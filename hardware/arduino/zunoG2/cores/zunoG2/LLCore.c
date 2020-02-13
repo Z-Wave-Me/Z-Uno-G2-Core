@@ -225,6 +225,16 @@ byte aux_findPWMChannel(byte pin){
     }
     return INVALID_PIN_INDEX;
 }
+
+void delayMicroseconds(word tdelay){
+    while(tdelay--){
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+   }
+}
+
 static inline dword map_pwmloc2ch(int loc, int ch){
     loc = (loc + 32-ch) & 0x1F;
     ch <<= 3;
@@ -296,6 +306,73 @@ void WDOG_Feed(){
   }
 
   wdog->CMD = WDOG_CMD_CLEAR;
+}
+
+inline void WDOGWR(unsigned int currloop)
+{
+    if (!(currloop % 4096))
+        WDOG_Feed();
+}
+
+inline unsigned long loopsToMcs(unsigned long loops)
+{
+    if (!loops)
+        return 0;
+    /*
+    loops *= 366UL;
+    loops -= 1110UL;
+    loops /= 1000UL;*/
+    loops *= 443;
+    loops -= 6482;
+    loops /= 1000;
+    return loops;
+}
+
+inline unsigned long mcsToLoops(unsigned long mcs)
+{
+    if (!mcs)
+        return 0;
+    
+    mcs *= 1000UL;
+    mcs += 1110UL;
+    mcs /= 366UL;
+    /*mcs *= 1000;
+    mcs -= 7080;
+    mcs /= 443;*/
+    return mcs;
+}
+
+unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout){
+    //timeout = mcsToLoops(timeout);
+    unsigned long maxloops = mcsToLoops(timeout) * 3;
+    unsigned long width = 0;
+    int real_port = ZUNO_PIN_DEFS[pin].port;
+    int real_pin = ZUNO_PIN_DEFS[pin].pin;
+    int mask = 1<<real_pin;
+
+    // wait for any previous pulse to end
+    while (((GPIO->P[real_port].DIN & mask) != 0) == state)
+    {
+        WDOGWR(maxloops);
+        if (--maxloops == 0)
+            return 0;
+    }
+
+    // wait for the pulse to start
+    while (((GPIO->P[real_port].DIN & mask) != 0) != state)
+    {
+        //WDOGWR(maxloops);
+        WDOGWR(maxloops);
+        if (--maxloops == 0)
+            return 0;
+    }
+    // wait for the pulse to stop
+    while (((GPIO->P[real_port].DIN & mask) != 0) == state) {
+        WDOGWR(maxloops);
+        if (++width == maxloops)
+            return 0;
+    }
+    return loopsToMcs(width);
 }
 
 

@@ -60,6 +60,7 @@ void digitalWrite(uint8_t pin, uint8_t val);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
 bool analogWrite(uint8_t pin, word value);
+void WDOG_Feed();
 
 uint8_t pin2HWPin(uint8_t pin);
 #endif // ZUNO_ARDUINOH

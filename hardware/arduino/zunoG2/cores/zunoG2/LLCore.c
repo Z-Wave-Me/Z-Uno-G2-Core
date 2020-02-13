@@ -276,6 +276,28 @@ bool analogWrite(uint8_t pin, word value){
         
     return true;
 }
+void WDOG_Feed(){
+  WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog
+  /* The watchdog should not be fed while it is disabled */
+  if (!(wdog->CTRL & WDOG_CTRL_EN)) {
+    return;
+  }
+
+  /* If a previous clearing is being synchronized to LF domain, then there */
+  /* is no point in waiting for it to complete before clearing over again. */
+  /* This avoids stalling the core in the typical use case where some idle loop */
+  /* keeps clearing the watchdog. */
+  if (wdog->SYNCBUSY & WDOG_SYNCBUSY_CMD) {
+    return;
+  }
+  /* Before writing to the WDOG_CMD register we also need to make sure that
+   * any previous write to WDOG_CTRL is complete. */
+  while ( (wdog->SYNCBUSY & WDOG_SYNCBUSY_CTRL) != 0U ) {
+  }
+
+  wdog->CMD = WDOG_CMD_CLEAR;
+}
+
 
 int main(){
 

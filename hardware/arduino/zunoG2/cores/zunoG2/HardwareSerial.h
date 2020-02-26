@@ -34,5 +34,6 @@ class HardwareSerial : public Stream {
 
 extern HardwareSerial Serial;
 extern HardwareSerial Serial0;
+extern HardwareSerial Serial1;
 
 #endif // _ZUNO_HARDWARE_SERIAL_H

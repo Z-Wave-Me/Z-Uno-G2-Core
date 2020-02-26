@@ -28,19 +28,19 @@ void HardwareSerial::end() {
 }
 
 size_t HardwareSerial::available(void) {
-	return (size_t) zunoSysCall(ZUNO_FUNC_SERIAL_AVAILABLE, serial_num);
+	return (size_t) zunoSysCall(ZUNO_FUNC_SERIAL_AVAILABLE, 1, serial_num);
 }
 
 int HardwareSerial::peek(void) {
 	int peekval;
 	if(!zunoSysCall(ZUNO_FUNC_SERIAL_AVAILABLE, serial_num)) 
 		return -1;
-	zunoSysCall(ZUNO_FUNC_SERIAL_WRITE, 3, serial_num, false, &peekval, 1);
+	zunoSysCall(ZUNO_FUNC_SERIAL_READ, 4, serial_num, false, &peekval, 1);
 	return peekval;
 }
 uint8_t HardwareSerial::read(void) {
 	uint8_t readval;
-	zunoSysCall(ZUNO_FUNC_SERIAL_WRITE, 3, serial_num, true, &readval, 1);
+	zunoSysCall(ZUNO_FUNC_SERIAL_READ, 4, serial_num, true, &readval, 1);
 	return readval;
 }
 size_t HardwareSerial::write(uint8_t value) {
@@ -49,6 +49,8 @@ size_t HardwareSerial::write(uint8_t value) {
 }
 
 // Экземпляры классов - стиль как в Ардуино
-HardwareSerial Serial(1, 5, 11);  // USB
-//HardwareSerial Serial1(ZUNO_FUNC_SERIAL1_BEGIN); // UART0
-HardwareSerial Serial0(0, 23, 24); // UART1 -  Нужно его добавить, пока это тот же UART0
+// FIXME: pin numbers for unofficial board was presented. 
+//     	  Correct them before the release!
+HardwareSerial Serial(1, 18, 17);  // USB
+HardwareSerial Serial1(1, 13, 12); // UART1  - разделяет один физический UART на разных пинах с Serial
+HardwareSerial Serial0(0, 11, 7); // UART0 

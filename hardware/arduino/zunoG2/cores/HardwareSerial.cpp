@@ -51,6 +51,6 @@ size_t HardwareSerial::write(uint8_t value) {
 // Экземпляры классов - стиль как в Ардуино
 // FIXME: pin numbers for unofficial board was presented. 
 //     	  Correct them before the release!
-HardwareSerial Serial(1, 18, 17);  // USB
+HardwareSerial Serial(1, 17, 16);  // USB
 HardwareSerial Serial1(1, 13, 12); // UART1  - разделяет один физический UART на разных пинах с Serial
 HardwareSerial Serial0(0, 11, 7); // UART0 

@@ -57,6 +57,8 @@ void delay(dword ms);
 dword millis();
 void pinMode(uint8_t pin, int mode);
 void digitalWrite(uint8_t pin, uint8_t val);
+int getRealPort(uint8_t);
+int getRealPin(uint8_t);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
 bool analogWrite(uint8_t pin, word value);

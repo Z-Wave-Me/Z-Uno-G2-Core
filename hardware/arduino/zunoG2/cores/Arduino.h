@@ -47,7 +47,10 @@ enum{
 #define A2                  16
 #define A3                  17
 #define BATTERY             0xFF
-
+//disable interrupts macros
+#define noInterrupts() __asm volatile("cpsid i"::: "memory")
+//inable interrupts macros
+# define interrupts() __asm volatile("cpsie i"::: "memory")
 // Additional libraries with "pluses"
 
 void * zunoSysCall(int vec, int num, ...);

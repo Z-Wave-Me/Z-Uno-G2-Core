@@ -12,10 +12,7 @@
 
 #define DEBUG_DHT 0
 
-//disable interrupts macros
-#define NOINTERRUPTS() __asm volatile("cpsid i"::: "memory")
-//inable interrupts macros
-# define INTERRUPTS() __asm volatile("cpsie i"::: "memory")
+
 
 DHT::DHT(uint8_t pin, uint8_t type) : _pin(pin)
 {
@@ -89,7 +86,7 @@ byte DHT::read(bool force)
     // Посылаем стартовый импульс
     // 0 на 1 мс и болльше
     // noInterrupts();
-	NOINTERRUPTS();
+	noInterrupts();
 
     pinMode(_pin, OUTPUT);
     digitalWrite(_pin, 0); // Send start signal
@@ -107,7 +104,7 @@ byte DHT::read(bool force)
     {
         wi++;
         if (!wi) {
-			INTERRUPTS();
+			interrupts();
             return DHT_RESULT_ERROR_NOSYNC;
         }
         delayMicroseconds(1);
@@ -127,7 +124,7 @@ byte DHT::read(bool force)
 
     if (time_i1 < 10 || time_i2 < 10)
 	{
-        INTERRUPTS();
+        interrupts();
 		return DHT_RESULT_ERROR_NOSYNC;
 	}
 
@@ -198,7 +195,7 @@ byte DHT::read(bool force)
         return DHT_RESULT_ERROR_CRC;
     }
 
-	INTERRUPTS();
+	interrupts();
     if (_type == DHT11) {
         humidity = data_ptr[0];
         temperature = data_ptr[2];

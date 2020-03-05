@@ -122,11 +122,6 @@ sample code bearing this copyright.
 
 #include "Arduino.h"
 
-//disable interrupts macros
-#define NOINTERRUPTS() __asm volatile("cpsid i"::: "memory")
-//inable interrupts macros
-# define INTERRUPTS() __asm volatile("cpsie i"::: "memory")
-
 OneWire::OneWire(byte pin): bus_pin(pin) {
 	//Here we caching some values for better perfomance
     real_pin = getRealPin(pin);
@@ -187,7 +182,7 @@ byte OneWire::reset(void) {
     byte r;
     byte retries = 125;
 
-	NOINTERRUPTS();
+	noInterrupts();
     // noInterrupts();
     // sysClockSet(SYSCLOCK_NORMAL);
     // pinMode(bus_pin, INPUT);
@@ -202,17 +197,17 @@ byte OneWire::reset(void) {
 	pinModeFast(OUTPUT);
 	digitalWriteFast(0);
     //digitalWrite(bus_pin, 0);
-    INTERRUPTS();
+    interrupts();
 	// interrupts();
     delayMicroseconds(480);
 
-	NOINTERRUPTS();
+	noInterrupts();
     // noInterrupts();
     // pinMode(bus_pin, INPUT); // allow it to float
     pinModeFast(INPUT);
 	delayMicroseconds(70);
     r = digitalReadFast();
-	INTERRUPTS();
+	interrupts();
     // interrupts();
 
     delayMicroseconds(410);
@@ -222,7 +217,7 @@ byte OneWire::reset(void) {
 
 void OneWire::write(byte v, byte power) {
     byte bitMask;
-    NOINTERRUPTS();
+    noInterrupts();
     // sysClockSet(SYSCLOCK_NORMAL);
     //digitalWrite(27, 0);
     pinModeFast(OUTPUT);;
@@ -243,7 +238,7 @@ void OneWire::write(byte v, byte power) {
             digitalWriteFast(1);
             delayMicroseconds(5);
         }
-        INTERRUPTS();
+        interrupts();
     }
     if (!power) {
         pinModeFast(INPUT);;
@@ -256,7 +251,7 @@ byte OneWire::read() {
     byte res = 0;
 
     //sysClockSet(SYSCLOCK_NORMAL);
-	NOINTERRUPTS();
+	noInterrupts();
 
     for (bitMask = 0x01; bitMask; bitMask <<= 1) {
 
@@ -274,7 +269,7 @@ byte OneWire::read() {
         if (r)
             res |= bitMask;
     }
-	INTERRUPTS();
+	interrupts();
     //sysClockNormallize();
     return res;
 }
@@ -310,7 +305,7 @@ bool OneWire::read_bit() {
     bool r;
     // sysClockSet(SYSCLOCK_NORMAL);
     // noInterrupts(); 
-    NOINTERRUPTS();
+    noInterrupts();
     pinModeFast(OUTPUT);;
     digitalWrite(bus_pin, 0);
     delayMicroseconds(3);
@@ -318,7 +313,7 @@ bool OneWire::read_bit() {
     delayMicroseconds(15);
     r = digitalReadFast();
     delayMicroseconds(73);
-    INTERRUPTS();
+    interrupts();
     // sysClockNormallize();
     // interrupts();
 
@@ -328,7 +323,7 @@ void OneWire::write_bit(bool bit) {
     //Serial0.println("BIT");
     // sysClockSet(SYSCLOCK_NORMAL);
     // noInterrupts();
-	NOINTERRUPTS();
+	noInterrupts();
     pinModeFast(OUTPUT);;
     digitalWrite(bus_pin, 0);
     if (bit) {
@@ -342,7 +337,7 @@ void OneWire::write_bit(bool bit) {
         // digitalWrite(bus_pin, 1);
         delayMicroseconds(5);
     }
-	INTERRUPTS();
+	interrupts();
     // sysClockNormallize();
     // interrupts();
 }

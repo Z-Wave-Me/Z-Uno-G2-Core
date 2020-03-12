@@ -5,8 +5,11 @@
 #include "CrtxADC.h"
 #include "CrtxTimer.h"
 
-void __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
+void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
+
+// from ZWSupport.c
+int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
 
 typedef struct PinDef{
     uint8_t port;
@@ -67,7 +70,7 @@ typedef struct ZUNOOnDemandHW_s {
     dword     pwm_freq_scaller;
 
 } ZUNOOnDemandHW_t;
-
+ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 // prototypes 
 void loop();
@@ -115,23 +118,25 @@ void LLInit() {
 }
 
 
-void zunoJumpTable(int vec, void * data) {
+void * zunoJumpTable(int vec, void * data) {
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
+            g_zuno_sys = (ZUNOSetupSysState_t*)data;
             setup();
             break;
         case ZUNO_JUMPTBL_LOOP:
             loop();
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
-            break;
+            return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         default:
             break; // UNKNOWN VECTOR
     }
+    return (void*)0;
 }
-void __zunoJTBL(int vec, void * data){
-    zunoJumpTable(vec, data);
+void * __zunoJTBL(int vec, void * data) {
+    return zunoJumpTable(vec, data);
 }
 
 void delay(dword ms){
@@ -375,7 +380,12 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout){
     return loopsToMcs(width);
 }
 
-
+void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
+    zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg);
+}
+void zunoCommitCfg(){
+    zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
+}
 int main(){
 
     return 0;

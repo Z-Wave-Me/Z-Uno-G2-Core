@@ -48,6 +48,11 @@ enum{
 #define A3                  17
 #define BATTERY             0xFF
 
+// system data
+extern ZUNOSetupSysState_t * g_zuno_sys;
+#define zunoNID()               (g_zuno_sys->node_id)
+#define zunoInNetwork()         (g_zuno_sys->node_id != 0)
+#define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
 // Additional libraries with "pluses"
 
 void * zunoSysCall(int vec, int num, ...);
@@ -64,4 +69,10 @@ void WDOG_Feed();
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
 void delayMicroseconds(word tdelay);
 uint8_t pin2HWPin(uint8_t pin);
+void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
+void zunoCommitCfg();
+void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
+void zunoSetZWChannel(byte ch, byte zw_channel);
+byte zunoAddChannel(byte type, byte subtype, byte options);
+bool zunoStartDeviceConfiguration();
 #endif // ZUNO_ARDUINOH

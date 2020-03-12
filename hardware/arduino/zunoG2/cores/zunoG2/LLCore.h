@@ -12,6 +12,6 @@ typedef struct ZUNOCodeHeader_s{
     uint16_t    crc16;
     uint32_t    flags;
 } ZUNOCodeHeader_t;
-//static const PinDef_t ZUNO_PIN_DEFS[];
+
 #define INVALID_PIN_INDEX 0xFF
 #endif

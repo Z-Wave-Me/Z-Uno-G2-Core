@@ -1596,7 +1596,8 @@ enum{
     cmuClock_HFPER = CMU_CLOCK_TYPE_HFPER,
     cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
     cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,
-    cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1
+    cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1,
+    cmuClock_I2C0=CMU_CLOCK_TYPE_I2C0
 };
 
 static inline void BUS_RegMaskedSet(volatile uint32_t *addr,

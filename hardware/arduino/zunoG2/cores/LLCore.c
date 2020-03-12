@@ -185,8 +185,21 @@ void pinMode(uint8_t pin, int mode){
         digitalWrite(pin, on_off);
     }
 
-
 }
+
+int getRealPin(uint8_t pin)
+{
+    int real_pin = ZUNO_PIN_DEFS[pin].pin;
+    return real_pin;
+}
+
+
+int getRealPort(uint8_t pin)
+{
+    int real_port = ZUNO_PIN_DEFS[pin].port;
+    return real_port;
+}
+
 int digitalRead(uint8_t pin) {
     int real_port = ZUNO_PIN_DEFS[pin].port;
     int real_pin = ZUNO_PIN_DEFS[pin].pin;

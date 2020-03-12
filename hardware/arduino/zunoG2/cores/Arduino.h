@@ -47,12 +47,19 @@ enum{
 #define A2                  16
 #define A3                  17
 #define BATTERY             0xFF
+<<<<<<< HEAD:hardware/arduino/zunoG2/cores/zunoG2/Arduino.h
 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
+=======
+//disable interrupts macros
+#define noInterrupts() __asm volatile("cpsid i"::: "memory")
+//inable interrupts macros
+# define interrupts() __asm volatile("cpsie i"::: "memory")
+>>>>>>> a3b141923b878906d18873634505a05637d8a229:hardware/arduino/zunoG2/cores/Arduino.h
 // Additional libraries with "pluses"
 
 void * zunoSysCall(int vec, int num, ...);
@@ -62,6 +69,8 @@ void delay(dword ms);
 dword millis();
 void pinMode(uint8_t pin, int mode);
 void digitalWrite(uint8_t pin, uint8_t val);
+int getRealPort(uint8_t);
+int getRealPin(uint8_t);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
 bool analogWrite(uint8_t pin, word value);

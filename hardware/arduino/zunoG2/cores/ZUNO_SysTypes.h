@@ -31,7 +31,12 @@ typedef struct ZUNODeviceConfiguation_s {
 	ZUNOChannelCCS_t    channel_types[ZUNO_MAX_CCTYPES];
 	uint16_t            app_version;
 	uint16_t            product_id;
+	uint8_t				device_generic_type;
+	uint8_t				device_specific_type;
+	uint16_t			device_icon;
+	uint16_t			device_app_icon;
 	uint8_t				security_keys;
+	uint16_t            __reserved;
 	uint16_t            crc16;
 }ZUNODeviceConfiguation_t;
 // Z-Wave packet
@@ -69,6 +74,15 @@ typedef struct zuno_handler_multi_gettersetter_s{
     void * setter;
     uint8_t offset;
 }zuno_handler_multi_gettersetter_t;
+
+typedef struct ZUNOSysEvent_s{
+	uint8_t event;
+	uint32_t params[2];
+}ZUNOSysEvent_t;
+
+typedef void zuno_user_systimer_handler(uint32_t);
+typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
+
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{

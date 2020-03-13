@@ -10,6 +10,7 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
+void zuno_CCTimer(uint32_t);
 
 typedef struct PinDef{
     uint8_t port;
@@ -63,12 +64,19 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     
 };
 
+/*
+typedef void zuno_user_systimer_handler(uint32_t);
+typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
+*/
+
 typedef struct ZUNOOnDemandHW_s {
     bool        ADCInitialized;
     bool        PWMInitialized;
-    byte     pwm_pins[MAX_ZUNO_PWMS];
-    dword     pwm_freq_scaller;
-
+    byte        pwm_pins[MAX_ZUNO_PWMS];
+    dword       pwm_freq_scaller;
+    // HANDLERS
+    zuno_user_systimer_handler * h_systimer;
+    zuno_user_sysevent_handler * h_sysevent; 
 } ZUNOOnDemandHW_t;
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
@@ -127,13 +135,40 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_LOOP:
             loop();
+            delay(20); // to avoid starvation
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
+        case ZUNO_JUMPTBL_SYSEVENT:
+            if(g_zuno_odhw_cfg.h_sysevent != NULL) {
+                g_zuno_odhw_cfg.h_sysevent((ZUNOSysEvent_t*)data);
+            }
+            break;
+        case ZUNO_JUMPTBL_SYSTIMER:
+            zuno_CCTimer((uint32_t)data);
+            if(g_zuno_odhw_cfg.h_systimer != NULL) {
+                g_zuno_odhw_cfg.h_systimer((uint32_t)data);
+            }
+            break;
         default:
             break; // UNKNOWN VECTOR
     }
     return (void*)0;
+}
+void zunoAttachSysHandler(byte type, void * handler){
+    switch(type){
+        case ZUNO_HANDLER_SYSTIMER:
+            g_zuno_odhw_cfg.h_systimer = (zuno_user_systimer_handler*)handler;
+            break;
+        case ZUNO_HANDLER_SYSEVENT:
+            g_zuno_odhw_cfg.h_sysevent = (zuno_user_sysevent_handler*)handler;
+            break;
+        case ZUNO_HANDLER_BATTERY:
+            break;
+    }
+}
+void zunoStartLearn(byte timeout, bool secured){
+    zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
 }
 void * __zunoJTBL(int vec, void * data) {
     return zunoJumpTable(vec, data);

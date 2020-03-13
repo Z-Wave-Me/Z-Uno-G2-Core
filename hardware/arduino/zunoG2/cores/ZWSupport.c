@@ -3,12 +3,64 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchMultilevel.h"
+#include "ZWCCMultichannel.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
 
-static const ZUNOChannelCCS_t ZUNO_CC_TYPES[2]={
-                                                {ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, 0, 2, COMMAND_CLASS_SWITCH_BINARY, SWITCH_BINARY_VERSION, COMMAND_CLASS_BASIC, BASIC_VERSION},
-                                                {ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER, 0, 2, COMMAND_CLASS_SWITCH_MULTILEVEL, SWITCH_MULTILEVEL_VERSION, COMMAND_CLASS_BASIC, BASIC_VERSION}
+
+// ZUNO_CC_TYPES defines translation from z-uno channel type to command classes of this channel  
+const ZUNOChannelCCS_t ZUNO_CC_TYPES[]={
+                                                {ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE, 2, COMMAND_CLASS_SWITCH_BINARY, SWITCH_BINARY_VERSION, COMMAND_CLASS_BASIC, BASIC_VERSION},
+                                                {ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER, CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE, 2, COMMAND_CLASS_SWITCH_MULTILEVEL, SWITCH_MULTILEVEL_VERSION, COMMAND_CLASS_BASIC, BASIC_VERSION}
+                                                // to be continued...
+                                                };
+// ZUNO_DEV_TYPES defines translation from z-uno channel type to device generic/specific types
+/*
+{
+	// ZUNO_SWITCH_BINARY_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_BASIC_CTRL),			
+		GENERIC_TYPE_SWITCH_BINARY, 		SPECIFIC_TYPE_POWER_SWITCH_BINARY, 			COMMAND_CLASS_SWITCH_BINARY, 		0, SWITCH_BINARY_GET, 0,	ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH, ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH}, 
+	// ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_BASIC_CTRL), 	
+	 	GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL, 		COMMAND_CLASS_SWITCH_MULTILEVEL, 	0, SWITCH_MULTILEVEL_GET, 0, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
+	// ZUNO_SENSOR_BINARY_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_CCS2 | ZUNO_EP_CHANNEL_FLAG_SADDR), 			
+	 	GENERIC_TYPE_SENSOR_NOTIFICATION, 	SPECIFIC_TYPE_NOTIFICATION_SENSOR, 			COMMAND_CLASS_SENSOR_BINARY_V2, COMMAND_CLASS_NOTIFICATION_V4,    SENSOR_BINARY_GET, NOTIFICATION_GET_V3, ICON_TYPE_GENERIC_SENSOR_NOTIFICATION, ICON_TYPE_GENERIC_SENSOR_NOTIFICATION},
+	// ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SADDR | ZUNO_EP_CHANNEL_FLAG_REPORT_FREQLIMIT), 									
+	 	GENERIC_TYPE_SENSOR_MULTILEVEL, 	SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL, 	COMMAND_CLASS_SENSOR_MULTILEVEL, 	0, SENSOR_MULTILEVEL_GET, 0, ICON_TYPE_GENERIC_SENSOR_MULTILEVEL, ICON_TYPE_GENERIC_SENSOR_MULTILEVEL},
+	// ZUNO_METER_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_SADDR | ZUNO_EP_CHANNEL_FLAG_REPORT_FREQLIMIT), 									
+		GENERIC_TYPE_METER, 				SPECIFIC_TYPE_SIMPLE_METER, 				COMMAND_CLASS_METER, 				0, METER_GET, 0, ICON_TYPE_GENERIC_SENSOR_MULTILEVEL, ICON_TYPE_GENERIC_SENSOR_MULTILEVEL},
+	// ZUNO_DOORLOCK_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_SECURE_ONLY), 	
+	    GENERIC_TYPE_ENTRY_CONTROL, 		SPECIFIC_TYPE_DOOR_LOCK, 					COMMAND_CLASS_DOOR_LOCK_V2, 		0, DOOR_LOCK_OPERATION_GET_V2, 0, ICON_TYPE_GENERIC_ENTRY_CONTROL, ICON_TYPE_GENERIC_ENTRY_CONTROL},
+	// ZUNO_FLOWSTOP_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_BASIC_CTRL), 		
+		GENERIC_TYPE_SWITCH_BINARY,			SPECIFIC_TYPE_VALVE_OPEN_CLOSE,				COMMAND_CLASS_SWITCH_BINARY,		0, SWITCH_BINARY_GET, 0, ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH, ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH},
+	// ZUNO_SIREN_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_BASIC_CTRL), 		
+		GENERIC_TYPE_SWITCH_BINARY,			SPECIFIC_TYPE_SIREN,						COMMAND_CLASS_SWITCH_BINARY,		0, SWITCH_BINARY_GET, 0, ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH, ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH},
+	// ZUNO_BLINDS_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_BASIC_CTRL), 		
+		GENERIC_TYPE_SWITCH_MULTILEVEL,		SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL,		COMMAND_CLASS_SWITCH_MULTILEVEL,	0, SWITCH_MULTILEVEL_GET, 0, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
+	// ZUNO_THERMOSTAT_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER | ZUNO_EP_CHANNEL_FLAG_CCS2), 			
+	 	GENERIC_TYPE_THERMOSTAT, 			SPECIFIC_TYPE_THERMOSTAT_GENERAL, 			COMMAND_CLASS_THERMOSTAT_MODE, 		COMMAND_CLASS_THERMOSTAT_SETPOINT, THERMOSTAT_MODE_GET, THERMOSTAT_SETPOINT_GET, ICON_TYPE_GENERIC_THERMOSTAT, ICON_TYPE_GENERIC_THERMOSTAT},
+	// ZUNO_SWITCH_COLOR_CHANNEL_NUMBER
+	{(ZUNO_EP_CHANNEL_FLAG_SETTER), 		
+		GENERIC_TYPE_SWITCH_MULTILEVEL,		SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL,		COMMAND_CLASS_SWITCH_COLOR,			0, SWITCH_COLOR_GET, 0, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH, ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
+};
+
+*/
+
+const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[] = {
+                                                {GENERIC_TYPE_SWITCH_BINARY,        SPECIFIC_TYPE_POWER_SWITCH_BINARY,              ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH,  ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH},
+                                                {GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL,          ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH,  ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
+                                                {GENERIC_TYPE_SENSOR_NOTIFICATION, 	SPECIFIC_TYPE_NOTIFICATION_SENSOR,              ICON_TYPE_GENERIC_SENSOR_NOTIFICATION,  ICON_TYPE_GENERIC_SENSOR_NOTIFICATION},
+                                                {GENERIC_TYPE_SENSOR_MULTILEVEL, 	SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL,        ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL},
+                                                {GENERIC_TYPE_METER, 				SPECIFIC_TYPE_SIMPLE_METER,                     ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL}
+                                                // to be continued...
                                                 };
 
 
@@ -50,7 +102,7 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes){
             break;
         case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
             if(cmd_bytes[0] == COMMAND_CLASS_SENSOR_MULTILEVEL)
-                return false;
+                return true;
             break;
     }
     return false;
@@ -107,44 +159,66 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
     LOGGING_UART.println("");
     #endif
 }
-//void zuno_dbgDump;
+// Main timer for CC purposes
+void zuno_CCTimer(uint32_t ticks){
+
+}
 // Main command handler for incoming z-wave commands
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
     int result = ZUNO_UNKNOWN_CMD;
-    // Check if command fits to any existing channel
+    
     #if LOGGING_DBG
     LOGGING_UART.print(millis());
     LOGGING_UART.print("INCOMING  "); 
     zuno_dbgdumpZWPacakge(cmd);
     #endif
-    byte zuno_ch = zuno_findTargetChannel(cmd);
-    if(zuno_ch == UNKNOWN_CHANNEL){
-        #if LOGGING_DBG
-        LOGGING_UART.println("    CHANNEL WAS NOT FOUND!"); 
-        #endif
-        return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
-    }
-    #if LOGGING_DBG
-    LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
-    LOGGING_UART.println(zuno_ch);
-    #endif
+    // prepare packet for report
     fillOutgoingPacket(cmd);
-    switch(ZW_CMD_CLASS){
-        case COMMAND_CLASS_BASIC:
-            result = zuno_CCBasicHandler(zuno_ch, cmd);
-            break;
-        #if ( WITH_CC_SWITCH_BINARY )
-        case COMMAND_CLASS_SWITCH_BINARY:
-            result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
-            break;
-        #endif
-        #if ( WITH_CC_SWITCH_MULTILEVEL)
-        case COMMAND_CLASS_SWITCH_MULTILEVEL:
-            result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
-            break;
-        #endif
+    // If we have multichannel support enabled.
+    // Pass the data through it first
+    #if WITH_CC_MULTICHANNEL
+    if(ZW_CMD_CLASS == COMMAND_CLASS_MULTICHANNEL){
+        result = zuno_CCMultichannel(cmd);
+        if(result == ZUNO_COMMAND_BLOCKED){
+            return result;
+        }
+        if(result == ZUNO_COMMAND_UNPACKED){
+            #if LOGGING_DBG
+            LOGGING_UART.print(millis());
+            LOGGING_UART.print("UNPACKED:  "); 
+            zuno_dbgdumpZWPacakge(cmd);
+            #endif
+            fillOutgoingPacket(cmd);
+        }
     }
-    // We have some report to send
+    #endif
+    // Check if command fits to any existing channel
+    if(result != ZUNO_COMMAND_ANSWERED){
+        byte zuno_ch = zuno_findTargetChannel(cmd);
+        if(zuno_ch == UNKNOWN_CHANNEL){
+            return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
+        }
+        #if LOGGING_DBG
+        LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
+        LOGGING_UART.println(zuno_ch);
+        #endif
+        switch(ZW_CMD_CLASS){
+            case COMMAND_CLASS_BASIC:
+                result = zuno_CCBasicHandler(zuno_ch, cmd);
+                break;
+            #if ( WITH_CC_SWITCH_BINARY )
+            case COMMAND_CLASS_SWITCH_BINARY:
+                result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
+                break;
+            #endif
+            #if ( WITH_CC_SWITCH_MULTILEVEL)
+            case COMMAND_CLASS_SWITCH_MULTILEVEL:
+                result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
+                break;
+            #endif
+        }
+    }
+    // Do we have any report to send?
     if(result == ZUNO_COMMAND_ANSWERED){
          #if LOGGING_DBG
         LOGGING_UART.print(millis());
@@ -347,6 +421,12 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
         ZUNO_CFG_TYPE_COUNT++;
     }
     byte ch_i = ZUNO_CFG_CHANNEL_COUNT;
+    if(ch_i == 0){
+        g_zuno_sys->zwave_cfg->device_generic_type      =   ZUNO_DEV_TYPES[type-1].gen_type;
+        g_zuno_sys->zwave_cfg->device_specific_type     =   ZUNO_DEV_TYPES[type-1].spec_type;
+        g_zuno_sys->zwave_cfg->device_icon              =   ZUNO_DEV_TYPES[type-1].icon;
+        g_zuno_sys->zwave_cfg->device_app_icon          =   ZUNO_DEV_TYPES[type-1].app_icon;
+    }
     // Create new channel
     ZUNO_CFG_CHANNEL(ch_i).type         =   type;
     ZUNO_CFG_CHANNEL(ch_i).sub_type     =   subtype;
@@ -360,4 +440,12 @@ void zunoSetZWChannel(byte ch, byte zw_channel){
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
     g_zuno_channelhandlers_map[ch].descriptor = (value_size&0x03) << 4 | (type & 0x07);
     g_zuno_channelhandlers_map[ch].p_handler = handler;
+}
+ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
+    for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
+        byte naked_channel = ZUNO_CFG_CHANNEL(i).zw_channel & (~ZWAVE_CHANNEL_MAPPED_BIT);
+        if(naked_channel == zw_ch)
+            return &(ZUNO_CFG_CHANNEL(i));
+    }
+    return NULL;
 }

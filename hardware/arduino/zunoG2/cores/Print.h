@@ -8,6 +8,7 @@
 
 #include "ArduinoTypes.h"
 #include <math.h>
+#include <string.h>
 
 class Print{
 public:
@@ -44,10 +45,7 @@ public:
     virtual size_t write(uint8_t) = 0;
     virtual size_t write(const uint8_t *buffer, size_t size);
 
-    size_t write(const char *str) {
-      if (str == NULL) return 0;
-      return write((const uint8_t *)str, strlen(str));
-    }
+    size_t write(const char *str);
     size_t write(const char *buffer, size_t size) {
       return write((const uint8_t *)buffer, size);
     }

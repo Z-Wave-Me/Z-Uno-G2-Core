@@ -1,5 +1,6 @@
-#ifndef ZGECKO
+#if (!defined(ZGECKO))
 #define ZGECKO
+
 #define __IOM volatile
 #define __IM volatile const
 #define __STATIC_INLINE static inline
@@ -1603,7 +1604,7 @@ enum{
 static inline void BUS_RegMaskedSet(volatile uint32_t *addr,
                                       uint32_t mask)
 {
-#if defined(PER_BITSET_MEM_BASE)
+#if defined(PER_BITSET_MEM_BASE) && !defined(ZUNO_PREPROC_PHASE)
   uint32_t aliasAddr = PER_BITSET_MEM_BASE + ((uint32_t)addr - PER_MEM_BASE);
   *(volatile uint32_t *)aliasAddr = mask;
 #else
@@ -1614,7 +1615,7 @@ static inline void BUS_RegMaskedSet(volatile uint32_t *addr,
 static inline void BUS_RegMaskedClear(volatile uint32_t *addr,
                                         uint32_t mask)
 {
-#if defined(PER_BITCLR_MEM_BASE)
+#if defined(PER_BITCLR_MEM_BASE) && !defined(ZUNO_PREPROC_PHASE)
   uint32_t aliasAddr = PER_BITCLR_MEM_BASE + ((uint32_t)addr - PER_MEM_BASE);
   *(volatile uint32_t *)aliasAddr = mask;
 #else
@@ -1626,7 +1627,7 @@ static inline void BUS_RegBitWrite(volatile uint32_t *addr,
                                      unsigned int bit,
                                      unsigned int val)
 {
-#if defined(BITBAND_PER_BASE)
+#if defined(BITBAND_PER_BASE) && !defined(ZUNO_PREPROC_PHASE)
   uint32_t aliasAddr =
     BITBAND_PER_BASE + (((uint32_t)addr - PER_MEM_BASE) * (uint32_t) 32) + (bit * (uint32_t) 4);
 

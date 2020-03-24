@@ -3,10 +3,13 @@
 #define ZUNO_ARDUINOH
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
+#include "LLCore.h"
+#include "ZUNO_StaticData.h"
 #include <string.h>
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "CrtxGPIO.h"
 #include "HardwareSerial.h"
+#include "ZWSupport.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 typedef enum {
@@ -47,6 +50,10 @@ enum{
 #define A2                  16
 #define A3                  17
 #define BATTERY             0xFF
+
+#define HIGH                1
+#define LOW                 0
+#define LED_BUILTIN         12 // !!! FIXME on prod
 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;

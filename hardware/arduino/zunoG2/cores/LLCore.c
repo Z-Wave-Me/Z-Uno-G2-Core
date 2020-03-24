@@ -4,6 +4,7 @@
 #include "CrtxGPIO.h"
 #include "CrtxADC.h"
 #include "CrtxTimer.h"
+#include "Stub.h"
 
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
@@ -124,13 +125,19 @@ void LLInit() {
 
 
 }
-
+#ifdef WITH_AUTOSETUP
+// this is managing using "preproc" util
+void zuno_static_autosetup();
+#endif
 
 void * zunoJumpTable(int vec, void * data) {
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
+            #ifdef WITH_AUTOSETUP
+            zuno_static_autosetup();
+            #endif
             setup();
             break;
         case ZUNO_JUMPTBL_LOOP:

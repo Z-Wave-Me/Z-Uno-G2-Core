@@ -6,7 +6,10 @@
 inline char digit2hexchar(byte d){
     return (d > 9) ? d - 10 + 'A' : d + '0';
 }
-
+size_t  Print::write(const char *str) {
+      if (str == NULL) return 0;
+      return write((const uint8_t *)str, strlen(str));
+}
 size_t Print::write(const uint8_t *buffer, size_t size)
 {
   size_t n = 0;

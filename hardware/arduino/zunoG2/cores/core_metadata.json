@@ -1,0 +1,147 @@
+{
+    "core_version":{"major":3,"minor":1,"branch":"alpha"},
+    "max_channel_ccs":2,
+    "channels":[
+        {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
+            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
+            "specific_type":"SPECIFIC_TYPE_POWER_SWITCH_BINARY",
+            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER", "type_val":2,
+            "cc_flags":["WITH_CC_SWITCHMULTILEVEL","WITH_CC_BASIC"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL",
+            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_SENSOR_BINARY_CHANNEL_NUMBER", "type_val":3,
+            "cc_flags":["WITH_CC_NOTIFICATION"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_NOTIFICATION","version":"2"}
+            ],
+            "generic_type":"GENERIC_TYPE_SENSOR_NOTIFICATION",
+            "specific_type":"SPECIFIC_TYPE_NOTIFICATION_SENSOR",
+            "icon_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
+            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER", "type_val":4,
+            "cc_flags":["WITH_CC_SENSORMULTILEVEL"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"3"}
+            ],
+            "generic_type":"GENERIC_TYPE_SENSOR_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL",
+            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}_${sub_type}"
+        },
+        {   
+            "type_name":"ZUNO_METER_CHANNEL_NUMBER", "type_val":5,
+            "cc_flags":["WITH_CC_METER"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_METER","version":"3"}
+            ],
+            "generic_type":"GENERIC_TYPE_METER",
+            "specific_type":"SPECIFIC_TYPE_SIMPLE_METER",
+            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_DOORLOCK_CHANNEL_NUMBER", "type_val":6,
+            "cc_flags":["WITH_CC_DOORLOCK"],
+            "generic_type":"GENERIC_TYPE_ENTRY_CONTROL",
+            "specific_type":"SPECIFIC_TYPE_DOOR_LOCK",
+            "icon_id":"ICON_TYPE_GENERIC_ENTRY_CONTROL",
+            "icon_app_id":"ICON_TYPE_GENERIC_ENTRY_CONTROL",
+            "ccs":[],
+            "flags":["0"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_FLOWSTOP_CHANNEL_NUMBER", "type_val":7,
+            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
+            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
+            "specific_type":"SPECIFIC_TYPE_VALVE_OPEN_CLOSE",
+            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_SIREN_CHANNEL_NUMBER", "type_val":8,
+            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
+            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
+            "specific_type":"SPECIFIC_TYPE_SIREN",
+            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
+            "cc_flags":["WITH_CC_SWITCHMULTILEVEL","WITH_CC_BASIC"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_BINARY_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",
+            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":11,
+            "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT"],
+            "generic_type":"GENERIC_TYPE_THERMOSTAT",
+            "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL",
+            "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
+            "icon_app_id":"ICON_TYPE_GENERIC_THERMOSTAT",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "ccs":[],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
+            "cc_flags":["WITH_CC_SWITCHCOLOR"],
+            "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
+            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "ccs":[],
+            "cluster_rule":"${type}"
+        }
+    ]
+}

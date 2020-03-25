@@ -4,6 +4,7 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
+#include "ZWCCMeter.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
 
@@ -56,10 +57,10 @@ const ZUNOChannelCCS_t ZUNO_CC_TYPES[]={
 
 const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[] = {
                                                 {GENERIC_TYPE_SWITCH_BINARY,        SPECIFIC_TYPE_POWER_SWITCH_BINARY,              ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH,  ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH},
-                                                {GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL,          ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH,  ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
                                                 {GENERIC_TYPE_SENSOR_NOTIFICATION, 	SPECIFIC_TYPE_NOTIFICATION_SENSOR,              ICON_TYPE_GENERIC_SENSOR_NOTIFICATION,  ICON_TYPE_GENERIC_SENSOR_NOTIFICATION},
                                                 {GENERIC_TYPE_SENSOR_MULTILEVEL, 	SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL,        ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL},
                                                 {GENERIC_TYPE_METER, 				SPECIFIC_TYPE_SIMPLE_METER,                     ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL}
+                                                {GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL,          ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH,  ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
                                                 // to be continued...
                                                 };
 
@@ -216,11 +217,16 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
                 result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
                 break;
             #endif
+            #if WITH_CC_METER
+                result = zuno_CCMeterHandler(zuno_ch, cmd);
+            case COMMAND_CLASS_METER:
+                break;
+            #endif
         }
     }
     // Do we have any report to send?
     if(result == ZUNO_COMMAND_ANSWERED){
-         #if LOGGING_DBG
+        #if LOGGING_DBG
         LOGGING_UART.print(millis());
         LOGGING_UART.print("OUTGOING  "); 
         zuno_dbgdumpZWPacakge(&g_outgoing_packet);

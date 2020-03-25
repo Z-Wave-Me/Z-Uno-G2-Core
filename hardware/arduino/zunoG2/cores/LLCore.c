@@ -434,6 +434,24 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 void zunoCommitCfg(){
     zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
 }
+
+void _zme_memset(byte * ptr, byte val, int count)
+{
+	while(count--)
+	{
+		*ptr = val;
+		ptr++;
+	}
+}
+void _zme_memcpy(byte * dst, byte * src, byte count){
+    src += (count-1);
+    while(count--) {
+        *dst = *src; 
+        src --;
+        dst ++;
+    }
+}
+
 int main(){
 
     return 0;

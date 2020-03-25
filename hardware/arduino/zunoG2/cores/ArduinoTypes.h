@@ -11,14 +11,14 @@ typedef unsigned char 	s_pin;
 
 typedef unsigned int 	size_t;
 typedef unsigned char   BYTE;
-typedef uint16_t      	WORD;
-typedef uint32_t        DWORD;
+typedef unsigned short  WORD;
+typedef unsigned long   DWORD;
 typedef unsigned char   XBYTE;
 typedef unsigned char   CCBYTE;
 
-typedef uint8_t         byte;
-typedef uint16_t        word;
-typedef uint32_t        dword;
+typedef unsigned char   byte;
+typedef unsigned short  word;
+typedef unsigned long   dword;
 
 
 
@@ -28,13 +28,13 @@ typedef uint32_t        dword;
 //typedef unsigned long   time_t;
 
 struct tmElements_s {
-uint8_t Second;
-uint8_t Minute;
-uint8_t Hour;
-uint8_t Wday; // day of week, sunday is day 1
-uint8_t Day;
-uint8_t Month;
-uint8_t Year; // offset from 1970;
+byte Second;
+byte Minute;
+byte Hour;
+byte Wday; // day of week, sunday is day 1
+byte Day;
+byte Month;
+byte Year; // offset from 1970;
 };
 
 

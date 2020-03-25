@@ -7,7 +7,7 @@
 #include "ZWCCMeter.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
-
+#include "zuno_preproc/ZUNO_AutoChannels.h"
 
 // ZUNO_CC_TYPES defines translation from z-uno channel type to command classes of this channel  
 const ZUNOChannelCCS_t ZUNO_CC_TYPES[]={
@@ -57,10 +57,10 @@ const ZUNOChannelCCS_t ZUNO_CC_TYPES[]={
 
 const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[] = {
                                                 {GENERIC_TYPE_SWITCH_BINARY,        SPECIFIC_TYPE_POWER_SWITCH_BINARY,              ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH,  ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH},
+                                                {GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL,          ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH,  ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
                                                 {GENERIC_TYPE_SENSOR_NOTIFICATION, 	SPECIFIC_TYPE_NOTIFICATION_SENSOR,              ICON_TYPE_GENERIC_SENSOR_NOTIFICATION,  ICON_TYPE_GENERIC_SENSOR_NOTIFICATION},
                                                 {GENERIC_TYPE_SENSOR_MULTILEVEL, 	SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL,        ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL},
                                                 {GENERIC_TYPE_METER, 				SPECIFIC_TYPE_SIMPLE_METER,                     ICON_TYPE_GENERIC_SENSOR_MULTILEVEL,    ICON_TYPE_GENERIC_SENSOR_MULTILEVEL}
-                                                {GENERIC_TYPE_SWITCH_MULTILEVEL, 	SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL,          ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH,  ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH},
                                                 // to be continued...
                                                 };
 

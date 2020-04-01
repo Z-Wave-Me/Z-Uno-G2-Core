@@ -90,4 +90,7 @@ void zunoSetZWChannel(byte ch, byte zw_channel);
 byte zunoAddChannel(byte type, byte subtype, byte options);
 bool zunoStartDeviceConfiguration();
 void zunoStartLearn(byte timeout, bool secured);
+int zunoEEPROMWrite(word address, word size, byte * data);
+int zunoEEPROMRead(word address, word size, byte * data);
+int zunoEEPROMErase();
 #endif // ZUNO_ARDUINOH

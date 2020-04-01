@@ -441,6 +441,23 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 void zunoCommitCfg(){
     zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
 }
+
+/*
+bool 	 b_write = va_arg(lst, uint32_t) > 0;
+			uint16_t addr  	 = va_arg(lst, uint32_t)&0x0ffff;
+			uint16_t size  	 = va_arg(lst, uint32_t)&0x0ffff;
+			uint8_t * p_data = va_arg(lst,uint8_t *);
+			zme_EEPROM_io(g_zuno_state.file_system, addr, p_data, size, b_write);
+*/
+int zunoEEPROMWrite(word address, word size, byte * data) {
+    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_IO, 4, true, address, size, data);
+}
+int zunoEEPROMRead(word address, word size, byte * data) {
+    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_IO, 4, false, address, size, data);
+}
+int zunoEEPROMErase() {
+    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_ERASE, 1, 0xCAFE0ACE);
+}
 int main(){
 
     return 0;

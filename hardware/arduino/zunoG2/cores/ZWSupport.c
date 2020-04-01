@@ -76,7 +76,7 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
     g_outgoing_packet.cmd = g_outgoing_data;
     g_outgoing_data[0] = cmd->cmd[0];  // the same command class
     g_outgoing_data[1] = cmd->cmd[1]+1; // in most cases report = get+1
-    // Reply as we was asked
+    // Reply as we were asked
     g_outgoing_packet.src_node          = zunoNID();
     g_outgoing_packet.dst_node          = cmd->src_node;
     g_outgoing_packet.src_zw_channel    = cmd->dst_zw_channel;
@@ -84,9 +84,9 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
     g_outgoing_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
     g_outgoing_packet.zw_rx_opts        = ZWAVE_PLUS_TX_OPTIONS;
 }
-
+#ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
-    #ifdef LOGGING_UART
+    
     LOGGING_UART.print(" SRC_ID:");
     LOGGING_UART.print(cmd->src_node);
     LOGGING_UART.print(".");
@@ -102,8 +102,8 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
     LOGGING_UART.print(" DATA:");
     LOGGING_UART.dumpPrint(cmd->cmd, cmd->len);
     LOGGING_UART.println("");
-    #endif
 }
+#endif
 // Main timer for CC purposes
 void zuno_CCTimer(uint32_t ticks){
 
@@ -148,10 +148,12 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
         LOGGING_UART.println(zuno_ch);
         #endif
         switch(ZW_CMD_CLASS){
+            #ifdef WITH_CC_BASIC
             case COMMAND_CLASS_BASIC:
                 result = zuno_CCBasicHandler(zuno_ch, cmd);
                 break;
-            #if ( WITH_CC_SWITCH_BINARY )
+            #endif
+            #ifdef WITH_CC_SWITCH_BINARY
             case COMMAND_CLASS_SWITCH_BINARY:
                 result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
                 break;
@@ -383,7 +385,7 @@ void zunoSetZWChannel(byte ch, byte zw_channel){
     ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 }
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
-    g_zuno_channelhandlers_map[ch].descriptor = (value_size&0x03) << 4 | (type & 0x07);
+    g_zuno_channelhandlers_map[ch].descriptor = ((value_size >> 1)&0x03) << 4 | (type & 0x07);
     g_zuno_channelhandlers_map[ch].p_handler = handler;
 }
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){

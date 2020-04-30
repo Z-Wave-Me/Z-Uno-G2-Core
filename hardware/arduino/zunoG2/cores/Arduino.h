@@ -93,6 +93,4 @@ void zunoStartLearn(byte timeout, bool secured);
 int zunoEEPROMWrite(word address, word size, byte * data);
 int zunoEEPROMRead(word address, word size, byte * data);
 int zunoEEPROMErase();
-void _zme_memcpy(byte * dst, byte * src, byte count);
-void _zme_memset(byte * ptr, byte val, int count);
 #endif // ZUNO_ARDUINOH

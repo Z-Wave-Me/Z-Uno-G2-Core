@@ -17,7 +17,7 @@
         },
         {   
             "type_name":"ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER", "type_val":2,
-            "cc_flags":["WITH_CC_SWITCHMULTILEVEL","WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"},
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
@@ -109,7 +109,7 @@
         },
         {   
             "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
-            "cc_flags":["WITH_CC_SWITCHMULTILEVEL","WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_BINARY_VERSION"},
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}

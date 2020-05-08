@@ -4,6 +4,7 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
+#include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
 
@@ -104,10 +105,7 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 	LOGGING_UART.println("");
 }
 #endif
-// Main timer for CC purposes
-void zuno_CCTimer(uint32_t ticks){
 
-}
 // Main command handler for incoming z-wave commands
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	int result = ZUNO_UNKNOWN_CMD;
@@ -408,4 +406,21 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
 			return &(ZUNO_CFG_CHANNEL(i));
 	}
 	return NULL;
+}
+
+
+// Main timer for CC purposes
+volatile t_ZUNO_TIMER		g_zuno_timer;
+
+void			zuno_CCTimer(uint32_t ticks)
+{
+	g_zuno_timer.ticks = ticks;
+	#ifdef WITH_CC_SWITCH_MULTILEVEL
+	zuno_CCSwitchMultilevelTimer(ticks);
+	#endif
+}
+
+void			zunoSendReport(byte ch)
+{
+
 }

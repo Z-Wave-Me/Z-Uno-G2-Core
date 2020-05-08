@@ -71,7 +71,8 @@ static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	{
 		lp->duration_dec = duration_dec;
 		lp->channel = channel + 1;
-		lp->b_mode = ZUNO_TIMER_SWITCH_ONLY_DEC;
+		if (lp->b_mode == 0)
+			lp->b_mode = ZUNO_TIMER_SWITCH_ONLY_DEC;
 	}
 	interrupts();
 	return ;

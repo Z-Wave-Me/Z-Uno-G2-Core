@@ -125,7 +125,7 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
 			return ;
 		noInterrupts();
-		if ((lp = fn_find(channel)) != 0 && lp->b_mode != 0)
+		if ((lp = fn_find(channel)) != 0 && (lp->b_mode & ZUNO_TIMER_SWITCH_SET_DEC) != 0)
 			step = fn_duration(lp->duration_dec);// If the step for lowering was previously set, then we will get it;
 		else
 			step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000;
@@ -153,7 +153,7 @@ static void		fn_remove_switch_multilevel(volatile t_ZUNO_TIMER_SWITCH_CHANNEL *l
 		lp_b->b_mode = ZUNO_TIMER_SWITCH_SET_DEC;// If the structure stores a step to reduce dimming, then leave a note about it
 	else
 	{
-		lp_b->b_mode = ZUNO_TIMER_SWITCH_SET_DEC;
+		lp_b->b_mode = 0;
 		lp_b->channel = 0;
 	}
 }
@@ -218,13 +218,13 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 	{
 		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ON) != 0)
 		{
-			if (ticks >= lp_b->ticks + lp_b->step || lp_b->ticks >= lp_b->step + ticks)
+			if (ticks >= lp_b->ticks + lp_b->step || lp_b->ticks >= lp_b->step + ticks)// Check if overflow has occurred lp_b->ticks >= lp_b->step + ticks
 			{
 				lp_b->ticks = ticks;
-				lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1;
+				lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1;// Depending on the flag, increase or decrease
 				zuno_universalSetter1P(lp_b->channel - 1, lp_b->current_level);
 				if (lp_b->current_level == ZUNO_TIMER_SWITCH_MAX_VALUE || lp_b->current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)
-					fn_remove_switch_multilevel(lp_b);
+					fn_remove_switch_multilevel(lp_b);// When you have reached the goal of dimming - stop
 			}
 		}
 		lp_b++;

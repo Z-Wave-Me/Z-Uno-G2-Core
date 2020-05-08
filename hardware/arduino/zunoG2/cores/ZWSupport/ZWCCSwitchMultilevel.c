@@ -39,7 +39,7 @@ static volatile t_ZUNO_TIMER_SWITCH_CHANNEL	*fn_find(uint8_t channel)// Trying t
 	lp_b = &g_zuno_timer.s_switch[0];
 	while (lp_b < lp_e)// At the very end, the structure where only the step to lower dimming is stored
 	{
-		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ONLY_DEC) != 0)
+		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_SET_DEC) != 0)
 			return (lp_b);
 		lp_b++;
 	}
@@ -58,7 +58,7 @@ static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	switch (cmd->len)// We can check the unsupported version of the command
 	{
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_SET_V1_FRAME):
-			duration_dec = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;
+			duration_dec = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;// In the first version, there is no step to reduce dimming, so we set
 			break ;
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_SET_V2_FRAME):
 			duration_dec = pk->v2.dimmingDuration;
@@ -71,14 +71,13 @@ static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	{
 		lp->duration_dec = duration_dec;
 		lp->channel = channel + 1;
-		if (lp->b_mode == 0)
-			lp->b_mode = ZUNO_TIMER_SWITCH_ONLY_DEC;
+		lp->b_mode |= ZUNO_TIMER_SWITCH_SET_DEC;
 	}
 	interrupts();
 	return ;
 }
 
-static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
+static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepare the structure for dimming
 {
 	u_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME		*pk;
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp;
@@ -99,70 +98,77 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	}
 	pk = (u_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME *)cmd->cmd;
 	if ((pk->v1.properties1 & (1 << 5)) == 0)
-	{
+	{// If the level from which you want to start dimming has come, make it current
 		if ((current_level = pk->v1.startLevel) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 		zuno_universalSetter1P(channel, current_level);
 	}
 	else
-	{
+	{// Otherwise, get the current
 		if ((current_level = zuno_universalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	}
 	if ((pk->v1.properties1 & (1 << 6)) == 0)
-	{
-		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)
+	{// Dimming to up
+		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)// Check it may not need to dim
 			return ;
 		if (cmd->len == sizeof(t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME))
-			step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000;
+			step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000;// Depending on the version, set the default step to increase or from the command we will
 		else
 			step = fn_duration(pk->v2.dimmingDuration);
-		if (step == 0)
+		if (step == 0)// If the step turned out to be zero - immediately set the desired level
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
 		b_mode = ZUNO_TIMER_SWITCH_INC | ZUNO_TIMER_SWITCH_ON;
 	}
 	else
-	{
-		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)
+	{// Dimming to down
+		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
 			return ;
 		noInterrupts();
 		if ((lp = fn_find(channel)) != 0 && lp->b_mode != 0)
-			step = fn_duration(lp->duration_dec);
+			step = fn_duration(lp->duration_dec);// If the step for lowering was previously set, then we will get it;
 		else
 			step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000;
 		interrupts();
-		if (step == 0)
+		if (step == 0)// If the step turned out to be zero - immediately set the desired level
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
 		b_mode = ZUNO_TIMER_SWITCH_DEC | ZUNO_TIMER_SWITCH_ON;
 	}
 	noInterrupts();
-	if ((lp = fn_find(channel)) != 0)
+	if ((lp = fn_find(channel)) != 0)// Trying to find a free structure
 	{
 		lp->step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE * 10);
 		lp->current_level = current_level;
 		lp->ticks = g_zuno_timer.ticks;
-		lp->b_mode = b_mode;
+		lp->b_mode |= b_mode;
 		lp->channel = channel + 1;
 	}
 	interrupts();
 	return ;
 }
 
-static void		fn_remove_switch_multilevel(uint8_t channel)
+static void		fn_remove_switch_multilevel(uint8_t channel)// Indicates that the channel is no longer required to continue dimming
 {
-	uint8_t				i;
+	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_b;
+	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_e;
 
 	channel++;
-	i = 0;
-	while (i < ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL)
+	lp_b = &g_zuno_timer.s_switch[0];
+	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
+	while (lp_b < lp_e)
 	{
-		if (g_zuno_timer.s_switch[i].channel == channel)
+		if (lp_b->channel == channel)
 		{
-			g_zuno_timer.s_switch[i].b_mode = 0;
-			g_zuno_timer.s_switch[i].channel = 0;
+			if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_SET_DEC) != 0)
+				lp_b->b_mode = ZUNO_TIMER_SWITCH_SET_DEC;
+			else
+			{
+				lp_b->b_mode = ZUNO_TIMER_SWITCH_SET_DEC;
+				lp_b->channel = 0;
+			}
 			return ;
 		}
-		i++;
+		lp_b++;
 	}
 }
 

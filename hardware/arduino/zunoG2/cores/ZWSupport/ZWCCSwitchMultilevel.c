@@ -165,14 +165,17 @@ static void			fn_stop_level(uint8_t channel)// Stop Dimming
 
 	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
 		return ;
-	noInterrupts();
 	channel++;
 	lp_b = &g_zuno_timer.s_switch[0];
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
+	noInterrupts();
 	while (lp_b < lp_e)
 	{
 		if (lp_b->channel == channel)
-			return (fn_remove_switch_multilevel(lp_b));
+		{
+			fn_remove_switch_multilevel(lp_b);
+			break ;
+		}
 		lp_b++;
 	}
 	interrupts();
@@ -214,6 +217,7 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 
 	lp_b = &g_zuno_timer.s_switch[0];
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
+	noInterrupts();
 	while (lp_b < lp_e)
 	{
 		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ON) != 0)
@@ -229,4 +233,5 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 		}
 		lp_b++;
 	}
+	interrupts();
 }

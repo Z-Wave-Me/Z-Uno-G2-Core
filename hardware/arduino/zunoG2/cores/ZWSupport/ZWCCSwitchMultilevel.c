@@ -3,18 +3,18 @@
 #include "./includes/ZWSupportTimer.h"
 #include "./includes/ZWCCSwitchMultilevelTimer.h"
 
-static uint32_t			fn_duration(uint32_t duration)
+static uint32_t			fn_duration(uint32_t duration)// Get the step for dimming in milliseconds
 {
 	if (duration == 0)
 		return (0);
 	if (duration == 0xFF)
-		return (ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000);
+		return (ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000);// Set By Default
 	if ((duration & (1 << 7)) != 0)
 		duration = (duration ^ (1 << 7)) * 60;
 	return (duration * 1000);
 }
 
-static volatile t_ZUNO_TIMER_SWITCH_CHANNEL	*fn_find(uint8_t channel)
+static volatile t_ZUNO_TIMER_SWITCH_CHANNEL	*fn_find(uint8_t channel)// Trying to find a free structure for writing
 {
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_b;
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_e;
@@ -23,27 +23,27 @@ static volatile t_ZUNO_TIMER_SWITCH_CHANNEL	*fn_find(uint8_t channel)
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
 
 	channel++;
-	while (lp_b < lp_e)
+	while (lp_b < lp_e)// First look for matches
 	{
 		if (lp_b->channel == channel)
 			return (lp_b);
 		lp_b++;
 	}
 	lp_b = &g_zuno_timer.s_switch[0];
-	while (lp_b < lp_e)
+	while (lp_b < lp_e)// Then look for an unoccupied structure
 	{
 		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ON) == 0)
 			return (lp_b);
 		lp_b++;
 	}
 	lp_b = &g_zuno_timer.s_switch[0];
-	while (lp_b < lp_e)
+	while (lp_b < lp_e)// At the very end, the structure where only the step to lower dimming is stored
 	{
 		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ONLY_DEC) != 0)
 			return (lp_b);
 		lp_b++;
 	}
-	return (0);
+	return (0);// So everything is busy
 }
 
 static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
@@ -52,10 +52,10 @@ static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp;
 	uint8_t												duration_dec;
 
-	if(channel > ZUNO_CFG_CHANNEL_COUNT)
-		return ;//Проверяем верный номкер канала и есть ли на этом канале обработчик
+	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
+		return ;
 	pk = (u_ZW_SWITCH_MULTILEVEL_SET_FRAME *)cmd->cmd;
-	switch (cmd->len)
+	switch (cmd->len)// We can check the unsupported version of the command
 	{
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_SET_V1_FRAME):
 			duration_dec = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;
@@ -64,7 +64,7 @@ static void				fn_set_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 			duration_dec = pk->v2.dimmingDuration;
 			break ;
 		default:
-			return ;//Проверим может не поддерживаемый версия команды
+			return ;
 	}
 	noInterrupts();
 	if ((lp = fn_find(channel)) != 0)
@@ -85,16 +85,16 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	uint8_t												current_level;
 	uint8_t												b_mode;
 
-	if(channel > ZUNO_CFG_CHANNEL_COUNT)
-		return ;//Проверяем верный номкер канала и есть ли на этом канале обработчик
-	switch (cmd->len)
+	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
+		return ;
+	switch (cmd->len)// We can check the unsupported version of the command
 	{
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME):
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V2_FRAME):
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V3_FRAME):
 			break ;
 		default:
-			return ;//Проверим может не поддерживаемый версия команды
+			return ;
 	}
 	pk = (u_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME *)cmd->cmd;
 	if ((pk->v1.properties1 & (1 << 5)) == 0)
@@ -167,7 +167,7 @@ static void		fn_remove_switch_multilevel(uint8_t channel)
 
 static void			fn_stop_level(uint8_t channel)
 {
-	if(channel > ZUNO_CFG_CHANNEL_COUNT)
+	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
 		return ;
 	noInterrupts();
 	fn_remove_switch_multilevel(channel);

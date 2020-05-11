@@ -105,13 +105,8 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 
 static void		fn_remove_switch_multilevel(volatile t_ZUNO_TIMER_SWITCH_CHANNEL *lp_b)
 {
-	if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_SET_DEC) != 0)
-		lp_b->b_mode = ZUNO_TIMER_SWITCH_SET_DEC;// If the structure stores a step to reduce dimming, then leave a note about it
-	else
-	{
-		lp_b->b_mode = 0;
-		lp_b->channel = 0;
-	}
+	lp_b->b_mode = 0;
+	lp_b->channel = 0;
 }
 
 static void			fn_stop_level(uint8_t channel)// Stop Dimming

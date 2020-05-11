@@ -11,7 +11,6 @@ typedef struct					s_ZUNO_TIMER_SWITCH_CHANNEL
 	uint32_t					step;//How many milliseconds divided by 10 to wait until the next change in the current dimming level
 	uint8_t						current_level;//Current Dimming Level
 	uint8_t						b_mode;//Stores modes
-	uint8_t						duration_dec;//
 	uint8_t						channel;//Tracked Channel Number + 1
 }								t_ZUNO_TIMER_SWITCH_CHANNEL;
 

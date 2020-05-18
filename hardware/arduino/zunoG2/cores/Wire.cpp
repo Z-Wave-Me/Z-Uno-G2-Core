@@ -2,13 +2,9 @@
 
 
 /* Public Constructors */
-TwoWire::TwoWire()
+TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0})
 {
-	init_freq = I2C_FREQ_STANDARD_MAX;
-	seq_return = i2cTransferDone;
-	status = 0;
-	available_bytes = 0;
-	seq = {0, 0, TwoWire::seq_buffer, 0, 0, 0};
+	
 }
 
 /* Public Methods */

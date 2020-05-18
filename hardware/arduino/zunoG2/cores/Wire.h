@@ -5,6 +5,7 @@
 class TwoWire 
 {
 	public:
+		TwoWire();
 		void		begin(void);
 		void		begin(uint8_t adress);
 		void		beginTransmission(uint8_t adress);

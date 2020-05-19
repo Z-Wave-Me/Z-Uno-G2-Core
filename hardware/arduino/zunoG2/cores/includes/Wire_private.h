@@ -5,8 +5,8 @@
 #include "CrtxI2C.h"
 
 
-#define WIRE_PIN_SCL					24// A1\RX - до ремапинга с помощью локаций
-#define WIRE_PIN_SDA					23// A0\TX - до ремапинга с помощью локаций
+#define WIRE_PIN_SCL					24//by default PA1/RX - SDL
+#define WIRE_PIN_SDA					23//by default and PA0/TX - SDA
 
 #define BUFFER_LENGTH					(uint16_t)32
 #define WIRE_BUFFER_LENGTH				BUFFER_LENGTH
@@ -32,7 +32,9 @@ class TwoWire
 	public:
 		TwoWire();
 		void		begin(void);
+		void		begin(uint8_t sdl, uint8_t sda);
 		void		begin(uint8_t adress);
+		void		begin(uint8_t adress, uint8_t sdl, uint8_t sda);
 		void		beginTransmission(uint8_t adress);
 		void		beginTransmission(uint8_t adress, uint8_t forced_start);
 		size_t		write(uint8_t data);
@@ -48,12 +50,14 @@ class TwoWire
 		void		setClock(uint32_t clock);
 
 	private:
+		static const uint8_t				wire_location[];//Based on SDA_0
 		uint32_t							init_freq;//To set the bus frequency, only valid in master mode - setClock
 		I2C_TransferReturn_TypeDef			seq_return;//Status after reading and writing data
 		uint8_t								status;//
 		uint8_t								available_bytes;//How many bytes read  - requestFrom
 		uint8_t								seq_buffer[WIRE_BUFFER_LENGTH];//The buffer for reading and writing the size depends on BUFFER_LENGTH
 		I2C_TransferSeq_TypeDef				seq;
+		uint8_t		_get_location(uint8_t pin);
 };
 
 extern TwoWire Wire;

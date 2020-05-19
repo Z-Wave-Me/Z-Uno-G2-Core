@@ -191,7 +191,7 @@ void		TwoWire::setClock(uint32_t clock)
 }
 
 /* Private Methods */
-uint8_t		TwoWire::_get_location(uint8_t pin)
+uint8_t		TwoWire::_get_location(uint8_t pin)// Get the location for the SDA, it is interconnected with the location of the SDL
 {
 	uint8_t				i;
 	uint8_t				out;

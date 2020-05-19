@@ -8,7 +8,7 @@
 
 #define UNKNOWN_CHANNEL       0xFF 
 
-#include "zuno_preproc/ZUNO_AutoChannels.h"
+#include "ZUNO_AutoChannels.h"
 
 enum {
 	HADLER_ARGTYPE_1UB,

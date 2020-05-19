@@ -1,7 +1,7 @@
 #ifndef ZUNO_DEFINITIONS
 #define ZUNO_DEFINITIONS
 
-#include "zuno_preproc/ZUNO_AutoDef.h"
+#include "ZUNO_AutoDef.h"
 
 
 #define MAX_CHANNEL_PARAMS                              4
@@ -549,6 +549,6 @@ enum {
 #define SWITCH_COLOR_COMPONENT_PURPLE      0x07
 
 #ifndef ZUNO_PREPROC_PHASE
-#include "zuno_preproc/Custom_defs.h"
+#include "Custom_defs.h"
 #endif
 #endif // ZUNO_DEFINITIONS

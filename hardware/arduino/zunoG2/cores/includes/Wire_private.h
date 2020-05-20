@@ -51,6 +51,8 @@ class TwoWire
 
 	private:
 		static const uint8_t				wire_location[];//Based on SDA_0
+		uint8_t								scl_pin;
+		uint8_t								sda_pin;
 		uint32_t							init_freq;//To set the bus frequency, only valid in master mode - setClock
 		I2C_TransferReturn_TypeDef			seq_return;//Status after reading and writing data
 		uint8_t								status;//

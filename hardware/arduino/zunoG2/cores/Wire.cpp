@@ -12,22 +12,26 @@ const uint8_t		TwoWire::wire_location[]={
 /* Public Constructors */
 TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0})
 {
+	scl_pin = WIRE_PIN_SCL;
+	sda_pin = WIRE_PIN_SDA;
 }
 
 /* Public Methods */
 void		TwoWire::begin(void)
 {
-	begin(0, WIRE_PIN_SCL, WIRE_PIN_SDA);//0 - master
+	begin(0, scl_pin, sda_pin);//0 - master
 }
 
 void		TwoWire::begin(uint8_t scl, uint8_t sda)
 {
+	scl_pin = scl;
+	sda_pin = sda;
 	begin(0, scl, sda);//0 - master
 }
 
 void		TwoWire::begin(uint8_t address)
 {
-	begin(address, WIRE_PIN_SCL, WIRE_PIN_SDA);
+	begin(address, scl_pin, sda_pin);
 }
 
 void		TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda)

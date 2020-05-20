@@ -118,7 +118,7 @@ uint8_t		TwoWire::endTransmission(uint8_t sendStop)
 
 	if ((tempos = seq_return) == WIRE_ERORR_TRANSMISSION_LONG_I2C)
 		return (WIRE_ERORR_TRANSMISSION_LONG);
-	if (tempos != i2cTransferInProgress || seq.flags != I2C_FLAG_WRITE || (status & WIRE_STATUS_BEGIN) == 0)
+	if (tempos != i2cTransferInProgress || seq.flags != I2C_FLAG_WRITE)
 		return (WIRE_ERORR_TRANSMISSION_OTHER);
 	timeout = 0x1FFFF;
 	tempos = I2C_TransferInit(&seq);
@@ -149,11 +149,6 @@ uint8_t		TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendSto
 	seq.addr = WIRE_ADDRESS(address);
 	seq.flags = I2C_FLAG_READ;
 	seq.buf->len = quantity;
-	if ((status & WIRE_STATUS_BEGIN) == 0)
-	{
-		available_bytes = 0;
-		return (0);
-	}
 	timeout = 0x1FFFF;
 	tempos = I2C_TransferInit(&seq);
 	while (tempos == i2cTransferInProgress && timeout-- != 0)

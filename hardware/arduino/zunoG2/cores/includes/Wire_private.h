@@ -5,7 +5,7 @@
 #include "CrtxI2C.h"
 
 
-#define WIRE_PIN_SCL					24//by default PA1/RX - SDL
+#define WIRE_PIN_SCL					24//by default PA1/RX - SCL
 #define WIRE_PIN_SDA					23//by default and PA0/TX - SDA
 
 #define BUFFER_LENGTH					(uint16_t)32
@@ -32,9 +32,9 @@ class TwoWire
 	public:
 		TwoWire();
 		void		begin(void);
-		void		begin(uint8_t sdl, uint8_t sda);
+		void		begin(uint8_t scl, uint8_t sda);
 		void		begin(uint8_t adress);
-		void		begin(uint8_t adress, uint8_t sdl, uint8_t sda);
+		void		begin(uint8_t adress, uint8_t scl, uint8_t sda);
 		void		beginTransmission(uint8_t adress);
 		void		beginTransmission(uint8_t adress, uint8_t forced_start);
 		size_t		write(uint8_t data);

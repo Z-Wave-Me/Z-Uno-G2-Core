@@ -20,9 +20,9 @@ void		TwoWire::begin(void)
 	begin(0, WIRE_PIN_SCL, WIRE_PIN_SDA);//0 - master
 }
 
-void		TwoWire::begin(uint8_t sdl, uint8_t sda)
+void		TwoWire::begin(uint8_t scl, uint8_t sda)
 {
-	begin(0, sdl, sda);//0 - master
+	begin(0, scl, sda);//0 - master
 }
 
 void		TwoWire::begin(uint8_t address)
@@ -30,7 +30,7 @@ void		TwoWire::begin(uint8_t address)
 	begin(address, WIRE_PIN_SCL, WIRE_PIN_SDA);
 }
 
-void		TwoWire::begin(uint8_t address, uint8_t sdl, uint8_t sda)
+void		TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda)
 {
 	I2C_Init_TypeDef			init_i2c;
 
@@ -39,9 +39,9 @@ void		TwoWire::begin(uint8_t address, uint8_t sdl, uint8_t sda)
 	CMU_ClockEnable(cmuClock_HFPER, true);
 	CMU_ClockEnable(cmuClock_I2C0, true);
 	/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
-	pinMode(sdl, GPIOMODE_OUTPUT_OPENDRAINPUP);
+	pinMode(scl, GPIOMODE_OUTPUT_OPENDRAINPUP);
 	pinMode(sda, GPIOMODE_OUTPUT_OPENDRAINPUP);
-	digitalWrite(sdl, HIGH);
+	digitalWrite(scl, HIGH);
 	digitalWrite(sda, HIGH);
 	init_i2c.enable = true;// Set emlib init parameters
 	init_i2c.master = (address == 0) ? true : false;
@@ -49,9 +49,9 @@ void		TwoWire::begin(uint8_t address, uint8_t sdl, uint8_t sda)
 	init_i2c.refFreq = 0;
 	init_i2c.clhr = i2cClockHLRStandard;
 	I2C0->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
-	sdl = _get_location(sdl);
-	sdl = (sdl == 0 ) ? sizeof(wire_location) - 1 : sdl - 1;
-	I2C0->ROUTELOC0 = (_get_location(sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (sdl << _I2C_ROUTELOC0_SCLLOC_SHIFT);//до ремапинга с помощью локаций
+	scl = _get_location(scl);
+	scl = (scl == 0 ) ? sizeof(wire_location) - 1 : scl - 1;
+	I2C0->ROUTELOC0 = (_get_location(sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (scl << _I2C_ROUTELOC0_SCLLOC_SHIFT);//до ремапинга с помощью локаций
 	I2C0->SADDR =  WIRE_ADDRESS(address);
 	I2C0->SADDRMASK = _I2C_SADDRMASK_MASK_DEFAULT;
 	I2C_Init(I2C0, &init_i2c);
@@ -191,7 +191,7 @@ void		TwoWire::setClock(uint32_t clock)
 }
 
 /* Private Methods */
-uint8_t		TwoWire::_get_location(uint8_t pin)// Get the location for the SDA, it is interconnected with the location of the SDL
+uint8_t		TwoWire::_get_location(uint8_t pin)// Get the location for the SDA, it is interconnected with the location of the SCL
 {
 	uint8_t				i;
 	uint8_t				out;

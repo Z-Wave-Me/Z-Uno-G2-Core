@@ -23,6 +23,7 @@ class TwoWire
 		uint8_t		read(void);
 		void		enableTS(uint8_t on_off);
 		void		setClock(uint32_t clock);
+		void		end(void);
 };
 
 extern TwoWire Wire;

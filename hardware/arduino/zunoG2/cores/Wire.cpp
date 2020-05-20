@@ -39,7 +39,7 @@ void		TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda)
 	I2C_Init_TypeDef			init_i2c;
 
 	if ((status & WIRE_STATUS_BEGIN) != 0)// Check it may have already initializedи
-		return ;
+		end();
 	CMU_ClockEnable(cmuClock_HFPER, true);
 	CMU_ClockEnable(cmuClock_I2C0, true);
 	/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
@@ -59,7 +59,7 @@ void		TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda)
 	I2C0->SADDR =  WIRE_ADDRESS(address);
 	I2C0->SADDRMASK = _I2C_SADDRMASK_MASK_DEFAULT;
 	I2C_Init(I2C0, &init_i2c);
-	status = WIRE_STATUS_BEGIN;
+	status |= WIRE_STATUS_BEGIN;
 }
 
 void		TwoWire::beginTransmission(uint8_t address)
@@ -192,6 +192,11 @@ void		TwoWire::enableTS(uint8_t on_off)
 void		TwoWire::setClock(uint32_t clock)
 {
 	init_freq = clock;
+}
+
+void		TwoWire::end(void)
+{
+	I2C_Reset(I2C0);
 }
 
 /* Private Methods */

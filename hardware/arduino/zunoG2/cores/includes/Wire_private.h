@@ -48,6 +48,7 @@ class TwoWire
 		uint8_t		read(void);
 		void		enableTS(uint8_t on_off);//Не сделанно еще
 		void		setClock(uint32_t clock);
+		void		end(void);
 
 	private:
 		static const uint8_t				wire_location[];//Based on SDA_0

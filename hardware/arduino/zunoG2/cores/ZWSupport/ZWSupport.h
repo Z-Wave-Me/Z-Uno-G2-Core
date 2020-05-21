@@ -1,6 +1,7 @@
 #ifndef ZW_COMMAND_CLASS_SUPPORT
 #define ZW_COMMAND_CLASS_SUPPORT
 #define MAX_ZW_PACKAGE 56
+#define ZUNO_LIFELINE_GRP 1
 
 // DBG
 /*#define LOGGING_DBG                 1
@@ -66,6 +67,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define CMD_REPLY_LEN g_outgoing_packet.len 
 #define CMD_REPLY_CMD g_outgoing_packet.cmd[1]
 #define CMD_REPLY_DATA(N) g_outgoing_packet.cmd[N+2]
+#define CMD_REPLY_CC  g_outgoing_packet.cmd[0]
 
 #define ZW_CMD_CLASS          (cmd->cmd[0])
 #define ZW_CMD                (cmd->cmd[1])

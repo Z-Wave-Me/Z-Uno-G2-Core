@@ -32,6 +32,15 @@ ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER
 ZUNOCommandPacket_t g_outgoing_packet;
 uint8_t             g_outgoing_data[MAX_ZW_PACKAGE];
 
+// Report data
+//-------------------------------------------------------------------------------------------------
+typedef struct ZUnoReportDta_s{
+	uint32_t channels_mask;
+	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
+}ZUnoReportDta_t;
+volatile ZUnoReportDta_t g_report_data;
+//-------------------------------------------------------------------------------------------------
+
 bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes){
 	switch(channel->type){
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
@@ -84,6 +93,18 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	g_outgoing_packet.dst_zw_channel    = cmd->src_zw_channel;
 	g_outgoing_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	g_outgoing_packet.zw_rx_opts        = ZWAVE_PLUS_TX_OPTIONS;
+}
+void fillOutgoingReportPacket(uint8_t ch){
+	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
+	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
+	g_outgoing_packet.cmd = g_outgoing_data;
+	g_outgoing_packet.flags 	= ZUNO_PACKETFLAGS_GROUP;
+	g_outgoing_packet.dst_node	= ZUNO_LIFELINE_GRP; 
+	g_outgoing_packet.src_node  = zunoNID();
+	g_outgoing_packet.src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel;
+	g_outgoing_packet.zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
+
+	// ZUNO_CFG_CHANNEL(ch)
 }
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
@@ -411,16 +432,83 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
 
 // Main timer for CC purposes
 volatile t_ZUNO_TIMER		g_zuno_timer;
-
-void			zuno_CCTimer(uint32_t ticks)
-{
+static bool    aux_check_last_reporttime(uint8_t channel, uint32_t ticks){
+	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
+	if((ZUNO_CFG_CHANNEL(ch).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) || 
+		(ZUNO_CFG_CHANNEL(ch).type, == ZUNO_METER_CHANNEL_NUMBER))
+		return (ticks -  g_report_data.last_report_time[ch]) > 3000UL; // We can't send too frequent for these CCs
+	#endif
+	return true;
+}
+void	zunoSendReportHandler(uint32_t ticks){
+	if(g_report_data.channels_mask == 0)
+		return;
+	int rs = ZUNO_UNKNOWN_CMD;
+	for(uint8_t ch=0; ch<ZUNO_MAX_MULTI_CHANNEL_NUMBER; ch++) { 
+		if((g_report_data.channels_mask & (1UL<<ch)) == 0)
+			continue;
+		if(!aux_check_last_reporttime(ch, ticks))
+			continue;
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("REPORT CH:");
+		LOGGING_UART.println(ch);
+		#endif
+		fillOutgoingReportPacket(ch);
+		rs = ZUNO_UNKNOWN_CMD;	
+		switch(ZUNO_CFG_CHANNEL(ch).type) {
+			#ifdef WITH_CC_SWITCH_BINARY
+			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+				rs = zuno_CCSwitchBinaryReport(ch);
+				break;
+			#endif
+			#ifdef WITH_CC_SWITCH_MULTILEVEL
+			#pragma message "SWITCHML REPORT ON"
+			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+				#ifdef LOGGING_DBG
+				LOGGING_UART.println("MULTILEVEL");
+				#endif
+				rs = zuno_CCSwitchMultilevelReport(ch);
+				break;
+			#endif
+			#ifdef WITH_CC_NOTIFICATION
+			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
+				break;
+			#endif
+			#ifdef WITH_CC_SENSOR_MULTILEVEL
+			case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
+				break;
+			#endif
+			#ifdef WITH_CC_METER
+			case ZUNO_METER_CHANNEL_NUMBER:
+				break;
+			#endif
+			default:
+				break;
+		}
+		if(rs == ZUNO_COMMAND_ANSWERED){
+			#ifdef LOGGING_DBG
+			LOGGING_UART.print(millis());
+			LOGGING_UART.print("OUTGOING REPORT:"); 
+			zuno_dbgdumpZWPacakge(&g_outgoing_packet);
+			#endif
+			zunoSendZWPackage(&g_outgoing_packet);
+			g_report_data.channels_mask &= ~(1UL<<ch); // remove channel bit from pending report bitmap
+			break; // Only one report per 1 pass
+		}
+	}
+}
+void	zuno_CCTimer(uint32_t ticks){
 	g_zuno_timer.ticks = ticks;
 	#ifdef WITH_CC_SWITCH_MULTILEVEL
 	zuno_CCSwitchMultilevelTimer(ticks);
 	#endif
+	if((ticks & 0x1F) == 0) // Once in ~320ms 
+		zunoSendReportHandler(ticks);
 }
 
-void			zunoSendReport(byte ch)
-{
-
+void	zunoSendReport(byte ch){
+	if((ch < 1) || (ch > (ZUNO_CFG_CHANNEL_COUNT)))
+		return;
+	ch--;
+	g_report_data.channels_mask |= (1 << ch);
 }

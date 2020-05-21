@@ -10,4 +10,5 @@
 
  
 int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCSwitchBinaryReport(byte channel);
 #endif // SWITCHBINARY_CC_H

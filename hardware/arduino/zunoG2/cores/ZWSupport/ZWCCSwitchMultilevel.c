@@ -64,6 +64,7 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 		if ((current_level = pk->v1.startLevel) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 		zuno_universalSetter1P(channel, current_level);
+		zunoSendReport(channel + 1);
 	}
 	else
 	{// Otherwise, get the current
@@ -133,16 +134,21 @@ static void			fn_stop_level(uint8_t channel)// Stop Dimming
 	return ;
 }
 
-int					zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd)
+int		zuno_CCSwitchMultilevelReport(byte channel){
+	CMD_REPLY_CC = COMMAND_CLASS_SWITCH_MULTILEVEL;
+    CMD_REPLY_CMD = SWITCH_MULTILEVEL_REPORT;
+	CMD_REPLY_DATA(0) = zuno_universalGetter1P(channel);
+	CMD_REPLY_LEN = 3;
+	return ZUNO_COMMAND_ANSWERED;
+}
+int		zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd)
 {
 	int rs = ZUNO_UNKNOWN_CMD;
 
 	switch(ZW_CMD)
 	{
 		case SWITCH_MULTILEVEL_GET:
-			CMD_REPLY_DATA(0) = zuno_universalGetter1P(channel);
-			CMD_REPLY_LEN = 3;
-			rs = ZUNO_COMMAND_ANSWERED;
+			rs = zuno_CCSwitchMultilevelReport(channel);
 			break;
 		case SWITCH_MULTILEVEL_SET:
 			zuno_universalSetter1P(channel, ZW_CMD_BPARAM(0));
@@ -177,6 +183,7 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 				lp_b->ticks = ticks;
 				lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1;// Depending on the flag, increase or decrease
 				zuno_universalSetter1P(lp_b->channel - 1, lp_b->current_level);
+				zunoSendReport(lp_b->channel);
 				if (lp_b->current_level == ZUNO_TIMER_SWITCH_MAX_VALUE || lp_b->current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)
 					fn_remove_switch_multilevel(lp_b);// When you have reached the goal of dimming - stop
 			}

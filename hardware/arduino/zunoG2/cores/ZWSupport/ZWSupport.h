@@ -79,6 +79,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define ZUNO_CFG_CHANNEL(N)     g_zuno_sys->zwave_cfg->channels[N]
 #define ZUNO_CFG_TYPE_COUNT     (g_zuno_sys->zwave_cfg->num_channel_types)
 #define ZUNO_CFG_TYPE(N)        g_zuno_sys->zwave_cfg->channel_types[N]
+#define ZUNO_CFG_TYPES          g_zuno_sys->zwave_cfg->channel_types
 
 /* Device class Av Control Point */
 #define GENERIC_TYPE_AV_CONTROL_POINT                                                    0x03 /*AV Control Point*/

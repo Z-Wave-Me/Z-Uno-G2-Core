@@ -381,21 +381,55 @@ bool zunoStartDeviceConfiguration() {
 	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
 	return  true;
 }
-byte zuno_findChannelType(byte type){
+byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count){
 	byte i;
-	for(i=0;i<ZUNO_CFG_TYPE_COUNT;i++){
-		if(ZUNO_CFG_TYPE(i).type == type)
+	for(i=0;i<count;i++){
+		if(types[i].type == type)
 			return i;
 	}
 	return UNKNOWN_CHANNEL;
 }
-
-byte zunoAddChannel(byte type, byte subtype, byte options)
-{
+#ifdef LOGGING_DBG
+void dbgDumpCCType(ZUNOChannelCCS_t * cc_type){
+	LOGGING_UART.print("CC TYPE:");
+	LOGGING_UART.print(cc_type->type, HEX);
+	LOGGING_UART.print(" FLAGS:");
+	LOGGING_UART.print(cc_type->flags, HEX);
+	LOGGING_UART.print(" CCS[");
+	LOGGING_UART.print(cc_type->num_ccs);
+	LOGGING_UART.print(" ]=");
+	for (int j = 0; j < cc_type->num_ccs; j++)
+	{
+		LOGGING_UART.print("{ cc:");
+		LOGGING_UART.print(cc_type->ccs[j].cc, HEX);
+		LOGGING_UART.print(" v:");
+		LOGGING_UART.print(cc_type->ccs[j].version, HEX);
+		LOGGING_UART.print("} ");
+	}
+	LOGGING_UART.println("");
+}
+void dbgCCTypes(){
+	static bool fist_run = true;
+	if(!fist_run)
+		return;
+	fist_run = false;	
+	delay(2000);
+	LOGGING_UART.println("STATIC TYPES:\n-------------------------");
+	for(int i=0;i<(sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t));i++){
+		dbgDumpCCType((ZUNOChannelCCS_t*)&ZUNO_CC_TYPES[i]);
+	}
+	LOGGING_UART.println("\n-------------------------");
+}
+#endif
+byte zunoAddChannel(byte type, byte subtype, byte options) {
+	#ifdef LOGGING_DBG
+	// dbgCCTypes();
+	#endif
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;
-	byte type_index = zuno_findChannelType(type);
+	// 
+	byte type_index = zuno_findChannelType(type, ZUNO_CFG_TYPES, ZUNO_CFG_TYPE_COUNT);
 	// We have to add new type to device
 	if(type_index == UNKNOWN_CHANNEL) {
 		// Do we have space for the new CC type?
@@ -403,7 +437,15 @@ byte zunoAddChannel(byte type, byte subtype, byte options)
 			return UNKNOWN_CHANNEL;
 		// Fill the type structure from predefined array.
 		// type index starts from 1, so we have to decrement it
-		memcpy(&ZUNO_CFG_TYPE(ZUNO_CFG_TYPE_COUNT), &ZUNO_CC_TYPES[type-1], sizeof(ZUNOChannelCCS_t));
+		int const_type_index =  zuno_findChannelType(type, (ZUNOChannelCCS_t*)&ZUNO_CC_TYPES, (sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t)));
+		if(const_type_index == UNKNOWN_CHANNEL){
+			#ifdef LOGGING_DBG
+			LOGGING_UART.print("***ERROR: Can't find CCTYPE for:");
+			LOGGING_UART.println(type, HEX);
+			#endif
+			return UNKNOWN_CHANNEL;
+		}
+		memcpy(&ZUNO_CFG_TYPE(ZUNO_CFG_TYPE_COUNT), &ZUNO_CC_TYPES[const_type_index], sizeof(ZUNOChannelCCS_t));
 		ZUNO_CFG_TYPE_COUNT++;
 	}
 	byte ch_i = ZUNO_CFG_CHANNEL_COUNT;

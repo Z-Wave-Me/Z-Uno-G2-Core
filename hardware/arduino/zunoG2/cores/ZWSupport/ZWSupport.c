@@ -2,6 +2,7 @@
 #include "ZWSupport.h"
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchBinary.h"
+#include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
 #include "./includes/ZWSupportTimer.h"
@@ -181,6 +182,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case COMMAND_CLASS_SWITCH_MULTILEVEL:
 				result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_SWITCH_COLOR
+			case COMMAND_CLASS_SWITCH_COLOR:
+				result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
 				break;
 			#endif
 		}
@@ -383,7 +389,9 @@ byte zuno_findChannelType(byte type){
 	}
 	return UNKNOWN_CHANNEL;
 }
-byte zunoAddChannel(byte type, byte subtype, byte options) {
+
+byte zunoAddChannel(byte type, byte subtype, byte options)
+{
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;

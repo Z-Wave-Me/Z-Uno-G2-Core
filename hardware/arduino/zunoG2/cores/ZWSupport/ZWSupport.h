@@ -15,16 +15,18 @@
 #endif
 #endif
 // 
-enum {
-    COMMAND_CLASS_BASIC = 0x20,
-    COMMAND_CLASS_SWITCH_BINARY = 0x25,
-    COMMAND_CLASS_SWITCH_MULTILEVEL = 0x26,
-    COMMAND_CLASS_SENSOR_MULTILEVEL = 0x31,
-    COMMAND_CLASS_METER = 0x32,
-    COMMAND_CLASS_MULTICHANNEL = 0x60,
-    COMMAND_CLASS_DOOR_LOCK = 0x62,
-    COMMAND_CLASS_NOTIFICATION = 0x71,
-    COMMAND_CLASS_BATTERY = 0x80,
+enum
+{
+	COMMAND_CLASS_BASIC = 0x20,
+	COMMAND_CLASS_SWITCH_BINARY = 0x25,
+	COMMAND_CLASS_SWITCH_MULTILEVEL = 0x26,
+	COMMAND_CLASS_SENSOR_MULTILEVEL = 0x31,
+	COMMAND_CLASS_METER = 0x32,
+	COMMAND_CLASS_SWITCH_COLOR = 0x33,
+	COMMAND_CLASS_MULTICHANNEL = 0x60,
+	COMMAND_CLASS_DOOR_LOCK = 0x62,
+	COMMAND_CLASS_NOTIFICATION = 0x71,
+	COMMAND_CLASS_BATTERY = 0x80,
 };
 
 
@@ -265,17 +267,17 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define SPECIFIC_TYPE_NOTIFICATION_SENSOR                                                0x01
 
 #define ICON_TYPE_UNASSIGNED                                                 0x0000   //MUST NOT be used by any product
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_CENTRAL_CONTROLLER                                 0x0100   //Central Controller Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_DISPLAY_SIMPLE                                     0x0200   //Display Simple Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_DOOR_LOCK_KEYPAD                                   0x0300   //Door Lock Keypad  Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_FAN_SWITCH                                         0x0400   //Fan Switch  Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_GATEWAY                                            0x0500   //Gateway  Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH                                0x0600   //Light Dimmer Switch  Device Type
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_PLUGIN                        0x0601	  //Light Dimmer, implemented as a plugin device 
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_WALL_OUTLET	                 0x0602	  //Light Dimmer, implemented as a wall outlet
@@ -283,7 +285,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_WALL_LAMP     	             0x0604	  //Relay device, implemented as a wall mounted lamp
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_LAMP_POST_HIGH	             0x0605	  //Relay device, implemented as a ceiling outlet
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_LAMP_POST_LOW	             0x0606	  //Relay device, implemented as a ceiling outlet
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH                                0x0700   //On/Off Power Switch  Device Type
 #define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_PLUGIN	                     0x0701	  //Relay device, implemented as a plugin device
 #define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_WALL_OUTLET	                 0x0702	  //Relay device, implemented as a wall outlet
@@ -291,17 +293,17 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_WALL_LAMP	                 0x0704	  //Relay device, implemented as a wall mounted lamp
 #define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_LAMP_POST_HIGH	             0x0705	  //Relay device, implemented as a ceiling outlet
 #define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_LAMP_POST_LOW	             0x0706	  //Relay device, implemented as a ceiling outlet
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_POWER_STRIP                                        0x0800   //Power Strip  Device Type
 #define ICON_TYPE_SPECIFIC_POWER_STRIP_INDIVIDUAL_OUTLET	                 0x08FF	  //Individual outlet of a power strip for showing outlets in exploded view
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_REMOTE_CONTROL_AV                                  0x0900   //Remote Control AV  Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_REMOTE_CONTROL_MULTI_PURPOSE                       0x0A00   //Remote Control Multi Purpose Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_REMOTE_CONTROL_SIMPLE                              0x0B00   //Remote Control Simple Device Type
 #define ICON_TYPE_SPECIFIC_REMOTE_CONTROL_SIMPLE_KEYFOB                      0x0B01   //Remote Control Simple Device Type (Key fob)
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SENSOR_NOTIFICATION                                0x0C00   //Sensor Notification Device Type
 #define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SMOKE_ALARM                   0x0C01   //Sensor Notification Device Type (Notification type Smoke Alarm)
 #define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CO_ALARM                      0x0C02   //Sensor Notification Device Type (Notification type CO Alarm)
@@ -322,7 +324,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_IRRIGATION                    0x0C11
 #define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_GAS_ALARM                     0x0C12
 #define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_MULTIDEVICE                   0x0CFF   //Sensor Notification Device Type (Bundled Notification functions)
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SENSOR_MULTILEVEL                                  0x0D00   //Sensor Multilevel Device Type
 #define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_AIR_TEMPERATURE                 0x0D01   //Sensor Multilevel Device Type (Sensor type Air Temperature)
 #define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_GENERAL_PURPOSE_VALUE           0x0D02   //Sensor Multilevel Device Type (Sensor type General Purpose Value)
@@ -359,33 +361,33 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 #define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TIME                            0x0D21   //Sensor Multilevel Device Type (Sensor type Time )
 #define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TARGET_TEMPERATURE              0x0D22   //Sensor Multilevel Device Type (Sensor type Target Temperature)
 #define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_MULTIDEVICE                     0x0DFF   //Sensor Multilevel Device Type (Bundled Sensor functions)
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SET_TOP_BOX                                        0x0E00   //Set Top Box Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SIREN                                              0x0F00   //Siren Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SUB_ENERGY_METER                                   0x1000   //Sub Energy Meter Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_SUB_SYSTEM_CONTROLLER                              0x1100   //Sub System Controller Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_THERMOSTAT                                         0x1200   //Thermostat Device Type
 #define ICON_TYPE_SPECIFIC_THERMOSTAT_LINE_VOLTAGE                           0x1201   //Thermostat Line Voltage Device Type
 #define ICON_TYPE_SPECIFIC_THERMOSTAT_SETBACK                                0x1202   //Thermostat Setback Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_THERMOSTAT_SETBACK_OBSOLETED                       0x1300   //Thermostat Setback [Obsoleted] Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_TV                                                 0x1400   //TV Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_VALVE_OPEN_CLOSE                                   0x1500   //Valve Open/Close Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_WALL_CONTROLLER                                    0x1600   //Wall Controller Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_WHOLE_HOME_METER_SIMPLE                            0x1700   //Whole Home Meter Simple Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_WINDOW_COVERING_NO_POSITION_ENDPOINT               0x1800   //Window Covering No Position/Endpoint  Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE                     0x1900   //Window Covering Endpoint Aware Device Type
-                                                                           
+																		   
 #define ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE            0x1A00   //Window Covering Position/Endpoint Aware Device Type
 
 #define ICON_TYPE_GENERIC_REPEATER                                           0x1B00   //Repeater Device Type 
@@ -415,10 +417,10 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 
 
 typedef struct ZUnoDevTypeDef_s{
-    byte gen_type;
-    byte spec_type;
-    word icon;
-    word app_icon; 
+	byte gen_type;
+	byte spec_type;
+	word icon;
+	word app_icon; 
 }ZUnoDevTypeDef_t;
 
 extern  const ZUNOChannelCCS_t ZUNO_CC_TYPES[];

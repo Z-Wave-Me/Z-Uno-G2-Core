@@ -134,13 +134,16 @@
         },
         {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
-            "cc_flags":["WITH_CC_SWITCHCOLOR"],
+            "cc_flags":["WITH_CC_SWITCH_COLOR"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
-            "ccs":[],
+            "ccs":[
+                {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"},
+                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+            ],
             "cluster_rule":"${type}"
         }
     ]

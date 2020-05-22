@@ -33,7 +33,7 @@
             "type_name":"ZUNO_SENSOR_BINARY_CHANNEL_NUMBER", "type_val":3,
             "cc_flags":["WITH_CC_NOTIFICATION"],
             "ccs":[
-                {"name":"COMMAND_CLASS_NOTIFICATION","version":"2"}
+                {"name":"COMMAND_CLASS_NOTIFICATION","version":"7"}
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_NOTIFICATION",
             "specific_type":"SPECIFIC_TYPE_NOTIFICATION_SENSOR",

@@ -65,6 +65,7 @@ extern ZUNOCommandPacket_t g_outgoing_packet;
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);
 int32_t zuno_universalGetter1P(byte zuno_ch);
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
+void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 
 #define CMD_REPLY_LEN g_outgoing_packet.len 
 #define CMD_REPLY_CMD g_outgoing_packet.cmd[1]

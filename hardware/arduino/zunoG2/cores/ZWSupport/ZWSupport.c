@@ -5,6 +5,7 @@
 #include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
+#include "ZWCCNotification.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -51,13 +52,17 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes){
 				return true;
 			break;
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			 if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_MULTILEVEL)
+			if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_bytes[0] == COMMAND_CLASS_BASIC)
 				return true;
 			break;
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
 			if(cmd_bytes[0] == COMMAND_CLASS_SENSOR_MULTILEVEL)
+				return true;
+			break;
+		case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
+			if(cmd_bytes[0] == COMMAND_CLASS_NOTIFICATION)
 				return true;
 			break;
 	}
@@ -177,6 +182,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case COMMAND_CLASS_SWITCH_BINARY:
 				result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_NOTIFICATION
+			case COMMAND_CLASS_NOTIFICATION:
+				result = zuno_CCNotificationHandler(zuno_ch, cmd);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
@@ -421,10 +431,19 @@ void dbgCCTypes(){
 	LOGGING_UART.println("\n-------------------------");
 }
 #endif
+static void initCCSData(){
+	static bool inited = false;
+	if(inited)
+		return;
+	#ifdef WITH_CC_NOTIFICATION
+	zuno_CCNotificationInitData();
+	#endif
+}
 byte zunoAddChannel(byte type, byte subtype, byte options) {
 	#ifdef LOGGING_DBG
 	// dbgCCTypes();
 	#endif
+	initCCSData();
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;
@@ -512,16 +531,13 @@ void	zunoSendReportHandler(uint32_t ticks){
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
-			#pragma message "SWITCHML REPORT ON"
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-				#ifdef LOGGING_DBG
-				LOGGING_UART.println("MULTILEVEL");
-				#endif
 				rs = zuno_CCSwitchMultilevelReport(ch);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
 			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
+				rs = zuno_CCNotificationReport(ch, NULL);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL
@@ -561,4 +577,11 @@ void	zunoSendReport(byte ch){
 		return;
 	ch--;
 	g_report_data.channels_mask |= (1 << ch);
+}
+void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
+	byte byte_index = b >> 3;
+	byte bit_index = b & 0x07;
+	if(byte_index >= max_sz)
+		return;
+	arr[byte_index] |= 1 << bit_index;
 }

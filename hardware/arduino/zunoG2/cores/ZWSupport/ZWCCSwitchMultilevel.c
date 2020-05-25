@@ -1,7 +1,7 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWSupport.h"
 #include "./includes/ZWSupportTimer.h"
-#include "./includes/ZWCCSwitchMultilevelTimer.h"
+#include "./includes/ZWCCSwitchMultilevel_private.h"
 
 static uint32_t			fn_duration(uint32_t duration)// Get the step for dimming in milliseconds
 {
@@ -47,8 +47,6 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 	uint8_t												current_level;
 	uint8_t												b_mode;
 
-	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
-		return ;
 	switch (cmd->len)// We can check the unsupported version of the command
 	{
 		case sizeof(t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME):
@@ -80,7 +78,10 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)// Check it may not need to dim
 			return ;
 		if (step == 0)// If the step turned out to be zero - immediately set the desired level
+		{
+			zunoSendReport(channel + 1);
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
+		}
 		b_mode = ZUNO_TIMER_SWITCH_INC | ZUNO_TIMER_SWITCH_ON;
 	}
 	else
@@ -88,7 +89,10 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
 			return ;
 		if (step == 0)// If the step turned out to be zero - immediately set the desired level
+		{
+			zunoSendReport(channel + 1);
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
+		}
 		b_mode = ZUNO_TIMER_SWITCH_DEC | ZUNO_TIMER_SWITCH_ON;
 	}
 	noInterrupts();
@@ -101,10 +105,9 @@ static void				fn_start_level(uint8_t channel, ZUNOCommandPacket_t *cmd)// Prepa
 		lp->channel = channel + 1;
 	}
 	interrupts();
-	return ;
 }
 
-static void		fn_remove_switch_multilevel(volatile t_ZUNO_TIMER_SWITCH_CHANNEL *lp_b)
+static void			fn_remove_switch_multilevel(volatile t_ZUNO_TIMER_SWITCH_CHANNEL *lp_b)
 {
 	lp_b->b_mode = 0;
 	lp_b->channel = 0;
@@ -115,8 +118,6 @@ static void			fn_stop_level(uint8_t channel)// Stop Dimming
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_b;
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_e;
 
-	if(channel > ZUNO_CFG_CHANNEL_COUNT)// Check if the channel number is correct
-		return ;
 	channel++;
 	lp_b = &g_zuno_timer.s_switch[0];
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
@@ -131,17 +132,17 @@ static void			fn_stop_level(uint8_t channel)// Stop Dimming
 		lp_b++;
 	}
 	interrupts();
-	return ;
 }
 
-int		zuno_CCSwitchMultilevelReport(byte channel){
+int				zuno_CCSwitchMultilevelReport(byte channel)
+{
 	CMD_REPLY_CC = COMMAND_CLASS_SWITCH_MULTILEVEL;
-    CMD_REPLY_CMD = SWITCH_MULTILEVEL_REPORT;
+	CMD_REPLY_CMD = SWITCH_MULTILEVEL_REPORT;
 	CMD_REPLY_DATA(0) = zuno_universalGetter1P(channel);
 	CMD_REPLY_LEN = 3;
 	return ZUNO_COMMAND_ANSWERED;
 }
-int		zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd)
+int				zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd)
 {
 	int rs = ZUNO_UNKNOWN_CMD;
 
@@ -170,6 +171,7 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 {
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_b;
 	volatile t_ZUNO_TIMER_SWITCH_CHANNEL				*lp_e;
+	uint8_t												current_level;
 
 	lp_b = &g_zuno_timer.s_switch[0];
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
@@ -181,10 +183,10 @@ void			zuno_CCSwitchMultilevelTimer(uint32_t ticks)// We dim in the timer if the
 			if (ticks >= lp_b->ticks + lp_b->step || lp_b->ticks >= lp_b->step + ticks)// Check if overflow has occurred lp_b->ticks >= lp_b->step + ticks
 			{
 				lp_b->ticks = ticks;
-				lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1;// Depending on the flag, increase or decrease
-				zuno_universalSetter1P(lp_b->channel - 1, lp_b->current_level);
+				current_level = (lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1);// Depending on the flag, increase or decrease
+				zuno_universalSetter1P(lp_b->channel - 1, current_level);
 				zunoSendReport(lp_b->channel);
-				if (lp_b->current_level == ZUNO_TIMER_SWITCH_MAX_VALUE || lp_b->current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)
+				if (current_level == ZUNO_TIMER_SWITCH_MAX_VALUE || current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)
 					fn_remove_switch_multilevel(lp_b);// When you have reached the goal of dimming - stop
 			}
 		}

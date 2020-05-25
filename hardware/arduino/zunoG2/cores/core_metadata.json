@@ -141,8 +141,7 @@
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"}
             ],
             "cluster_rule":"${type}"
         }

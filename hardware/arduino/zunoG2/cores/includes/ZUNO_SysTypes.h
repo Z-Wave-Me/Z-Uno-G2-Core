@@ -4,7 +4,7 @@
 // Sketch setup
 typedef struct ZUNOChannel_s {
 	uint8_t type;
-	uint8_t sub_type;
+	uint8_t sub_type;//additional type values SWITCH_COLOR_FLAGS_RED in ZUNO_SWITCH_COLOR
 	uint8_t params[MAX_CHANNEL_PARAMS];
 	uint8_t zw_channel;
 } ZUNOChannel_t;

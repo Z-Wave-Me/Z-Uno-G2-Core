@@ -327,8 +327,7 @@ void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 			break;
 	}
 }
-int32_t zuno_universalGetter1P(byte zuno_ch)
-{
+int32_t zuno_universalGetter1P(byte zuno_ch) {
 	if(zuno_ch>ZUNO_CFG_CHANNEL_COUNT)
 		return 0;
 	if(g_zuno_channelhandlers_map[zuno_ch].p_handler == NULL)
@@ -370,8 +369,7 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value)
 		return;
 	byte type = g_zuno_channelhandlers_map[zuno_ch].descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	byte val_type = (g_zuno_channelhandlers_map[zuno_ch].descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
-	switch(type)
-	{
+	switch(type) {
 		case CHANNEL_HANDLER_SINGLE_GETTERSETTER: {
 				zuno_handler_single_gettersetter_t * p_gs = (zuno_handler_single_gettersetter_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 				zuno_callSetter(val_type, UNKNOWN_CHANNEL, p_gs->setter, value);
@@ -393,12 +391,10 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value)
 	}
 }
 
-static void		fn_callSetter(byte val_type, byte ch, void *handler, uint32_t value, uint32_t value_add)
-{
+static void _callSetter(byte val_type, byte ch, void *handler, uint32_t value, uint32_t value_add) {
 	if(handler == 0)
 		return;
-	switch(val_type)
-	{
+	switch(val_type) {
 		case HADLER_ARGTYPE_1UB:
 		case HADLER_ARGTYPE_1SB:
 			value = value & 0xFF;
@@ -421,8 +417,7 @@ static void		fn_callSetter(byte val_type, byte ch, void *handler, uint32_t value
 		((zuno_singlesetter4ub_2p_t *)handler)(value, value_add);
 }
 
-void			zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add)
-{
+void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 	void							*lp;
 	uint8_t							type;
 	uint8_t							val_type;
@@ -433,13 +428,12 @@ void			zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add)
 	type = ((ZUnoChannelDtaHandler_t *)lp)->descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	val_type = (((ZUnoChannelDtaHandler_t *)lp)->descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
 	lp = ((ZUnoChannelDtaHandler_t *)lp)->p_handler;
-	switch(type)
-	{
+	switch(type) {
 		case CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P:
-			fn_callSetter(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->setter, value, value_add);
+		_callSetter(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
-			fn_callSetter(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
+		_callSetter(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 	}
 }
@@ -560,9 +554,8 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
 	return NULL;
 }
 
-
 // Main timer for CC purposes
-volatile t_ZUNO_TIMER		g_zuno_timer;
+volatile ZUNO_TIMER_t		g_zuno_timer;
 static bool    aux_check_last_reporttime(uint8_t channel, uint32_t ticks){
 	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
 	if((ZUNO_CFG_CHANNEL(ch).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) || 
@@ -571,13 +564,11 @@ static bool    aux_check_last_reporttime(uint8_t channel, uint32_t ticks){
 	#endif
 	return true;
 }
-void	zunoSendReportHandler(uint32_t ticks)
-{
+void	zunoSendReportHandler(uint32_t ticks) {
 	if(g_report_data.channels_mask == 0)
 		return;
 	int rs = ZUNO_UNKNOWN_CMD;
-	for(uint8_t ch = 0; ch < ZUNO_MAX_MULTI_CHANNEL_NUMBER; ch++)
-	{
+	for(uint8_t ch = 0; ch < ZUNO_MAX_MULTI_CHANNEL_NUMBER; ch++) {
 		if((g_report_data.channels_mask & (1UL << ch)) == 0)
 			continue;
 		if(!aux_check_last_reporttime(ch, ticks))
@@ -633,8 +624,7 @@ void	zunoSendReportHandler(uint32_t ticks)
 		}
 	}
 }
-void	zuno_CCTimer(uint32_t ticks)
-{
+void zuno_CCTimer(uint32_t ticks) {
 	g_zuno_timer.ticks = ticks;
 	#ifdef WITH_CC_SWITCH_MULTILEVEL
 	zuno_CCSwitchMultilevelTimer(ticks);
@@ -646,7 +636,7 @@ void	zuno_CCTimer(uint32_t ticks)
 		zunoSendReportHandler(ticks);
 }
 
-void	zunoSendReport(byte ch){
+void zunoSendReport(byte ch){
 	if((ch < 1) || (ch > (ZUNO_CFG_CHANNEL_COUNT)))
 		return;
 	ch--;

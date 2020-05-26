@@ -27,8 +27,7 @@
 	10 bit address - use format XXXX XAAX AAAA AAAA */
 #define WIRE_ADDRESS(x)							x << _I2C_SADDR_ADDR_SHIFT//7 bit address
 
-class TwoWire 
-{
+class TwoWire {
 	public:
 		TwoWire();
 		void		begin(void);

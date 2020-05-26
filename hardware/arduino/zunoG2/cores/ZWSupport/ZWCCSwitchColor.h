@@ -13,8 +13,8 @@
 #define SWITCH_COLOR_START_LEVEL_CHANGE                                                  0x06
 #define SWITCH_COLOR_STOP_LEVEL_CHANGE                                                   0x07
 
-int				zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-int				zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd);
-void			zuno_CCSwitchColorTimer(uint32_t ticks);
+int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd);
+void zuno_CCSwitchColorTimer(uint32_t ticks);
 
 #endif // ZWCC_SWITCH_COLOR_H

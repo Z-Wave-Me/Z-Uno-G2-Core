@@ -3,14 +3,14 @@
 #include "./includes/ZWCCSwitchColor_private.h"
 
 static int _supported_report(uint8_t channel) {//Processed to get the value of the color components
-	ZwSwitchColorSupportedFrame_t		*lp;
+	ZwSwitchColorSupportedReporFrame_t		*lp;
 
-	lp = (ZwSwitchColorSupportedFrame_t *)&CMD_REPLY_CC;
+	lp = (ZwSwitchColorSupportedReporFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->cmd = SWITCH_COLOR_SUPPORTED_REPORT;
 	lp->colorComponentMask1 = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
 	lp->colorComponentMask2 = 0;
-	CMD_REPLY_LEN = sizeof(ZwSwitchColorSupportedFrame_t);
+	CMD_REPLY_LEN = sizeof(ZwSwitchColorSupportedReporFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

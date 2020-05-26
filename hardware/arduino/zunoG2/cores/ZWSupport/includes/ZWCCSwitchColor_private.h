@@ -12,12 +12,12 @@
 
 # define ZUNO_TIMER_COLOR_DEFAULT_DURATION	0xFF//The default dimming period is seconds.
 
-typedef struct					ZwSwitchColorSupportedFrame_s {
+typedef struct					ZwSwitchColorSupportedReporFrame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentMask1;/* MSB */
 	uint8_t						colorComponentMask2;/* LSB */
-}								ZwSwitchColorSupportedFrame_t;//ZW_SWITCH_COLOR_SUPPORTED_REPORTV3Frame
+}								ZwSwitchColorSupportedReporFrame_t;//ZW_SWITCH_COLOR_SUPPORTED_REPORTV3Frame
 
 typedef struct					ZwSwitchColorGetFrame_s {
 	uint8_t						cmdClass;/* The command class */

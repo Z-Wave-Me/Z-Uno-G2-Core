@@ -6,6 +6,16 @@
 # define ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL	0x3//How many channels at the same time support for dimming
 # define ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL	0x3//How many channels at the same time support for dimming
 
+# ifdef WITH_CC_SWITCH_MULTILEVEL
+	# undef ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL
+	# define ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL		0//To reduce the amount of occupied memory if this channel is not used
+# endif
+
+# ifdef WITH_CC_SWITCH_COLOR
+	# undef ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL
+	# define ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL		0//To reduce the amount of occupied memory if this channel is not used
+# endif
+
 typedef struct					ZunoTimerSwitchChannel_s {
 	uint32_t					ticks;//The number of milliseconds since starting the current program divided by 10 - Saved while changing current level
 	uint32_t					step;//How many milliseconds divided by 10 to wait until the next change in the current dimming level

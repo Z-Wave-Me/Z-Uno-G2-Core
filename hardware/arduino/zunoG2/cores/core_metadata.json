@@ -129,7 +129,10 @@
             "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "icon_app_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
-            "ccs":[],
+            "ccs":[
+                {"name":"COMMAND_CLASS_THERMOSTAT_MODE","version":"THERMOSTAT_MODE_VERSION"},
+                {"name":"COMMAND_CLASS_THERMOSTAT_SETPOINT","version":"THERMOSTAT_SETPOINT_VERSION"}
+            ],
             "cluster_rule":"${type}"
         },
         {   

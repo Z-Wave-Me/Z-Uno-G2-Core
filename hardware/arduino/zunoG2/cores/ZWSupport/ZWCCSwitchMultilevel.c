@@ -13,9 +13,9 @@ static uint32_t _duration(uint32_t duration) {// Get the step for dimming in mil
 	return (duration * 1000);
 }
 
-static volatile ZUNO_TIMER_SWITCH_CHANNEL_t	*_find(uint8_t channel) {// Trying to find a free structure for writing
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_e;
+static volatile ZunoTimerSwitchChannel_t	*_find(uint8_t channel) {// Trying to find a free structure for writing
+	volatile ZunoTimerSwitchChannel_t				*lp_b;
+	volatile ZunoTimerSwitchChannel_t				*lp_e;
 
 	lp_b = &g_zuno_timer.s_switch[0];
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
@@ -38,21 +38,21 @@ static volatile ZUNO_TIMER_SWITCH_CHANNEL_t	*_find(uint8_t channel) {// Trying t
 }
 
 static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare the structure for dimming
-	ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME_u		*pk;
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp;
+	ZwSwitchMultilevelStopLevelChangeFrame_t		*pk;
+	volatile ZunoTimerSwitchChannel_t				*lp;
 	uint32_t											step;
 	uint8_t												current_level;
 	uint8_t												b_mode;
 
 	switch (cmd->len) {// We can check the unsupported version of the command
-		case sizeof(ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME_t):
-		case sizeof(ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V2_FRAME_t):
-		case sizeof(ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V3_FRAME_t):
+		case sizeof(ZwSwitchMultilevelStopLevelChangeV1Frame_t):
+		case sizeof(ZwSwitchMultilevelStopLevelChangeV2Frame_t):
+		case sizeof(ZwSwitchMultilevelStopLevelChangeV3Frame_t):
 			break ;
 		default:
 			return ;
 	}
-	pk = (ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME_u *)cmd->cmd;
+	pk = (ZwSwitchMultilevelStopLevelChangeFrame_t *)cmd->cmd;
 	if ((pk->v1.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
 		if ((current_level = pk->v1.startLevel) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
@@ -62,7 +62,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 		if ((current_level = zuno_universalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	}
-	if (cmd->len == sizeof(ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME_t))
+	if (cmd->len == sizeof(ZwSwitchMultilevelStopLevelChangeV1Frame_t))
 		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * 1000;// Depending on the version, set the default step to increase or from the command we will
 	else
 		step =_duration(pk->v2.dimmingDuration);
@@ -94,14 +94,14 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 	interrupts();
 }
 
-static void _remove_switch_multilevel(volatile ZUNO_TIMER_SWITCH_CHANNEL_t *lp_b) {
+static void _remove_switch_multilevel(volatile ZunoTimerSwitchChannel_t *lp_b) {
 	lp_b->b_mode = 0;
 	lp_b->channel = 0;
 }
 
 static void		_stop_level(uint8_t channel) {// Stop Dimming
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_e;
+	volatile ZunoTimerSwitchChannel_t				*lp_b;
+	volatile ZunoTimerSwitchChannel_t				*lp_e;
 
 	channel++;
 	lp_b = &g_zuno_timer.s_switch[0];
@@ -148,8 +148,8 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 }
 
 void zuno_CCSwitchMultilevelTimer(uint32_t ticks) {// We dim in the timer if there is a need
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_SWITCH_CHANNEL_t				*lp_e;
+	volatile ZunoTimerSwitchChannel_t				*lp_b;
+	volatile ZunoTimerSwitchChannel_t				*lp_e;
 	uint8_t												current_level;
 
 	lp_b = &g_zuno_timer.s_switch[0];

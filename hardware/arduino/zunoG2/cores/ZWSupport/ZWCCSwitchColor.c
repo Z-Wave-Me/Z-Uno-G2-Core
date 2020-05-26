@@ -3,14 +3,14 @@
 #include "./includes/ZWCCSwitchColor_private.h"
 
 static int _supported_report(uint8_t channel) {//Processed to get the value of the color components
-	ZW_SWITCH_COLOR_SUPPORTED_REPORT_FRAME_t		*lp;
+	ZwSwitchColorSupportedFrame_t		*lp;
 
-	lp = (ZW_SWITCH_COLOR_SUPPORTED_REPORT_FRAME_t *)&CMD_REPLY_CC;
+	lp = (ZwSwitchColorSupportedFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->cmd = SWITCH_COLOR_SUPPORTED_REPORT;
 	lp->colorComponentMask1 = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
 	lp->colorComponentMask2 = 0;
-	CMD_REPLY_LEN = sizeof(ZW_SWITCH_COLOR_SUPPORTED_REPORT_FRAME_t);
+	CMD_REPLY_LEN = sizeof(ZwSwitchColorSupportedFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -19,17 +19,17 @@ static void	_set_color(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	uint8_t						i;
 
 	lp = (uint8_t *)cmd->cmd;
-	i = ((ZW_SWITCH_COLOR_SET_FRAME_t *)lp)->properties1 & 0x1F;//Color Component Count (5 bits)
-	lp = (uint8_t *)&((ZW_SWITCH_COLOR_SET_FRAME_t *)lp)->variantgroup[0];
+	i = ((ZwSwitchColorSetFrame_t *)lp)->properties1 & 0x1F;//Color Component Count (5 bits)
+	lp = (uint8_t *)&((ZwSwitchColorSetFrame_t *)lp)->variantgroup[0];
 	while (i-- != 0) {
-		zuno_universalSetter2P(channel, ((VG_SWITCH_COLOR_SET_VG_t *)lp)->colorComponentId, ((VG_SWITCH_COLOR_SET_VG_t *)lp)->value);
-		lp = lp + sizeof(VG_SWITCH_COLOR_SET_VG_t);
+		zuno_universalSetter2P(channel, ((VgSwitchColorSetVg_t *)lp)->colorComponentId, ((VgSwitchColorSetVg_t *)lp)->value);
+		lp = lp + sizeof(VgSwitchColorSetVg_t);
 	}
 }
 
-static volatile ZUNO_TIMER_COLOR_CHANNEL_t	*_find(uint8_t channel, uint8_t colorComponentId) {// Trying to find a free structure for writing
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_e;
+static volatile ZunoTimerColorChannel_t	*_find(uint8_t channel, uint8_t colorComponentId) {// Trying to find a free structure for writing
+	volatile ZunoTimerColorChannel_t				*lp_b;
+	volatile ZunoTimerColorChannel_t				*lp_e;
 
 	lp_b = &g_zuno_timer.s_color[0];
 	lp_e = &g_zuno_timer.s_color[ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL];
@@ -50,12 +50,12 @@ static volatile ZUNO_TIMER_COLOR_CHANNEL_t	*_find(uint8_t channel, uint8_t color
 }
 
 static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare the structure for dimming
-	ZW_SWITCH_COLOR_START_LEVEL_CHANGE_FRAME_u			*pk;
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t					*lp;
+	ZwSwitchColorStartLevelChange_FRAME_u			*pk;
+	volatile ZunoTimerColorChannel_t					*lp;
 	uint8_t												current_level;
 	uint8_t												b_mode;
 
-	pk = (ZW_SWITCH_COLOR_START_LEVEL_CHANGE_FRAME_u *)cmd->cmd;
+	pk = (ZwSwitchColorStartLevelChange_FRAME_u *)cmd->cmd;
 	if ((pk->v2.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
 		current_level = pk->v2.startLevel;
 		zuno_universalSetter2P(channel, pk->v2.colorComponentId, current_level);
@@ -84,14 +84,14 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 	interrupts();
 }
 
-static void _remove_switch_multilevel(volatile ZUNO_TIMER_COLOR_CHANNEL_t *lp_b) {
+static void _remove_switch_multilevel(volatile ZunoTimerColorChannel_t *lp_b) {
 	lp_b->b_mode = 0;
 	lp_b->channel = 0;
 }
 
 static void _stop_level(uint8_t channel, uint8_t colorComponentId) {// Stop Dimming
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_e;
+	volatile ZunoTimerColorChannel_t				*lp_b;
+	volatile ZunoTimerColorChannel_t				*lp_e;
 
 	channel++;
 	lp_b = &g_zuno_timer.s_color[0];
@@ -129,7 +129,7 @@ int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd)
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case SWITCH_COLOR_STOP_LEVEL_CHANGE:
-			_stop_level(channel, ((ZW_SWITCH_COLOR_STOP_LEVEL_CHANGE_FRAME_t *)cmd->cmd)->colorComponentId);
+			_stop_level(channel, ((ZwSwitchColorStopLevelChange_t *)cmd->cmd)->colorComponentId);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 	}
@@ -138,24 +138,24 @@ int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd)
 
 int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd)
 {
-	ZW_SWITCH_COLOR_REPORT_FRAME_u			*lp;
+	ZwSwitchColorReportFrame_t			*lp;
 
 	if (cmd == 0) {
 		_supported_report(channel);
 		return (ZUNO_COMMAND_ANSWERED);
 	}
-	lp = (ZW_SWITCH_COLOR_REPORT_FRAME_u *)&CMD_REPLY_CC;
+	lp = (ZwSwitchColorReportFrame_t *)&CMD_REPLY_CC;
 	lp->v2.cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->v2.cmd = SWITCH_COLOR_REPORT;
-	lp->v2.colorComponentId = ((ZW_SWITCH_COLOR_GET_FRAME_t *)cmd->cmd)->colorComponentId;
+	lp->v2.colorComponentId = ((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId;
 	lp->v2.value = zuno_universalGetter1P(channel);
-	CMD_REPLY_LEN = sizeof(ZW_SWITCH_COLOR_REPORT_FRAME_u);
+	CMD_REPLY_LEN = sizeof(ZwSwitchColorReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 void zuno_CCSwitchColorTimer(uint32_t ticks) {// We dim in the timer if there is a need
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_b;
-	volatile ZUNO_TIMER_COLOR_CHANNEL_t				*lp_e;
+	volatile ZunoTimerColorChannel_t				*lp_b;
+	volatile ZunoTimerColorChannel_t				*lp_e;
 	uint8_t											current_level;
 
 	lp_b = &g_zuno_timer.s_color[0];

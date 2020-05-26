@@ -12,83 +12,83 @@
 
 # define ZUNO_TIMER_COLOR_DEFAULT_DURATION	0xFF//The default dimming period is seconds.
 
-typedef struct					ZW_SWITCH_COLOR_SUPPORTED_REPORT_FRAME_s {
+typedef struct					ZwSwitchColorSupportedFrame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentMask1;/* MSB */
 	uint8_t						colorComponentMask2;/* LSB */
-}								ZW_SWITCH_COLOR_SUPPORTED_REPORT_FRAME_t;//ZW_SWITCH_COLOR_SUPPORTED_REPORT_V3_FRAME
+}								ZwSwitchColorSupportedFrame_t;//ZW_SWITCH_COLOR_SUPPORTED_REPORTV3Frame
 
-typedef struct					ZW_SWITCH_COLOR_GET_FRAME_s {
+typedef struct					ZwSwitchColorGetFrame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentId;/**/
-}								ZW_SWITCH_COLOR_GET_FRAME_t;//ZW_SWITCH_COLOR_GET_V3_FRAME
+}								ZwSwitchColorGetFrame_t;//ZW_SWITCH_COLOR_GETV3Frame
 
-typedef struct					ZW_SWITCH_COLOR_REPORT_V2_FRAME_s {
+typedef struct					ZwSwitchColorReportV2Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentId;/**/
 	uint8_t						value;/**/
-}								ZW_SWITCH_COLOR_REPORT_V2_FRAME_t;
+}								ZwSwitchColorReportV2Frame_t;
 
-typedef struct					ZW_SWITCH_COLOR_REPORT_V3_FRAME_s{
+typedef struct					ZwSwitchColorReportV3Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentId;/**/
 	uint8_t						currentValue;/**/
 	uint8_t						targetValue;/**/
 	uint8_t						duration;/**/
-}								ZW_SWITCH_COLOR_REPORT_V3_FRAME_t;
+}								ZwSwitchColorReportV3Frame_t;
 
-typedef union {//For more convenient support, several versions of commands
-	ZW_SWITCH_COLOR_REPORT_V2_FRAME_t					v2;
-	ZW_SWITCH_COLOR_REPORT_V3_FRAME_t					v3;
-}								ZW_SWITCH_COLOR_REPORT_FRAME_u;
+typedef union					ZwSwitchColorReportFrame_u {//For more convenient support, several versions of commands
+	ZwSwitchColorReportV2Frame_t					v2;
+	ZwSwitchColorReportV3Frame_t					v3;
+}								ZwSwitchColorReportFrame_t;
 
 /************************************************************/
 /* Switch Color Set variant group structs */                
 /************************************************************/
-typedef struct					VG_SWITCH_COLOR_SET_VG_s {
+typedef struct					VgSwitchColorSetVg_s {
 	uint8_t						colorComponentId;/**/
 	uint8_t						value;/**/
-}								VG_SWITCH_COLOR_SET_VG_t;//VG_SWITCH_COLOR_SET_V3_VG
+}								VgSwitchColorSetVg_t;//VG_SWITCH_COLOR_SET_V3_VG
 
-typedef struct					ZW_SWITCH_COLOR_SET_FRAME_s {
+typedef struct					ZwSwitchColorSetFrame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
-	VG_SWITCH_COLOR_SET_VG_t	variantgroup[4];/**/
-}								ZW_SWITCH_COLOR_SET_FRAME_t;//ZW_SWITCH_COLOR_SET_4BYTE_FRAME
+	VgSwitchColorSetVg_t		variantgroup[4];/**/
+}								ZwSwitchColorSetFrame_t;//ZW_SWITCH_COLOR_SET_4BYTE_FRAME
 
-typedef struct					ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V2_FRAME_s {
+typedef struct					ZwSwitchColorStartLevelChangeV2Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
 	uint8_t						colorComponentId;/**/
 	uint8_t						startLevel;/**/
-}								ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V2_FRAME_t;
+}								ZwSwitchColorStartLevelChangeV2Frame_t;
 
 
-typedef struct					ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V3_FRAME_s {
+typedef struct					ZwSwitchColorStartLevelChangeV3Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
 	uint8_t						colorComponentId;/**/
 	uint8_t						startLevel;/**/
 	uint8_t						duration;/**/
-}								ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V3_FRAME_t;
+}								ZwSwitchColorStartLevelChangeV3Frame_t;
 
 typedef union {//For more convenient support, several versions of commands
-	ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V2_FRAME_t		v2;
-	ZW_SWITCH_COLOR_START_LEVEL_CHANGE_V3_FRAME_t		v3;
-}								ZW_SWITCH_COLOR_START_LEVEL_CHANGE_FRAME_u;
+	ZwSwitchColorStartLevelChangeV2Frame_t		v2;
+	ZwSwitchColorStartLevelChangeV3Frame_t		v3;
+}								ZwSwitchColorStartLevelChange_FRAME_u;
 
 
-typedef struct					ZW_SWITCH_COLOR_STOP_LEVEL_CHANGE_FRAME_s {
+typedef struct					ZwSwitchColorStopLevelChange_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						colorComponentId;/**/
-}								ZW_SWITCH_COLOR_STOP_LEVEL_CHANGE_FRAME_t;//ZW_SWITCH_COLOR_STOP_LEVEL_CHANGE_V3_FRAME
+}								ZwSwitchColorStopLevelChange_t;//ZW_SWITCH_COLOR_STOP_LEVEL_CHANGEV3Frame
 
 #endif // ZWCC_SWITCH_COLOR_PRIVATE_H

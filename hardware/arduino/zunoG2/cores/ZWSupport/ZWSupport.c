@@ -555,7 +555,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
 }
 
 // Main timer for CC purposes
-volatile ZUNO_TIMER_t		g_zuno_timer;
+volatile ZunoTimer_t		g_zuno_timer;
 static bool    aux_check_last_reporttime(uint8_t channel, uint32_t ticks){
 	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
 	if((ZUNO_CFG_CHANNEL(ch).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) || 

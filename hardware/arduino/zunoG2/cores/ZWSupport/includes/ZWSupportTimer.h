@@ -24,12 +24,8 @@ typedef struct					ZunoTimerColorChannel_s {
 }								ZunoTimerColorChannel_t;
 
 typedef struct					ZunoTimer_s {
-	#ifdef WITH_CC_SWITCH_MULTILEVEL
 	ZunoTimerSwitchChannel_t	s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
-	#endif
-	#ifdef WITH_CC_SWITCH_COLOR
 	ZunoTimerColorChannel_t		s_color[ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL];
-	#endif
 	uint32_t					ticks;//The number of milliseconds since starting the current program divided by 10
 }								ZunoTimer_t;
 

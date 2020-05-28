@@ -77,7 +77,7 @@ extern ZUNOCommandPacket_t g_outgoing_packet;
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);
 void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add);
 int32_t zuno_universalGetter1P(byte zuno_ch);
-uint32_t zuno_universalGetter2P(byte zuno_ch);
+uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value);
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 

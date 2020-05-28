@@ -35,7 +35,7 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t * cmd){
                     // see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
                     return ZUNO_COMMAND_BLOCKED;
                 }
-                byte type_index = channel->type - 1;
+                byte type_index = zuno_findChannelType(channel->type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
                 CMD_REPLY_DATA(0) = ZW_CMD_BPARAM(0); // The index of selected endpoint
                 CMD_REPLY_DATA(1) = ZUNO_DEV_TYPES[type_index].gen_type;
                 CMD_REPLY_DATA(2) = ZUNO_DEV_TYPES[type_index].spec_type;

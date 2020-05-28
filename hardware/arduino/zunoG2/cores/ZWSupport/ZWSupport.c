@@ -447,7 +447,10 @@ bool zunoStartDeviceConfiguration() {
 	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
 	return  true;
 }
-byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count){
+byte getMaxChannelTypes() {
+	return sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
+}
+byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count) {
 	byte i;
 	for(i=0;i<count;i++){
 		if(types[i].type == type)
@@ -474,7 +477,7 @@ void dbgDumpCCType(ZUNOChannelCCS_t * cc_type){
 	}
 	LOGGING_UART.println("");
 }
-void dbgCCTypes(){
+void dbgCCTypes() {
 	static bool fist_run = true;
 	if(!fist_run)
 		return;
@@ -487,7 +490,7 @@ void dbgCCTypes(){
 	LOGGING_UART.println("\n-------------------------");
 }
 #endif
-static void initCCSData(){
+static void initCCSData() {
 	static bool inited = false;
 	if(inited)
 		return;
@@ -512,7 +515,7 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 			return UNKNOWN_CHANNEL;
 		// Fill the type structure from predefined array.
 		// type index starts from 1, so we have to decrement it
-		int const_type_index =  zuno_findChannelType(type, (ZUNOChannelCCS_t*)&ZUNO_CC_TYPES, (sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t)));
+		int const_type_index =  zuno_findChannelType(type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
 		if(const_type_index == UNKNOWN_CHANNEL){
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("***ERROR: Can't find CCTYPE for:");
@@ -593,7 +596,7 @@ void	zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchColorReport(ch, 0);
+				rs = zuno_CCSwitchColorReport(ch, NULL);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION

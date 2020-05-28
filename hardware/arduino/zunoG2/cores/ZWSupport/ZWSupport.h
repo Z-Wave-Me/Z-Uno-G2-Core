@@ -72,6 +72,8 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add);
 int32_t zuno_universalGetter1P(byte zuno_ch);
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
+byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
+byte getMaxChannelTypes();
 
 #define CMD_REPLY_LEN g_outgoing_packet.len 
 #define CMD_REPLY_CMD g_outgoing_packet.cmd[1]

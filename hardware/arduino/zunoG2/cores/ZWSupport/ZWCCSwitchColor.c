@@ -107,10 +107,8 @@ static void _stop_level(uint8_t channel, uint8_t colorComponentId) {// Stop Dimm
 	interrupts();
 }
 
-int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd)
-{
+int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd){
 	int				rs;
-
 	rs = ZUNO_UNKNOWN_CMD;
 	switch(ZW_CMD)
 	{

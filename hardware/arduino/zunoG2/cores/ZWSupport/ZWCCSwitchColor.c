@@ -149,17 +149,22 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 		mask = ((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId;
 	else
 		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
+	if (mask == 0)
+		return (ZUNO_UNKNOWN_CMD);
 	colorComponentId = 1;
 	while (mask != 0) {//We will sort through all the colors and send a report for each
 		if ((mask & 0x1) != 0) {
 			lp->v2.colorComponentId = colorComponentId;
 			lp->v2.value = zuno_universalGetter2P(channel, colorComponentId);
+			if ((mask = mask >> 1) == 0)
+				break ;
 			zunoSendZWPackage(&g_outgoing_packet);
+		} else {
+			mask = mask >> 1;
 		}
 		colorComponentId = colorComponentId << 1;
-		mask = mask >> 1;
 	}
-	return (ZUNO_UNKNOWN_CMD);
+	return (ZUNO_COMMAND_ANSWERED);
 }
 
 void zuno_CCSwitchColorTimer(uint32_t ticks) {// We dim in the timer if there is a need

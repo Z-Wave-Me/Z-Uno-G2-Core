@@ -1,5 +1,5 @@
-#ifndef ZWCC_SWITCH_MULTILEVEL_TIMER_H
-#define ZWCC_SWITCH_MULTILEVEL_TIMER_H
+#ifndef ZWCC_SWITCH_MULTILEVEL_PRIVATE_H
+#define ZWCC_SWITCH_MULTILEVEL_PRIVATE_H
 
 #include "stdint.h"
 
@@ -13,38 +13,34 @@
 # define ZUNO_TIMER_SWITCH_DEFAULT_DURATION		0x63//The default dimming period is seconds.
 
 
-typedef struct					s_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME
-{
+typedef struct					ZwSwitchMultilevelStopLevelChangeV1Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
 	uint8_t						startLevel;/**/
-}								t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME;
+}								ZwSwitchMultilevelStopLevelChangeV1Frame_t;
 
-typedef struct					s_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V2_FRAME
-{
+typedef struct					ZwSwitchMultilevelStopLevelChangeV2Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
 	uint8_t						startLevel;/**/
 	uint8_t						dimmingDuration;/**/
-}								t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V2_FRAME;
+}								ZwSwitchMultilevelStopLevelChangeV2Frame_t;
 
-typedef struct					s_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V3_FRAME
-{
+typedef struct					ZwSwitchMultilevelStopLevelChangeV3Frame_s {
 	uint8_t						cmdClass;/* The command class */
 	uint8_t						cmd;/* The command */
 	uint8_t						properties1;/* masked byte */
 	uint8_t						startLevel;/**/
 	uint8_t						dimmingDuration;/**/
 	uint8_t						stepSize;/**/
-}								t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V3_FRAME;
+}								ZwSwitchMultilevelStopLevelChangeV3Frame_t;
 
-typedef union//For more convenient support, several versions of commands
-{
-	t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V1_FRAME	v1;
-	t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V2_FRAME	v2;
-	t_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_V3_FRAME	v3;
-}								u_ZW_SWITCH_MULTILEVEL_START_LEVEL_CHANGE_FRAME;
+typedef union					ZwSwitchMultilevelStopLevelChangeFrame_u {//For more convenient support, several versions of commands
+	ZwSwitchMultilevelStopLevelChangeV1Frame_t	v1;
+	ZwSwitchMultilevelStopLevelChangeV2Frame_t	v2;
+	ZwSwitchMultilevelStopLevelChangeV3Frame_t	v3;
+}								ZwSwitchMultilevelStopLevelChangeFrame_t;
 
-#endif// ZWCC_SWITCH_MULTILEVEL_TIMER_H
+#endif// ZWCC_SWITCH_MULTILEVEL_PRIVATE_H

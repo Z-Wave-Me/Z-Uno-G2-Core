@@ -2,8 +2,7 @@
 #define WIRE_H
 
 
-class TwoWire 
-{
+class TwoWire {
 	public:
 		TwoWire();
 		void		begin(void);

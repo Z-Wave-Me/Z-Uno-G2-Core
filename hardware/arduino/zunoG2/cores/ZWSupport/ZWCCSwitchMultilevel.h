@@ -34,8 +34,8 @@
 #define SWITCH_MULTILEVEL_SUPPORTED_REPORT_PROPERTIES2_RESERVED_MASK                      0xE0
 #define SWITCH_MULTILEVEL_SUPPORTED_REPORT_PROPERTIES2_RESERVED_SHIFT                     0x05
 
-int		        zuno_CCSwitchMultilevelReport(byte channel);
-int				zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
-void			zuno_CCSwitchMultilevelTimer(uint32_t ticks);
+int zuno_CCSwitchMultilevelReport(byte channel);
+int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
+void zuno_CCSwitchMultilevelTimer(uint32_t ticks);
 
 #endif // SWITCHMULTILEVEL_CC_H

@@ -135,7 +135,7 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            delay(2000); // <---- DBG
+            delay(2000); //???
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif

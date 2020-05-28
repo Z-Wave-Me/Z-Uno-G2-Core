@@ -5,7 +5,9 @@
 #include "ArduinoTypes.h"
 #include "LLCore.h"
 #include "ZUNO_StaticData.h"
+#ifndef ZUNO_PREPROC_PHASE
 #include <string.h>
+#endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "CrtxGPIO.h"
 #include "HardwareSerial.h"

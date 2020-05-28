@@ -1,8 +1,6 @@
 #ifndef ZUNO_DEFINITIONS
 #define ZUNO_DEFINITIONS
-
 #include "ZUNO_AutoDef.h"
-
 
 #define MAX_CHANNEL_PARAMS                              4
 #define ZUNO_MAX_MULTI_CHANNEL_NUMBER 					32

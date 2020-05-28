@@ -62,7 +62,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 		zunoSendReport(channel + 1);
 	}
 	else// Otherwise, get the current
-		current_level = zuno_universalGetter1P(channel);
+		current_level = zuno_universalGetter2P(channel);
 	if ((pk->v2.properties1 & (1 << 6)) == 0) {// Dimming to up
 		if (ZUNO_TIMER_COLOR_MAX_VALUE - current_level == 0)// Check it may not need to dim
 			return ;
@@ -148,7 +148,7 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	lp->v2.cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->v2.cmd = SWITCH_COLOR_REPORT;
 	lp->v2.colorComponentId = ((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId;
-	lp->v2.value = zuno_universalGetter1P(channel);
+	lp->v2.value = zuno_universalGetter2P(channel);
 	CMD_REPLY_LEN = sizeof(ZwSwitchColorReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }

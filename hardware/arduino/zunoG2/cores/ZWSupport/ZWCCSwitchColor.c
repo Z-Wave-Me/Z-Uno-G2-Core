@@ -107,8 +107,7 @@ static void _stop_level(uint8_t channel, uint8_t colorComponentId) {// Stop Dimm
 	interrupts();
 }
 
-int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd)
-{
+int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
 	rs = ZUNO_UNKNOWN_CMD;
@@ -137,8 +136,7 @@ int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd)
 }
 
 
-int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd)
-{
+int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	ZwSwitchColorReportFrame_t			*lp;
 	uint8_t								colorComponentId;
 	uint8_t								mask;
@@ -152,10 +150,8 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd)
 	else
 		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
 	colorComponentId = 1;
-	while (mask != 0)//We will sort through all the colors and send a report for each
-	{
-		if ((mask & 0x1) != 0)
-		{
+	while (mask != 0) {//We will sort through all the colors and send a report for each
+		if ((mask & 0x1) != 0) {
 			lp->v2.colorComponentId = colorComponentId;
 			lp->v2.value = zuno_universalGetter2P(channel, colorComponentId);
 			zunoSendZWPackage((ZUNOCommandPacket_t *)lp);

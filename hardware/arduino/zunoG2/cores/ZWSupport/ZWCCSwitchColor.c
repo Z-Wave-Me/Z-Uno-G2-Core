@@ -140,29 +140,31 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	ZwSwitchColorReportFrame_t			*lp;
 	uint8_t								colorComponentId;
 	uint8_t								mask;
-
+	if (cmd != NULL){
+		fillOutgoingPacket(cmd);
+		mask = 1 << (((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId);
+	} else{
+		fillOutgoingReportPacket(channel);
+		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
+	}
 	lp = (ZwSwitchColorReportFrame_t *)&CMD_REPLY_CC;
 	lp->v2.cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->v2.cmd = SWITCH_COLOR_REPORT;
 	CMD_REPLY_LEN = sizeof(lp->v2);
-	if (cmd != 0)
-		mask = ((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId;
-	else
-		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
-	colorComponentId = 1;
-	while (mask != 0) {//We will sort through all the colors and send a report for each
-		if ((mask & 0x1) != 0) {
+	colorComponentId = 0;
+	while (mask != 0) {//We will pass through all the colors and send a report for each
+		if ((mask & 0x01) != 0) {
 			lp->v2.colorComponentId = colorComponentId;
 			lp->v2.value = zuno_universalGetter2P(channel, colorComponentId);
-			zunoSendZWPackage((ZUNOCommandPacket_t *)lp);
+			zunoSendZWPackage(&g_outgoing_packet);
 		}
-		colorComponentId = colorComponentId << 1;
+		colorComponentId++;
 		mask = mask >> 1;
 	}
-	return (ZUNO_UNKNOWN_CMD);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void zuno_CCSwitchColorTimer(uint32_t ticks) {// We dim in the timer if there is a need
+void zuno_CCSwitchColorTimer(uint32_t ticks) { // We dim in the timer if there is a need
 	volatile ZunoTimerColorChannel_t				*lp_b;
 	volatile ZunoTimerColorChannel_t				*lp_e;
 	uint8_t											current_level;

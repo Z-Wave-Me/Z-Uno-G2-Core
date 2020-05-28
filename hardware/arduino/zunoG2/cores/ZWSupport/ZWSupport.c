@@ -409,9 +409,56 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value)
 	}
 }
 
-static void _callSetter(byte val_type, byte ch, void *handler, uint32_t value, uint32_t value_add) {
-	if(handler == 0)
-		return;
+static uint32_t _callGetter2P(byte val_type, byte ch, void * handler, uint32_t value){
+	if (handler == 0)
+		return (0);
+	switch(val_type) {
+		case HADLER_ARGTYPE_1UB:
+		case HADLER_ARGTYPE_1SB:
+			value = value & 0xFF;
+			break;
+		case HADLER_ARGTYPE_2UB:
+		case HADLER_ARGTYPE_2SB:
+			value = value & 0xFFFF;
+			break;
+		case HADLER_ARGTYPE_4UB:
+		case HADLER_ARGTYPE_4SB:
+			break;
+		default:
+			return (0);
+	}
+	if(ch != UNKNOWN_CHANNEL)
+		return (((zuno_multigetter4ub_2p_t *)handler)(ch, value));
+	else
+		return (((zuno_singlegetter4ub_2p_t *)handler)(value));
+}
+
+
+uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
+	void							*lp;
+	uint8_t							type;
+	uint8_t							val_type;
+
+	if (zuno_ch > ZUNO_CFG_CHANNEL_COUNT)
+		return (0);
+	lp = &g_zuno_channelhandlers_map[zuno_ch];
+	type = ((ZUnoChannelDtaHandler_t *)lp)->descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
+	val_type = (((ZUnoChannelDtaHandler_t *)lp)->descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
+	lp = ((ZUnoChannelDtaHandler_t *)lp)->p_handler;
+	switch(type) {
+		case CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P:
+		_callGetter2P(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->getter, value);
+			break;
+		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
+		_callGetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->getter, value);
+			break;
+	}
+	return 0;
+}
+
+static void _callSetter2P(byte val_type, byte ch, void *handler, uint32_t value, uint32_t value_add) {
+	if (handler == 0)
+		return ;
 	switch(val_type) {
 		case HADLER_ARGTYPE_1UB:
 		case HADLER_ARGTYPE_1SB:
@@ -448,10 +495,10 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 	lp = ((ZUnoChannelDtaHandler_t *)lp)->p_handler;
 	switch(type) {
 		case CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P:
-		_callSetter(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->setter, value, value_add);
+		_callSetter2P(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
-		_callSetter(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
+		_callSetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 	}
 }

@@ -62,6 +62,11 @@ typedef void zuno_multisetter2b_t(uint8_t, int16_t);
 typedef void zuno_multisetter4b_t(uint8_t, int32_t);
 
 
+// SINGLE_GETTER 2P
+typedef uint32_t zuno_singlegetter4ub_2p_t(uint32_t);
+// MULTI_GETTER 2P
+typedef uint32_t zuno_multigetter4ub_2p_t(uint8_t, uint32_t);
+
 // SINGLE_SETTER 2P
 typedef void zuno_singlesetter4ub_2p_t(uint32_t, uint32_t);
 // MULTI_SETTER 2P
@@ -72,6 +77,7 @@ extern ZUNOCommandPacket_t g_outgoing_packet;
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);
 void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add);
 int32_t zuno_universalGetter1P(byte zuno_ch);
+uint32_t zuno_universalGetter2P(byte zuno_ch);
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 

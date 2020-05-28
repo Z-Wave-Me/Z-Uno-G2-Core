@@ -3,6 +3,7 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchColor.h"
+#include "ZWCCSwitchThermostat.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
 #include "ZWCCNotification.h"
@@ -43,32 +44,39 @@ typedef struct ZUnoReportDta_s{
 volatile ZUnoReportDta_t g_report_data;
 //-------------------------------------------------------------------------------------------------
 
-bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes)
-{
-	switch(channel->type)
-	{
+bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
+	uint8_t					cmd_class;
+
+	cmd_class = cmd_bytes[0];
+	switch(channel->type) {
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_BINARY)
+			if(cmd_class == COMMAND_CLASS_SWITCH_BINARY)
 				return true;
-			if(cmd_bytes[0] == COMMAND_CLASS_BASIC)
+			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_MULTILEVEL)
+			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
-			if(cmd_bytes[0] == COMMAND_CLASS_BASIC)
+			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_SENSOR_MULTILEVEL)
+			if(cmd_class == COMMAND_CLASS_SENSOR_MULTILEVEL)
 				return true;
 			break;
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_COLOR)
+			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
+				return true;
+			break;
+		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
+				return true;
+			if(cmd_class == COMMAND_CLASS_THERMOSTAT_SETPOINT)
 				return true;
 			break;
 		case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_NOTIFICATION)
+			if(cmd_class == COMMAND_CLASS_NOTIFICATION)
 				return true;
 			break;
 	}
@@ -204,6 +212,16 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#ifdef WITH_CC_SWITCH_COLOR
 			case COMMAND_CLASS_SWITCH_COLOR:
 				result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_THERMOSTAT_MODE
+			case COMMAND_CLASS_THERMOSTAT_MODE:
+				result = zuno_CCSwitchThermostatModeHandler(zuno_ch, cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_THERMOSTAT_SETPOINT
+			case COMMAND_CLASS_THERMOSTAT_SETPOINT:
+				result = zuno_CCSwitchThermostatSetPointHandler(zuno_ch, cmd);
 				break;
 			#endif
 		}

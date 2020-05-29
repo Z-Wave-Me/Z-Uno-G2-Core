@@ -121,6 +121,7 @@ int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			break ;
 		case SWITCH_COLOR_SET:
 			_set_color(channel, cmd);
+			zunoSendReport(channel + 1);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case SWITCH_COLOR_START_LEVEL_CHANGE:

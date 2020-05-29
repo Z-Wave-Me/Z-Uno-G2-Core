@@ -133,6 +133,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 			break;
 		case SWITCH_MULTILEVEL_SET:
 			zuno_universalSetter1P(channel, ZW_CMD_BPARAM(0));
+			zunoSendReport(channel + 1);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break;
 		case SWITCH_MULTILEVEL_START_LEVEL_CHANGE:

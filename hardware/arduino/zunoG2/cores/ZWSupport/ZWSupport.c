@@ -69,12 +69,12 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
 				return true;
 			break;
-		/*case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
 				return true;
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_SETPOINT)
 				return true;
-			break;*/
+			break;
 		case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_NOTIFICATION)
 				return true;

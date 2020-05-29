@@ -122,6 +122,20 @@
             "cluster_rule":"${type}"
         },
         {   
+            "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":11,
+            "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT"],
+            "generic_type":"GENERIC_TYPE_THERMOSTAT",
+            "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL",
+            "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
+            "icon_app_id":"ICON_TYPE_GENERIC_THERMOSTAT",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_THERMOSTAT_MODE","version":"THERMOSTAT_MODE_VERSION"},
+                {"name":"COMMAND_CLASS_THERMOSTAT_SETPOINT","version":"THERMOSTAT_SETPOINT_VERSION"}
+            ],	
+            "cluster_rule":"${type}"	
+        },
+        {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
             "cc_flags":["WITH_CC_SWITCH_COLOR"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",

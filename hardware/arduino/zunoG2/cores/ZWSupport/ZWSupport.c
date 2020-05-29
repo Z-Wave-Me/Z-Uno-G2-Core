@@ -93,10 +93,12 @@ bool compare_zw_channel(byte ch, byte targ) {
 }
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	byte i;
-	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++)
+	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel,cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
 			if(zuno_compare_channeltypeCC(&(ZUNO_CFG_CHANNEL(i)), cmd->cmd))
 				return i;
+		
+	}
 	return UNKNOWN_CHANNEL;
 }
 
@@ -104,9 +106,9 @@ byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
 	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
-	g_outgoing_packet.cmd = g_outgoing_data;
-	g_outgoing_data[0] = cmd->cmd[0];  // the same command class
-	g_outgoing_data[1] = cmd->cmd[1]+1; // in most cases report = get+1
+	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
+	g_outgoing_packet.cmd[0] = cmd->cmd[0];  // the same command class
+	g_outgoing_packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
 	// Reply as we were asked
 	g_outgoing_packet.src_node          = zunoNID();
 	g_outgoing_packet.dst_node          = cmd->src_node;
@@ -118,11 +120,11 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 void fillOutgoingReportPacket(uint8_t ch) {
 	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
 	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
-	g_outgoing_packet.cmd = g_outgoing_data;
+	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
 	g_outgoing_packet.flags 	= ZUNO_PACKETFLAGS_GROUP;
 	g_outgoing_packet.dst_node	= ZUNO_LIFELINE_GRP; 
 	g_outgoing_packet.src_node  = zunoNID();
-	g_outgoing_packet.src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel;
+	g_outgoing_packet.src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel; //& ~(ZWAVE_CHANNEL_MAPPED_BIT);
 	g_outgoing_packet.zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
 
 	// ZUNO_CFG_CHANNEL(ch)
@@ -182,6 +184,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	if(result != ZUNO_COMMAND_ANSWERED){
 		byte zuno_ch = zuno_findTargetChannel(cmd);
 		if(zuno_ch == UNKNOWN_CHANNEL){
+			#ifdef LOGGING_DBG
+			LOGGING_UART.println("**** Can't find channel for last cmd!"); 
+			#endif
 			return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
 		}
 		#ifdef LOGGING_DBG
@@ -228,11 +233,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	}
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
-		#ifdef LOGGING_DBG
-		LOGGING_UART.print(millis());
-		LOGGING_UART.print("OUTGOING  "); 
-		zuno_dbgdumpZWPacakge(&g_outgoing_packet);
-		#endif
 		zunoSendZWPackage(&g_outgoing_packet);
 	}
 	return result;
@@ -700,12 +700,8 @@ void	zunoSendReportHandler(uint32_t ticks) {
 				break;
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
-			#ifdef LOGGING_DBG
-			LOGGING_UART.print(millis());
-			LOGGING_UART.print("OUTGOING REPORT:"); 
-			zuno_dbgdumpZWPacakge(&g_outgoing_packet);
-			#endif
 			zunoSendZWPackage(&g_outgoing_packet);
+
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			g_report_data.channels_mask &= ~(1UL<<ch); // remove channel bit from pending report bitmap
@@ -738,3 +734,24 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 		return;
 	arr[byte_index] |= 1 << bit_index;
 }
+void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
+	if(zunoNID() == 0) // We are out of network - don't send anything
+		return;
+    #ifdef LOGGING_DBG
+	LOGGING_UART.print(millis());
+	LOGGING_UART.print(" OUTGOING PACAKAGE");
+	zuno_dbgdumpZWPacakge(&g_outgoing_packet);
+	#endif
+	// DBG
+	//g_outgoing_packet.src_zw_channel    = 0;
+	//g_outgoing_packet.dst_zw_channel    = 0;
+	// If the channel "mapped to" main channel => report twice
+	byte last_ch = pkg->src_zw_channel;
+    if(pkg->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
+		pkg->src_zw_channel = 0;
+		zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg);
+		pkg->src_zw_channel = last_ch & ~(ZWAVE_CHANNEL_MAPPED_BIT);
+	}
+    zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg); // DBG
+	pkg->src_zw_channel = last_ch; // Bring it back!
+}	

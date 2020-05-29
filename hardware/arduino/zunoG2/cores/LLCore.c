@@ -436,9 +436,6 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout){
     return loopsToMcs(width);
 }
 
-void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
-    zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg);
-}
 void zunoCommitCfg(){
     zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
 }

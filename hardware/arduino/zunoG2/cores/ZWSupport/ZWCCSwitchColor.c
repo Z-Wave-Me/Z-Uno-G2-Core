@@ -140,11 +140,10 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	ZwSwitchColorReportFrame_t			*lp;
 	uint8_t								colorComponentId;
 	uint8_t								mask;
-	if (cmd != NULL){
-		fillOutgoingPacket(cmd);
+
+	if (cmd != NULL) {//fillOutgoingPacket(cmd);
 		mask = 1 << (((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId);
-	} else{
-		fillOutgoingReportPacket(channel);
+	} else {//fillOutgoingReportPacket(channel);
 		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
 	}
 	lp = (ZwSwitchColorReportFrame_t *)&CMD_REPLY_CC;

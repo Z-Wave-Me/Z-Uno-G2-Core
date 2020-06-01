@@ -735,8 +735,14 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 	arr[byte_index] |= 1 << bit_index;
 }
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
-	if(zunoNID() == 0) // We are out of network - don't send anything
+	if(zunoNID() == 0) { // We are out of network - don't send anything
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print(millis());
+		LOGGING_UART.print(" Package was dropped! NodeID==0");
+		#endif
 		return;
+		
+	}
     #ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print(" OUTGOING PACAKAGE");

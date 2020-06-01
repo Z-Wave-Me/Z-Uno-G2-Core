@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 /* Switch Multilevel command class commands */
-#define SWITCH_MULTILEVEL_VERSION                                                        0x03
+#define SWITCH_MULTILEVEL_VERSION                                                        0x02
 #define SWITCH_MULTILEVEL_GET                                                            0x02
 #define SWITCH_MULTILEVEL_REPORT                                                         0x03
 #define SWITCH_MULTILEVEL_SET                                                            0x01

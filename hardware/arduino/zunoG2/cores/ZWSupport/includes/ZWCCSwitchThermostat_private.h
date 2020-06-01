@@ -3,7 +3,17 @@
 
 #include "Arduino.h"
 
-# define THERMOSTAT_MASK					0x1F//Mode (5 bits)
+# define THERMOSTAT_MASK_4_BIT					0xF//Mode (4 bits)
+# define THERMOSTAT_MASK_5_BIT					0x1F//Mode (5 bits)
+# define THERMOSTAT_CELSIUS						0x0
+# define THERMOSTAT_FAHRENHEIT					0x1
+# define THERMOSTAT_SETPOINT_PRECISION			0x1
+# define THERMOSTAT_SETPOINT_SIZE				0x2
+
+# define THERMOSTAT_SETPOINT_SCALE(channel)		((ZUNO_CFG_CHANNEL(channel).params[0] & THERMOSTAT_UNITS_FAHRENHEIT) != 0 ? THERMOSTAT_FAHRENHEIT : THERMOSTAT_CELSIUS)
+
+# define THERMOSTAT_SETPOINT_PARAMETR(size, scale, precision)		size | ((scale) << 3) | ((precision) << 5)
+
 
 /******************Thermostat Mode*******************************************************************************************************/
 /************************************************************/
@@ -233,6 +243,16 @@ typedef union							ZwThermostatSetpointSupportedReportFrame_u
 
 
 /************************************************************/
+/* Thermostat Setpoint Get command class structs */      
+/************************************************************/
+typedef struct							ZwThermostatSetpointGetFrame_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								level;/* masked byte */
+}										ZwThermostatSetpointGetFrame_t;
+
+/************************************************************/
 /* Thermostat Setpoint Report command class structs */
 /************************************************************/
 typedef struct							ZwThermostatSetpointReport1ByteFrame_s
@@ -284,5 +304,59 @@ typedef union							ZwThermostatSetpointReportFrame_u
 	ZwThermostatSetpointReport3ByteFrame_t			byte3;
 	ZwThermostatSetpointReport4ByteFrame_t			byte4;
 }										ZwThermostatSetpointReportFrame_t;
+
+
+/************************************************************/
+/* Thermostat Setpoint Set command class structs */
+/************************************************************/
+typedef struct							ZwThermostatSetpointSet1ByteFrame_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								level;/* masked byte */
+	uint8_t								level2;/* masked byte */
+	uint8_t								value1;
+}										ZwThermostatSetpointSet1ByteFrame_t;
+
+typedef struct							ZwThermostatSetpointSet2ByteFrame_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								level;/* masked byte */
+	uint8_t								level2;/* masked byte */
+	uint8_t								value1;/* MSB */
+	uint8_t								value2;/* LSB */
+}										ZwThermostatSetpointSet2ByteFrame_t;
+
+typedef struct							ZwThermostatSetpointSet3ByteFrame_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								level;/* masked byte */
+	uint8_t								level2;/* masked byte */
+	uint8_t								value1;/* MSB */
+	uint8_t								value2;
+	uint8_t								value3;/* LSB */
+}										ZwThermostatSetpointSet3ByteFrame_t;
+
+typedef struct							ZwThermostatSetpointSet4ByteFrame_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								level;/* masked byte */
+	uint8_t								level2;/* masked byte */
+	uint8_t								value1;/* MSB */
+	uint8_t								value2;
+	uint8_t								value3;
+	uint8_t								value4;/* LSB */
+}										ZwThermostatSetpointSet4ByteFrame_t;
+
+typedef union							ZwThermostatSetpointSetFrame_u
+{
+	ZwThermostatSetpointSet1ByteFrame_t			byte1;
+	ZwThermostatSetpointSet2ByteFrame_t			byte2;
+	ZwThermostatSetpointSet3ByteFrame_t			byte3;
+	ZwThermostatSetpointSet4ByteFrame_t			byte4;
+}										ZwThermostatSetpointSetFrame_t;
 
 #endif // ZWCC_SWITCH_THERMOSTAT_PRIVATE_H

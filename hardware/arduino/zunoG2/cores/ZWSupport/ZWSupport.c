@@ -377,12 +377,21 @@ int32_t zuno_universalGetter1P(byte zuno_ch) {
 			zuno_handler_multi_getter_t * p_mw = (zuno_handler_multi_getter_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 			return zuno_getMappedValue(val_type, zuno_ch - p_mw->offset, p_mw->getter);
 		}
+		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
+		{
+			zuno_handler_single_thermostat_t *p_gs = (zuno_handler_single_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+			return zuno_callGetter(val_type, UNKNOWN_CHANNEL, p_gs->getter1);
+		}
+		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
+		{
+			zuno_handler_multi_thermostat_t *p_mgs = (zuno_handler_multi_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+			return zuno_callGetter(val_type, zuno_ch-p_mgs->offset, p_mgs->getter1);
+		}
 	}
 	return 0;
 }
 
-void zuno_universalSetter1P(byte zuno_ch, int32_t value)
-{
+void zuno_universalSetter1P(byte zuno_ch, int32_t value) {
 	if(zuno_ch > ZUNO_CFG_CHANNEL_COUNT)
 		return;
 	byte type = g_zuno_channelhandlers_map[zuno_ch].descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
@@ -404,6 +413,16 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value)
 		case CHANNEL_HANDLER_MULTI_MAPPER: {
 				zuno_handler_multi_getter_t * p_mw = (zuno_handler_multi_getter_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 				zuno_setMappedValue(val_type, zuno_ch - p_mw->offset, p_mw->getter, value);
+			}
+			break;
+		case CHANNEL_HANDLER_SINGLE_THERMOSTAT: {
+				zuno_handler_single_thermostat_t *p_gs = (zuno_handler_single_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+				zuno_callSetter(val_type, UNKNOWN_CHANNEL, p_gs->setter1, value);
+			}
+			break;
+		case CHANNEL_HANDLER_MULTI_THERMOSTAT: {
+				zuno_handler_multi_thermostat_t * p_mgs = (zuno_handler_multi_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+				zuno_callSetter(val_type, zuno_ch-p_mgs->offset, p_mgs->setter1, value);
 			}
 			break;
 	}
@@ -455,9 +474,13 @@ uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
 	lp = ((ZUnoChannelDtaHandler_t *)lp)->p_handler;
 	switch(type) {
 		case CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P:
-		  	return _callGetter2P(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->getter, value);
+			return _callGetter2P(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->getter, value);
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
-		 	return _callGetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->getter, value);
+			return _callGetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->getter, value);
+		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
+			return _callGetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_thermostat_t *)lp)->getter2, value);
+		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
+			return _callGetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_thermostat_t *)lp)->offset, ((zuno_handler_multi_thermostat_t *)lp)->getter2, value);
 	}
 	return 0;
 }
@@ -509,16 +532,18 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 	type = ((ZUnoChannelDtaHandler_t *)lp)->descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	val_type = (((ZUnoChannelDtaHandler_t *)lp)->descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
 	lp = ((ZUnoChannelDtaHandler_t *)lp)->p_handler;
-	Serial0.print("***UniSetter type:");
-	Serial0.print(type);
-	Serial0.print(" vt:");
-	Serial0.println(val_type);
 	switch(type) {
 		case CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P:
 			_callSetter2P(val_type, UNKNOWN_CHANNEL, ((zuno_handler_single_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
 			_callSetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
+			break;
+		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
+			_callSetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_thermostat_t *)lp)->setter2, value, value_add);
+			break;
+		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
+			_callSetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_thermostat_t *)lp)->offset, ((zuno_handler_multi_thermostat_t *)lp)->setter2, value, value_add);
 			break;
 	}
 }
@@ -694,6 +719,11 @@ void	zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_METER
 			case ZUNO_METER_CHANNEL_NUMBER:
+				break;
+			#endif
+			#ifdef WITH_CC_THERMOSTAT_MODE || defined WITH_CC_THERMOSTAT_SETPOINT
+			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+				rs = zuno_CCSwitchThermostatReport(ch);
 				break;
 			#endif
 			default:

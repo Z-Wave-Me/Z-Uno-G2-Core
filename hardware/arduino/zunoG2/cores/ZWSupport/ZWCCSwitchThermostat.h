@@ -61,6 +61,6 @@
 #define THERMOSTAT_SETPOINT_SUPPORTED_REPORT                                             0x05
 
 int zuno_CCSwitchThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-
+int zuno_CCSwitchThermostatReport(byte channel);
 int zuno_CCSwitchThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
 #endif // ZWCC_SWITCH_THERMOSTAT_H

@@ -132,8 +132,8 @@
             "ccs":[
                 {"name":"COMMAND_CLASS_THERMOSTAT_MODE","version":"THERMOSTAT_MODE_VERSION"},
                 {"name":"COMMAND_CLASS_THERMOSTAT_SETPOINT","version":"THERMOSTAT_SETPOINT_VERSION"}
-            ],	
-            "cluster_rule":"${type}"	
+            ],
+            "cluster_rule":"${type}"
         },
         {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,

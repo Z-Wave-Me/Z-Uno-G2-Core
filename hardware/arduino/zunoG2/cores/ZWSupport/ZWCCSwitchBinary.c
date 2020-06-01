@@ -15,7 +15,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t * cmd){
             rs = zuno_CCSwitchBinaryReport(channel);
             break;
         case SWITCH_BINARY_SET:
-            zuno_universalSetter1P(channel, ZW_CMD_BPARAM(0));
+            zuno_universalSetter1P(channel, ZW_CMD_BPARAM(0) ? 0xFF : 0x00); // Map the value right way
             zunoSendReport(channel + 1);
             rs = ZUNO_COMMAND_PROCESSED;
             break;

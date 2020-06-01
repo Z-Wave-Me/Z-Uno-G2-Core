@@ -3,7 +3,7 @@
     "max_channel_ccs":2,
     "channels":[
         {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
-            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SWITCH_BINARY","WITH_CC_BASIC"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}

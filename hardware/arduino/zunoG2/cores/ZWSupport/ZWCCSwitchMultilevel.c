@@ -120,21 +120,29 @@ static void		_stop_level(uint8_t channel) {// Stop Dimming
 int zuno_CCSwitchMultilevelReport(byte channel) {
 	CMD_REPLY_CC = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	CMD_REPLY_CMD = SWITCH_MULTILEVEL_REPORT;
-	CMD_REPLY_DATA(0) = zuno_universalGetter1P(channel);
+	byte val_mapper = zuno_universalGetter1P(channel);
+	if(val_mapper > 99)
+		val_mapper = 99;
+	CMD_REPLY_DATA(0) = val_mapper;
 	CMD_REPLY_LEN = 3;
 	return ZUNO_COMMAND_ANSWERED;
 }
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	int rs = ZUNO_UNKNOWN_CMD;
-
 	switch(ZW_CMD) {
 		case SWITCH_MULTILEVEL_GET:
 			rs = zuno_CCSwitchMultilevelReport(channel);
 			break;
-		case SWITCH_MULTILEVEL_SET:
-			zuno_universalSetter1P(channel, ZW_CMD_BPARAM(0));
-			zunoSendReport(channel + 1);
-			rs = ZUNO_COMMAND_PROCESSED;
+		case SWITCH_MULTILEVEL_SET:{
+				byte val_mapper = ZW_CMD_BPARAM(0);
+				if(val_mapper == 0xFF)
+					val_mapper = 99; // We use always 99 as the last "on" value
+				if(val_mapper > 99)
+					return rs;
+				zuno_universalSetter1P(channel, val_mapper);
+				zunoSendReport(channel + 1);
+				rs = ZUNO_COMMAND_PROCESSED;
+			}
 			break;
 		case SWITCH_MULTILEVEL_START_LEVEL_CHANGE:
 			_start_level(channel, cmd);

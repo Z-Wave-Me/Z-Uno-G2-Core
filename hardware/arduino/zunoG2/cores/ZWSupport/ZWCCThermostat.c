@@ -1,5 +1,5 @@
-#include "ZWCCSwitchThermostat.h"
-#include "./includes/ZWCCSwitchThermostat_private.h"
+#include "ZWCCThermostat.h"
+#include "./includes/ZWCCThermostat_private.h"
 
 static int _supported_report_mode(uint8_t channel) {//Processed to get the value of the thermostatmode components
 	ZwThermostatModeSupportedReportFrame_t		*lp;
@@ -31,7 +31,7 @@ static int _report_mode(uint8_t channel) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCSwitchThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
 	rs = ZUNO_UNKNOWN_CMD;
@@ -109,7 +109,7 @@ static void _set_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	zuno_universalSetter2P(channel, lp->byte2.level & THERMOSTAT_MASK_4_BIT, value);
 }
 
-int zuno_CCSwitchThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
 	rs = ZUNO_UNKNOWN_CMD;
@@ -130,7 +130,7 @@ int zuno_CCSwitchThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t 
 	return (rs);
 }
 
-int zuno_CCSwitchThermostatReport(byte channel) {
+int zuno_CCThermostatReport(byte channel) {
 	#ifdef WITH_CC_THERMOSTAT_MODE
 	_report_mode(channel);
 	#endif

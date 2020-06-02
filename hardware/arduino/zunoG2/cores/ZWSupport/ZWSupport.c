@@ -3,7 +3,7 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchColor.h"
-#include "ZWCCSwitchThermostat.h"
+#include "ZWCCThermostat.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
 #include "ZWCCNotification.h"
@@ -221,12 +221,12 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#endif
 			#ifdef WITH_CC_THERMOSTAT_MODE
 			case COMMAND_CLASS_THERMOSTAT_MODE:
-				result = zuno_CCSwitchThermostatModeHandler(zuno_ch, cmd);
+				result = zuno_CCThermostatModeHandler(zuno_ch, cmd);
 				break;
 			#endif
 			#ifdef WITH_CC_THERMOSTAT_SETPOINT
 			case COMMAND_CLASS_THERMOSTAT_SETPOINT:
-				result = zuno_CCSwitchThermostatSetPointHandler(zuno_ch, cmd);
+				result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd);
 				break;
 			#endif
 		}
@@ -723,7 +723,7 @@ void	zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_THERMOSTAT_MODE || defined WITH_CC_THERMOSTAT_SETPOINT
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchThermostatReport(ch);
+				rs = zuno_CCThermostatReport(ch);
 				break;
 			#endif
 			default:

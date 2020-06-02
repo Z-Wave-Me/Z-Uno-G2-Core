@@ -721,7 +721,7 @@ void	zunoSendReportHandler(uint32_t ticks) {
 			case ZUNO_METER_CHANNEL_NUMBER:
 				break;
 			#endif
-			#ifdef WITH_CC_THERMOSTAT_MODE || defined WITH_CC_THERMOSTAT_SETPOINT
+			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchThermostatReport(ch);
 				break;

@@ -68,6 +68,31 @@ static int _supported_report_setpoint(uint8_t channel) {//Processed to get the v
 }
 
 
+static uint16_t _limit_setpoint(uint8_t b_test, uint16_t value) {
+	int16_t					up_limit;
+	int16_t					down_limit;
+	uint8_t					ratio;
+
+	if ((b_test & THERMOSTAT_RANGE_NEG) != 0 && (b_test & THERMOSTAT_RANGE_POS) != 0) {
+		up_limit = 10 * THERMOSTAT_SETPOINT_RATIO;
+		down_limit = -10 * THERMOSTAT_SETPOINT_RATIO;
+	} else if ((b_test & THERMOSTAT_RANGE_NEG) != 0 ) {
+		up_limit = 0;
+		down_limit = -10 * THERMOSTAT_SETPOINT_RATIO;
+	} else {
+		up_limit = 10 * THERMOSTAT_SETPOINT_RATIO;
+		down_limit = 0;
+	}
+	ratio = b_test & THERMOSTAT_LIMITS_MASK;
+	up_limit = up_limit * ratio;
+	down_limit = down_limit * ratio;
+	if ((int16_t)value > up_limit)
+		value = (uint16_t)up_limit;
+	if ((int16_t)value < down_limit)
+		value = (uint16_t)down_limit;
+	return (value);
+}
+
 static int _report_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	ZwThermostatSetpointReportFrame_t			*lp;
 	uint8_t										componentId;
@@ -86,6 +111,7 @@ static int _report_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	lp->byte2.level = componentId;
 	lp->byte2.level2 = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
 	out = zuno_universalGetter2P(channel, componentId);
+	out = _limit_setpoint(ZUNO_CFG_CHANNEL(channel).params[0], out);
 	lp->byte2.value1 = (uint8_t)(out >> (sizeof(out) * 8 / 2));
 	lp->byte2.value2 = (uint8_t)(out & 0xFF);
 	CMD_REPLY_LEN = sizeof(lp->byte2);
@@ -99,6 +125,7 @@ static void _set_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	
 	lp = (ZwThermostatSetpointSetFrame_t *)cmd->cmd;
 	value = lp->byte2.value2 | (lp->byte2.value1 << (sizeof(value) * 8 / 2));
+	value =_limit_setpoint(ZUNO_CFG_CHANNEL(channel).params[0], value);
 	zuno_universalSetter2P(channel, lp->byte2.level & THERMOSTAT_MASK_4_BIT, value);
 }
 

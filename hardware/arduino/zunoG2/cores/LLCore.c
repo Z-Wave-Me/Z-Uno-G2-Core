@@ -402,7 +402,8 @@ inline unsigned long mcsToLoops(unsigned long mcs)
     return mcs;
 }
 
-unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout){
+unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
+{
     //timeout = mcsToLoops(timeout);
     unsigned long maxloops = mcsToLoops(timeout) * 3;
     unsigned long width = 0;
@@ -427,7 +428,8 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout){
             return 0;
     }
     // wait for the pulse to stop
-    while (((GPIO->P[real_port].DIN & mask) != 0) == state) {
+    while (((GPIO->P[real_port].DIN & mask) != 0) == state) 
+    {
         WDOGWR(maxloops);
         if (++width == maxloops)
             return 0;
@@ -458,6 +460,21 @@ int zunoEEPROMRead(word address, word size, byte * data) {
 int zunoEEPROMErase() {
     return (int)zunoSysCall(ZUNO_FUNC_EEPROM_ERASE, 1, 0xCAFE0ACE);
 }
+
+
+void _zme_memcpy(byte * dst, byte * src, byte count)
+{
+    // Serial0.println(*src);
+    src += (count - 1);
+    while(count--) 
+    {
+        *dst = *src;
+        // Serial0.println(*src);
+        src--;
+        dst++;
+    }
+}
+
 int main(){
 
     return 0;

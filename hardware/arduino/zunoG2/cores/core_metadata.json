@@ -46,7 +46,7 @@
             "type_name":"ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER", "type_val":4,
             "cc_flags":["WITH_CC_SENSORMULTILEVEL"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"3"}
+                {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"7"}
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL",

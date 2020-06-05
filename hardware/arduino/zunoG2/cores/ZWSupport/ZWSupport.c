@@ -4,6 +4,8 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCMultichannel.h"
+#include "ZWCCMeter.h"
+#include "ZWCCSensorMultilevel.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -18,6 +20,7 @@ enum {
 	HADLER_ARGTYPE_2SB = HADLER_ARGTYPE_2UB | 0x08,
 	HADLER_ARGTYPE_4SB = HADLER_ARGTYPE_4UB | 0x08
 };
+
 #define HANDLER_DESCRIPTOR_TYPE_MASK     0x07
 #define HANDLER_DESCRIPTOR_LEN_SHIFT     0x04
 #define HANDLER_DESCRIPTOR_LEN_MASK      0x03
@@ -28,26 +31,37 @@ typedef struct ZUnoChannelDtaHandler_s{
 					   // |    7   | 6 |  5    |   4 | 3 |2|1|0|
 	byte   descriptor; // | SIGNED | - | 2^NUM_BYTES | - | TYPE|
 }ZUnoChannelDtaHandler_t;
+
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 ZUNOCommandPacket_t g_outgoing_packet;
+
 uint8_t             g_outgoing_data[MAX_ZW_PACKAGE];
 
-bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes){
-	switch(channel->type){
+bool zuno_compare_channeltypeCC(ZUNOChannel_t * channel, uint8_t * cmd_bytes)
+{
+	switch(channel->type)
+	{
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 			if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_BINARY)
 				return true;
 			if(cmd_bytes[0] == COMMAND_CLASS_BASIC)
 				return true;
 			break;
+
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			 if(cmd_bytes[0] == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_bytes[0] == COMMAND_CLASS_BASIC)
 				return true;
 			break;
+
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
 			if(cmd_bytes[0] == COMMAND_CLASS_SENSOR_MULTILEVEL)
+				return true;
+			break;
+
+		case ZUNO_METER_CHANNEL_NUMBER:
+			if(cmd_bytes[0] == COMMAND_CLASS_METER)
 				return true;
 			break;
 	}
@@ -63,8 +77,8 @@ bool compare_zw_channel(byte ch, byte targ) {
 }
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	byte i;
-	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++)
-		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel,cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
+	for(i = 0; i < ZUNO_CFG_CHANNEL_COUNT; i++)
+		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel, cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
 			if(zuno_compare_channeltypeCC(&(ZUNO_CFG_CHANNEL(i)), cmd->cmd))
 				return i;
 	return UNKNOWN_CHANNEL;
@@ -162,6 +176,17 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 				result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
 				break;
 			#endif
+			#ifdef WITH_CC_METER
+			case COMMAND_CLASS_METER:
+				result = zuno_CCMeterHandler(zuno_ch, cmd);
+				break;
+			#endif
+			
+			#ifdef WITH_CC_SENSORMULTILEVEL
+			case COMMAND_CLASS_SENSOR_MULTILEVEL:
+				result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
+				break;
+			#endif
 		}
 	}
 	// Do we have any report to send?
@@ -225,7 +250,8 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 			break;
 		case HADLER_ARGTYPE_4UB:
 		case HADLER_ARGTYPE_4SB:
-			if(ch != UNKNOWN_CHANNEL){
+			if(ch != UNKNOWN_CHANNEL)
+			{
 				((zuno_multisetter4ub_t*)handler)(ch, value);
 				break;
 			}
@@ -410,9 +436,9 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch){
 
 
 // Main timer for CC purposes
-volatile t_ZUNO_TIMER		g_zuno_timer;
+volatile t_ZUNO_TIMER g_zuno_timer;
 
-void			zuno_CCTimer(uint32_t ticks)
+void zuno_CCTimer(uint32_t ticks)
 {
 	g_zuno_timer.ticks = ticks;
 	#ifdef WITH_CC_SWITCH_MULTILEVEL
@@ -420,7 +446,7 @@ void			zuno_CCTimer(uint32_t ticks)
 	#endif
 }
 
-void			zunoSendReport(byte ch)
+void zunoSendReport(byte ch)
 {
 
 }

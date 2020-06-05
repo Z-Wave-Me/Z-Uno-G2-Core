@@ -549,6 +549,6 @@ enum {
 #define SWITCH_COLOR_COMPONENT_PURPLE      0x07
 
 #ifndef ZUNO_PREPROC_PHASE
-#include "zuno_preproc/Custom_defs.h"
+#include "./zuno_preproc/Custom_defs.h"
 #endif
 #endif // ZUNO_DEFINITIONS

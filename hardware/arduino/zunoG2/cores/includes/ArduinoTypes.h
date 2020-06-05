@@ -28,17 +28,18 @@ typedef unsigned long   dword;
 //typedef unsigned long   time_t;
 
 struct tmElements_s {
-byte Second;
-byte Minute;
-byte Hour;
-byte Wday; // day of week, sunday is day 1
-byte Day;
-byte Month;
-byte Year; // offset from 1970;
+    byte Second;
+    byte Minute;
+    byte Hour;
+    byte Wday; // day of week, sunday is day 1
+    byte Day;
+    byte Month;
+    byte Year; // offset from 1970;
 };
 
 
 typedef struct tmElements_s tmElements_t;
+
 typedef enum tmElementsFields{
     tmSecond, tmMinute, tmHour, tmWday, tmDay,tmMonth, tmYear, tmNbrFields
 }tmElementsFields_t;	 

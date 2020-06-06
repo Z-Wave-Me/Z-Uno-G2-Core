@@ -1598,7 +1598,13 @@ enum{
     cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
     cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,
     cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1,
-    cmuClock_I2C0=CMU_CLOCK_TYPE_I2C0
+    cmuClock_I2C0 = CMU_CLOCK_TYPE_I2C0,
+    cmuClock_I2C1 = CMU_CLOCK_TYPE_I2C1,
+    cmuClock_USART0 = CMU_CLOCK_TYPE_USART0,
+    cmuClock_USART1 = CMU_CLOCK_TYPE_USART1,
+    cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
+    cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO
+    
 };
 
 static inline void BUS_RegMaskedSet(volatile uint32_t *addr,

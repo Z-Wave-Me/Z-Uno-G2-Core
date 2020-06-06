@@ -4,7 +4,7 @@
 // Sketch setup
 typedef struct ZUNOChannel_s {
 	uint8_t type;
-	uint8_t sub_type;
+	uint8_t sub_type;//additional type values SWITCH_COLOR_FLAGS_RED in ZUNO_SWITCH_COLOR
 	uint8_t params[MAX_CHANNEL_PARAMS];
 	uint8_t zw_channel;
 } ZUNOChannel_t;
@@ -74,6 +74,19 @@ typedef struct zuno_handler_multi_gettersetter_s{
     void * setter;
     uint8_t offset;
 }zuno_handler_multi_gettersetter_t;
+typedef struct		zuno_handler_single_thermostat_s {//???
+	void			*getter1;
+	void			*setter1;
+	void			*getter2;
+	void			*setter2;
+}					zuno_handler_single_thermostat_t;
+typedef struct		zuno_handler_multi_thermostat_s {//???
+	void			*getter1;
+	void			*setter1;
+	void			*getter2;
+	void			*setter2;
+	uint8_t			offset;
+}					zuno_handler_multi_thermostat_t;
 
 typedef struct ZUNOSysEvent_s{
 	uint8_t event;

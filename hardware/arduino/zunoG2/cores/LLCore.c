@@ -135,6 +135,7 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
+            delay(2000); //???
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
@@ -437,9 +438,6 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
     return loopsToMcs(width);
 }
 
-void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
-    zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg);
-}
 void zunoCommitCfg(){
     zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
 }

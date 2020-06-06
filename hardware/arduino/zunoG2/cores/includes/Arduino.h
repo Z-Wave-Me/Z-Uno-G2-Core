@@ -5,7 +5,9 @@
 #include "ArduinoTypes.h"
 #include "LLCore.h"
 #include "ZUNO_StaticData.h"
+#ifndef ZUNO_PREPROC_PHASE
 #include <string.h>
+#endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "CrtxGPIO.h"
 #include "HardwareSerial.h"
@@ -90,6 +92,7 @@ void zunoSetZWChannel(byte ch, byte zw_channel);
 byte zunoAddChannel(byte type, byte subtype, byte options);
 bool zunoStartDeviceConfiguration();
 void zunoStartLearn(byte timeout, bool secured);
+void zunoSendReport(byte ch);
 int zunoEEPROMWrite(word address, word size, byte * data);
 int zunoEEPROMRead(word address, word size, byte * data);
 int zunoEEPROMErase();

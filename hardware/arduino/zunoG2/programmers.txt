@@ -1,0 +1,6 @@
+zprog.name=Z-Uno-2G Programmer
+zprog.communication=usb
+zprog.protocol=usb
+zprog.program.protocol=usb
+zprog.program.tool=zprog
+zprog.program.extra_params=

@@ -20,7 +20,7 @@ tools.zprog.cmd.cores={runtime.platform.path}/cores
 
 tools.zprog.upload.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
 tools.zprog.erase.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" arduino_dummy
-tools.zprog.bootloader.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" boot {runtime.platform.path}/bootloaders/zuno_bootloader.bin -d COM7
+tools.zprog.bootloader.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" boot {runtime.platform.path}/bootloaders/zuno_bootloader.bin -d "{serial.port}"
 tools.zprog.program.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
 
 
@@ -64,3 +64,10 @@ tools.zprog.erase.params.quiet=-q -q
 
 tools.zprog.bootloader.params.verbose=-v
 tools.zprog.bootloader.params.quiet=-q
+
+
+# USB Default Flags
+# Default blank usb manufacturer will be filled it at compile time
+# - from numeric vendor ID, set to Unknown otherwise
+build.usb_manufacturer="Unknown"
+build.usb_flags=-DUSB_VID={build.vid} -DUSB_PID={build.pid} '-DUSB_MANUFACTURER={build.usb_manufacturer}' '-DUSB_PRODUCT={build.usb_product}'

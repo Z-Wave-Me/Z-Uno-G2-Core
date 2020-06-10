@@ -11,7 +11,7 @@ zuno.pid.0=0xEA60
 
 zuno.upload.tool=zprog
 zuno.upload.protocol=usb
-zuno.upload.maximum_size=32768‬ 
+zuno.upload.maximum_size=32768
 zuno.upload.maximum_data_size=2048
 zuno.upload.speed=115200
 

@@ -1,0 +1,7 @@
+#ifndef ZWCC_DOOOR_LOCK_PRIVATE_H
+#define ZWCC_DOOOR_LOCK_PRIVATE_H
+
+#include "Arduino.h"
+
+
+#endif // ZWCC_DOOOR_LOCK_PRIVATE_H

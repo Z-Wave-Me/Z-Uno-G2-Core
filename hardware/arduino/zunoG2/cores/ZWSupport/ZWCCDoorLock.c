@@ -16,7 +16,7 @@ static int _report_configuration(uint8_t channel) {
 }
 
 static void _set_operation(uint8_t channel, ZUNOCommandPacket_t *cmd) {
-	zuno_universalSetter1P(channel, ((ZwDoorLockOperationSet_t *)cmd)->doorLockMode);
+	zuno_universalSetter1P(channel, ((ZwDoorLockOperationSet_t *)cmd->cmd)->doorLockMode);
 }
 
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {

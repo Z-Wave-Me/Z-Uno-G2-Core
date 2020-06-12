@@ -745,8 +745,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 				break;
 			#endif
 			#ifdef WITH_CC_DOORLOCK
-			case COMMAND_CLASS_DOOR_LOCK:
-				rs = zuno_CCSDoorLockReport(ch, NULL);
+			case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+				rs = zuno_CCDoorLockReport(ch);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION

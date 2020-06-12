@@ -13,6 +13,6 @@
 #define DOOR_LOCK_OPERATION_SET                                                          0x01
 
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-int zuno_CCSDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCDoorLockReport(uint8_t channel);
 
 #endif // ZWCC_DOOOR_LOCK_H

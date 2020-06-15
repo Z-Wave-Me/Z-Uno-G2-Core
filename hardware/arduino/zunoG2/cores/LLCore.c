@@ -6,6 +6,8 @@
 #include "CrtxTimer.h"
 #include "Stub.h"
 
+//# define ZUNO_PIN_V1 
+
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
 
@@ -26,6 +28,7 @@ typedef struct PinDef{
 // E = 4
 // F = 5
 
+#if defined ZUNO_PIN_V1
 // "NIKBOARD" map
 static const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
@@ -64,6 +67,42 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     {1, 13,  8}, //  31 - B13
     
 };
+#else
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{2, 8, 13},//0 - PC8 - 0
+	{2, 9, 14},//1 - PC9 - 1
+	{2, 10, 15},//2 - PC10 - 2
+	{2, 11, 16},//3 - PC11 - TX0
+	{5, 0, 24},//4 - PF0//???
+	{5, 1, 25},//5 - PF1//???
+	{5, 2, 26},//6 - PF2//???
+	{5, 3, 27},//7 - PF3 - RX0
+	{5, 4, 28},//8 - PF4 - 7
+	{5, 5, 29},//9 - PF5 - 8
+	{5, 6, 30},//10 - PF6//A0
+	{5, 7, 31},//11 - PF7//A1
+	{3, 9, 17},//12 - PD9 - A2
+	{3, 10, 18},//13 - PD10 -A3
+	{3, 11, 19},//14 - PD11 - 9
+	{3, 12, 20},//15 - PD12 - 10
+	{3, 13, 21},//16 - PD13//???
+	{3, 14, 22},//17 - PD14 - SERVICE LED 2 - red
+	{3, 15, 23},//18 - PD15 - SERVICE LED 1 - yellow
+	{0, 0, 0},//19 - PA0//???
+	{0, 1, 1},//20 - PA1//???
+	{0, 2, 2},//21 - PA2 - ARDURINO LED - blue and PWM1
+	{0, 3, 3},//22 - PA3 - PWM2
+	{0, 4, 4},//23 - PA4 - PWM3
+	{0, 5, 5},//24 - PA5 - PWM4
+	{1, 11, 6},//25 - PB11 - 17
+	{1, 12, 7},//26 - PB12 - 18
+	{1, 13, 8},//27 - PB13 - 19
+	{1, 14, 9},//28 - PB14 - 20
+	{1, 15, 10},//29 - PB15 - 21
+	{2, 6, 11},//30 - PC6 - 22
+	{2, 7, 12}//31 - PC7 - BTN
+};
+#endif
 
 /*
 typedef void zuno_user_systimer_handler(uint32_t);

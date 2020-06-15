@@ -509,13 +509,13 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
           return adcPosSelAPORT3XCH2;
 #else
       case A0:
-          return adcPosSelAPORT3XCH8;
+          return adcPosSelAPORT1XCH22;
       case A1:
-          return adcPosSelAPORT4XCH9;
+          return adcPosSelAPORT2XCH23;
       case A2:   
-          return adcPosSelAPORT3XCH10;
+          return adcPosSelAPORT4XCH1;
       case A3:
-          return adcPosSelAPORT3XCH12;
+          return adcPosSelAPORT3XCH2;
 #endif
       case BATTERY:
           return adcPosSelAVDD;

@@ -6,7 +6,6 @@
 #include "CrtxTimer.h"
 #include "Stub.h"
 
-//# define ZUNO_PIN_V1 
 
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};

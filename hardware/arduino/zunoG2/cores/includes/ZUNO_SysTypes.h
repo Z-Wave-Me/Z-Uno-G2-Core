@@ -74,13 +74,13 @@ typedef struct zuno_handler_multi_gettersetter_s{
     void * setter;
     uint8_t offset;
 }zuno_handler_multi_gettersetter_t;
-typedef struct		zuno_handler_single_thermostat_s {//???
+typedef struct		zuno_handler_single_thermostat_s {
 	void			*getter1;
 	void			*setter1;
 	void			*getter2;
 	void			*setter2;
 }					zuno_handler_single_thermostat_t;
-typedef struct		zuno_handler_multi_thermostat_s {//???
+typedef struct		zuno_handler_multi_thermostat_s {
 	void			*getter1;
 	void			*setter1;
 	void			*getter2;

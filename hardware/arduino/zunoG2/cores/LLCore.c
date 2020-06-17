@@ -6,6 +6,7 @@
 #include "CrtxTimer.h"
 #include "Stub.h"
 
+
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
 
@@ -26,6 +27,7 @@ typedef struct PinDef{
 // E = 4
 // F = 5
 
+#if defined ZUNO_PIN_V1
 // "NIKBOARD" map
 static const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
@@ -64,6 +66,44 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     {1, 13,  8}, //  31 - B13
     
 };
+#else
+// FIXME: где analog not support - проблеммы у analogWrite - не проходит, лампочка не мигает
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	// LEFT SIDE
+	{2, 8, 13},//0 - PC8 - 0 - analog not support
+	{2, 9, 14},//1 - PC9 - 1 - analog not support
+	{2, 10, 15},//2 - PC10 - 2 - analog not support
+	{5, 6, 30},//3 - PF6 - A0 - analog not support
+	{5, 7, 31},//4 - PF7 - A1 - analog not support
+	{3, 9, 17},//5 - PD9 - A2 - analog not support
+	{3, 10, 18},//6 - PD10 -A3
+	{5, 4, 28},//7 - PF4 - 7
+	{5, 5, 29},//8 - PF5 - 8
+	// RIGHT SIDE
+	{3, 11, 19},//9 - PD11 - 9
+	{3, 12, 20},//10 - PD12 - 10
+	{0, 0, 0},//11 - PA0// FIXME - 11  - analog not suppor - не удалось помигать с помощью digitalWrite
+	{0, 1, 1},//12 - PA1// FIXME - 12 - analog not suppor - не удалось помигать с помощью digitalWrite
+	{0, 2, 2},//13 - PA2 - ARDURINO LED - blue and PWM1
+	{0, 3, 3},//14 - PA3 - PWM2
+	{0, 4, 4},//15 - PA4 - PWM3 - analog not suppor
+	{0, 5, 5},//16 - PA5 - PWM4
+	{1, 11, 6},//17 - PB11 - 17 - analog not suppor
+	{1, 12, 7},//18 - PB12 - 18 - analog not suppor
+	{1, 13, 8},//19 - PB13 - 19 - analog not suppor
+	{1, 14, 9},//20 - PB14 - 20 - analog not suppor
+	{1, 15, 10},//21 - PB15 - 21 - analog not suppor
+	{2, 6, 11},//22 - PC6 - 22 - analog not suppor
+	{2, 7, 12},//23 - PC7 - BTN - analog not suppor
+	{2, 11, 16},//24 - PC11 - TX0 - analog not suppor
+	{5, 3, 27},//25 - PF3 - RX0 - analog not suppor
+	// DO NOT USE !!!
+	{3, 13, 21},//26 - PD13 - USB Serial
+	{5, 2, 26}//27 - PF2 - USB Serial
+
+
+};
+#endif
 
 /*
 typedef void zuno_user_systimer_handler(uint32_t);
@@ -135,7 +175,7 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            delay(2000); //???
+            delay(2000);// ! DBG - что бы информацию выводила отладочную окуратно без разброса - в Realese - убрать
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif

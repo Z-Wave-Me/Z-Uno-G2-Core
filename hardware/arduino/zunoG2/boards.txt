@@ -1,0 +1,66 @@
+# See: http://code.google.com/p/arduino/wiki/Platforms
+
+menu.cpu=Processor
+menu.Frequency=Frequency
+menu.Security=Security
+##############################################################
+zuno.name=Z-Wave>ME Z-Uno-2G
+
+zuno.vid.0=0x10C4
+zuno.pid.0=0xEA60
+
+zuno.upload.tool=zprog
+zuno.upload.protocol=usb
+zuno.upload.maximum_size=32768
+zuno.upload.maximum_data_size=2048
+zuno.upload.speed=115200
+
+zuno.bootloader.tool=zprog
+zuno.bootloader.low_fuses=0xFF
+zuno.bootloader.high_fuses=0xDE
+zuno.bootloader.extended_fuses=0x05
+zuno.bootloader.unlock_bits=0x3F
+zuno.bootloader.lock_bits=0x0F
+zuno.bootloader.file=none
+
+zuno.build.mcu=zuno
+zuno.build.f_cpu=16000000L
+zuno.build.board=zuno
+zuno.build.core=/
+zuno.build.variant=
+zuno.build.vid=0x10C4
+zuno.build.pid=0xEA60
+zuno.build.usb_product="Z-UNO-2G"
+zuno.build.extra_flags=
+
+zuno.menu.Frequency.Ru = Russian
+zuno.menu.Frequency.Eu = Europe
+zuno.menu.Frequency.Us = USA
+zuno.menu.Frequency.In = India
+zuno.menu.Frequency.Il = Israel
+zuno.menu.Frequency.ANz = Australia & New Zealand, Brazil
+zuno.menu.Frequency.Ch = China
+zuno.menu.Frequency.Hk = Hong Kong
+zuno.menu.Frequency.Jp = Japan
+zuno.menu.Frequency.Kr = Korea
+
+
+zuno.menu.Frequency.Ru.build.rf_freq = RU
+zuno.menu.Frequency.Eu.build.rf_freq = EU
+zuno.menu.Frequency.Us.build.rf_freq = US
+zuno.menu.Frequency.In.build.rf_freq = IN
+zuno.menu.Frequency.Il.build.rf_freq = IL
+zuno.menu.Frequency.ANz.build.rf_freq = ANZ
+zuno.menu.Frequency.Ch.build.rf_freq = CN
+zuno.menu.Frequency.Hk.build.rf_freq = HK
+zuno.menu.Frequency.Jp.build.rf_freq = JP
+zuno.menu.Frequency.Kr.build.rf_freq = KR
+
+zuno.menu.Security.Off = Disabled
+zuno.menu.Security.On = S0
+zuno.menu.Security.On2 = S2
+
+zuno.menu.Security.Off.build.security = 0
+zuno.menu.Security.On.build.security = 1
+zuno.menu.Security.On2.build.security = 2
+

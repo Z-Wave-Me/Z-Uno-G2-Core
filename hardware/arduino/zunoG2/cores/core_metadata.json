@@ -75,7 +75,9 @@
             "specific_type":"SPECIFIC_TYPE_DOOR_LOCK",
             "icon_id":"ICON_TYPE_GENERIC_ENTRY_CONTROL",
             "icon_app_id":"ICON_TYPE_GENERIC_ENTRY_CONTROL",
-            "ccs":[],
+            "ccs":[
+                {"name":"COMMAND_CLASS_DOOR_LOCK","version":"DOOR_LOCK_VERSION"}
+            ],
             "flags":["0"],
             "cluster_rule":"${type}"
         },

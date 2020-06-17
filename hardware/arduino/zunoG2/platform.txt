@@ -1,0 +1,73 @@
+
+# ZUNO Core and platform.
+# ------------------------------
+
+# For more info:
+# https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
+
+name=Z-Wave>ME Z-Uno-2G Boards
+
+# ZUNO compile variables
+# ---------------------
+tools.zprog.cmd.path={runtime.tools.zuno_toolchain.path}/zme_make/zme_make
+tools.zprog.cmd.utility={runtime.tools.zuno_toolchain.path}/utility
+tools.zprog.cmd.include={runtime.tools.zuno_toolchain.path}/gcc/lib/gcc/arm-none-eabi/7.2.1/include
+tools.zprog.cmd.bin={runtime.tools.zuno_toolchain.path}/gcc/bin
+
+tools.zprog.cmd.libraries={runtime.platform.path}/libraries
+tools.zprog.cmd.cores={runtime.platform.path}/cores
+
+
+tools.zprog.upload.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
+tools.zprog.erase.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" arduino_dummy
+tools.zprog.bootloader.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" boot {runtime.platform.path}/bootloaders/zuno_bootloader.bin -d "{serial.port}"
+tools.zprog.program.pattern="{runtime.tools.zuno_toolchain.path}/zme_make/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
+
+
+# ZUNO compile patterns
+# ----------------------
+recipe.c.o.pattern="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.cpp.o.pattern="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.S.o.pattern="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.ar.pattern="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.c.combine.pattern="{tools.zprog.cmd.path}" build "{build.path}/{build.project_name}" -S "{tools.zprog.cmd.cores}" -S "{tools.zprog.cmd.libraries}"  -S "{tools.zprog.cmd.include}" -B  "{build.path}" -T "{tools.zprog.cmd.bin}" -O "arduino_ide"
+recipe.objcopy.eep.pattern="{tools.zprog.cmd.path}" arduino_dummy  
+recipe.objcopy.hex.pattern="{tools.zprog.cmd.path}" arduino_dummy 
+
+# Preprocessor
+# -------------
+preproc.includes.flags="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.preproc.includes="{tools.zprog.cmd.path}" arduino_dummy 
+preproc.macros.flags="{tools.zprog.cmd.path}" arduino_dummy 
+recipe.preproc.macros= "{tools.zprog.cmd.path}" arduino_preproc  "{source_file}"
+
+
+# Compute size
+# -------------
+recipe.size.pattern="{tools.zprog.cmd.path}" arduino_size {build.project_name} -B "{build.path}"
+recipe.size.regex=^(?:\.text)\s+([0-9]+).*
+recipe.size.regex.data=^(?:\.ram)\s+([0-9]+).*
+recipe.size.regex.eeprom=^(?:\.eeprom)\s+([0-9]+).*
+
+
+# ZUNO Uploader/Programmers tools
+# ------------------------------
+
+tools.zprog.upload.params.verbose=-v
+tools.zprog.upload.params.quiet=-q
+
+tools.zprog.program.params.verbose=-v
+tools.zprog.program.params.quiet=-q
+
+tools.zprog.erase.params.verbose=-v
+tools.zprog.erase.params.quiet=-q -q
+
+tools.zprog.bootloader.params.verbose=-v
+tools.zprog.bootloader.params.quiet=-q
+
+
+# USB Default Flags
+# Default blank usb manufacturer will be filled it at compile time
+# - from numeric vendor ID, set to Unknown otherwise
+build.usb_manufacturer="Unknown"
+build.usb_flags=-DUSB_VID={build.vid} -DUSB_PID={build.pid} '-DUSB_MANUFACTURER={build.usb_manufacturer}' '-DUSB_PRODUCT={build.usb_product}'

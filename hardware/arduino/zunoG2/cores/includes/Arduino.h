@@ -47,6 +47,8 @@ enum{
     INPUT_PULLDOWN  = GPIOMODE_INPUTPULL
 };
 
+//# define ZUNO_PIN_V1
+#if defined ZUNO_PIN_V1
 #define A0                  14
 #define A1                  15
 #define A2                  16
@@ -56,7 +58,17 @@ enum{
 #define HIGH                1
 #define LOW                 0
 #define LED_BUILTIN         12 // !!! FIXME on prod
+#else
+#define A0                  3
+#define A1                  4
+#define A2                  5
+#define A3                  6
+#define BATTERY             0xFF
 
+#define HIGH                1
+#define LOW                 0
+#define LED_BUILTIN         13
+#endif
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)

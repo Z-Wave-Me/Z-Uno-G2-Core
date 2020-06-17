@@ -9,6 +9,7 @@
 #include "ZWCCMeter.h"
 #include "ZWCCSensorMultilevel.h"
 #include "ZWCCNotification.h"
+#include "ZWCCDoorLock.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -60,20 +61,22 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
-
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
-
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SENSOR_MULTILEVEL)
 				return true;
 			break;
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
+				return true;
+			break;
+		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;
 			break;
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
@@ -231,7 +234,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 				result = zuno_CCMeterHandler(zuno_ch, cmd);
 				break;
 			#endif
-			
+			#ifdef WITH_CC_DOORLOCK
+			case COMMAND_CLASS_DOOR_LOCK:
+				result = zuno_CCDoorLockHandler(zuno_ch, cmd);
+				break;
+			#endif
 			#ifdef WITH_CC_SENSORMULTILEVEL
 			case COMMAND_CLASS_SENSOR_MULTILEVEL:
 				result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
@@ -735,6 +742,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchColorReport(ch, NULL);
+				break;
+			#endif
+			#ifdef WITH_CC_DOORLOCK
+			case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+				rs = zuno_CCDoorLockReport(ch);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION

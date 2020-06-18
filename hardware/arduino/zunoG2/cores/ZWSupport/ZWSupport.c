@@ -10,6 +10,7 @@
 #include "ZWCCSensorMultilevel.h"
 #include "ZWCCNotification.h"
 #include "ZWCCDoorLock.h"
+#include "ZWCCConfiguration.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -79,6 +80,10 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;
 			break;
+		case ZUNO_CONFIGURATION_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_CONFIGURATION)
+				return true;
+			break;
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
 				return true;
@@ -89,7 +94,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_NOTIFICATION)
 				return true;
 			break;
-
 		case ZUNO_METER_CHANNEL_NUMBER:
 			if(cmd_bytes[0] == COMMAND_CLASS_METER)
 				return true;
@@ -237,6 +241,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#ifdef WITH_CC_DOORLOCK
 			case COMMAND_CLASS_DOOR_LOCK:
 				result = zuno_CCDoorLockHandler(zuno_ch, cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_CONFIGURATION
+			case COMMAND_CLASS_CONFIGURATION:
+				result = zuno_CCConfigurationHandler(zuno_ch, cmd);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSORMULTILEVEL

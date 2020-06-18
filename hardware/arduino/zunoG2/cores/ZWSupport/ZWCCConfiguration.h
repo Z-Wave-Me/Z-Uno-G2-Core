@@ -3,8 +3,6 @@
 
 #include "Arduino.h"
 
-#define WITH_CC_CONFIGURATION
-
 /* Configuration command class commands */
 #define CONFIGURATION_VERSION                                                            0x01
 #define CONFIGURATION_GET                                                                0x05

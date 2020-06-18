@@ -109,4 +109,6 @@ int zunoEEPROMWrite(word address, word size, byte * data);
 int zunoEEPROMRead(word address, word size, byte * data);
 int zunoEEPROMErase();
 void _zme_memcpy(byte *dst, byte *src, byte count);
+uint32_t zunoLoadCFGParam(uint8_t param);
+void zunoSaveCFGParam(uint8_t param, uint32_t value);
 #endif // ZUNO_ARDUINOH

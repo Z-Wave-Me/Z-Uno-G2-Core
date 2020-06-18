@@ -80,10 +80,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;
 			break;
-		case ZUNO_CONFIGURATION_CHANNEL_NUMBER:
-			if(cmd_class == COMMAND_CLASS_CONFIGURATION)
-				return true;
-			break;
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
 				return true;
@@ -99,6 +95,10 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 	}
+	#ifdef WITH_CC_CONFIGURATION
+	if (cmd_class == COMMAND_CLASS_CONFIGURATION)
+		return (true);
+	#endif
 	return false;
 }
 
@@ -245,7 +245,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 			#endif
 			#ifdef WITH_CC_CONFIGURATION
 			case COMMAND_CLASS_CONFIGURATION:
-				result = zuno_CCConfigurationHandler(zuno_ch, cmd);
+				result = zuno_CCConfigurationHandler(cmd);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSORMULTILEVEL

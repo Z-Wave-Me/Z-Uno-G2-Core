@@ -3,11 +3,14 @@
 
 #include "Arduino.h"
 
-typedef uint16_t CONFIGPARAM_MAX_SIZE;
+typedef uint32_t CONFIGPARAM_MAX_SIZE;
 
 #define CONFIGPARAM_MIN_PARAM			0x40
 #define CONFIGPARAM_MAX_PARAM			0x60
-#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(CONFIGPARAM_MAX_SIZE)) + 0x2000)
+#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(CONFIGPARAM_MAX_SIZE)) + 0x204)
+
+
+extern zuno_configuration_changed *g_zuno_configuration_change;
 
 /************************************************************/
 /* Configuration Get command class structs */               

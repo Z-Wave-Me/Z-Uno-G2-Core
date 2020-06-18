@@ -81,6 +81,9 @@ typedef void zuno_singlesetter4ub_2p_t(uint32_t, uint32_t);
 typedef void zuno_multisetter1ub_2p_t(uint8_t, uint32_t, uint8_t);
 typedef void zuno_multisetter2ub_2p_t(uint8_t, uint32_t, uint16_t);
 typedef void zuno_multisetter4ub_2p_t(uint8_t, uint32_t, uint32_t);
+
+typedef void zuno_configuration_changed(uint8_t, uint32_t);
+
 // Common CC subroutines and data
 extern ZUNOCommandPacket_t g_outgoing_packet;
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);

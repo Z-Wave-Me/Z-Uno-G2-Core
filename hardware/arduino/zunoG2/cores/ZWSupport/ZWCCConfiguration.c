@@ -4,27 +4,35 @@
 
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
-	CONFIGPARAM_MAX_SIZE					value;
+	uint32_t								value;
 
+	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+		return (ZUNO_UNKNOWN_CMD);
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
-	lp->byte2.cmdClass = COMMAND_CLASS_CONFIGURATION;
-	lp->byte2.cmd = CONFIGURATION_REPORT;
-	lp->byte2.parameterNumber = param;
-	lp->byte2.level = sizeof(CONFIGPARAM_MAX_SIZE);
-	lp->byte2.configurationValue1 = (uint8_t)(value >> 8);
-	lp->byte2.configurationValue2 = (uint8_t)(value);
-	CMD_REPLY_LEN = sizeof(lp->byte2);
+	lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION;
+	lp->byte4.cmd = CONFIGURATION_REPORT;
+	lp->byte4.parameterNumber = param;
+	lp->byte4.level = sizeof(uint32_t);
+	lp->byte4.configurationValue1 = (uint8_t)(value >> 24);
+	lp->byte4.configurationValue2 = (uint8_t)(value >> 16);
+	lp->byte4.configurationValue3 = (uint8_t)(value >> 8);
+	lp->byte4.configurationValue4 = (uint8_t)(value);
+	CMD_REPLY_LEN = sizeof(lp->byte4);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static void _configuration_set(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 	ZwConfigurationSetFrame_t			*lp;
 	uint8_t								size;
+	uint8_t								param;
 	uint32_t							value;
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
-	if (((size = lp->byte1.level) & 0x80) != 0)
+	param = lp->byte1.parameterNumber;
+	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+		return (ZUNO_UNKNOWN_CMD);
+	if (((size = lp->byte1.level) & 0x80) != 0)// Check whether you want to restore the default value
 		size = 0;
 	else
 		size = size & 0x7;
@@ -43,14 +51,16 @@ static void _configuration_set(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			value = lp->byte1.configurationValue1;
 			break;
 		default:
-			value = 0;
+			value = -1;
 			break;
 	}
-	zuno_universalSetter2P(channel, lp->byte1.parameterNumber, (CONFIGPARAM_MAX_SIZE)value);
+	#ifdef WITH_CC_CONFIGURATION
+	g_zuno_configuration_change(param, (CONFIGPARAM_MAX_SIZE)value);// Call the sketch function to handle the changes
+	#endif
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
-
-int zuno_CCConfigurationHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
 	rs = ZUNO_UNKNOWN_CMD;
@@ -59,8 +69,7 @@ int zuno_CCConfigurationHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = _configuration_get(((ZwConfigurationGetFrame_t *)cmd->cmd)->parameterNumber);
 			break ;
 		case CONFIGURATION_SET:
-			_configuration_set(channel, cmd);
-			rs = ZUNO_COMMAND_PROCESSED;
+			rs = _configuration_set(cmd);
 			break ;
 	}
 	return (rs);
@@ -70,15 +79,15 @@ int zuno_CCConfigurationHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 CONFIGPARAM_MAX_SIZE zunoLoadCFGParam(uint8_t param)
 {
 	CONFIGPARAM_MAX_SIZE		out;
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)
+	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
-	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (byte*)&out);
+	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&out);
 	return (out);
 }
 
 void zunoSaveCFGParam(uint8_t param, CONFIGPARAM_MAX_SIZE value)
 {
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)
+	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return ;
-	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (byte*)&value);
+	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&value);
 }

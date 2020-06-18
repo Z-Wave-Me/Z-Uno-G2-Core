@@ -22,6 +22,7 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd)
 		{
 			ZW_CMD_BPARAM(0) >>=3;
 			ZW_CMD_BPARAM(0) &= 0x07;
+			
 			if ((ZW_CMD_BPARAM(0)) != ((ZUNO_CFG_CHANNEL(channel).params[0]) & 0x07))
 			{
 				CMD_REPLY_LEN = 0;

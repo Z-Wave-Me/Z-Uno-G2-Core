@@ -46,9 +46,7 @@ static void _configuration_set(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			value = 0;
 			break;
 	}
-	size = lp->byte1.parameterNumber;
-	zunoSaveCFGParam(size, (CONFIGPARAM_MAX_SIZE)value);
-	zuno_universalSetter2P(channel, size, (CONFIGPARAM_MAX_SIZE)value);
+	zuno_universalSetter2P(channel, lp->byte1.parameterNumber, (CONFIGPARAM_MAX_SIZE)value);
 }
 
 

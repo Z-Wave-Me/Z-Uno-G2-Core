@@ -3,8 +3,7 @@
 
 #include "Arduino.h"
 
-# define ZUNO_CONFIGURATION_CHANNEL_NUMBER		13
-# define WITH_CC_CONFIGURATION				13
+#define WITH_CC_CONFIGURATION
 
 /* Configuration command class commands */
 #define CONFIGURATION_VERSION                                                            0x01
@@ -12,8 +11,6 @@
 #define CONFIGURATION_REPORT                                                             0x06
 #define CONFIGURATION_SET                                                                0x04
 
-int zuno_CCConfigurationHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-uint16_t zunoLoadCFGParam(uint8_t param);
-void zunoSaveCFGParam(uint8_t param, uint16_t value);
+int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd);
 
 #endif // ZWCC_CONFIGURATION_H

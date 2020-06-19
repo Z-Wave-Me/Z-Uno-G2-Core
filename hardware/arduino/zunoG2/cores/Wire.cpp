@@ -10,9 +10,8 @@ const uint8_t		TwoWire::wire_location[]={
 
 
 /* Public Constructors */
-TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}) {
-	scl_pin = WIRE_PIN_SCL;
-	sda_pin = WIRE_PIN_SDA;
+TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
+
 }
 
 /* Public Methods */
@@ -162,6 +161,7 @@ uint8_t TwoWire::read(void) {
 }
 
 void TwoWire::enableTS(uint8_t on_off) {
+// FIXME: не знаю как менять и надо ли менять
 }
 
 void TwoWire::setClock(uint32_t clock) {

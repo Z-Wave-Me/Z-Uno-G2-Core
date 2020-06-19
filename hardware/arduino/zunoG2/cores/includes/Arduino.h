@@ -53,22 +53,35 @@ enum{
 #define A1                  15
 #define A2                  16
 #define A3                  17
+#define SCL                 24//by default PA1/RX - SCL
+#define SDA                 23//by default and PA0/TX - SDA
 #define BATTERY             0xFF
 
 #define HIGH                1
 #define LOW                 0
 #define LED_BUILTIN         12 // !!! FIXME on prod
 #else
-#define A0                  3
-#define A1                  4
-#define A2                  5
-#define A3                  6
+#define A0                  3//PF6
+#define A1                  4//PF7
+#define A2                  5//PD9
+#define A3                  6//PD10
+
+#define SCL                 9//by default PD11 I2C0
+#define SDA                 10//by default PD12 I2C0
+
+#define SCK                 0//by default PC8 USART0
+#define MISO                1//by default PC9 USART0 - RX
+#define MOSI                2//by default PC10 USART0 - TX
+#define SS                  8//by default PF5 USART0
+
 #define BATTERY             0xFF
 
 #define HIGH                1
 #define LOW                 0
-#define LED_BUILTIN         13
+#define LED_BUILTIN         13//PA2
 #endif
+
+
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)

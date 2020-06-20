@@ -4,15 +4,6 @@
 #include "Arduino.h"
 #include "CrtxI2C.h"
 
-#if defined ZUNO_PIN_V1
-#define WIRE_PIN_SCL					24//by default PA1/RX - SCL
-#define WIRE_PIN_SDA					23//by default and PA0/TX - SDA
-#else
-#define WIRE_PIN_SCL					9//by default
-#define WIRE_PIN_SDA					10//by default
-#endif
-
-
 #define BUFFER_LENGTH					(uint16_t)32
 #define WIRE_BUFFER_LENGTH				BUFFER_LENGTH
 

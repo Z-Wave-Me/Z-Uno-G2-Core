@@ -10,9 +10,8 @@ const uint8_t		TwoWire::wire_location[]={
 
 
 /* Public Constructors */
-TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}) {
-	scl_pin = WIRE_PIN_SCL;
-	sda_pin = WIRE_PIN_SDA;
+TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
+
 }
 
 /* Public Methods */
@@ -33,8 +32,7 @@ void TwoWire::begin(uint8_t address) {
 void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	I2C_Init_TypeDef			init_i2c;
 
-	if ((status & WIRE_STATUS_BEGIN) != 0)// Check it may have already initializedи
-		end();
+	end();
 	CMU_ClockEnable(cmuClock_HFPER, true);
 	CMU_ClockEnable(cmuClock_I2C0, true);
 	/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
@@ -162,6 +160,7 @@ uint8_t TwoWire::read(void) {
 }
 
 void TwoWire::enableTS(uint8_t on_off) {
+// FIXME: не знаю как менять и надо ли менять
 }
 
 void TwoWire::setClock(uint32_t clock) {
@@ -169,7 +168,10 @@ void TwoWire::setClock(uint32_t clock) {
 }
 
 void TwoWire::end(void) {
+	if ((status & WIRE_STATUS_BEGIN) == 0)// Check maybe not yet initialized
+		return ;
 	I2C_Reset(I2C0);
+	status ^= WIRE_STATUS_BEGIN;
 }
 
 /* Private Methods */

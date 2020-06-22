@@ -1,16 +1,7 @@
 #include "Wire_private.h"
 
-const uint8_t		TwoWire::wire_location[]={
-	0x00, 0x01, 0x02, 0x03, 0x04, 0x05,// LOC 0-5 = PA0-PA5
-	0x1B, 0x1C, 0x1D, 0x1E, 0x1F,// LOC  6-10 = PB11-PB15
-	0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, // LOC 11-16 = PC6-PC11
-	0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, // LOC 17-23 = PD9-PD15
-	0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57// LOC 24-31 = PF0-PF7
-};
-
-
 /* Public Constructors */
-TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), status(0), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
+TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
 
 }
 
@@ -46,13 +37,12 @@ void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	init_i2c.refFreq = 0;
 	init_i2c.clhr = i2cClockHLRStandard;
 	I2C0->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
-	scl = _get_location(scl);
-	scl = (scl == 0 ) ? sizeof(wire_location) - 1 : scl - 1;
-	I2C0->ROUTELOC0 = (_get_location(sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (scl << _I2C_ROUTELOC0_SCLLOC_SHIFT);//до ремапинга с помощью локаций
+	scl = getLocation(&WIRE_LOCATION[0], sizeof(WIRE_LOCATION), scl);
+	scl = (scl == 0 ) ? sizeof(WIRE_LOCATION) - 1 : scl - 1;
+	I2C0->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], sizeof(WIRE_LOCATION), sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (scl << _I2C_ROUTELOC0_SCLLOC_SHIFT);
 	I2C0->SADDR =  WIRE_ADDRESS(address);
 	I2C0->SADDRMASK = _I2C_SADDRMASK_MASK_DEFAULT;
 	I2C_Init(I2C0, &init_i2c);
-	status |= WIRE_STATUS_BEGIN;
 }
 
 void TwoWire::beginTransmission(uint8_t address) {
@@ -168,29 +158,10 @@ void TwoWire::setClock(uint32_t clock) {
 }
 
 void TwoWire::end(void) {
-	if ((status & WIRE_STATUS_BEGIN) == 0)// Check maybe not yet initialized
-		return ;
 	I2C_Reset(I2C0);
-	status ^= WIRE_STATUS_BEGIN;
 }
 
 /* Private Methods */
-uint8_t TwoWire::_get_location(uint8_t pin) {// Get the location for the SDA, it is interconnected with the location of the SCL
-	uint8_t				i;
-	uint8_t				out;
-	const uint8_t		*s_location;
-
-	i = 0;
-	out = 0;
-	pin = (getRealPort(pin) << 4) | getRealPin(pin);
-	s_location = &wire_location[0];
-	while (i < sizeof(wire_location)) {
-		if (s_location[i] == pin)
-			return (i);
-		i++;
-	}
-	return (out);
-}
 
 /* Preinstantiate Objects */
 TwoWire Wire = TwoWire();

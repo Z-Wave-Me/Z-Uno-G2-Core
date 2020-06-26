@@ -9,7 +9,7 @@
 #define WITH_CC_SWITCH_MULTILEVEL   1
 #define WITH_CC_MULTICHANNEL        1*/
 
-#define LOGGING_DBG 0
+//#define LOGGING_DBG 0
 
 #ifdef LOGGING_DBG
 #ifndef LOGGING_UART 

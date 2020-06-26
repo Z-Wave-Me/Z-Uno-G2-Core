@@ -283,6 +283,19 @@ int getRealPort(uint8_t pin)
     return real_port;
 }
 
+uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
+	uint8_t				i;
+
+	i = 0;
+	pin = (getRealPort(pin) << 4) | getRealPin(pin);
+	while (i < count) {
+		if (location[i] == pin)
+			return (i);
+		i++;
+	}
+	return (0);
+}
+
 int digitalRead(uint8_t pin) {
     int real_port = ZUNO_PIN_DEFS[pin].port;
     int real_pin = ZUNO_PIN_DEFS[pin].pin;

@@ -12,5 +12,6 @@
 #define SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK      0x07
 
 int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCSensorMultilevelReport(byte channel);
 
 #endif // __SENSOR_MULTILEVEL_H__

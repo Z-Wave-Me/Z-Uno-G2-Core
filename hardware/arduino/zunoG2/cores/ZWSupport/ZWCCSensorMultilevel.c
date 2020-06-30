@@ -8,6 +8,28 @@ typedef union split_e
 
 } split_t;
 
+int zuno_CCSensorMultilevelReport(byte channel)
+{
+    CMD_REPLY_CC = COMMAND_CLASS_SENSOR_MULTILEVEL;
+    CMD_REPLY_CMD = SENSOR_MULTILEVEL_REPORT;
+
+    CMD_REPLY_DATA(0) = ZUNO_CFG_CHANNEL(channel).sub_type;
+    
+    uint8_t channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
+    
+    CMD_REPLY_DATA(1) = channel_size;            
+    
+    channel_size &= SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
+
+    split_t values = { .val = zuno_universalGetter1P(channel) };
+    
+    _zme_memcpy(&CMD_REPLY_DATA(2), values.buff, channel_size);
+
+    CMD_REPLY_LEN = channel_size + 4;
+
+    return ZUNO_COMMAND_ANSWERED;
+}
+
 int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd)
 {
     int rs = ZUNO_UNKNOWN_CMD;
@@ -31,7 +53,6 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd)
                 }
             }
 
-
             CMD_REPLY_LEN = 8;
 
             rs = ZUNO_COMMAND_ANSWERED;
@@ -51,21 +72,7 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd)
             break;
 
         case SENSOR_MULTILEVEL_GET:
-            CMD_REPLY_DATA(0) = ZUNO_CFG_CHANNEL(channel).sub_type;
-            
-            uint8_t channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
-           
-            CMD_REPLY_DATA(1) = channel_size;            
-           
-            channel_size &= SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
-
-            split_t values = { .val = zuno_universalGetter1P(channel) };
-            
-            _zme_memcpy(&CMD_REPLY_DATA(2), values.buff, channel_size);
-
-            CMD_REPLY_LEN = channel_size + 4;
-            
-            rs = ZUNO_COMMAND_ANSWERED;
+            rs = zuno_CCSensorMultilevelReport(channel);
             break;
     }
 

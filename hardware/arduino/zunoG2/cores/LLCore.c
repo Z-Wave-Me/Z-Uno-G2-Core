@@ -67,6 +67,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     
 };
 #else
+// FIXME: где analog not support - проблеммы у analogWrite - не проходит, лампочка не мигает
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8, 13},//0 - PC8 - 0 - analog not support
@@ -81,8 +82,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// RIGHT SIDE
 	{3, 11, 19},//9 - PD11 - 9
 	{3, 12, 20},//10 - PD12 - 10
-	{0, 0, 0},//11 - PA0//??? - 11  - analog not suppor
-	{0, 1, 1},//12 - PA1//??? - 12 - analog not suppor
+	{0, 0, 0},//11 - PA0// FIXME - 11  - analog not suppor - не удалось помигать с помощью digitalWrite
+	{0, 1, 1},//12 - PA1// FIXME - 12 - analog not suppor - не удалось помигать с помощью digitalWrite
 	{0, 2, 2},//13 - PA2 - ARDURINO LED - blue and PWM1
 	{0, 3, 3},//14 - PA3 - PWM2
 	{0, 4, 4},//15 - PA4 - PWM3 - analog not suppor
@@ -95,7 +96,11 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 6, 11},//22 - PC6 - 22 - analog not suppor
 	{2, 7, 12},//23 - PC7 - BTN - analog not suppor
 	{2, 11, 16},//24 - PC11 - TX0 - analog not suppor
-	{5, 3, 27}//25 - PF3 - RX0 - analog not suppor
+	{5, 3, 27},//25 - PF3 - RX0 - analog not suppor
+	// DO NOT USE !!!
+	{3, 13, 21},//26 - PD13 - USB Serial
+	{5, 2, 26}//27 - PF2 - USB Serial
+
 
 };
 #endif
@@ -170,7 +175,7 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            delay(2000); //???
+            delay(2000);// ! DBG - что бы информацию выводила отладочную окуратно без разброса - в Realese - убрать
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
@@ -276,6 +281,19 @@ int getRealPort(uint8_t pin)
 {
     int real_port = ZUNO_PIN_DEFS[pin].port;
     return real_port;
+}
+
+uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
+	uint8_t				i;
+
+	i = 0;
+	pin = (getRealPort(pin) << 4) | getRealPin(pin);
+	while (i < count) {
+		if (location[i] == pin)
+			return (i);
+		i++;
+	}
+	return (0);
 }
 
 int digitalRead(uint8_t pin) {

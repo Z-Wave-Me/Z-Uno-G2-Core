@@ -3,10 +3,9 @@
 
 #include "Arduino.h"
 #include "CrtxI2C.h"
+#include "Wire_define.h"
 
-
-#define WIRE_PIN_SCL					24//by default PA1/RX - SCL
-#define WIRE_PIN_SDA					23//by default and PA0/TX - SDA
+#define WIRE_LOCATION		g_loc_pa0_pf7_all
 
 #define BUFFER_LENGTH					(uint16_t)32
 #define WIRE_BUFFER_LENGTH				BUFFER_LENGTH
@@ -17,9 +16,6 @@
 #define WIRE_ERORR_TRANSMISSION_NACK_ADDRESS	2
 #define WIRE_ERORR_TRANSMISSION_NACK_DATA		3
 #define WIRE_ERORR_TRANSMISSION_OTHER			4
-
-
-#define WIRE_STATUS_BEGIN						0x1//Indicates that initialization was performed - Wire.begin
 
 
 /* Layout details, A = address bit, X = don't care bit (set to 0):
@@ -50,16 +46,13 @@ class TwoWire {
 		void		end(void);
 
 	private:
-		static const uint8_t				wire_location[];//Based on SDA_0
 		uint8_t								scl_pin;
 		uint8_t								sda_pin;
 		uint32_t							init_freq;//To set the bus frequency, only valid in master mode - setClock
 		I2C_TransferReturn_TypeDef			seq_return;//Status after reading and writing data
-		uint8_t								status;//
 		uint8_t								available_bytes;//How many bytes read  - requestFrom
 		uint8_t								seq_buffer[WIRE_BUFFER_LENGTH];//The buffer for reading and writing the size depends on BUFFER_LENGTH
 		I2C_TransferSeq_TypeDef				seq;
-		uint8_t		_get_location(uint8_t pin);
 };
 
 extern TwoWire Wire;

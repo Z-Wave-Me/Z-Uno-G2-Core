@@ -6,8 +6,8 @@ menu.Security=Security
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno-2G
 
-zuno2.vid.0=0x10C4
-zuno2.pid.0=0xEA60
+zuno2.vid.0=0x10c4
+zuno2.pid.0=0xea60
 
 zuno2.upload.tool=zprog
 zuno2.upload.protocol=usb
@@ -28,8 +28,8 @@ zuno2.build.f_cpu=16000000L
 zuno2.build.board=zuno2
 zuno2.build.core=/
 zuno2.build.variant=
-zuno2.build.vid=0x10C4
-zuno2.build.pid=0xEA60
+zuno2.build.vid=0x10c4
+zuno2.build.pid=0xea60
 zuno2.build.usb_product="Z-UNO-2G"
 zuno2.build.extra_flags=
 

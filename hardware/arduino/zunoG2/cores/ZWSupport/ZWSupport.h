@@ -9,7 +9,7 @@
 #define WITH_CC_SWITCH_MULTILEVEL   1
 #define WITH_CC_MULTICHANNEL        1*/
 
-#define LOGGING_DBG 0
+//#define LOGGING_DBG 0
 
 #ifdef LOGGING_DBG
 #ifndef LOGGING_UART 
@@ -29,6 +29,7 @@ enum
 	COMMAND_CLASS_THERMOSTAT_SETPOINT = 0x43,
 	COMMAND_CLASS_MULTICHANNEL = 0x60,
 	COMMAND_CLASS_DOOR_LOCK = 0x62,
+	COMMAND_CLASS_CONFIGURATION = 0x70,
 	COMMAND_CLASS_NOTIFICATION = 0x71,
 	COMMAND_CLASS_BATTERY = 0x80,
 };
@@ -80,6 +81,9 @@ typedef void zuno_singlesetter4ub_2p_t(uint32_t, uint32_t);
 typedef void zuno_multisetter1ub_2p_t(uint8_t, uint32_t, uint8_t);
 typedef void zuno_multisetter2ub_2p_t(uint8_t, uint32_t, uint16_t);
 typedef void zuno_multisetter4ub_2p_t(uint8_t, uint32_t, uint32_t);
+
+typedef void zuno_configuration_changed(uint8_t, uint32_t);
+
 // Common CC subroutines and data
 extern ZUNOCommandPacket_t g_outgoing_packet;
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);

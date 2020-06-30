@@ -49,26 +49,49 @@ enum{
 
 //# define ZUNO_PIN_V1
 #if defined ZUNO_PIN_V1
-#define A0                  14
-#define A1                  15
-#define A2                  16
-#define A3                  17
-#define BATTERY             0xFF
+	#define A0                  14
+	#define A1                  15
+	#define A2                  16
+	#define A3                  17
+	#define SCL                 24//by default PA1/RX - SCL
+	#define SDA                 23//by default and PA0/TX - SDA
+	#define BATTERY             0xFF
 
-#define HIGH                1
-#define LOW                 0
-#define LED_BUILTIN         12 // !!! FIXME on prod
+	#define HIGH                1
+	#define LOW                 0
+	#define LED_BUILTIN         12 // !!! FIXME on prod
 #else
-#define A0                  3
-#define A1                  4
-#define A2                  5
-#define A3                  6
-#define BATTERY             0xFF
+	#define A0                  3//PF6
+	#define A1                  4//PF7
+	#define A2                  5//PD9
+	#define A3                  6//PD10
+	#define SCL                 9//by default PD11 I2C0
+	#define SDA                 10//by default PD12 I2C0
 
-#define HIGH                1
-#define LOW                 0
-#define LED_BUILTIN         13
+	#define BATTERY             0xFF
+
+	#define HIGH                1
+	#define LOW                 0
+	#define LED_BUILTIN         13//PA2
+
+	#define SPI_BUS_NOMBER			0//Bus number used for SPI
+	#if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1
+		//PA0 - PF7 - all
+		#define SCK					0//by default PC8 USART0/USART1
+		#define MISO				1//by default PC9 USART0/USART1 - RX
+		#define MOSI				2//by default PC10 USART0/USART1 - TX
+		#define SS					8//by default PF5
+	#elif SPI_BUS_NOMBER == 2
+		//PF0,PF1,PF3-PF7
+		#define SCK					16//by default PA5  USART2 
+		#define MISO				25//by default PF3 USART2 - RX
+		#define MOSI				7//by default PF4 USART2 - TX
+		#define SS					8//by default PF5
+	#else
+		#define SPI_BUS_NOMBER		Incorrectly defined! 
+	#endif
 #endif
+
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
@@ -89,6 +112,7 @@ void pinMode(uint8_t pin, int mode);
 void digitalWrite(uint8_t pin, uint8_t val);
 int getRealPort(uint8_t);
 int getRealPin(uint8_t);
+uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
 bool analogWrite(uint8_t pin, word value);
@@ -109,4 +133,6 @@ int zunoEEPROMWrite(word address, word size, byte * data);
 int zunoEEPROMRead(word address, word size, byte * data);
 int zunoEEPROMErase();
 void _zme_memcpy(byte *dst, byte *src, byte count);
+uint32_t zunoLoadCFGParam(uint8_t param);
+void zunoSaveCFGParam(uint8_t param, uint32_t value);
 #endif // ZUNO_ARDUINOH

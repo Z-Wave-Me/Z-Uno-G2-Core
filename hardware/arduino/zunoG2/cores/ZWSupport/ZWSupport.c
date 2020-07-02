@@ -765,10 +765,12 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL
 			case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
+				rs = zuno_CCSensorMultilevelReport(ch);
 				break;
 			#endif
 			#ifdef WITH_CC_METER
 			case ZUNO_METER_CHANNEL_NUMBER:
+				rs = zuno_CCMeterReport(ch);
 				break;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)

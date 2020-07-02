@@ -37,9 +37,9 @@ void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	init_i2c.refFreq = 0;
 	init_i2c.clhr = i2cClockHLRStandard;
 	I2C0->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
-	scl = getLocation(&WIRE_LOCATION[0], sizeof(WIRE_LOCATION), scl);
-	scl = (scl == 0 ) ? sizeof(WIRE_LOCATION) - 1 : scl - 1;
-	I2C0->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], sizeof(WIRE_LOCATION), sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (scl << _I2C_ROUTELOC0_SCLLOC_SHIFT);
+	scl = getLocation(WIRE_LOCATION, WIRE_LOCATION_SIZE, scl);
+	scl = (scl == 0 ) ? WIRE_LOCATION_SIZE - 1 : scl - 1;
+	I2C0->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (scl << _I2C_ROUTELOC0_SCLLOC_SHIFT);
 	I2C0->SADDR =  WIRE_ADDRESS(address);
 	I2C0->SADDRMASK = _I2C_SADDRMASK_MASK_DEFAULT;
 	I2C_Init(I2C0, &init_i2c);

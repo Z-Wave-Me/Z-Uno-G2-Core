@@ -5,7 +5,8 @@
 #include "CrtxI2C.h"
 #include "Wire_define.h"
 
-#define WIRE_LOCATION		g_loc_pa0_pf7_all
+#define WIRE_LOCATION			g_loc_pa0_pf7_all
+#define WIRE_LOCATION_SIZE		g_loc_pa0_pf7_all_size
 
 #define BUFFER_LENGTH					(uint16_t)32
 #define WIRE_BUFFER_LENGTH				BUFFER_LENGTH

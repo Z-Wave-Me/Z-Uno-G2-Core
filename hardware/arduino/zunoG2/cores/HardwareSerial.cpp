@@ -58,6 +58,6 @@ HardwareSerial Serial0(0, 11, 7); // UART0
 #else
 // FIXME: при rst отваливаеться UART1/UART0
 HardwareSerial Serial(1, 26, 27);// USB
-HardwareSerial Serial1(1, 7, 8); // UART1
-HardwareSerial Serial0(0, 24, 25); // UART0
+HardwareSerial Serial1(1, 8, 7); // UART1
+HardwareSerial Serial0(0, 25, 24); // UART0
 #endif

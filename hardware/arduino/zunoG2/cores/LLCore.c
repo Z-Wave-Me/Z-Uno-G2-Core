@@ -17,7 +17,6 @@ void zuno_CCTimer(uint32_t);
 typedef struct PinDef{
     uint8_t port;
     uint8_t pin;
-    uint8_t pwm_loc;
 }PinDef_t;
 
 // A = 0
@@ -31,75 +30,75 @@ typedef struct PinDef{
 // "NIKBOARD" map
 static const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
-    {1, 14,  9 },  //  0 - B14
-    {1, 15,  10}, //  1 - B15
-    {2, 6,   11},  //  2 - C6
-    {2, 7,   12},  //  3 - C7
-    {2, 8,   13},  //  4 - C8
-    {2, 9,   14},  //  5 - C9 (UART_USB_RX)
-    {2, 10,  15}, //  6 - C10
-    {2, 11,  16}, //  7 - C11
-    {5, 0,   24},  //  8 - F0 (SCLK)
-    {5, 1,   25},  //  9 - F1 (SDIO)
-    {5, 2,   26},  // 10 - F2 (SWO)
-    {5, 3,   27},  // 11 - F3 (UART_USB_TX)
-    {5, 4,   28},  // 12 - F4 (LED)
-    {5, 5,   29},  // 13 - F5
-    {5, 6,   30},  // 14 - F6
-    {5, 7,   31},  // 15 - F7 (BTN)
+    {1, 14},  //  0 - B14
+    {1, 15}, //  1 - B15
+    {2, 6},  //  2 - C6
+    {2, 7},  //  3 - C7
+    {2, 8},  //  4 - C8
+    {2, 9},  //  5 - C9 (UART_USB_RX)
+    {2, 10}, //  6 - C10
+    {2, 11}, //  7 - C11
+    {5, 0},  //  8 - F0 (SCLK)
+    {5, 1},  //  9 - F1 (SDIO)
+    {5, 2},  // 10 - F2 (SWO)
+    {5, 3},  // 11 - F3 (UART_USB_TX)
+    {5, 4},  // 12 - F4 (LED)
+    {5, 5},  // 13 - F5
+    {5, 6},  // 14 - F6
+    {5, 7},  // 15 - F7 (BTN)
     // RIGHT SIDE
-    {3, 9,  17},  //  16 - D9
-    {3, 10, 18}, //  17 - D10
-    {3, 11, 19}, //  18 - D11
-    {3, 12, 20}, //  19 - D12
-    {3, 13, 21}, //  20 - D13
-    {3, 14, 22}, //  21 - D14
-    {3, 15, 23}, //  22 - D15
-    {0, 0,   0},  //  23 - A0 (RX)
-    {0, 1,   1},  //  24 - A1 (TX)
-    {0, 2,   2},  //  25 - A2 (ADC0)
-    {0, 3,   3},  //  26 - A3 
-    {0, 4,   4},  //  27 - A4
-    {0, 5,   5},  //  28 - A5
-    {1, 11,  6}, //  29 - B11 
-    {1, 12,  7}, //  30 - B12
-    {1, 13,  8}, //  31 - B13
+    {3, 9},  //  16 - D9
+    {3, 10}, //  17 - D10
+    {3, 11}, //  18 - D11
+    {3, 12}, //  19 - D12
+    {3, 13}, //  20 - D13
+    {3, 14}, //  21 - D14
+    {3, 15}, //  22 - D15
+    {0, 0},  //  23 - A0 (RX)
+    {0, 1},  //  24 - A1 (TX)
+    {0, 2},  //  25 - A2 (ADC0)
+    {0, 3},  //  26 - A3 
+    {0, 4},  //  27 - A4
+    {0, 5},  //  28 - A5
+    {1, 11}, //  29 - B11 
+    {1, 12}, //  30 - B12
+    {1, 13}, //  31 - B13
     
 };
 #else
 // FIXME: где analog not support - проблеммы у analogWrite - не проходит, лампочка не мигает
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
-	{2, 8, 13},//0 - PC8 - 0 - analog not support
-	{2, 9, 14},//1 - PC9 - 1 - analog not support
-	{2, 10, 15},//2 - PC10 - 2 - analog not support
-	{5, 6, 30},//3 - PF6 - A0 - analog not support
-	{5, 7, 31},//4 - PF7 - A1 - analog not support
-	{3, 9, 17},//5 - PD9 - A2 - analog not support
-	{3, 10, 18},//6 - PD10 -A3
-	{5, 4, 28},//7 - PF4 - 7
-	{5, 5, 29},//8 - PF5 - 8
+	{2, 8},//0 - PC8 - 0 
+	{2, 9},//1 - PC9 - 1 
+	{2, 10},//2 - PC10 - 2 
+	{5, 6},//3 - PF6 - A0 
+	{5, 7},//4 - PF7 - A1 
+	{3, 9},//5 - PD9 - A2 
+	{3, 10},//6 - PD10 -A3
+	{5, 4},//7 - PF4 - 7
+	{5, 5},//8 - PF5 - 8
 	// RIGHT SIDE
-	{3, 11, 19},//9 - PD11 - 9
-	{3, 12, 20},//10 - PD12 - 10
-	{0, 0, 0},//11 - PA0// FIXME - 11  - analog not suppor - не удалось помигать с помощью digitalWrite
-	{0, 1, 1},//12 - PA1// FIXME - 12 - analog not suppor - не удалось помигать с помощью digitalWrite
-	{0, 2, 2},//13 - PA2 - ARDURINO LED - blue and PWM1
-	{0, 3, 3},//14 - PA3 - PWM2
-	{0, 4, 4},//15 - PA4 - PWM3 - analog not suppor
-	{0, 5, 5},//16 - PA5 - PWM4
-	{1, 11, 6},//17 - PB11 - 17 - analog not suppor
-	{1, 12, 7},//18 - PB12 - 18 - analog not suppor
-	{1, 13, 8},//19 - PB13 - 19 - analog not suppor
-	{1, 14, 9},//20 - PB14 - 20 - analog not suppor
-	{1, 15, 10},//21 - PB15 - 21 - analog not suppor
-	{2, 6, 11},//22 - PC6 - 22 - analog not suppor
-	{2, 7, 12},//23 - PC7 - BTN - analog not suppor
-	{2, 11, 16},//24 - PC11 - TX0 - analog not suppor
-	{5, 3, 27},//25 - PF3 - RX0 - analog not suppor
+	{3, 11},//9 - PD11 - 9
+	{3, 12},//10 - PD12 - 10
+	{0, 0},//11 - PA0// FIXME - 11  
+	{0, 1},//12 - PA1// FIXME - 12 
+	{0, 2},//13 - PA2 - ARDURINO LED - blue and PWM1
+	{0, 3},//14 - PA3 - PWM2
+	{0, 4},//15 - PA4 - PWM3 
+	{0, 5},//16 - PA5 - PWM4
+	{1, 11},//17 - PB11 - 17 
+	{1, 12},//18 - PB12 - 18 
+	{1, 13},//19 - PB13 - 19 
+	{1, 14},//20 - PB14 - 20 
+	{1, 15},//21 - PB15 - 21 
+	{2, 6},//22 - PC6 - 22 
+	{2, 7},//23 - PC7 - BTN
+	{2, 11},//24 - PC11 - TX0 
+	{5, 3},//25 - PF3 - RX0 
 	// DO NOT USE !!!
-	{3, 13, 21},//26 - PD13 - USB Serial
-	{5, 2, 26}//27 - PF2 - USB Serial
+	{3, 13},//26 - PD13 - USB Serial
+	{5, 2}//27 - PF2 - USB Serial
 
 
 };
@@ -138,6 +137,15 @@ extern void (*__init_array_end []) (void) __attribute__((weak));
 extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
 
+// Universal pin location index
+const uint8_t g_loc_pa0_pf7_all[] = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05,// LOC 0-5 = PA0-PA5
+		0x1B, 0x1C, 0x1D, 0x1E, 0x1F,// LOC  6-10 = PB11-PB15
+		0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, // LOC 11-16 = PC6-PC11
+		0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, // LOC 17-23 = PD9-PD15
+		0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57// LOC 24-31 = PF0-PF7
+	};
+const uint8_t g_loc_pa0_pf7_all_size = sizeof(g_loc_pa0_pf7_all);
 
 uint8_t pin2HWPin(uint8_t pin){
     return (ZUNO_PIN_DEFS[pin].port << 4) | (ZUNO_PIN_DEFS[pin].pin&0x0F);
@@ -352,7 +360,7 @@ void delayMicroseconds(word tdelay){
 static inline dword map_pwmloc2ch(int loc, int ch){
     loc = (loc + 32-ch) & 0x1F;
     ch <<= 3;
-    return (dword(loc)) << ch;
+    return loc << ch;
 }
 bool analogWrite(uint8_t pin, word value){
     
@@ -369,6 +377,8 @@ bool analogWrite(uint8_t pin, word value){
         TIMER_Init_TypeDef timerInit = TIMER_INIT_DEFAULT;
         TIMER_Init(TIMER1, &timerInit);
         g_zuno_odhw_cfg.PWMInitialized = true;
+        // const uint8_t g_loc_pa0_pf7_all[]
+
     }
     byte ch =  aux_findPWMChannel(pin);
     if(value == 0){
@@ -382,22 +392,27 @@ bool analogWrite(uint8_t pin, word value){
         digitalWrite(pin, 0);  
         return true;
     } 
-    if(ch == INVALID_PIN_INDEX){
+    if(ch == INVALID_PIN_INDEX){    
         ch = aux_findPWMChannel(INVALID_PIN_INDEX);
         if(ch == INVALID_PIN_INDEX)
             return false;
         TIMER_InitCC_TypeDef timerCCInit = TIMER_INITCC_DEFAULT;
         timerCCInit.mode      = timerCCModePWM;
         timerCCInit.cmoa      = timerOutputActionToggle;
+        timerCCInit.outInvert = 0;
         TIMER_InitCC(TIMER1, ch, &timerCCInit);
-        TIMER1->ROUTELOC0 = (TIMER1->ROUTELOC0 & ~(0x1FUL<<ch)) | map_pwmloc2ch(ZUNO_PIN_DEFS[pin].pwm_loc, ch);
         g_zuno_odhw_cfg.pwm_pins[ch] = pin; // We occupied this channel with the needed pin
+        uint32_t pwm_loc = getLocation(g_loc_pa0_pf7_all, g_loc_pa0_pf7_all_size, pin);
+        pwm_loc =  map_pwmloc2ch(pwm_loc, ch);
+        TIMER1->ROUTELOC0 &=  ~(0x1FUL<<(ch<<3));
+        TIMER1->ROUTELOC0 |=  pwm_loc;
+        TIMER1->ROUTEPEN |= (1UL<<ch);
         // enable the output
         digitalWrite(pin, 0);
-        TIMER1->ROUTEPEN |= (1UL<<ch);
+
     } 
     TIMER_CompareBufSet(TIMER1, ch, value);
-        
+    
     return true;
 }
 void WDOG_Feed(){

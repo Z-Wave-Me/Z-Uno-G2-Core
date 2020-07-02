@@ -6,6 +6,8 @@
 
 #if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1 //We select the necessary settings depending on the bus USART
 	#define SPI_LOCATION		g_loc_pa0_pf7_all
+	#define SPI_LOCATION_SIZE	g_loc_pa0_pf7_all_size
+	
 	#if SPI_BUS_NOMBER == 0
 		#define SPI_BUS_CLOCK	cmuClock_USART0
 		#define SPI_BUS			USART0
@@ -15,6 +17,7 @@
 	#endif
 #elif SPI_BUS_NOMBER == 2
 	#define SPI_LOCATION		g_loc_pf0_pf1_pf3_pf7
+	#define SPI_LOCATION_SIZE	sizeof(g_loc_pf0_pf1_pf3_pf7)
 	#define SPI_BUS_CLOCK		cmuClock_USART2
 	#define SPI_BUS				USART2
 #else

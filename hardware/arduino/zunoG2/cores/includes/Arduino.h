@@ -61,6 +61,10 @@ enum{
 	#define LOW                 0
 	#define LED_BUILTIN         12 // !!! FIXME on prod
 #else
+	#define PWM1				13
+	#define PWM2                14
+	#define PWM3                15
+	#define PWM4                16
 	#define A0                  3//PF6
 	#define A1                  4//PF7
 	#define A2                  5//PD9

@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Universal pin location index
+extern const uint8_t g_loc_pa0_pf7_all[];
+extern const uint8_t g_loc_pa0_pf7_all_size;
+
 typedef struct ZUNOCodeHeader_s{
     char        sign[8];
     uint8_t     version_major;

@@ -3,7 +3,6 @@
 
 #include "Arduino.h"
 #include "CrtxI2C.h"
-#include "Wire_define.h"
 
 #define WIRE_LOCATION			g_loc_pa0_pf7_all
 #define WIRE_LOCATION_SIZE		g_loc_pa0_pf7_all_size

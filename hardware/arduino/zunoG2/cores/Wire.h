@@ -1,8 +1,6 @@
 #ifndef WIRE_H
 #define WIRE_H
 
-#include "Wire_define.h"
-
 class TwoWire {
 	public:
 		TwoWire();

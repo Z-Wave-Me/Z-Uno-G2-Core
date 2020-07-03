@@ -266,7 +266,7 @@ void pinMode(uint8_t pin, int mode){
         digitalWrite(pin, on_off);
     }
     if(real_pin < 8){
-      GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin)))
+      GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin << 2)))
                           | (real_mode << (real_pin << 2 ));
     } else {
       GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2)))

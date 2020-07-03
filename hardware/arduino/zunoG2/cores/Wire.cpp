@@ -1,23 +1,23 @@
 #include "Wire_private.h"
 
 /* Public Constructors */
-TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, TwoWire::seq_buffer, 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
+TwoWire::TwoWire(): init_freq(I2C_FREQ_STANDARD_MAX), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, &this->seq_buffer[0], 0, 0, 0}), scl_pin(SCL), sda_pin(SDA) {
 
 }
 
 /* Public Methods */
 void TwoWire::begin(void) {
-	begin(0, scl_pin, sda_pin);//0 - master
+	begin(0, this->scl_pin, this->sda_pin);//0 - master
 }
 
 void TwoWire::begin(uint8_t scl, uint8_t sda) {
-	scl_pin = scl;
-	sda_pin = sda;
+	this->scl_pin = scl;
+	this->sda_pin = sda;
 	begin(0, scl, sda);//0 - master
 }
 
 void TwoWire::begin(uint8_t address) {
-	begin(address, scl_pin, sda_pin);
+	begin(address, this->scl_pin, this->sda_pin);
 }
 
 void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
@@ -33,7 +33,7 @@ void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	digitalWrite(sda, HIGH);
 	init_i2c.enable = true;// Set emlib init parameters
 	init_i2c.master = (address == 0) ? true : false;
-	init_i2c.freq = init_freq;
+	init_i2c.freq = this->init_freq;
 	init_i2c.refFreq = 0;
 	init_i2c.clhr = i2cClockHLRStandard;
 	I2C0->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
@@ -50,10 +50,10 @@ void TwoWire::beginTransmission(uint8_t address) {
 }
 
 void TwoWire::beginTransmission(uint8_t address, uint8_t forced_start) {
-	seq.addr = WIRE_ADDRESS(address);
-	seq.flags = I2C_FLAG_WRITE;
-	seq.buf->len = 0;
-	seq_return = i2cTransferInProgress;
+	this->seq.addr = WIRE_ADDRESS(address);
+	this->seq.flags = I2C_FLAG_WRITE;
+	this->seq.buf->len = 0;
+	this->seq_return = i2cTransferInProgress;
 }
 
 size_t TwoWire::write(uint8_t data) {
@@ -64,16 +64,16 @@ size_t TwoWire::write(const uint8_t *data, size_t quantity) {
 	size_t			len;
 	uint8_t			*b;
 
-	if (seq.flags != I2C_FLAG_WRITE) {
-		seq_return = i2cTransferDone;
+	if (this->seq.flags != I2C_FLAG_WRITE) {
+		this->seq_return = i2cTransferDone;
 		return (0);
 	}
-	if ((len = seq.buf->len) + quantity > WIRE_BUFFER_LENGTH) {
-		seq_return = WIRE_ERORR_TRANSMISSION_LONG_I2C;
+	if ((len = this->seq.buf->len) + quantity > WIRE_BUFFER_LENGTH) {
+		this->seq_return = WIRE_ERORR_TRANSMISSION_LONG_I2C;
 		return (0);
 	}
-	seq.buf->len = len + quantity;
-	b = &seq_buffer[len];
+	this->seq.buf->len = len + quantity;
+	b = &this->seq_buffer[len];
 	len = 0;
 	while (len < quantity) {
 		b[len] = data[len];
@@ -90,15 +90,15 @@ uint8_t TwoWire::endTransmission(uint8_t sendStop) {
 	I2C_TransferReturn_TypeDef			tempos;
 	uint32_t							timeout;
 
-	if ((tempos = seq_return) == WIRE_ERORR_TRANSMISSION_LONG_I2C)
+	if ((tempos = this->seq_return) == WIRE_ERORR_TRANSMISSION_LONG_I2C)
 		return (WIRE_ERORR_TRANSMISSION_LONG);
-	if (tempos != i2cTransferInProgress || seq.flags != I2C_FLAG_WRITE)
+	if (tempos != i2cTransferInProgress || this->seq.flags != I2C_FLAG_WRITE)
 		return (WIRE_ERORR_TRANSMISSION_OTHER);
 	timeout = 0x1FFFF;
-	tempos = I2C_TransferInit(&seq);
+	tempos = I2C_TransferInit(&this->seq);
 	while (tempos == i2cTransferInProgress && timeout-- != 0)
 		tempos = I2C_Transfer();
-	if ((seq_return = tempos) == i2cTransferDone)
+	if ((this->seq_return = tempos) == i2cTransferDone)
 		return (WIRE_ERORR_TRANSMISSION_SUCCESS);
 	return (WIRE_ERORR_TRANSMISSION_OTHER);
 }
@@ -118,35 +118,35 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop
 
 	if (quantity > WIRE_BUFFER_LENGTH)
 		quantity = WIRE_BUFFER_LENGTH;
-	seq.addr = WIRE_ADDRESS(address);
-	seq.flags = I2C_FLAG_READ;
-	seq.buf->len = quantity;
+	this->seq.addr = WIRE_ADDRESS(address);
+	this->seq.flags = I2C_FLAG_READ;
+	this->seq.buf->len = quantity;
 	timeout = 0x1FFFF;
-	tempos = I2C_TransferInit(&seq);
+	tempos = I2C_TransferInit(&this->seq);
 	while (tempos == i2cTransferInProgress && timeout-- != 0)
 		tempos = I2C_Transfer();
 	if (tempos != i2cTransferDone) {
-		available_bytes = 0;
+		this->available_bytes = 0;
 		return (0);
 	}
-	available_bytes = seq.buf->len;
-	return (seq.buf->len);
+	this->available_bytes = this->seq.buf->len;
+	return (this->seq.buf->len);
 }
 
 uint8_t		TwoWire::available(void) {
-	if (seq.flags != I2C_FLAG_READ)
+	if (this->seq.flags != I2C_FLAG_READ)
 		return (0);
-	return (available_bytes);
+	return (this->available_bytes);
 }
 
 uint8_t TwoWire::read(void) {
 	uint8_t			len;
 
-	if (seq.flags != I2C_FLAG_READ || (len = available_bytes) == 0)
+	if (this->seq.flags != I2C_FLAG_READ || (len = this->available_bytes) == 0)
 		return (0);
-	len = seq.buf->len - len;
-	available_bytes--;
-	return (seq_buffer[len]);
+	len = this->seq.buf->len - len;
+	this->available_bytes--;
+	return (this->seq_buffer[len]);
 }
 
 void TwoWire::enableTS(uint8_t on_off) {
@@ -154,7 +154,7 @@ void TwoWire::enableTS(uint8_t on_off) {
 }
 
 void TwoWire::setClock(uint32_t clock) {
-	init_freq = clock;
+	this->init_freq = clock;
 }
 
 void TwoWire::end(void) {

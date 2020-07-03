@@ -12,12 +12,9 @@
 #define LSBFIRST		false
 
 #if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1 // Select the necessary location scheme
-	#ifndef LOC_PA0_PF7_ALL
-		#define LOC_PA0_PF7_ALL 
-		extern const uint8_t g_loc_pa0_pf7_all[];
-		extern const uint8_t g_loc_pa0_pf7_all_size;
 
-	#endif
+// As long as nothing
+
 #elif SPI_BUS_NOMBER == 2
 	#ifndef LOC_PF0_PF1_PF3_PF7
 		#define LOC_PF0_PF1_PF3_PF7

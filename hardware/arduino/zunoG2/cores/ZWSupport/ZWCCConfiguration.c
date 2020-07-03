@@ -54,6 +54,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 			value = -1;
 			break;
 	}
+	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
 	#ifdef WITH_CC_CONFIGURATION
 	g_zuno_configuration_change(param, (CONFIGPARAM_MAX_SIZE)value);// Call the sketch function to handle the changes
 	#endif

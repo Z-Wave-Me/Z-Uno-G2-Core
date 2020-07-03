@@ -18,10 +18,10 @@ SPIClass::SPIClass(void): sck_pin(SCK), miso_pin(MISO), mosi_pin(MOSI), ss_pin(S
 
 /* Public Methods */
 void SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
-	SPIClass::sck_pin = sck;
-	SPIClass::miso_pin = miso;
-	SPIClass::mosi_pin = mosi;
-	SPIClass::ss_pin = ss;
+	this->sck_pin = sck;
+	this->miso_pin = miso;
+	this->mosi_pin = mosi;
+	this->ss_pin = ss;
 	CMU_ClockEnable(cmuClock_HFPER, true);
 	CMU_ClockEnable(cmuClock_GPIO, true);
 	CMU_ClockEnable(SPI_BUS_CLOCK, true);
@@ -32,16 +32,16 @@ void SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
 }
 
 void SPIClass::begin(void) {
-	begin(SPIClass::sck_pin, SPIClass::miso_pin, SPIClass::mosi_pin, SPIClass::ss_pin);
+	begin(this->sck_pin, this->miso_pin, this->mosi_pin, this->ss_pin);
 }
 
 void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode) {
-	if (clock != SPIClass::init_spi.baudrate || bitOrder != SPIClass::init_spi.msbf || dataMode != SPIClass::init_spi.clockMode)
+	if (clock != this->init_spi.baudrate || bitOrder != this->init_spi.msbf || dataMode != this->init_spi.clockMode)
 	{//If the settings have not changed, why update them for USART
-		SPIClass::init_spi.msbf = bitOrder;
-		SPIClass::init_spi.baudrate = clock;
-		SPIClass::init_spi.clockMode = dataMode;
-		USART_InitSync(SPI_BUS, &(SPIClass::init_spi));
+		this->init_spi.msbf = bitOrder;
+		this->init_spi.baudrate = clock;
+		this->init_spi.clockMode = dataMode;
+		USART_InitSync(SPI_BUS, &(this->init_spi));
 		SPI_BUS->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
 		SPI_BUS->ROUTELOC0 &= ~(_USART_ROUTELOC0_TXLOC_MASK | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK);
 		#if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1
@@ -55,9 +55,9 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 		#elif SPI_BUS_NOMBER == 2
 			//PA5 = 5 real
 			SPI_BUS->ROUTELOC0 |= 
-			 (((((getRealPort(SPIClass::mosi_pin) << 4) | getRealPin(SPIClass::mosi_pin)) == 5) ? 0 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->mosi_pin) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT)
-			| (((((getRealPort(SPIClass::miso_pin) << 4) | getRealPin(SPIClass::miso_pin)) == 5) ? 31 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->miso_pin) + 13) << _USART_ROUTELOC0_RXLOC_SHIFT)
-			| (((((getRealPort(SPIClass::sck_pin) << 4) | getRealPin(SPIClass::sck_pin)) == 5) ? 30 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->sck_pin) + 12) << _USART_ROUTELOC0_CLKLOC_SHIFT);
+			 (((((getRealPort(this->mosi_pin) << 4) | getRealPin(this->mosi_pin)) == 5) ? 0 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->mosi_pin) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT)
+			| (((((getRealPort(this->miso_pin) << 4) | getRealPin(this->miso_pin)) == 5) ? 31 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->miso_pin) + 13) << _USART_ROUTELOC0_RXLOC_SHIFT)
+			| (((((getRealPort(this->sck_pin) << 4) | getRealPin(this->sck_pin)) == 5) ? 30 : getLocation(&SPI_LOCATION[0], SPI_LOCATION_SIZE, this->sck_pin) + 12) << _USART_ROUTELOC0_CLKLOC_SHIFT);
 		#else
 			#define SPI_BUS_NOMBER		Incorrectly defined!
 		#endif

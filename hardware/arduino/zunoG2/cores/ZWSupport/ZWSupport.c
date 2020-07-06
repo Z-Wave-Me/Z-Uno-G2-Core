@@ -95,10 +95,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 	}
-	#ifdef WITH_CC_CONFIGURATION
-	if (cmd_class == COMMAND_CLASS_CONFIGURATION)
-		return (true);
-	#endif
 	return false;
 }
 
@@ -199,8 +195,13 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 		}
 	}
 	#endif
+	// Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
+	#ifdef WITH_CC_CONFIGURATION
+	if(ZW_CMD_CLASS == COMMAND_CLASS_CONFIGURATION)
+			result = zuno_CCConfigurationHandler(cmd);
+	#endif
 	// Check if command fits to any existing channel
-	if(result != ZUNO_COMMAND_ANSWERED){
+	if((result != ZUNO_COMMAND_ANSWERED) && (result != ZUNO_COMMAND_PROCESSED)){
 		byte zuno_ch = zuno_findTargetChannel(cmd);
 		if(zuno_ch == UNKNOWN_CHANNEL){
 			#ifdef LOGGING_DBG
@@ -243,28 +244,20 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 				result = zuno_CCDoorLockHandler(zuno_ch, cmd);
 				break;
 			#endif
-			#ifdef WITH_CC_CONFIGURATION
-			case COMMAND_CLASS_CONFIGURATION:
-				result = zuno_CCConfigurationHandler(cmd);
-				break;
-			#endif
 			#ifdef WITH_CC_SENSORMULTILEVEL
 			case COMMAND_CLASS_SENSOR_MULTILEVEL:
 				result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
 			#endif
-	
 			#ifdef WITH_CC_SWITCH_COLOR
 			case COMMAND_CLASS_SWITCH_COLOR:
 				result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
 				break;
 			#endif
-	
 			#ifdef WITH_CC_THERMOSTAT_MODE
 			case COMMAND_CLASS_THERMOSTAT_MODE:
 				result = zuno_CCThermostatModeHandler(zuno_ch, cmd);
 				break;
 			#endif
-	
 			#ifdef WITH_CC_THERMOSTAT_SETPOINT
 			case COMMAND_CLASS_THERMOSTAT_SETPOINT:
 				result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd);

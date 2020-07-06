@@ -10,6 +10,7 @@ class TwoWire {
 		void		begin(uint8_t adress, uint8_t scl, uint8_t sda);
 		void		beginTransmission(uint8_t adress);
 		void		beginTransmission(uint8_t adress, uint8_t forced_start);
+		size_t		write(int data){write((uint8_t)data);};
 		size_t		write(uint8_t data);
 		size_t		write(const char *data);
 		size_t		write(const uint8_t *data, size_t quantity);

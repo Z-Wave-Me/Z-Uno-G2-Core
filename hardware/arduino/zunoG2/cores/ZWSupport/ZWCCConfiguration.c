@@ -1,7 +1,7 @@
 #include "ZWCCConfiguration.h"
 #include "./includes/ZWCCConfiguration_private.h"
 
-
+#ifdef WITH_CC_CONFIGURATION
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
@@ -55,9 +55,8 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 			break;
 	}
 	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
-	#ifdef WITH_CC_CONFIGURATION
-	g_zuno_configuration_change(param, (CONFIGPARAM_MAX_SIZE)value);// Call the sketch function to handle the changes
-	#endif
+	 for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_ZW_CFG);i++)
+        ((zuno_configuartionhandler_t *)(getSysHandlerPtr(ZUNO_HANDLER_ZW_CFG, i)))(param, value);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -92,3 +91,4 @@ void zunoSaveCFGParam(uint8_t param, CONFIGPARAM_MAX_SIZE value)
 		return ;
 	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&value);
 }
+#endif

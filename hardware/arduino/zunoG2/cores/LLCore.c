@@ -109,15 +109,6 @@ typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 */
 
-typedef struct ZUNOOnDemandHW_s {
-    bool        ADCInitialized;
-    bool        PWMInitialized;
-    byte        pwm_pins[MAX_ZUNO_PWMS];
-    dword       pwm_freq_scaller;
-    // HANDLERS
-    zuno_user_systimer_handler * h_systimer;
-    zuno_user_sysevent_handler * h_sysevent; 
-} ZUNOOnDemandHW_t;
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 // prototypes 
@@ -178,6 +169,7 @@ void LLInit() {
 void zuno_static_autosetup();
 #endif
 
+
 void * zunoJumpTable(int vec, void * data) {
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
@@ -196,32 +188,27 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         case ZUNO_JUMPTBL_SYSEVENT:
-            if(g_zuno_odhw_cfg.h_sysevent != NULL) {
-                g_zuno_odhw_cfg.h_sysevent((ZUNOSysEvent_t*)data);
-            }
+            for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_SYSEVENT);i++)
+                ((zuno_user_sysevent_handler *)(getSysHandlerPtr(ZUNO_HANDLER_SYSEVENT, i)))((ZUNOSysEvent_t*)data);
             break;
         case ZUNO_JUMPTBL_SYSTIMER:
             zuno_CCTimer((uint32_t)data);
-            if(g_zuno_odhw_cfg.h_systimer != NULL) {
-                g_zuno_odhw_cfg.h_systimer((uint32_t)data);
-            }
+            for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_SYSTIMER);i++)
+                ((zuno_user_systimer_handler *)(getSysHandlerPtr(ZUNO_HANDLER_SYSTIMER, i)))((uint32_t)data);
             break;
         default:
             break; // UNKNOWN VECTOR
     }
     return (void*)0;
 }
-void zunoAttachSysHandler(byte type, void * handler){
-    switch(type){
-        case ZUNO_HANDLER_SYSTIMER:
-            g_zuno_odhw_cfg.h_systimer = (zuno_user_systimer_handler*)handler;
-            break;
-        case ZUNO_HANDLER_SYSEVENT:
-            g_zuno_odhw_cfg.h_sysevent = (zuno_user_sysevent_handler*)handler;
-            break;
-        case ZUNO_HANDLER_BATTERY:
-            break;
-    }
+int zunoAttachSysHandler(byte type, void * handler){
+    if(type >= ZUNO_HANDLER_MAX_NUMBER)
+        return -2;
+    if(g_zuno_odhw_cfg.h_sys_handler_len[type] >= MAX_HANDLER_LIST)
+        return -1;
+    g_zuno_odhw_cfg.h_sys_handler[type][g_zuno_odhw_cfg.h_sys_handler_len[type]] = handler;
+    g_zuno_odhw_cfg.h_sys_handler_len[type]++;
+    return g_zuno_odhw_cfg.h_sys_handler_len[type];
 }
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);

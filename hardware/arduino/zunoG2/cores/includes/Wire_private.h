@@ -7,8 +7,13 @@
 #define WIRE_LOCATION			g_loc_pa0_pf7_all
 #define WIRE_LOCATION_SIZE		g_loc_pa0_pf7_all_size
 
-#define BUFFER_LENGTH					(uint16_t)32
-#define WIRE_BUFFER_LENGTH				BUFFER_LENGTH
+// If you need more, please use ZUNO_ENABLE(WIRE_BUFFER_LENGTH=[NEEDED_LEN])
+#ifndef WIRE_BUFFER_LENGTH 
+#define WIRE_BUFFER_LENGTH				32
+#else
+#pragma message "WIRE_BUFFER_LENGTH was defined by user"
+#endif
+#define WIRE_BUFFER_LENGTH_				((uint16_t)(WIRE_BUFFER_LENGTH))
 
 #define WIRE_ERORR_TRANSMISSION_SUCCESS			0
 #define WIRE_ERORR_TRANSMISSION_LONG			1
@@ -51,7 +56,7 @@ class TwoWire {
 		uint32_t							init_freq;//To set the bus frequency, only valid in master mode - setClock
 		I2C_TransferReturn_TypeDef			seq_return;//Status after reading and writing data
 		uint8_t								available_bytes;//How many bytes read  - requestFrom
-		uint8_t								seq_buffer[WIRE_BUFFER_LENGTH];//The buffer for reading and writing the size depends on BUFFER_LENGTH
+		uint8_t								seq_buffer[WIRE_BUFFER_LENGTH_];//The buffer for reading and writing the size depends on BUFFER_LENGTH
 		I2C_TransferSeq_TypeDef				seq;
 };
 

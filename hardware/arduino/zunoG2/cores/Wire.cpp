@@ -116,8 +116,8 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop
 	uint32_t							timeout;
 	I2C_TransferReturn_TypeDef			tempos;
 
-	if (quantity > WIRE_BUFFER_LENGTH)
-		quantity = WIRE_BUFFER_LENGTH;
+	if (quantity > WIRE_BUFFER_LENGTH_)
+		quantity = WIRE_BUFFER_LENGTH_;
 	this->seq.addr = WIRE_ADDRESS(address);
 	this->seq.flags = I2C_FLAG_READ;
 	this->seq.buf->len = quantity;

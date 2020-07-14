@@ -11,6 +11,7 @@
 #include "ZWCCNotification.h"
 #include "ZWCCDoorLock.h"
 #include "ZWCCConfiguration.h"
+#include "ZWCCAssociation.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -169,6 +170,32 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 }
 #endif
 
+// Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
+static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
+	int result = ZUNO_UNKNOWN_CMD;
+
+	switch(ZW_CMD_CLASS) {
+			case COMMAND_CLASS_CONFIGURATION:
+				#ifdef WITH_CC_CONFIGURATION
+				result = zuno_CCConfigurationHandler(cmd);
+				#endif
+				break ;
+			case COMMAND_CLASS_ASSOCIATION:
+				result = zuno_CCAssociationHandler(cmd);
+				break ;
+			case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
+				result = zuno_CCMultiAssociationHandler(cmd);
+				break ;
+			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
+				result = zuno_CCAssociationGprInfoHandler(cmd);
+				break ;
+			default:
+				return (true);
+	}
+	*out = result;
+	return (false);
+}
+
 // Main command handler for incoming z-wave commands
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	int result = ZUNO_UNKNOWN_CMD;
@@ -199,13 +226,8 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 		}
 	}
 	#endif
-	// Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
-	#ifdef WITH_CC_CONFIGURATION
-	if(ZW_CMD_CLASS == COMMAND_CLASS_CONFIGURATION)
-			result = zuno_CCConfigurationHandler(cmd);
-	#endif
 	// Check if command fits to any existing channel
-	if((result != ZUNO_COMMAND_ANSWERED) && (result != ZUNO_COMMAND_PROCESSED)){
+	if((result != ZUNO_COMMAND_ANSWERED) && (result != ZUNO_COMMAND_PROCESSED) && _multiinstance(cmd, &result) == true){
 		byte zuno_ch = zuno_findTargetChannel(cmd);
 		if(zuno_ch == UNKNOWN_CHANNEL){
 			#ifdef LOGGING_DBG
@@ -647,6 +669,15 @@ static void initCCSData() {
 	zuno_CCNotificationInitData();
 	#endif
 }
+void zunoAddAssociation(byte type, uint32_t params) {
+	uint8_t						num;
+
+	if ((num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
+		return ;
+	ZUNO_CFG_ASSOCIATION_COUNT++;
+	ZUNO_CFG_ASSOCIATION(num).type = type;
+}
+
 byte zunoAddChannel(byte type, byte subtype, byte options) {
 	#ifdef LOGGING_DBG
 	// dbgCCTypes();

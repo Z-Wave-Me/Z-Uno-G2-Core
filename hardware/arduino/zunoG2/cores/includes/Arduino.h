@@ -47,6 +47,15 @@ enum{
     INPUT_PULLDOWN  = GPIOMODE_INPUTPULL
 };
 
+enum {
+	CTRL_GROUP_1 = 1,
+	CTRL_GROUP_2,
+	CTRL_GROUP_3,
+	CTRL_GROUP_4,
+	CTRL_GROUP_5
+};
+
+
 //# define ZUNO_PIN_V1
 #if defined ZUNO_PIN_V1
 	#define A0                  14
@@ -130,6 +139,7 @@ void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handle
 int zunoAttachSysHandler(byte type, void * handler);
 void zunoSetZWChannel(byte ch, byte zw_channel);
 byte zunoAddChannel(byte type, byte subtype, byte options);
+void zunoAddAssociation(byte type, uint32_t params);
 bool zunoStartDeviceConfiguration();
 void zunoStartLearn(byte timeout, bool secured);
 void zunoSendReport(byte ch);

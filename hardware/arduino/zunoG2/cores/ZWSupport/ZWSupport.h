@@ -27,11 +27,14 @@ enum
 	COMMAND_CLASS_SWITCH_COLOR = 0x33,
 	COMMAND_CLASS_THERMOSTAT_MODE = 0x40,
 	COMMAND_CLASS_THERMOSTAT_SETPOINT = 0x43,
+	COMMAND_CLASS_ASSOCIATION_GRP_INFO = 0x59,
 	COMMAND_CLASS_MULTICHANNEL = 0x60,
 	COMMAND_CLASS_DOOR_LOCK = 0x62,
 	COMMAND_CLASS_CONFIGURATION = 0x70,
 	COMMAND_CLASS_NOTIFICATION = 0x71,
 	COMMAND_CLASS_BATTERY = 0x80,
+	COMMAND_CLASS_ASSOCIATION = 0x85,
+	COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION = 0x8E
 };
 
 
@@ -111,6 +114,10 @@ void fillOutgoingReportPacket(uint8_t ch);
 #define ZUNO_CFG_TYPE_COUNT     (g_zuno_sys->zwave_cfg->num_channel_types)
 #define ZUNO_CFG_TYPE(N)        g_zuno_sys->zwave_cfg->channel_types[N]
 #define ZUNO_CFG_TYPES          g_zuno_sys->zwave_cfg->channel_types
+
+#define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_sys->zwave_cfg->num_associations)
+#define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_sys->zwave_cfg->associations[N])
+#define ZUNO_CFG_ASSOCIATION_TYPES		(g_zuno_sys->zwave_cfg->association_types)
 
 /* Device class Av Control Point */
 #define GENERIC_TYPE_AV_CONTROL_POINT                                                    0x03 /*AV Control Point*/

@@ -27,7 +27,6 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint8_t 			num_channels;
 	ZUNOAssociation_t	associations[ZUNO_MAX_ASSOC_NUMBER];
 	uint8_t 			num_associations;
-	uint8_t 			association_types;
 	uint8_t 			num_channel_types;
 	ZUNOChannelCCS_t    channel_types[ZUNO_MAX_CCTYPES];
 	uint16_t            app_version;

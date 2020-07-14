@@ -6,7 +6,7 @@
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 
 /************************************************************/
-/* Association Groupings Report command class structs */    
+/* Association Groupings Report command class structs */     // is similar /* Multi Channel Association Groupings Report command class structs */
 /************************************************************/
 typedef struct								ZwAssociationGroupingsReportFrame_s
 {

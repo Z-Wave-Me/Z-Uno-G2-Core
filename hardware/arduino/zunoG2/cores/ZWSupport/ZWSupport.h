@@ -9,11 +9,11 @@
 #define WITH_CC_SWITCH_MULTILEVEL   1
 #define WITH_CC_MULTICHANNEL        1*/
 
-//#define LOGGING_DBG 0
+#define LOGGING_DBG 0
 
 #ifdef LOGGING_DBG
 #ifndef LOGGING_UART 
-#define LOGGING_UART Serial0
+#define LOGGING_UART Serial
 #endif
 #endif
 // 
@@ -117,7 +117,6 @@ void fillOutgoingReportPacket(uint8_t ch);
 
 #define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_sys->zwave_cfg->num_associations)
 #define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_sys->zwave_cfg->associations[N])
-#define ZUNO_CFG_ASSOCIATION_TYPES		(g_zuno_sys->zwave_cfg->association_types)
 
 /* Device class Av Control Point */
 #define GENERIC_TYPE_AV_CONTROL_POINT                                                    0x03 /*AV Control Point*/

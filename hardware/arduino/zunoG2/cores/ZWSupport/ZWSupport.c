@@ -669,14 +669,6 @@ static void initCCSData() {
 	zuno_CCNotificationInitData();
 	#endif
 }
-void zunoAddAssociation(byte type, uint32_t params) {
-	uint8_t						num;
-
-	if ((num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
-		return ;
-	ZUNO_CFG_ASSOCIATION_COUNT++;
-	ZUNO_CFG_ASSOCIATION(num).type = type;
-}
 
 byte zunoAddChannel(byte type, byte subtype, byte options) {
 	#ifdef LOGGING_DBG

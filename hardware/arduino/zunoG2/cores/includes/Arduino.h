@@ -140,6 +140,7 @@ int zunoAttachSysHandler(byte type, void * handler);
 void zunoSetZWChannel(byte ch, byte zw_channel);
 byte zunoAddChannel(byte type, byte subtype, byte options);
 void zunoAddAssociation(byte type, uint32_t params);
+void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name);
 bool zunoStartDeviceConfiguration();
 void zunoStartLearn(byte timeout, bool secured);
 void zunoSendReport(byte ch);

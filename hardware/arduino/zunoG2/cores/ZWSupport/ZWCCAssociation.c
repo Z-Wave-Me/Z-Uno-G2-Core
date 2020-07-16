@@ -66,7 +66,7 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 			break ;
 		case MULTI_CHANNEL_ASSOCIATION_GET:
 			if (_group_id(ASSOCIATION_GROUP_ID) != ZUNO_UNKNOWN_CMD)
-				ASSOCIATION_GROUP_ID = ASSOCIATION_GROUP_INDEX_LIFE_LINE;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+				ASSOCIATION_GROUP_ID = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
 			break ;
 		case MULTI_CHANNEL_ASSOCIATION_GROUPINGS_GET:
 			rs = _assotiation_groupings_report(COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION, MULTI_CHANNEL_ASSOCIATION_GROUPINGS_REPORT);
@@ -84,8 +84,8 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 
 	groupIndex = ASSOCIATION_GROUP_ID;
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
-		groupIndex = ASSOCIATION_GROUP_INDEX_LIFE_LINE;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
-	if (groupIndex == ASSOCIATION_GROUP_INDEX_LIFE_LINE) {
+		groupIndex = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+	if (groupIndex == ZUNO_LIFELINE_GRP) {
 		group_name = (char *)ASSOCIATION_GROUP_NAME_LIFE_LINE;
 		len = (sizeof(ASSOCIATION_GROUP_NAME_LIFE_LINE) - 1);
 	}
@@ -121,14 +121,14 @@ static int _association_gpr_info_profile_report(ZwAssociationGroupInfoGetFrame_t
 	CMD_REPLY_LEN = sizeof(ZwAssociationGroupInfoReportFrame_t);
 	if ((in->properties1 & (1 << 6)) != 0) {
 		lp->properties1 |= (1 << 7);//If List Mode is 1, a sending node is advertising the properties of all association groups. The sending node MAY return several Reports.
-		groupIndex = ASSOCIATION_GROUP_INDEX_LIFE_LINE;
+		groupIndex = ZUNO_LIFELINE_GRP;
 		groupIndex_end = ZUNO_CFG_ASSOCIATION_COUNT + 1;//+1 for "Lifeline"
 	}
 	else {
 		groupIndex = in->groupingIdentifier;
 		if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD) {
-			groupIndex = ASSOCIATION_GROUP_INDEX_LIFE_LINE;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
-			groupIndex_end = ASSOCIATION_GROUP_INDEX_LIFE_LINE;
+			groupIndex = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+			groupIndex_end = ZUNO_LIFELINE_GRP;
 		}
 		else
 			groupIndex_end = groupIndex;
@@ -136,7 +136,7 @@ static int _association_gpr_info_profile_report(ZwAssociationGroupInfoGetFrame_t
 	while (groupIndex <= groupIndex_end) {
 		switch (groupIndex) {
 			case 1:
-				lp->variantgroup.groupingIdentifier = ASSOCIATION_GROUP_INDEX_LIFE_LINE;
+				lp->variantgroup.groupingIdentifier = ZUNO_LIFELINE_GRP;
 				lp->variantgroup.profile1 = 0;
 				lp->variantgroup.profile2 = 1;
 				break;
@@ -159,13 +159,13 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 
 	groupIndex = in->groupingIdentifier;
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
-		groupIndex = ASSOCIATION_GROUP_INDEX_LIFE_LINE;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+		groupIndex = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
 	lp = (ZwAssociationGroupCommandListReportFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
 	lp->cmd = ASSOCIATION_GROUP_COMMAND_LIST_REPORT;
 	lp->groupingIdentifier = groupIndex;
 	listLength = 2;
-	if (groupIndex == ASSOCIATION_GROUP_INDEX_LIFE_LINE)
+	if (groupIndex == ZUNO_LIFELINE_GRP)
 	{
 		lp->command[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
 		lp->command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
@@ -182,9 +182,9 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 				lp->command[0] = COMMAND_CLASS_BASIC;
 				lp->command[1] = BASIC_SET;
 				lp->command[2] = COMMAND_CLASS_SWITCH_MULTILEVEL;
-				lp->command[3] = MULTI_INSTANCE_GET;
+				lp->command[3] = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
 				lp->command[4] = COMMAND_CLASS_SWITCH_MULTILEVEL;
-				lp->command[5] = MULTI_INSTANCE_REPORT;
+				lp->command[5] = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
 				break;
 			case ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER:
 				lp->command[0] = COMMAND_CLASS_SCENE_ACTIVATION;
@@ -229,7 +229,77 @@ void zunoAddAssociation(byte type, uint32_t params) {
 }
 
 void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name) {
-	if (--groupIndex >= ZUNO_MAX_ASSOC_NUMBER_LIMITATION)
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
-	g_zuno_associations_group_name[groupIndex] = group_name;
+	g_zuno_associations_group_name[groupIndex - 1] = group_name;
+}
+
+static void _send_group(uint8_t groupIndex)
+{
+	fillOutgoingReportPacket(0);
+	g_outgoing_packet.dst_node = groupIndex;
+	g_outgoing_packet.src_zw_channel = 0;
+	zunoSendZWPackage(&g_outgoing_packet);
+}
+
+
+void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {
+	ZwBasicSetFrame_t								*lp;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	lp = (ZwBasicSetFrame_t *)&CMD_REPLY_CC;
+	lp->cmdClass = COMMAND_CLASS_BASIC;
+	lp->cmd = BASIC_SET;
+	lp->value = value;
+	CMD_REPLY_LEN = sizeof(ZwBasicSetFrame_t);
+	_send_group(groupIndex);
+}
+
+void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop) {
+	ZwSwitchMultilevelStartLevelChangeFrame_t						*lp;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&CMD_REPLY_CC;
+	lp->v1.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
+	if(start_stop != false) {
+		lp->v1.cmd = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
+		lp->v1.properties1 = (direction == true) ? 0x60 : 0x20;
+		lp->v1.startLevel = 0;
+		CMD_REPLY_LEN = sizeof(lp->v1);
+	}
+	else {
+		lp->v1.cmd = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
+		CMD_REPLY_LEN = sizeof(ZwSwitchMultilevelStopLevelChangeFrame_t);
+	}
+	_send_group(groupIndex);
+}
+
+void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene) {
+	ZwSceneActivationSetFrame_t								*lp;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	lp = (ZwSceneActivationSetFrame_t *)&CMD_REPLY_CC;
+	lp->cmdClass = COMMAND_CLASS_SCENE_ACTIVATION;
+	lp->cmd = SCENE_ACTIVATION_SET;
+	lp->sceneId = scene;
+	//lp->dimmingDuration = 0xFF;//Specify dimming duration configured by the Scene Actuator Configuration Set and Scene Controller Configuration Set Command depending on device used.
+	//CMD_REPLY_LEN = sizeof(ZwSceneActivationSetFrame_t);
+	CMD_REPLY_LEN = 3;
+	_send_group(groupIndex);
+}
+
+void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {
+	ZwDoorLockOperationSet_t								*lp;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	lp = (ZwDoorLockOperationSet_t *)&CMD_REPLY_CC;
+	lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
+	lp->cmd = DOOR_LOCK_OPERATION_SET;
+	lp->doorLockMode = (open_close != false) ? 0x00 : 0xFF;
+	CMD_REPLY_LEN = sizeof(ZwDoorLockOperationSet_t);// FIXME
+	_send_group(groupIndex);
 }

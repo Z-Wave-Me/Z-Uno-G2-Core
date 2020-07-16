@@ -69,14 +69,4 @@ typedef union							ZwDoorLockOperationReportFrame_u {//For more convenient supp
 	ZwDoorLockOperationReportV4Frame_t	v4;
 }										ZwDoorLockOperationReportFrame_t;
 
-/************************************************************/
-/* Door Lock Operation Set command class structs */      
-/************************************************************/
-typedef struct							ZwDoorLockOperationSet_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t								cmd;/* The command */
-	uint8_t								doorLockMode;/**/
-}										ZwDoorLockOperationSet_t;//_ZW_DOOR_LOCK_OPERATION_SET_V4_FRAME_
-
 #endif // ZWCC_DOOOR_LOCK_PRIVATE_H

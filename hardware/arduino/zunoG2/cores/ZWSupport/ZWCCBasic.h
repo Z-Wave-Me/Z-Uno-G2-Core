@@ -8,5 +8,15 @@
 #define BASIC_REPORT                                                                     0x03
 #define BASIC_SET                                                                        0x01
 
+/************************************************************/
+/* Basic Set command class structs */                       
+/************************************************************/
+typedef struct								ZwBasicSetFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									value;/**/
+}											ZwBasicSetFrame_t;
+
 int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t * cmd);
 #endif // BASIC_CC_H

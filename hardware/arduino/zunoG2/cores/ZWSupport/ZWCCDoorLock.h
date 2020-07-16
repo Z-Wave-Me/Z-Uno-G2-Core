@@ -12,6 +12,16 @@
 #define DOOR_LOCK_OPERATION_REPORT                                                       0x03
 #define DOOR_LOCK_OPERATION_SET                                                          0x01
 
+/************************************************************/
+/* Door Lock Operation Set command class structs */      
+/************************************************************/
+typedef struct							ZwDoorLockOperationSet_s
+{
+	uint8_t								cmdClass;/* The command class */
+	uint8_t								cmd;/* The command */
+	uint8_t								doorLockMode;/**/
+}										ZwDoorLockOperationSet_t;//_ZW_DOOR_LOCK_OPERATION_SET_V4_FRAME_
+
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
 int zuno_CCDoorLockReport(uint8_t channel);
 

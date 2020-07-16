@@ -3,12 +3,10 @@
 
 #include "Arduino.h"
 #include "ZWCCBasic.h"
-#include "ZWCCMultichannel.h"
+#include "ZWCCSwitchMultilevel.h"
 #include "ZWCCDoorLock.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
-
-#define ASSOCIATION_GROUP_INDEX_LIFE_LINE	1
 
 #define ASSOCIATION_GROUP_NAME_LIFE_LINE	"Lifeline"
 #define ASSOCIATION_GROUP_NAME_DEFAULT		"User group 00"
@@ -21,6 +19,17 @@
 /* Scene Activation command class commands */
 #define SCENE_ACTIVATION_VERSION                                                         0x01
 #define SCENE_ACTIVATION_SET                                                             0x01
+
+/************************************************************/
+/* Scene Activation Set command class structs */            
+/************************************************************/
+typedef struct								ZwSceneActivationSetFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									sceneId;/**/
+	uint8_t									dimmingDuration;/**/
+}											ZwSceneActivationSetFrame_t;
 
 /************************************************************/
 /* Association Groupings Report command class structs */     // is similar /* Multi Channel Association Groupings Report command class structs */

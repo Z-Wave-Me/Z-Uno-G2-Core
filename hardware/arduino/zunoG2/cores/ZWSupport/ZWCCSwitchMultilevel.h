@@ -34,6 +34,48 @@
 #define SWITCH_MULTILEVEL_SUPPORTED_REPORT_PROPERTIES2_RESERVED_MASK                      0xE0
 #define SWITCH_MULTILEVEL_SUPPORTED_REPORT_PROPERTIES2_RESERVED_SHIFT                     0x05
 
+/************************************************************/
+/* Switch Multilevel Start Level Change command class structs */
+/************************************************************/
+typedef struct					ZwSwitchMultilevelStartLevelChangeV1Frame_s {
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	uint8_t						properties1;/* masked byte */
+	uint8_t						startLevel;/**/
+}								ZwSwitchMultilevelStartLevelChangeV1Frame_t;
+
+typedef struct					ZwSwitchMultilevelStartLevelChangeV2Frame_s {
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	uint8_t						properties1;/* masked byte */
+	uint8_t						startLevel;/**/
+	uint8_t						dimmingDuration;/**/
+}								ZwSwitchMultilevelStartLevelChangeV2Frame_t;
+
+typedef struct					ZwSwitchMultilevelStartLevelChangeV3Frame_s {
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	uint8_t						properties1;/* masked byte */
+	uint8_t						startLevel;/**/
+	uint8_t						dimmingDuration;/**/
+	uint8_t						stepSize;/**/
+}								ZwSwitchMultilevelStartLevelChangeV3Frame_t;
+
+typedef union					ZwSwitchMultilevelStartLevelChangeFrame_u {//For more convenient support, several versions of commands
+	ZwSwitchMultilevelStartLevelChangeV1Frame_t	v1;
+	ZwSwitchMultilevelStartLevelChangeV2Frame_t	v2;
+	ZwSwitchMultilevelStartLevelChangeV3Frame_t	v3;
+}								ZwSwitchMultilevelStartLevelChangeFrame_t;
+
+/************************************************************/
+/* Switch Multilevel Stop Level Change command class structs */
+/************************************************************/
+typedef struct					ZwSwitchMultilevelStopLevelChangeFrame_s
+{
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+}								ZwSwitchMultilevelStopLevelChangeFrame_t;
+
 int zuno_CCSwitchMultilevelReport(byte channel);
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
 void zuno_CCSwitchMultilevelTimer(uint32_t ticks);

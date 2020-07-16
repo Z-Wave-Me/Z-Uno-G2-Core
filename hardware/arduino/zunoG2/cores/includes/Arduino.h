@@ -150,4 +150,11 @@ int zunoEEPROMErase();
 void _zme_memcpy(byte *dst, byte *src, byte count);
 uint32_t zunoLoadCFGParam(uint8_t param);
 void zunoSaveCFGParam(uint8_t param, uint32_t value);
+
+// Associations
+void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
+void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
+void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
+void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
+
 #endif // ZUNO_ARDUINOH

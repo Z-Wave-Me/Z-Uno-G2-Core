@@ -507,7 +507,16 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
           return adcPosSelAPORT4XCH1;
       case A3:
           return adcPosSelAPORT3XCH2;
-#else
+#elif defined ZUNO_PIN_V2
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif defined ZUNO_PIN_V3
       case A0:
           return adcPosSelAPORT1XCH22;
       case A1:

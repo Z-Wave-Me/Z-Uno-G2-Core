@@ -52,12 +52,16 @@ size_t HardwareSerial::write(uint8_t value) {
 // FIXME: pin numbers for unofficial board was presented. 
 //     	  Correct them before the release!
 #if defined ZUNO_PIN_V1
-HardwareSerial Serial(1, 20, 10);// USB
-HardwareSerial Serial1(1, 13, 12); // UART1  - разделяет один физический UART на разных пинах с Serial
-HardwareSerial Serial0(0, 11, 7); // UART0 
-#else
-// FIXME: при rst отваливаеться UART1/UART0
-HardwareSerial Serial(1, 26, 27);// USB
-HardwareSerial Serial1(1, 8, 7); // UART1
-HardwareSerial Serial0(0, 25, 24); // UART0
+	HardwareSerial Serial(1, 20, 10);// USB
+	HardwareSerial Serial1(1, 13, 12); // UART1  - разделяет один физический UART на разных пинах с Serial
+	HardwareSerial Serial0(0, 11, 7); // UART0 
+#elif defined ZUNO_PIN_V2
+	// FIXME: при rst отваливаеться UART1/UART0
+	HardwareSerial Serial(1, 26, 27);// USB
+	HardwareSerial Serial1(1, 8, 7); // UART1
+	HardwareSerial Serial0(0, 25, 24); // UART0
+#elif defined ZUNO_PIN_V3
+	HardwareSerial Serial(2, 26, 27);// USB
+	HardwareSerial Serial1(2, 8, 7); // UART1
+	HardwareSerial Serial0(0, 25, 24); // UART0
 #endif

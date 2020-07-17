@@ -65,8 +65,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     {1, 13}, //  31 - B13
     
 };
-#else
-// FIXME: где analog not support - проблеммы у analogWrite - не проходит, лампочка не мигает
+#elif defined ZUNO_PIN_V2
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
@@ -81,8 +80,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// RIGHT SIDE
 	{3, 11},//9 - PD11 - 9
 	{3, 12},//10 - PD12 - 10
-	{0, 0},//11 - PA0// FIXME - 11  
-	{0, 1},//12 - PA1// FIXME - 12 
+	{0, 0},//11 - PA0
+	{0, 1},//12 - PA1
 	{0, 2},//13 - PA2 - ARDURINO LED - blue and PWM1
 	{0, 3},//14 - PA3 - PWM2
 	{0, 4},//15 - PA4 - PWM3 
@@ -99,8 +98,40 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// DO NOT USE !!!
 	{3, 13},//26 - PD13 - USB Serial
 	{5, 2}//27 - PF2 - USB Serial
-
-
+};
+#elif defined ZUNO_PIN_V3
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	// LEFT SIDE
+	{2, 8},//0 - PC8 - 0 
+	{2, 9},//1 - PC9 - 1 
+	{2, 10},//2 - PC10 - 2 
+	{5, 6},//3 - PF6 - A0 
+	{5, 7},//4 - PF7 - A1 
+	{3, 9},//5 - PD9 - A2 
+	{3, 10},//6 - PD10 -A3
+	{5, 4},//7 - PF4 - 7
+	{5, 5},//8 - PF5 - 8
+	// RIGHT SIDE
+	{3, 11},//9 - PD11 - 9
+	{3, 12},//10 - PD12 - 10
+	{3, 14},//11 - PD14 - 11
+	{3, 15},//12 - PD15 - 12
+	{0, 0},//13 - PA0 - ARDURINO LED - blue and PWM1
+	{0, 1},//14 - PA1 - PWM2
+	{0, 2},//15 - PA2 - PWM3 
+	{0, 3},//16 - PA3 - PWM4
+	{0, 4},//17 - PA4 - 17
+	{0, 5},//18 - PA5 - 18
+	{1, 11},//19 - PB11 - 19 
+	{1, 12},//20 - PB12 - 20 
+	{1, 13},//21 - PB13 - 21 
+	{1, 14},//22 - PB14 - 22 
+	{2, 7},//23 - PC7 - BTN
+	{2, 11},//24 - PC11 - TX0 
+	{3, 13},//25 - PD13 - RX0 
+	// DO NOT USE !!!
+	{5, 2},//26 - PF2 - USB Serial
+	{5, 3}//27 - PF3 - USB Serial
 };
 #endif
 

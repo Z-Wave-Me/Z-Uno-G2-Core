@@ -498,7 +498,7 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
       case A3:
           return adcPosSelAPORT2XCH7;
           */
-#if defined ZUNO_PIN_V1
+#if ZUNO_PIN_V == 1
       case A0:
           return adcPosSelAPORT1XCH22;
       case A1:
@@ -507,7 +507,7 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
           return adcPosSelAPORT4XCH1;
       case A3:
           return adcPosSelAPORT3XCH2;
-#elif defined ZUNO_PIN_V2
+#elif ZUNO_PIN_V == 2
       case A0:
           return adcPosSelAPORT1XCH22;
       case A1:
@@ -516,7 +516,7 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
           return adcPosSelAPORT4XCH1;
       case A3:
           return adcPosSelAPORT3XCH2;
-#elif defined ZUNO_PIN_V3
+#elif ZUNO_PIN_V == 3
       case A0:
           return adcPosSelAPORT1XCH22;
       case A1:

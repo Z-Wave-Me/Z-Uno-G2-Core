@@ -26,7 +26,7 @@ typedef struct PinDef{
 // E = 4
 // F = 5
 
-#if defined ZUNO_PIN_V1
+#if ZUNO_PIN_V == 1
 // "NIKBOARD" map
 static const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
@@ -65,7 +65,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     {1, 13}, //  31 - B13
     
 };
-#elif defined ZUNO_PIN_V2
+#elif ZUNO_PIN_V == 2
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
@@ -99,7 +99,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 13},//26 - PD13 - USB Serial
 	{5, 2}//27 - PF2 - USB Serial
 };
-#elif defined ZUNO_PIN_V3
+#elif ZUNO_PIN_V == 3
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 

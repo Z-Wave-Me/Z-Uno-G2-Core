@@ -89,7 +89,9 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 		group_name = (char *)ASSOCIATION_GROUP_NAME_LIFE_LINE;
 		len = (sizeof(ASSOCIATION_GROUP_NAME_LIFE_LINE) - 1);
 	}
-	else if ((group_name = g_zuno_associations_group_name[groupIndex]) == NULL || (len = strlen(group_name) > ASSOCIATION_GROUP_NAME_MAX)) {
+	else if ((group_name = g_zuno_associations_group_name[groupIndex - 2]) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
+		;
+	else {
 		group_name = &group_name_default[0];
 		len = (sizeof(ASSOCIATION_GROUP_NAME_DEFAULT)- 1);
 		group_name[len - 1] = groupIndex % 10 + 0x30;
@@ -237,7 +239,7 @@ void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name) {
 static void _send_group(uint8_t groupIndex)
 {
 	fillOutgoingReportPacket(0);
-	g_outgoing_packet.dst_node = groupIndex;
+	g_outgoing_packet.dst_node = groupIndex + 1;
 	g_outgoing_packet.src_zw_channel = 0;
 	zunoSendZWPackage(&g_outgoing_packet);
 }

@@ -238,7 +238,6 @@ void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name) {
 
 static void _send_group(uint8_t groupIndex)
 {
-	fillOutgoingReportPacket(0);
 	g_outgoing_packet.dst_node = groupIndex + 1;
 	g_outgoing_packet.src_zw_channel = 0;
 	zunoSendZWPackage(&g_outgoing_packet);
@@ -250,6 +249,7 @@ void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
+	fillOutgoingReportPacket(0);
 	lp = (ZwBasicSetFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_BASIC;
 	lp->cmd = BASIC_SET;
@@ -263,6 +263,7 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
+	fillOutgoingReportPacket(0);
 	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&CMD_REPLY_CC;
 	lp->v1.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	if(start_stop != false) {
@@ -283,6 +284,7 @@ void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene) {
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
+	fillOutgoingReportPacket(0);
 	lp = (ZwSceneActivationSetFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_SCENE_ACTIVATION;
 	lp->cmd = SCENE_ACTIVATION_SET;
@@ -298,6 +300,7 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
+	fillOutgoingReportPacket(0);
 	lp = (ZwDoorLockOperationSet_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	lp->cmd = DOOR_LOCK_OPERATION_SET;

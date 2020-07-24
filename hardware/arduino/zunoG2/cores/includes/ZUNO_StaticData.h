@@ -90,9 +90,6 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_ASSOCIATION_GROUP_SCENE_CONTROL 			{ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER, ZUNO_ASSOC_NO_PARAMS}
 #define ZUNO_ASSOCIATION_GROUP_DOORLOCK					{ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER, ZUNO_ASSOC_NO_PARAMS}
 
-#define ZUNO_SLEEPING_MODE_ALWAYS_AWAKE 			    ZUNO_MODE_ALWAYS_LISTENING_NUMBER
-#define ZUNO_SLEEPING_MODE_SLEEPING			 		    ZUNO_MODE_WAKE_UP_NUMBER
-#define ZUNO_SLEEPING_MODE_FREQUENTLY_AWAKE 		    ZUNO_MODE_FLIRS_NUMBER
 
 //#endif
 // -----------------------------------------------------------------
@@ -108,10 +105,10 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 									__VA_ARGS__, \
 								}
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE) 		\
-								BYTE ___zunoSleepingModeValue = VALUE
+								unsigned char ___zunoSleepingModeValue = VALUE
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H) 		\
-								word ___zunoBatteryLow = L; \
-								word ___zunoBatteryHigh = H 
+								unsigned int ___zunoBatteryLow = L; \
+								unsigned int ___zunoBatteryHigh = H 
 #define ZUNO_SETUP_CFGPARAMETER_HANDLER(H) 		\
 								GENERIC_POINTER ___zunoCFGHandler = ((void*)H)
 #define ZUNO_SETUP_BATTERY_HANDLER(H) 		\
@@ -123,13 +120,13 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_SETUP_SYSTIMER_HANDLER(H)\
 								GENERIC_POINTER ___zunoSysTimerHandler = ((void*)H)
 #define ZUNO_SETUP_PRODUCT_AUTO() \
-								BYTE ___zunoProductType = 1
+								unsigned char ___zunoProductType = 1
 #define ZUNO_SETUP_PRODUCT_ID(MAJ,MIN) \
-								BYTE ___zunoProductType = 2;\
-								BYTE ___zunoProductIDMaj = MAJ;\
-								BYTE ___zunoProductIDMin = MIN
+								unsigned char ___zunoProductType = 2;\
+								unsigned char ___zunoProductIDMaj = MAJ;\
+								unsigned char ___zunoProductIDMin = MIN
 #define ZUNO_SETUP_S2ACCESS(B) \
-								BYTE ___zunoS2Access = B
+								unsigned char ___zunoS2Access = B
 #define ZUNO_DISABLE(VAR_NAMES)\
 								char ___zunoDisableList[] = #VAR_NAMES
 #define ZUNO_ENABLE(VAR_NAMES)\

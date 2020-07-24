@@ -167,6 +167,8 @@ byte zunoAddChannel(byte type, byte subtype, byte options);
 void zunoAddAssociation(byte type, uint32_t params);
 void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name);
 bool zunoStartDeviceConfiguration();
+void zunoSetS2Keys(byte keys);
+void zunoSetSleepingMode(byte mode);
 void zunoStartLearn(byte timeout, bool secured);
 void zunoSendReport(byte ch);
 int zunoEEPROMWrite(word address, word size, byte * data);

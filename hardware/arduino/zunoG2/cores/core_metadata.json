@@ -1,6 +1,12 @@
 {
     "core_version":{"major":3,"minor":1,"branch":"alpha"},
     "max_channel_ccs":2,
+    "associations":[
+        {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},
+        {"type_name":"ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER", "type_val":2, "preproc_flags":[]},
+        {"type_name":"ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER", "type_val":3, "preproc_flags":[]},
+        {"type_name":"ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER", "type_val":4, "preproc_flags":["S2_ENTRY_CONTROL"]}
+    ],
     "channels":[
         {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
             "cc_flags":["WITH_CC_SWITCH_BINARY","WITH_CC_BASIC"],
@@ -13,6 +19,7 @@
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   
@@ -27,6 +34,7 @@
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   
@@ -40,6 +48,7 @@
             "icon_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
             "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   
@@ -53,6 +62,7 @@
             "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}_${sub_type}"
         },
         {   
@@ -66,6 +76,7 @@
             "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   
@@ -79,6 +90,7 @@
                 {"name":"COMMAND_CLASS_DOOR_LOCK","version":"DOOR_LOCK_VERSION"}
             ],
             "flags":["0"],
+            "preproc_flags":["S2_ENTRY_CONTROL"],
             "cluster_rule":"${type}"
         },
         {   
@@ -89,6 +101,7 @@
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
@@ -103,6 +116,7 @@
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
@@ -121,6 +135,7 @@
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   
@@ -131,6 +146,7 @@
             "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "icon_app_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_THERMOSTAT_MODE","version":"THERMOSTAT_MODE_VERSION"},
                 {"name":"COMMAND_CLASS_THERMOSTAT_SETPOINT","version":"THERMOSTAT_SETPOINT_VERSION"}
@@ -145,6 +161,7 @@
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"}
             ],

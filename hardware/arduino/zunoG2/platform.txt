@@ -18,10 +18,10 @@ tools.zprog.cmd.libraries={runtime.platform.path}/libraries
 tools.zprog.cmd.cores={runtime.platform.path}/cores
 
 
-tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
+tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide" -i
 tools.zprog.erase.pattern="{runtime.tools.zme_make.path}/zme_make" arduino_dummy
-tools.zprog.bootloader.pattern="{runtime.tools.zme_make.path}/zme_make" boot {runtime.platform.path}/bootloaders/zuno_bootloader.bin -d "{serial.port}"
-tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide"
+tools.zprog.bootloader.pattern="{runtime.tools.zme_make.path}/zme_make" boot -c {runtime.platform.path}/bootloaders/ -d "{serial.port}" -i
+tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide" -i
 
 
 # ZUNO compile patterns
@@ -50,7 +50,6 @@ recipe.size.pattern="{tools.zprog.cmd.path}" arduino_size {build.project_name} -
 recipe.size.regex=^(?:\.text)\s+([0-9]+).*
 recipe.size.regex.data=^(?:\.ram)\s+([0-9]+).*
 recipe.size.regex.eeprom=^(?:\.eeprom)\s+([0-9]+).*
-
 
 # ZUNO Uploader/Programmers tools
 # ------------------------------

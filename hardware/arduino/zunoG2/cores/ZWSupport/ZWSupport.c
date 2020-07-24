@@ -712,6 +712,13 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 	ZUNO_CFG_CHANNEL_COUNT++;
 	return ch_i;
 }
+void zunoSetS2Keys(byte keys){
+	g_zuno_sys->zwave_cfg->security_keys = keys;
+}
+void zunoSetSleepingMode(byte mode){
+	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+	g_zuno_sys->zwave_cfg->flags |= (mode & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+}
 void zunoSetZWChannel(byte ch, byte zw_channel) {
 	ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 }

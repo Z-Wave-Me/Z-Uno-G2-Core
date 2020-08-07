@@ -1,4 +1,5 @@
 #ifndef CORTEXUSART_H
+#define CORTEXUSART_H
 #include "ZGecko.h"
 
 /**************************************************************************//**

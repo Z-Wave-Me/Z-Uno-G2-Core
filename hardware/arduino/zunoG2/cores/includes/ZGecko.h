@@ -1908,20 +1908,6 @@ typedef struct
 #define SCB_AIRCR_VECTRESET_Pos             0U                                            /*!< SCB AIRCR: VECTRESET Position */
 #define SCB_AIRCR_VECTRESET_Msk            (1UL /*<< SCB_AIRCR_VECTRESET_Pos*/)           /*!< SCB AIRCR: VECTRESET Mask */
 
-enum{
-    cmuClock_HFPER = CMU_CLOCK_TYPE_HFPER,
-    cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
-    cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,
-    cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1,
-    cmuClock_I2C0 = CMU_CLOCK_TYPE_I2C0,
-    cmuClock_I2C1 = CMU_CLOCK_TYPE_I2C1,
-    cmuClock_USART0 = CMU_CLOCK_TYPE_USART0,
-    cmuClock_USART1 = CMU_CLOCK_TYPE_USART1,
-    cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
-    cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO
-    
-};
-
 static inline void BUS_RegMaskedSet(volatile uint32_t *addr,
                                       uint32_t mask)
 {
@@ -2264,9 +2250,6 @@ typedef struct {
 #define _WDOG_IEN_PEM1_DEFAULT                    0x00000000UL                  /**< Mode DEFAULT for WDOG_IEN */
 #define WDOG_IEN_PEM1_DEFAULT                     (_WDOG_IEN_PEM1_DEFAULT << 4) /**< Shifted mode DEFAULT for WDOG_IEN */
 
-#define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
-#define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
-
 /* Memory mapping of Core Hardware */
 #define SCS_BASE            (0xE000E000UL)                            /*!< System Control Space Base Address */
 #define ITM_BASE            (0xE0000000UL)                            /*!< ITM Base Address */
@@ -2312,6 +2295,26 @@ __STATIC_INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
   {
     NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
   }
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get unique number for this device.
+ *
+ * @return
+ *   Unique number for this device.
+ ******************************************************************************/
+__STATIC_INLINE uint64_t SYSTEM_GetUnique(void)
+{
+#if defined (_DEVINFO_EUI64H_MASK)
+  uint32_t tmp = DEVINFO->EUI64L;
+  return (uint64_t)((uint64_t)DEVINFO->EUI64H << 32) | tmp;
+#elif defined(_DEVINFO_UNIQUEH_MASK)
+  uint32_t tmp = DEVINFO->UNIQUEL;
+  return (uint64_t)((uint64_t)DEVINFO->UNIQUEH << 32) | tmp;
+#else
+#error Location of device unique number is not defined.
+#endif
 }
 
 #endif // ZGECKO

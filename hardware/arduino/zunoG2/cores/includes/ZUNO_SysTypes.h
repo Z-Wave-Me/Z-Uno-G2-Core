@@ -92,11 +92,16 @@ typedef struct ZUNOSysEvent_s{
 	uint8_t event;
 	uint32_t params[2];
 }ZUNOSysEvent_t;
-
+typedef struct ZUNOSysDbgMessage_s{
+	uint8_t type;
+	char *  p_text;
+}ZUNOSysDbgMessage_t;
+typedef void zuno_void_handler(void);
+typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 typedef void zuno_configuartionhandler_t(uint8_t, uint32_t);
-
+typedef uint8_t zuno_battery_handler_t(void);
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{
@@ -105,18 +110,22 @@ typedef struct ZUNOUARTOptions_s{
     uint8_t tx_pin;
 }ZUNOUARTOptions_t;
 
+typedef struct HandlerFunc_s{
+	uint8_t main_type;
+	uint8_t sub_type;
+	uint16_t code_offset;
+}HandlerFunc_t;
+
 typedef struct ZUNOOnDemandHW_s {
     bool        ADCInitialized;
     bool        PWMInitialized;
     uint8_t        pwm_pins[MAX_ZUNO_PWMS];
     uint32_t       pwm_freq_scaller;
     // HANDLERS
-    void *      h_sys_handler[ZUNO_HANDLER_MAX_NUMBER][MAX_HANDLER_LIST];
-    uint8_t     h_sys_handler_len[ZUNO_HANDLER_MAX_NUMBER];
+	HandlerFunc_t  h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+    
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 
-inline int getSysHandlerCount(uint8_t type) {return g_zuno_odhw_cfg.h_sys_handler_len[type];};
-inline void * getSysHandlerPtr(uint8_t type, uint8_t index) {return g_zuno_odhw_cfg.h_sys_handler[type][index];};
  
 #endif // __ZUNO_SYS_TYPES__

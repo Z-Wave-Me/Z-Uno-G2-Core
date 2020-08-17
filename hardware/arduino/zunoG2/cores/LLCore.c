@@ -5,7 +5,13 @@
 #include "CrtxADC.h"
 #include "CrtxTimer.h"
 #include "Stub.h"
+#include <stdarg.h>
 
+#ifdef LOGGING_DBG
+#ifndef LOGGING_UART 
+#define LOGGING_UART Serial0
+#endif
+#endif
 
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
@@ -202,6 +208,7 @@ void zuno_static_autosetup();
 
 
 void * zunoJumpTable(int vec, void * data) {
+    byte sub_handler_type = 0x00;
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
@@ -218,28 +225,134 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
-        case ZUNO_JUMPTBL_SYSEVENT:
-            for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_SYSEVENT);i++)
-                ((zuno_user_sysevent_handler *)(getSysHandlerPtr(ZUNO_HANDLER_SYSEVENT, i)))((ZUNOSysEvent_t*)data);
+        #ifdef LOGGING_DBG
+        case ZUNO_JUMPTBL_SYSEVENT:{
+                ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+                LOGGING_UART.print("[");
+                LOGGING_UART.print(millis());
+                LOGGING_UART.print("] ");
+                LOGGING_UART.print("SYSEVENT: ");
+                LOGGING_UART.print(evnt->event, HEX);
+                LOGGING_UART.print(" ARGS: ");
+                LOGGING_UART.print(evnt->params[0], HEX);
+                LOGGING_UART.print(" ");
+                LOGGING_UART.println(evnt->params[1], HEX);
+            }
             break;
+        #endif
         case ZUNO_JUMPTBL_SYSTIMER:
             zuno_CCTimer((uint32_t)data);
-            for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_SYSTIMER);i++)
-                ((zuno_user_systimer_handler *)(getSysHandlerPtr(ZUNO_HANDLER_SYSTIMER, i)))((uint32_t)data);
             break;
+        case ZUNO_JUMPTBL_IRQ:
+            sub_handler_type = (uint8_t)((uint32_t)data)&0x0FF;
+            break;
+        #ifdef LOGGING_DBG
+        case ZUNO_JUMPTBL_DEBUGPRINT:{
+            ZUNOSysDbgMessage_t * msg = (ZUNOSysDbgMessage_t *)data;
+            LOGGING_UART.print("[");
+            LOGGING_UART.print(millis());
+            LOGGING_UART.print("] ");
+            switch(msg->type){
+                case ZUNO_DBGPRT_SYS:
+                    LOGGING_UART.print("SYS");
+                    break;
+                case ZUNO_DBGPRT_CUSTOM_ERR:
+                    LOGGING_UART.print("ERR");
+                    break;
+                case ZUNO_DBGPRT_CUSTOM_WARN:
+                    LOGGING_UART.print("WRN");
+                    break;
+                case ZUNO_DBGPRT_CUSTOM_INFO:
+                    LOGGING_UART.print("INF");
+                    break;
+                case ZUNO_DBGPRT_CUSTOM_DBG:
+                     LOGGING_UART.print("DBG");
+                    break;
+            }
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(msg->p_text);
+            }
+            break;
+         #endif
         default:
             break; // UNKNOWN VECTOR
     }
+    if(vec >= ZUNO_JUMPTBL_SYSEVENT){
+        zunoSysHandlerCall(vec-ZUNO_JUMPTBL_SYSEVENT,sub_handler_type, data);
+    }
     return (void*)0;
 }
-int zunoAttachSysHandler(byte type, void * handler){
-    if(type >= ZUNO_HANDLER_MAX_NUMBER)
-        return -2;
-    if(g_zuno_odhw_cfg.h_sys_handler_len[type] >= MAX_HANDLER_LIST)
-        return -1;
-    g_zuno_odhw_cfg.h_sys_handler[type][g_zuno_odhw_cfg.h_sys_handler_len[type]] = handler;
-    g_zuno_odhw_cfg.h_sys_handler_len[type]++;
-    return g_zuno_odhw_cfg.h_sys_handler_len[type];
+void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
+    uint8_t i;
+    void * result = NULL;
+    byte * base_addr = (byte*) ZUNO_CODE_START;
+    va_list args;
+    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
+        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0) // Empty handler
+            continue;
+        if((g_zuno_odhw_cfg.h_sys_handler[i].main_type == type) && 
+            (g_zuno_odhw_cfg.h_sys_handler[i].sub_type  == sub_type || 
+            g_zuno_odhw_cfg.h_sys_handler[i].sub_type == 0xFF)) // 0xFF is "wild card"
+            {
+                base_addr += g_zuno_odhw_cfg.h_sys_handler[i].code_offset;
+                switch(type){
+                    case ZUNO_HANDLER_SYSTIMER:
+                        va_start (args, sub_type);
+                        ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
+                        va_end (args);
+                        break;
+                    case ZUNO_HANDLER_SYSEVENT:
+                        va_start (args, sub_type);
+                        ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
+                        va_end (args);
+                        break;
+                    case ZUNO_HANDLER_IRQ:
+                    case ZUNO_HANDLER_SLEEP:
+                    case ZUNO_HANDLER_WUP:
+                        ((zuno_void_handler*)(base_addr))();
+                        break;
+                    case ZUNO_HANDLER_DEBUGPRINT:
+                        va_start (args, sub_type);
+  	                    ((zuno_dbgprint_handler*)(base_addr))(va_arg(args,ZUNOSysDbgMessage_t*));
+	                    va_end (args);
+                        break;
+                    case ZUNO_HANDLER_ZW_CFG:
+                        va_start (args, sub_type);
+                        ((zuno_configuartionhandler_t*)(base_addr))((uint8_t)va_arg(args,uint32_t), va_arg(args,uint32_t));
+                        va_end (args);
+                        break;
+                    case ZUNO_HANDLER_ZW_BATTERY:
+                        result = (void*)((zuno_battery_handler_t*)(base_addr))();
+                        break;
+                }
+        }
+    }
+    return result;
+}
+int zunoAttachSysHandler(byte type, byte sub_type, void * handler){
+    byte i;
+    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFF;
+    // Searching for vacant ceil to add the handler
+    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
+        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0){
+            g_zuno_odhw_cfg.h_sys_handler[i].main_type = type;
+            g_zuno_odhw_cfg.h_sys_handler[i].sub_type = sub_type;
+            g_zuno_odhw_cfg.h_sys_handler[i].code_offset = offset;
+            return 0;
+        }
+    }
+    return -1;
+}
+int zunoDetachSysHandler(void * handler){
+    byte i;
+    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFF;
+    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
+        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == offset){
+            g_zuno_odhw_cfg.h_sys_handler[i].code_offset = 0;
+            return 0;
+        }
+    }
+    return -1;
 }
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
@@ -544,8 +657,6 @@ int zunoEEPROMRead(word address, word size, byte * data) {
 int zunoEEPROMErase() {
     return (int)zunoSysCall(ZUNO_FUNC_EEPROM_ERASE, 1, 0xCAFE0ACE);
 }
-
-
 void _zme_memcpy(byte * dst, byte * src, byte count)
 {
     // Serial0.println(*src);

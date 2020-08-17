@@ -1422,5 +1422,60 @@ typedef struct {
 /** @} End of group EFR32FG13P_GPIO */
 /** @} End of group Parts */
 
+/** Pin mode. For more details on each mode, refer to the
+ * reference manual. */
+typedef enum {
+  /** Input disabled. Pull-up if DOUT is set. */
+  gpioModeDisabled                  = _GPIO_P_MODEL_MODE0_DISABLED,
+  /** Input enabled. Filter if DOUT is set. */
+  gpioModeInput                     = _GPIO_P_MODEL_MODE0_INPUT,
+  /** Input enabled. DOUT determines pull direction. */
+  gpioModeInputPull                 = _GPIO_P_MODEL_MODE0_INPUTPULL,
+  /** Input enabled with filter. DOUT determines pull direction. */
+  gpioModeInputPullFilter           = _GPIO_P_MODEL_MODE0_INPUTPULLFILTER,
+  /** Push-pull output. */
+  gpioModePushPull                  = _GPIO_P_MODEL_MODE0_PUSHPULL,
+#if defined(_GPIO_P_MODEL_MODE0_PUSHPULLDRIVE)
+  /** Push-pull output with drive-strength set by DRIVEMODE. */
+  gpioModePushPullDrive             = _GPIO_P_MODEL_MODE0_PUSHPULLDRIVE,
+#endif
+#if defined(_GPIO_P_MODEL_MODE0_PUSHPULLALT)
+  /** Push-pull using alternate control. */
+  gpioModePushPullAlternate       = _GPIO_P_MODEL_MODE0_PUSHPULLALT,
+#endif
+  /** Wired-or output. */
+  gpioModeWiredOr                       = _GPIO_P_MODEL_MODE0_WIREDOR,
+  /** Wired-or output with pull-down. */
+  gpioModeWiredOrPullDown               = _GPIO_P_MODEL_MODE0_WIREDORPULLDOWN,
+  /** Open-drain output. */
+  gpioModeWiredAnd                      = _GPIO_P_MODEL_MODE0_WIREDAND,
+  /** Open-drain output with filter. */
+  gpioModeWiredAndFilter                = _GPIO_P_MODEL_MODE0_WIREDANDFILTER,
+  /** Open-drain output with pull-up. */
+  gpioModeWiredAndPullUp                = _GPIO_P_MODEL_MODE0_WIREDANDPULLUP,
+  /** Open-drain output with filter and pull-up. */
+  gpioModeWiredAndPullUpFilter          = _GPIO_P_MODEL_MODE0_WIREDANDPULLUPFILTER,
+#if defined(_GPIO_P_MODEL_MODE0_WIREDANDDRIVE)
+  /** Open-drain output with drive-strength set by DRIVEMODE. */
+  gpioModeWiredAndDrive                 = _GPIO_P_MODEL_MODE0_WIREDANDDRIVE,
+  /** Open-drain output with filter and drive-strength set by DRIVEMODE. */
+  gpioModeWiredAndDriveFilter           = _GPIO_P_MODEL_MODE0_WIREDANDDRIVEFILTER,
+  /** Open-drain output with pull-up and drive-strength set by DRIVEMODE. */
+  gpioModeWiredAndDrivePullUp           = _GPIO_P_MODEL_MODE0_WIREDANDDRIVEPULLUP,
+  /** Open-drain output with filter, pull-up and drive-strength set by DRIVEMODE. */
+  gpioModeWiredAndDrivePullUpFilter     = _GPIO_P_MODEL_MODE0_WIREDANDDRIVEPULLUPFILTER
+#endif
+#if defined(_GPIO_P_MODEL_MODE0_WIREDANDALT)
+  /** Open-drain output using alternate control. */
+  gpioModeWiredAndAlternate             = _GPIO_P_MODEL_MODE0_WIREDANDALT,
+  /** Open-drain output using alternate control with filter. */
+  gpioModeWiredAndAlternateFilter       = _GPIO_P_MODEL_MODE0_WIREDANDALTFILTER,
+  /** Open-drain output using alternate control with pull-up. */
+  gpioModeWiredAndAlternatePullUp       = _GPIO_P_MODEL_MODE0_WIREDANDALTPULLUP,
+  /** Open-drain output using alternate control with filter and pull-up. */
+  gpioModeWiredAndAlternatePullUpFilter = _GPIO_P_MODEL_MODE0_WIREDANDALTPULLUPFILTER,
+#endif
+} GPIO_Mode_TypeDef;
+
 
 #endif // CORTEXGPIO_H

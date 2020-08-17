@@ -1,6 +1,14 @@
 // Arduino.h
 #ifndef ZUNO_ARDUINOH
 #define ZUNO_ARDUINOH
+
+#define ZUNO_UNO				1
+#define ZUNO_RASBERI			2
+#define ZUNO_ASSEMBLY_TYPE		1
+// #ifndef ZUNO_ASSEMBLY_TYPE
+// 	#define ZUNO_ASSEMBLY_TYPE			ZUNO_UNO//default
+// #endif
+
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"
@@ -12,6 +20,7 @@
 #include "CrtxGPIO.h"
 #include "HardwareSerial.h"
 #include "ZWSupport.h"
+#include "CrtxCmu.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 typedef enum {

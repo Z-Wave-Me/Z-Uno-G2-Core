@@ -322,7 +322,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         va_end (args);
                         break;
                     case ZUNO_HANDLER_ZW_BATTERY:
-                        result = (void*)((zuno_battery_handler_t*)(base_addr))();
+                        result = ((zuno_battery_handler_t*)(base_addr))();
                         break;
                 }
         }

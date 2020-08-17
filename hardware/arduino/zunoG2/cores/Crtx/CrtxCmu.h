@@ -2184,6 +2184,21 @@ typedef struct {
 #define CMU_CLK_BRANCH_MASK        0x1fU
 
 
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+  enum{
+      cmuClock_HFPER = CMU_CLOCK_TYPE_HFPER,
+      cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
+      cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,
+      cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1,
+      cmuClock_I2C0 = CMU_CLOCK_TYPE_I2C0,
+      cmuClock_I2C1 = CMU_CLOCK_TYPE_I2C1,
+      cmuClock_USART0 = CMU_CLOCK_TYPE_USART0,
+      cmuClock_USART1 = CMU_CLOCK_TYPE_USART1,
+      cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
+      cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO
+      
+  } CMU_Clock_TypeDef;
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 /** Clock points in CMU. See CMU overview in the reference manual. */
 typedef enum {
   /*******************/
@@ -2309,7 +2324,7 @@ typedef enum {
 
 #if defined(CMU_HFBUSCLKEN0_GPIO)
   /** General-purpose input/output clock */
-  cmuClock_GPIO_0 = (CMU_NOPRESC_REG << CMU_PRESC_REG_POS)
+  cmuClock_GPIO = (CMU_NOPRESC_REG << CMU_PRESC_REG_POS)
                   | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                   | (CMU_HFBUSCLKEN0_EN_REG << CMU_EN_REG_POS)
                   | (_CMU_HFBUSCLKEN0_GPIO_SHIFT << CMU_EN_BIT_POS)
@@ -2339,13 +2354,13 @@ typedef enum {
 
   /** High-frequency peripheral clock */
 #if defined(_CMU_HFPRESC_MASK)
-  cmuClock_HFPER_0 = (CMU_HFPERPRESC_REG << CMU_PRESC_REG_POS)
+  cmuClock_HFPER = (CMU_HFPERPRESC_REG << CMU_PRESC_REG_POS)
                    | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                    | (CMU_CTRL_EN_REG << CMU_EN_REG_POS)
                    | (_CMU_CTRL_HFPERCLKEN_SHIFT << CMU_EN_BIT_POS)
                    | (CMU_HFPER_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #else
-  cmuClock_HFPER_0 = (CMU_HFPERCLKDIV_REG << CMU_DIV_REG_POS)
+  cmuClock_HFPER = (CMU_HFPERCLKDIV_REG << CMU_DIV_REG_POS)
                    | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                    | (CMU_HFPERCLKDIV_EN_REG << CMU_EN_REG_POS)
                    | (_CMU_HFPERCLKDIV_HFPERCLKEN_SHIFT << CMU_EN_BIT_POS)
@@ -2381,7 +2396,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_USART0)
   /** Universal sync/async receiver/transmitter 0 clock */
-  cmuClock_USART0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_USART0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                     | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                     | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                     | (_CMU_HFPERCLKEN0_USART0_SHIFT << CMU_EN_BIT_POS)
@@ -2408,7 +2423,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_USART1)
   /** Universal sync/async receiver/transmitter 1 clock */
-  cmuClock_USART1_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_USART1 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                     | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                     | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                     | (_CMU_HFPERCLKEN0_USART1_SHIFT << CMU_EN_BIT_POS)
@@ -2417,7 +2432,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_USART2)
   /** Universal sync/async receiver/transmitter 2 clock */
-  cmuClock_USART2_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_USART2 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                     | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                     | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                     | (_CMU_HFPERCLKEN0_USART2_SHIFT << CMU_EN_BIT_POS)
@@ -2489,7 +2504,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_TIMER0)
   /** Timer 0 clock */
-  cmuClock_TIMER0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_TIMER0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                     | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                     | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                     | (_CMU_HFPERCLKEN0_TIMER0_SHIFT << CMU_EN_BIT_POS)
@@ -2502,7 +2517,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_TIMER1)
   /** Timer 1 clock */
-  cmuClock_TIMER1_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_TIMER1 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                     | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                     | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                     | (_CMU_HFPERCLKEN0_TIMER1_SHIFT << CMU_EN_BIT_POS)
@@ -2556,14 +2571,14 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_WTIMER0)
   /** Wide-timer 0 clock */
-  cmuClock_WTIMER0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_WTIMER0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                      | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                      | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                      | (_CMU_HFPERCLKEN0_WTIMER0_SHIFT << CMU_EN_BIT_POS)
                      | (CMU_HFPER_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #elif defined(CMU_HFPERCLKEN1_WTIMER0)
   /** Wide-timer 0 clock */
-  cmuClock_WTIMER0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_WTIMER0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                      | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                      | (CMU_HFPERCLKEN1_EN_REG << CMU_EN_REG_POS)
                      | (_CMU_HFPERCLKEN1_WTIMER0_SHIFT << CMU_EN_BIT_POS)
@@ -2714,7 +2729,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_GPIO)
   /** General-purpose input/output clock */
-  cmuClock_GPIO_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_GPIO = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                   | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                   | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                   | (_CMU_HFPERCLKEN0_GPIO_SHIFT << CMU_EN_BIT_POS)
@@ -2732,7 +2747,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_ADC0)
   /** Analog-to-digital converter 0 clock */
-  cmuClock_ADC0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_ADC0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                   | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                   | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                   | (_CMU_HFPERCLKEN0_ADC0_SHIFT << CMU_EN_BIT_POS)
@@ -2754,7 +2769,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_I2C0)
   /** I2C 0 clock */
-  cmuClock_I2C0_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_I2C0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                   | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                   | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                   | (_CMU_HFPERCLKEN0_I2C0_SHIFT << CMU_EN_BIT_POS)
@@ -2767,7 +2782,7 @@ typedef enum {
 
 #if defined(CMU_HFPERCLKEN0_I2C1)
   /** I2C 1 clock */
-  cmuClock_I2C1_0 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
+  cmuClock_I2C1 = (CMU_NODIV_REG << CMU_DIV_REG_POS)
                   | (CMU_NOSEL_REG << CMU_SEL_REG_POS)
                   | (CMU_HFPERCLKEN0_EN_REG << CMU_EN_REG_POS)
                   | (_CMU_HFPERCLKEN0_I2C1_SHIFT << CMU_EN_BIT_POS)
@@ -3172,5 +3187,18 @@ typedef enum {
                     | (CMU_PDMREF_CLK_BRANCH << CMU_CLK_BRANCH_POS),
 #endif
 } CMU_Clock_TypeDef;
+#else
+	#error Set ZUNO_ASSEMBLY_TYPE
+#endif
+
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+  #define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
+  #define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+  void CMU_ClockEnable(CMU_Clock_TypeDef clock, uint8_t enable);
+  uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock);
+#else
+	#error Set ZUNO_ASSEMBLY_TYPE
+#endif
 
 #endif // CRTX_CMU_H

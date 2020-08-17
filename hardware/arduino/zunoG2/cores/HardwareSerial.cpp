@@ -48,7 +48,7 @@ size_t HardwareSerial::write(uint8_t value) {
 	return 1;
 }
 
-#ifndef ZUNO_EXCLUDE//So that it is not compiled when not needed and does not appear in the code
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 	// Экземпляры классов - стиль как в Ардуино
 	// FIXME: pin numbers for unofficial board was presented. 
 	//     	  Correct them before the release!
@@ -66,4 +66,7 @@ size_t HardwareSerial::write(uint8_t value) {
 		HardwareSerial Serial1(1, 8, 7); // UART1 // Пока не поддерживается 2
 		HardwareSerial Serial0(0, 25, 24); // UART0
 	#endif
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#else
+	#error Set ZUNO_ASSEMBLY_TYPE
 #endif

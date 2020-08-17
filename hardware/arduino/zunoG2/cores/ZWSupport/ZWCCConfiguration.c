@@ -55,8 +55,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 			break;
 	}
 	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
-	 for(int i=0;i<getSysHandlerCount(ZUNO_HANDLER_ZW_CFG);i++)
-        ((zuno_configuartionhandler_t *)(getSysHandlerPtr(ZUNO_HANDLER_ZW_CFG, i)))(param, value);
+    zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 

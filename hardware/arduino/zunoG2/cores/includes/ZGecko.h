@@ -1,9 +1,102 @@
 #if (!defined(ZGECKO))
 #define ZGECKO
 
-#define __IOM volatile
-#define __IM volatile const
+/* following defines should be used for structure members */
+#define     __IM     volatile const      /*! Defines 'read only' structure member permissions */
+#define     __OM     volatile            /*! Defines 'write only' structure member permissions */
+#define     __IOM    volatile            /*! Defines 'read / write' structure member permissions */
+
 #define __STATIC_INLINE static inline
+#define     __O     volatile             /*!< Defines 'write only' permissions */
+#define     __IO    volatile             /*!< Defines 'read / write' permissions */
+
+
+
+#define EFM_ASSERT(expr)		((void)(expr))
+
+/** Interrupt Number Definition */
+typedef enum IRQn{
+/******  Cortex-M4 Processor Exceptions Numbers ********************************************/
+  NonMaskableInt_IRQn   = -14,              /*!< 2  Cortex-M4 Non Maskable Interrupt      */
+  HardFault_IRQn        = -13,              /*!< 3  Cortex-M4 Hard Fault Interrupt        */
+  MemoryManagement_IRQn = -12,              /*!< 4  Cortex-M4 Memory Management Interrupt */
+  BusFault_IRQn         = -11,              /*!< 5  Cortex-M4 Bus Fault Interrupt         */
+  UsageFault_IRQn       = -10,              /*!< 6  Cortex-M4 Usage Fault Interrupt       */
+  SVCall_IRQn           = -5,               /*!< 11 Cortex-M4 SV Call Interrupt           */
+  DebugMonitor_IRQn     = -4,               /*!< 12 Cortex-M4 Debug Monitor Interrupt     */
+  PendSV_IRQn           = -2,               /*!< 14 Cortex-M4 Pend SV Interrupt           */
+  SysTick_IRQn          = -1,               /*!< 15 Cortex-M4 System Tick Interrupt       */
+
+/******  EFR32ZG13P Peripheral Interrupt Numbers ********************************************/
+
+  EMU_IRQn              = 0,  /*!< 16+0 EFR32 EMU Interrupt */
+  FRC_PRI_IRQn          = 1,  /*!< 16+1 EFR32 FRC_PRI Interrupt */
+  WDOG0_IRQn            = 2,  /*!< 16+2 EFR32 WDOG0 Interrupt */
+  WDOG1_IRQn            = 3,  /*!< 16+3 EFR32 WDOG1 Interrupt */
+  FRC_IRQn              = 4,  /*!< 16+4 EFR32 FRC Interrupt */
+  MODEM_IRQn            = 5,  /*!< 16+5 EFR32 MODEM Interrupt */
+  RAC_SEQ_IRQn          = 6,  /*!< 16+6 EFR32 RAC_SEQ Interrupt */
+  RAC_RSM_IRQn          = 7,  /*!< 16+7 EFR32 RAC_RSM Interrupt */
+  BUFC_IRQn             = 8,  /*!< 16+8 EFR32 BUFC Interrupt */
+  LDMA_IRQn             = 9,  /*!< 16+9 EFR32 LDMA Interrupt */
+  GPIO_EVEN_IRQn        = 10, /*!< 16+10 EFR32 GPIO_EVEN Interrupt */
+  TIMER0_IRQn           = 11, /*!< 16+11 EFR32 TIMER0 Interrupt */
+  USART0_RX_IRQn        = 12, /*!< 16+12 EFR32 USART0_RX Interrupt */
+  USART0_TX_IRQn        = 13, /*!< 16+13 EFR32 USART0_TX Interrupt */
+  ACMP0_IRQn            = 14, /*!< 16+14 EFR32 ACMP0 Interrupt */
+  ADC0_IRQn             = 15, /*!< 16+15 EFR32 ADC0 Interrupt */
+  IDAC0_IRQn            = 16, /*!< 16+16 EFR32 IDAC0 Interrupt */
+  I2C0_IRQn             = 17, /*!< 16+17 EFR32 I2C0 Interrupt */
+  GPIO_ODD_IRQn         = 18, /*!< 16+18 EFR32 GPIO_ODD Interrupt */
+  TIMER1_IRQn           = 19, /*!< 16+19 EFR32 TIMER1 Interrupt */
+  USART1_RX_IRQn        = 20, /*!< 16+20 EFR32 USART1_RX Interrupt */
+  USART1_TX_IRQn        = 21, /*!< 16+21 EFR32 USART1_TX Interrupt */
+  LEUART0_IRQn          = 22, /*!< 16+22 EFR32 LEUART0 Interrupt */
+  PCNT0_IRQn            = 23, /*!< 16+23 EFR32 PCNT0 Interrupt */
+  CMU_IRQn              = 24, /*!< 16+24 EFR32 CMU Interrupt */
+  MSC_IRQn              = 25, /*!< 16+25 EFR32 MSC Interrupt */
+  CRYPTO0_IRQn          = 26, /*!< 16+26 EFR32 CRYPTO0 Interrupt */
+  LETIMER0_IRQn         = 27, /*!< 16+27 EFR32 LETIMER0 Interrupt */
+  AGC_IRQn              = 28, /*!< 16+28 EFR32 AGC Interrupt */
+  PROTIMER_IRQn         = 29, /*!< 16+29 EFR32 PROTIMER Interrupt */
+  PRORTC_IRQn           = 30, /*!< 16+30 EFR32 PRORTC Interrupt */
+  RTCC_IRQn             = 31, /*!< 16+31 EFR32 RTCC Interrupt */
+  SYNTH_IRQn            = 32, /*!< 16+32 EFR32 SYNTH Interrupt */
+  CRYOTIMER_IRQn        = 33, /*!< 16+33 EFR32 CRYOTIMER Interrupt */
+  RFSENSE_IRQn          = 34, /*!< 16+34 EFR32 RFSENSE Interrupt */
+  FPUEH_IRQn            = 35, /*!< 16+35 EFR32 FPUEH Interrupt */
+  SMU_IRQn              = 36, /*!< 16+36 EFR32 SMU Interrupt */
+  WTIMER0_IRQn          = 37, /*!< 16+37 EFR32 WTIMER0 Interrupt */
+  USART2_RX_IRQn        = 38, /*!< 16+38 EFR32 USART2_RX Interrupt */
+  USART2_TX_IRQn        = 39, /*!< 16+39 EFR32 USART2_TX Interrupt */
+  I2C1_IRQn             = 40, /*!< 16+40 EFR32 I2C1 Interrupt */
+  VDAC0_IRQn            = 41, /*!< 16+41 EFR32 VDAC0 Interrupt */
+  CSEN_IRQn             = 42, /*!< 16+42 EFR32 CSEN Interrupt */
+  LESENSE_IRQn          = 43, /*!< 16+43 EFR32 LESENSE Interrupt */
+  CRYPTO1_IRQn          = 44, /*!< 16+44 EFR32 CRYPTO1 Interrupt */
+  TRNG0_IRQn            = 45, /*!< 16+45 EFR32 TRNG0 Interrupt */
+} IRQn_Type;
+
+#define CRYPTO_IRQn               CRYPTO0_IRQn /*!< Alias for CRYPTO0_IRQn */
+
+/** Part family */
+#define _EFR32_ZEN_FAMILY                       1                                /**< ZEN Gecko RF SoC Family  */
+#define _EFR_DEVICE                                                              /**< Silicon Labs EFR-type RF SoC */
+#define _SILICON_LABS_MODULE                    1                                /**< Silicon Labs multi-chip module */
+#define _SILICON_LABS_32B_SERIES_1                                               /**< Silicon Labs series number */
+#define _SILICON_LABS_32B_SERIES                1                                /**< Silicon Labs series number */
+#define _SILICON_LABS_32B_SERIES_1_CONFIG_3                                      /**< Series 1, Configuration 3 */
+#define _SILICON_LABS_32B_SERIES_1_CONFIG       3                                /**< Series 1, Configuration 3 */
+#define _SILICON_LABS_GECKO_INTERNAL_SDID       89                               /**< Silicon Labs internal use only, may change any time */
+#define _SILICON_LABS_GECKO_INTERNAL_SDID_89                                     /**< Silicon Labs internal use only, may change any time */
+#define _SILICON_LABS_EFR32_RADIO_SUBGHZ        1                                /**< Radio supports Sub-GHz */
+#define _SILICON_LABS_EFR32_RADIO_2G4HZ         2                                /**< Radio supports 2.4 GHz */
+#define _SILICON_LABS_EFR32_RADIO_DUALBAND      3                                /**< Radio supports dual band */
+#define _SILICON_LABS_EFR32_RADIO_TYPE          _SILICON_LABS_EFR32_RADIO_SUBGHZ /**< Radio type */
+#define _SILICON_LABS_32B_PLATFORM_2                                             /**< @deprecated Silicon Labs platform name */
+#define _SILICON_LABS_32B_PLATFORM              2                                /**< @deprecated Silicon Labs platform name */
+#define _SILICON_LABS_32B_PLATFORM_2_GEN_3                                       /**< @deprecated Platform 2, generation 3 */
+#define _SILICON_LABS_32B_PLATFORM_2_GEN        3                                /**< @deprecated Platform 2, generation 3 */
 
 /* Memory Base addresses and limits */
 #define RAM0_CODE_MEM_BASE         ((uint32_t) 0x10000000UL) /**< RAM0_CODE base address  */
@@ -220,11 +313,160 @@
 
 /** @} End of group EFR32FG13P231F512GM32_Peripheral_Base */
 
+/** RMU Register Declaration */
+typedef struct {
+  __IOM uint32_t CTRL;     /**< Control Register  */
+  __IM uint32_t  RSTCAUSE; /**< Reset Cause Register  */
+  __IOM uint32_t CMD;      /**< Command Register  */
+  __IOM uint32_t RST;      /**< Reset Control Register  */
+  __IOM uint32_t LOCK;     /**< Configuration Lock Register  */
+} RMU_TypeDef;             /** @} */
+
+/***************************************************************************//**
+ * @addtogroup ZGM13_RMU
+ * @{
+ * @defgroup ZGM13_RMU_BitFields  RMU Bit Fields
+ * @{
+ ******************************************************************************/
+/* Bit fields for RMU CTRL */
+#define _RMU_CTRL_RESETVALUE               0x00004204UL                          /**< Default value for RMU_CTRL */
+#define _RMU_CTRL_MASK                     0x03007777UL                          /**< Mask for RMU_CTRL */
+#define _RMU_CTRL_WDOGRMODE_SHIFT          0                                     /**< Shift value for RMU_WDOGRMODE */
+#define _RMU_CTRL_WDOGRMODE_MASK           0x7UL                                 /**< Bit mask for RMU_WDOGRMODE */
+#define _RMU_CTRL_WDOGRMODE_DISABLED       0x00000000UL                          /**< Mode DISABLED for RMU_CTRL */
+#define _RMU_CTRL_WDOGRMODE_LIMITED        0x00000001UL                          /**< Mode LIMITED for RMU_CTRL */
+#define _RMU_CTRL_WDOGRMODE_EXTENDED       0x00000002UL                          /**< Mode EXTENDED for RMU_CTRL */
+#define _RMU_CTRL_WDOGRMODE_DEFAULT        0x00000004UL                          /**< Mode DEFAULT for RMU_CTRL */
+#define _RMU_CTRL_WDOGRMODE_FULL           0x00000004UL                          /**< Mode FULL for RMU_CTRL */
+#define RMU_CTRL_WDOGRMODE_DISABLED        (_RMU_CTRL_WDOGRMODE_DISABLED << 0)   /**< Shifted mode DISABLED for RMU_CTRL */
+#define RMU_CTRL_WDOGRMODE_LIMITED         (_RMU_CTRL_WDOGRMODE_LIMITED << 0)    /**< Shifted mode LIMITED for RMU_CTRL */
+#define RMU_CTRL_WDOGRMODE_EXTENDED        (_RMU_CTRL_WDOGRMODE_EXTENDED << 0)   /**< Shifted mode EXTENDED for RMU_CTRL */
+#define RMU_CTRL_WDOGRMODE_DEFAULT         (_RMU_CTRL_WDOGRMODE_DEFAULT << 0)    /**< Shifted mode DEFAULT for RMU_CTRL */
+#define RMU_CTRL_WDOGRMODE_FULL            (_RMU_CTRL_WDOGRMODE_FULL << 0)       /**< Shifted mode FULL for RMU_CTRL */
+#define _RMU_CTRL_LOCKUPRMODE_SHIFT        4                                     /**< Shift value for RMU_LOCKUPRMODE */
+#define _RMU_CTRL_LOCKUPRMODE_MASK         0x70UL                                /**< Bit mask for RMU_LOCKUPRMODE */
+#define _RMU_CTRL_LOCKUPRMODE_DEFAULT      0x00000000UL                          /**< Mode DEFAULT for RMU_CTRL */
+#define _RMU_CTRL_LOCKUPRMODE_DISABLED     0x00000000UL                          /**< Mode DISABLED for RMU_CTRL */
+#define _RMU_CTRL_LOCKUPRMODE_LIMITED      0x00000001UL                          /**< Mode LIMITED for RMU_CTRL */
+#define _RMU_CTRL_LOCKUPRMODE_EXTENDED     0x00000002UL                          /**< Mode EXTENDED for RMU_CTRL */
+#define _RMU_CTRL_LOCKUPRMODE_FULL         0x00000004UL                          /**< Mode FULL for RMU_CTRL */
+#define RMU_CTRL_LOCKUPRMODE_DEFAULT       (_RMU_CTRL_LOCKUPRMODE_DEFAULT << 4)  /**< Shifted mode DEFAULT for RMU_CTRL */
+#define RMU_CTRL_LOCKUPRMODE_DISABLED      (_RMU_CTRL_LOCKUPRMODE_DISABLED << 4) /**< Shifted mode DISABLED for RMU_CTRL */
+#define RMU_CTRL_LOCKUPRMODE_LIMITED       (_RMU_CTRL_LOCKUPRMODE_LIMITED << 4)  /**< Shifted mode LIMITED for RMU_CTRL */
+#define RMU_CTRL_LOCKUPRMODE_EXTENDED      (_RMU_CTRL_LOCKUPRMODE_EXTENDED << 4) /**< Shifted mode EXTENDED for RMU_CTRL */
+#define RMU_CTRL_LOCKUPRMODE_FULL          (_RMU_CTRL_LOCKUPRMODE_FULL << 4)     /**< Shifted mode FULL for RMU_CTRL */
+#define _RMU_CTRL_SYSRMODE_SHIFT           8                                     /**< Shift value for RMU_SYSRMODE */
+#define _RMU_CTRL_SYSRMODE_MASK            0x700UL                               /**< Bit mask for RMU_SYSRMODE */
+#define _RMU_CTRL_SYSRMODE_DISABLED        0x00000000UL                          /**< Mode DISABLED for RMU_CTRL */
+#define _RMU_CTRL_SYSRMODE_LIMITED         0x00000001UL                          /**< Mode LIMITED for RMU_CTRL */
+#define _RMU_CTRL_SYSRMODE_DEFAULT         0x00000002UL                          /**< Mode DEFAULT for RMU_CTRL */
+#define _RMU_CTRL_SYSRMODE_EXTENDED        0x00000002UL                          /**< Mode EXTENDED for RMU_CTRL */
+#define _RMU_CTRL_SYSRMODE_FULL            0x00000004UL                          /**< Mode FULL for RMU_CTRL */
+#define RMU_CTRL_SYSRMODE_DISABLED         (_RMU_CTRL_SYSRMODE_DISABLED << 8)    /**< Shifted mode DISABLED for RMU_CTRL */
+#define RMU_CTRL_SYSRMODE_LIMITED          (_RMU_CTRL_SYSRMODE_LIMITED << 8)     /**< Shifted mode LIMITED for RMU_CTRL */
+#define RMU_CTRL_SYSRMODE_DEFAULT          (_RMU_CTRL_SYSRMODE_DEFAULT << 8)     /**< Shifted mode DEFAULT for RMU_CTRL */
+#define RMU_CTRL_SYSRMODE_EXTENDED         (_RMU_CTRL_SYSRMODE_EXTENDED << 8)    /**< Shifted mode EXTENDED for RMU_CTRL */
+#define RMU_CTRL_SYSRMODE_FULL             (_RMU_CTRL_SYSRMODE_FULL << 8)        /**< Shifted mode FULL for RMU_CTRL */
+#define _RMU_CTRL_PINRMODE_SHIFT           12                                    /**< Shift value for RMU_PINRMODE */
+#define _RMU_CTRL_PINRMODE_MASK            0x7000UL                              /**< Bit mask for RMU_PINRMODE */
+#define _RMU_CTRL_PINRMODE_DISABLED        0x00000000UL                          /**< Mode DISABLED for RMU_CTRL */
+#define _RMU_CTRL_PINRMODE_LIMITED         0x00000001UL                          /**< Mode LIMITED for RMU_CTRL */
+#define _RMU_CTRL_PINRMODE_EXTENDED        0x00000002UL                          /**< Mode EXTENDED for RMU_CTRL */
+#define _RMU_CTRL_PINRMODE_DEFAULT         0x00000004UL                          /**< Mode DEFAULT for RMU_CTRL */
+#define _RMU_CTRL_PINRMODE_FULL            0x00000004UL                          /**< Mode FULL for RMU_CTRL */
+#define RMU_CTRL_PINRMODE_DISABLED         (_RMU_CTRL_PINRMODE_DISABLED << 12)   /**< Shifted mode DISABLED for RMU_CTRL */
+#define RMU_CTRL_PINRMODE_LIMITED          (_RMU_CTRL_PINRMODE_LIMITED << 12)    /**< Shifted mode LIMITED for RMU_CTRL */
+#define RMU_CTRL_PINRMODE_EXTENDED         (_RMU_CTRL_PINRMODE_EXTENDED << 12)   /**< Shifted mode EXTENDED for RMU_CTRL */
+#define RMU_CTRL_PINRMODE_DEFAULT          (_RMU_CTRL_PINRMODE_DEFAULT << 12)    /**< Shifted mode DEFAULT for RMU_CTRL */
+#define RMU_CTRL_PINRMODE_FULL             (_RMU_CTRL_PINRMODE_FULL << 12)       /**< Shifted mode FULL for RMU_CTRL */
+#define _RMU_CTRL_RESETSTATE_SHIFT         24                                    /**< Shift value for RMU_RESETSTATE */
+#define _RMU_CTRL_RESETSTATE_MASK          0x3000000UL                           /**< Bit mask for RMU_RESETSTATE */
+#define _RMU_CTRL_RESETSTATE_DEFAULT       0x00000000UL                          /**< Mode DEFAULT for RMU_CTRL */
+#define RMU_CTRL_RESETSTATE_DEFAULT        (_RMU_CTRL_RESETSTATE_DEFAULT << 24)  /**< Shifted mode DEFAULT for RMU_CTRL */
+
+/* Bit fields for RMU RSTCAUSE */
+#define _RMU_RSTCAUSE_RESETVALUE           0x00000000UL                            /**< Default value for RMU_RSTCAUSE */
+#define _RMU_RSTCAUSE_MASK                 0x00010F1DUL                            /**< Mask for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_PORST                 (0x1UL << 0)                            /**< Power on Reset */
+#define _RMU_RSTCAUSE_PORST_SHIFT          0                                       /**< Shift value for RMU_PORST */
+#define _RMU_RSTCAUSE_PORST_MASK           0x1UL                                   /**< Bit mask for RMU_PORST */
+#define _RMU_RSTCAUSE_PORST_DEFAULT        0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_PORST_DEFAULT         (_RMU_RSTCAUSE_PORST_DEFAULT << 0)      /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_AVDDBOD               (0x1UL << 2)                            /**< Brown Out Detector AVDD Reset */
+#define _RMU_RSTCAUSE_AVDDBOD_SHIFT        2                                       /**< Shift value for RMU_AVDDBOD */
+#define _RMU_RSTCAUSE_AVDDBOD_MASK         0x4UL                                   /**< Bit mask for RMU_AVDDBOD */
+#define _RMU_RSTCAUSE_AVDDBOD_DEFAULT      0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_AVDDBOD_DEFAULT       (_RMU_RSTCAUSE_AVDDBOD_DEFAULT << 2)    /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_DVDDBOD               (0x1UL << 3)                            /**< Brown Out Detector DVDD Reset */
+#define _RMU_RSTCAUSE_DVDDBOD_SHIFT        3                                       /**< Shift value for RMU_DVDDBOD */
+#define _RMU_RSTCAUSE_DVDDBOD_MASK         0x8UL                                   /**< Bit mask for RMU_DVDDBOD */
+#define _RMU_RSTCAUSE_DVDDBOD_DEFAULT      0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_DVDDBOD_DEFAULT       (_RMU_RSTCAUSE_DVDDBOD_DEFAULT << 3)    /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_DECBOD                (0x1UL << 4)                            /**< Brown Out Detector Decouple Domain Reset */
+#define _RMU_RSTCAUSE_DECBOD_SHIFT         4                                       /**< Shift value for RMU_DECBOD */
+#define _RMU_RSTCAUSE_DECBOD_MASK          0x10UL                                  /**< Bit mask for RMU_DECBOD */
+#define _RMU_RSTCAUSE_DECBOD_DEFAULT       0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_DECBOD_DEFAULT        (_RMU_RSTCAUSE_DECBOD_DEFAULT << 4)     /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_EXTRST                (0x1UL << 8)                            /**< External Pin Reset */
+#define _RMU_RSTCAUSE_EXTRST_SHIFT         8                                       /**< Shift value for RMU_EXTRST */
+#define _RMU_RSTCAUSE_EXTRST_MASK          0x100UL                                 /**< Bit mask for RMU_EXTRST */
+#define _RMU_RSTCAUSE_EXTRST_DEFAULT       0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_EXTRST_DEFAULT        (_RMU_RSTCAUSE_EXTRST_DEFAULT << 8)     /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_LOCKUPRST             (0x1UL << 9)                            /**< LOCKUP Reset */
+#define _RMU_RSTCAUSE_LOCKUPRST_SHIFT      9                                       /**< Shift value for RMU_LOCKUPRST */
+#define _RMU_RSTCAUSE_LOCKUPRST_MASK       0x200UL                                 /**< Bit mask for RMU_LOCKUPRST */
+#define _RMU_RSTCAUSE_LOCKUPRST_DEFAULT    0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_LOCKUPRST_DEFAULT     (_RMU_RSTCAUSE_LOCKUPRST_DEFAULT << 9)  /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_SYSREQRST             (0x1UL << 10)                           /**< System Request Reset */
+#define _RMU_RSTCAUSE_SYSREQRST_SHIFT      10                                      /**< Shift value for RMU_SYSREQRST */
+#define _RMU_RSTCAUSE_SYSREQRST_MASK       0x400UL                                 /**< Bit mask for RMU_SYSREQRST */
+#define _RMU_RSTCAUSE_SYSREQRST_DEFAULT    0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_SYSREQRST_DEFAULT     (_RMU_RSTCAUSE_SYSREQRST_DEFAULT << 10) /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_WDOGRST               (0x1UL << 11)                           /**< Watchdog Reset */
+#define _RMU_RSTCAUSE_WDOGRST_SHIFT        11                                      /**< Shift value for RMU_WDOGRST */
+#define _RMU_RSTCAUSE_WDOGRST_MASK         0x800UL                                 /**< Bit mask for RMU_WDOGRST */
+#define _RMU_RSTCAUSE_WDOGRST_DEFAULT      0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_WDOGRST_DEFAULT       (_RMU_RSTCAUSE_WDOGRST_DEFAULT << 11)   /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_EM4RST                (0x1UL << 16)                           /**< EM4 Reset */
+#define _RMU_RSTCAUSE_EM4RST_SHIFT         16                                      /**< Shift value for RMU_EM4RST */
+#define _RMU_RSTCAUSE_EM4RST_MASK          0x10000UL                               /**< Bit mask for RMU_EM4RST */
+#define _RMU_RSTCAUSE_EM4RST_DEFAULT       0x00000000UL                            /**< Mode DEFAULT for RMU_RSTCAUSE */
+#define RMU_RSTCAUSE_EM4RST_DEFAULT        (_RMU_RSTCAUSE_EM4RST_DEFAULT << 16)    /**< Shifted mode DEFAULT for RMU_RSTCAUSE */
+
+/* Bit fields for RMU CMD */
+#define _RMU_CMD_RESETVALUE                0x00000000UL                  /**< Default value for RMU_CMD */
+#define _RMU_CMD_MASK                      0x00000001UL                  /**< Mask for RMU_CMD */
+#define RMU_CMD_RCCLR                      (0x1UL << 0)                  /**< Reset Cause Clear */
+#define _RMU_CMD_RCCLR_SHIFT               0                             /**< Shift value for RMU_RCCLR */
+#define _RMU_CMD_RCCLR_MASK                0x1UL                         /**< Bit mask for RMU_RCCLR */
+#define _RMU_CMD_RCCLR_DEFAULT             0x00000000UL                  /**< Mode DEFAULT for RMU_CMD */
+#define RMU_CMD_RCCLR_DEFAULT              (_RMU_CMD_RCCLR_DEFAULT << 0) /**< Shifted mode DEFAULT for RMU_CMD */
+
+/* Bit fields for RMU RST */
+#define _RMU_RST_RESETVALUE                0x00000000UL /**< Default value for RMU_RST */
+#define _RMU_RST_MASK                      0x00000000UL /**< Mask for RMU_RST */
+
+/* Bit fields for RMU LOCK */
+#define _RMU_LOCK_RESETVALUE               0x00000000UL                      /**< Default value for RMU_LOCK */
+#define _RMU_LOCK_MASK                     0x0000FFFFUL                      /**< Mask for RMU_LOCK */
+#define _RMU_LOCK_LOCKKEY_SHIFT            0                                 /**< Shift value for RMU_LOCKKEY */
+#define _RMU_LOCK_LOCKKEY_MASK             0xFFFFUL                          /**< Bit mask for RMU_LOCKKEY */
+#define _RMU_LOCK_LOCKKEY_DEFAULT          0x00000000UL                      /**< Mode DEFAULT for RMU_LOCK */
+#define _RMU_LOCK_LOCKKEY_LOCK             0x00000000UL                      /**< Mode LOCK for RMU_LOCK */
+#define _RMU_LOCK_LOCKKEY_UNLOCKED         0x00000000UL                      /**< Mode UNLOCKED for RMU_LOCK */
+#define _RMU_LOCK_LOCKKEY_LOCKED           0x00000001UL                      /**< Mode LOCKED for RMU_LOCK */
+#define _RMU_LOCK_LOCKKEY_UNLOCK           0x0000E084UL                      /**< Mode UNLOCK for RMU_LOCK */
+#define RMU_LOCK_LOCKKEY_DEFAULT           (_RMU_LOCK_LOCKKEY_DEFAULT << 0)  /**< Shifted mode DEFAULT for RMU_LOCK */
+#define RMU_LOCK_LOCKKEY_LOCK              (_RMU_LOCK_LOCKKEY_LOCK << 0)     /**< Shifted mode LOCK for RMU_LOCK */
+#define RMU_LOCK_LOCKKEY_UNLOCKED          (_RMU_LOCK_LOCKKEY_UNLOCKED << 0) /**< Shifted mode UNLOCKED for RMU_LOCK */
+#define RMU_LOCK_LOCKKEY_LOCKED            (_RMU_LOCK_LOCKKEY_LOCKED << 0)   /**< Shifted mode LOCKED for RMU_LOCK */
+#define RMU_LOCK_LOCKKEY_UNLOCK            (_RMU_LOCK_LOCKKEY_UNLOCK << 0)   /**< Shifted mode UNLOCK for RMU_LOCK */
+
+
 /**************************************************************************//**
  * @defgroup EFR32FG13P231F512GM32_Peripheral_Declaration Peripheral Declarations
  * @{
  *****************************************************************************/
-
 #define MSC          ((MSC_TypeDef *) MSC_BASE)             /**< MSC base pointer */
 #define EMU          ((EMU_TypeDef *) EMU_BASE)             /**< EMU base pointer */
 #define RMU          ((RMU_TypeDef *) RMU_BASE)             /**< RMU base pointer */
@@ -265,7 +507,7 @@
 #define DEVINFO      ((DEVINFO_TypeDef *) DEVINFO_BASE)     /**< DEVINFO base pointer */
 #define ROMTABLE     ((ROMTABLE_TypeDef *) ROMTABLE_BASE)   /**< ROMTABLE base pointer */
 
-#define DWT          ((DWT_Type*) DWT_BASE)
+
 /** @} End of group EFR32FG13P231F512GM32_Peripheral_Declaration */
 
 /**************************************************************************//**
@@ -1593,19 +1835,78 @@ typedef struct
   __IOM uint32_t FUNCTION3;              /*!< Offset: 0x058 (R/W)  Function Register 3 */
 } DWT_Type;
 
-enum{
-    cmuClock_HFPER = CMU_CLOCK_TYPE_HFPER,
-    cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
-    cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,
-    cmuClock_TIMER1 = CMU_CLOCK_TYPE_TIMER1,
-    cmuClock_I2C0 = CMU_CLOCK_TYPE_I2C0,
-    cmuClock_I2C1 = CMU_CLOCK_TYPE_I2C1,
-    cmuClock_USART0 = CMU_CLOCK_TYPE_USART0,
-    cmuClock_USART1 = CMU_CLOCK_TYPE_USART1,
-    cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
-    cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO
-    
-};
+/**
+  \ingroup    CMSIS_core_register
+  \defgroup   CMSIS_NVIC  Nested Vectored Interrupt Controller (NVIC)
+  \brief      Type definitions for the NVIC Registers
+  @{
+ */
+/**
+  \brief  Structure type to access the Nested Vectored Interrupt Controller (NVIC).
+ */
+typedef struct
+{
+  __IOM uint32_t ISER[8U];               /*!< Offset: 0x000 (R/W)  Interrupt Set Enable Register */
+        uint32_t RESERVED0[24U];
+  __IOM uint32_t ICER[8U];               /*!< Offset: 0x080 (R/W)  Interrupt Clear Enable Register */
+        uint32_t RSERVED1[24U];
+  __IOM uint32_t ISPR[8U];               /*!< Offset: 0x100 (R/W)  Interrupt Set Pending Register */
+        uint32_t RESERVED2[24U];
+  __IOM uint32_t ICPR[8U];               /*!< Offset: 0x180 (R/W)  Interrupt Clear Pending Register */
+        uint32_t RESERVED3[24U];
+  __IOM uint32_t IABR[8U];               /*!< Offset: 0x200 (R/W)  Interrupt Active bit Register */
+        uint32_t RESERVED4[56U];
+  __IOM uint8_t  IP[240U];               /*!< Offset: 0x300 (R/W)  Interrupt Priority Register (8Bit wide) */
+        uint32_t RESERVED5[644U];
+  __OM  uint32_t STIR;                   /*!< Offset: 0xE00 ( /W)  Software Trigger Interrupt Register */
+}  NVIC_Type;
+
+typedef struct
+{
+  __IM  uint32_t CPUID;                  /*!< Offset: 0x000 (R/ )  CPUID Base Register */
+  __IOM uint32_t ICSR;                   /*!< Offset: 0x004 (R/W)  Interrupt Control and State Register */
+  __IOM uint32_t VTOR;                   /*!< Offset: 0x008 (R/W)  Vector Table Offset Register */
+  __IOM uint32_t AIRCR;                  /*!< Offset: 0x00C (R/W)  Application Interrupt and Reset Control Register */
+  __IOM uint32_t SCR;                    /*!< Offset: 0x010 (R/W)  System Control Register */
+  __IOM uint32_t CCR;                    /*!< Offset: 0x014 (R/W)  Configuration Control Register */
+  __IOM uint8_t  SHP[12U];               /*!< Offset: 0x018 (R/W)  System Handlers Priority Registers (4-7, 8-11, 12-15) */
+  __IOM uint32_t SHCSR;                  /*!< Offset: 0x024 (R/W)  System Handler Control and State Register */
+  __IOM uint32_t CFSR;                   /*!< Offset: 0x028 (R/W)  Configurable Fault Status Register */
+  __IOM uint32_t HFSR;                   /*!< Offset: 0x02C (R/W)  HardFault Status Register */
+  __IOM uint32_t DFSR;                   /*!< Offset: 0x030 (R/W)  Debug Fault Status Register */
+  __IOM uint32_t MMFAR;                  /*!< Offset: 0x034 (R/W)  MemManage Fault Address Register */
+  __IOM uint32_t BFAR;                   /*!< Offset: 0x038 (R/W)  BusFault Address Register */
+  __IOM uint32_t AFSR;                   /*!< Offset: 0x03C (R/W)  Auxiliary Fault Status Register */
+  __IM  uint32_t PFR[2U];                /*!< Offset: 0x040 (R/ )  Processor Feature Register */
+  __IM  uint32_t DFR;                    /*!< Offset: 0x048 (R/ )  Debug Feature Register */
+  __IM  uint32_t ADR;                    /*!< Offset: 0x04C (R/ )  Auxiliary Feature Register */
+  __IM  uint32_t MMFR[4U];               /*!< Offset: 0x050 (R/ )  Memory Model Feature Register */
+  __IM  uint32_t ISAR[5U];               /*!< Offset: 0x060 (R/ )  Instruction Set Attributes Register */
+		uint32_t RESERVED0[5U];
+  __IOM uint32_t CPACR;                  /*!< Offset: 0x088 (R/W)  Coprocessor Access Control Register */
+} SCB_Type;
+
+/* SCB Application Interrupt and Reset Control Register Definitions */
+#define SCB_AIRCR_VECTKEY_Pos              16U                                            /*!< SCB AIRCR: VECTKEY Position */
+#define SCB_AIRCR_VECTKEY_Msk              (0xFFFFUL << SCB_AIRCR_VECTKEY_Pos)            /*!< SCB AIRCR: VECTKEY Mask */
+
+#define SCB_AIRCR_VECTKEYSTAT_Pos          16U                                            /*!< SCB AIRCR: VECTKEYSTAT Position */
+#define SCB_AIRCR_VECTKEYSTAT_Msk          (0xFFFFUL << SCB_AIRCR_VECTKEYSTAT_Pos)        /*!< SCB AIRCR: VECTKEYSTAT Mask */
+
+#define SCB_AIRCR_ENDIANESS_Pos            15U                                            /*!< SCB AIRCR: ENDIANESS Position */
+#define SCB_AIRCR_ENDIANESS_Msk            (1UL << SCB_AIRCR_ENDIANESS_Pos)               /*!< SCB AIRCR: ENDIANESS Mask */
+
+#define SCB_AIRCR_PRIGROUP_Pos              8U                                            /*!< SCB AIRCR: PRIGROUP Position */
+#define SCB_AIRCR_PRIGROUP_Msk             (7UL << SCB_AIRCR_PRIGROUP_Pos)                /*!< SCB AIRCR: PRIGROUP Mask */
+
+#define SCB_AIRCR_SYSRESETREQ_Pos           2U                                            /*!< SCB AIRCR: SYSRESETREQ Position */
+#define SCB_AIRCR_SYSRESETREQ_Msk          (1UL << SCB_AIRCR_SYSRESETREQ_Pos)             /*!< SCB AIRCR: SYSRESETREQ Mask */
+
+#define SCB_AIRCR_VECTCLRACTIVE_Pos         1U                                            /*!< SCB AIRCR: VECTCLRACTIVE Position */
+#define SCB_AIRCR_VECTCLRACTIVE_Msk        (1UL << SCB_AIRCR_VECTCLRACTIVE_Pos)           /*!< SCB AIRCR: VECTCLRACTIVE Mask */
+
+#define SCB_AIRCR_VECTRESET_Pos             0U                                            /*!< SCB AIRCR: VECTRESET Position */
+#define SCB_AIRCR_VECTRESET_Msk            (1UL /*<< SCB_AIRCR_VECTRESET_Pos*/)           /*!< SCB AIRCR: VECTRESET Mask */
 
 static inline void BUS_RegMaskedSet(volatile uint32_t *addr,
                                       uint32_t mask)
@@ -1949,6 +2250,71 @@ typedef struct {
 #define _WDOG_IEN_PEM1_DEFAULT                    0x00000000UL                  /**< Mode DEFAULT for WDOG_IEN */
 #define WDOG_IEN_PEM1_DEFAULT                     (_WDOG_IEN_PEM1_DEFAULT << 4) /**< Shifted mode DEFAULT for WDOG_IEN */
 
-#define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
-#define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
+/* Memory mapping of Core Hardware */
+#define SCS_BASE            (0xE000E000UL)                            /*!< System Control Space Base Address */
+#define ITM_BASE            (0xE0000000UL)                            /*!< ITM Base Address */
+#define DWT_BASE            (0xE0001000UL)                            /*!< DWT Base Address */
+#define TPI_BASE            (0xE0040000UL)                            /*!< TPI Base Address */
+#define CoreDebug_BASE      (0xE000EDF0UL)                            /*!< Core Debug Base Address */
+#define SysTick_BASE        (SCS_BASE +  0x0010UL)                    /*!< SysTick Base Address */
+#define NVIC_BASE           (SCS_BASE +  0x0100UL)                    /*!< NVIC Base Address */
+#define SCB_BASE            (SCS_BASE +  0x0D00UL)                    /*!< System Control Block Base Address */
+
+#define SCnSCB              ((SCnSCB_Type    *)     SCS_BASE      )   /*!< System control Register not in SCB */
+#define SCB                 ((SCB_Type       *)     SCB_BASE      )   /*!< SCB configuration struct */
+#define SysTick             ((SysTick_Type   *)     SysTick_BASE  )   /*!< SysTick configuration struct */
+#define NVIC                ((NVIC_Type      *)     NVIC_BASE     )   /*!< NVIC configuration struct */
+#define ITM                 ((ITM_Type       *)     ITM_BASE      )   /*!< ITM configuration struct */
+#define DWT                 ((DWT_Type       *)     DWT_BASE      )   /*!< DWT configuration struct */
+#define TPI                 ((TPI_Type       *)     TPI_BASE      )   /*!< TPI configuration struct */
+#define CoreDebug           ((CoreDebug_Type *)     CoreDebug_BASE)   /*!< Core Debug configuration struct */
+
+/**
+  \brief   Clear Pending Interrupt
+  \details Clears the pending bit of a device specific interrupt in the NVIC pending register.
+  \param [in]      IRQn  Device specific interrupt number.
+  \note    IRQn must not be negative.
+ */
+__STATIC_INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
+{
+  if ((int32_t)(IRQn) >= 0)
+  {
+    NVIC->ICPR[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+  }
+}
+
+/**
+  \brief   Enable Interrupt
+  \details Enables a device specific interrupt in the NVIC interrupt controller.
+  \param [in]      IRQn  Device specific interrupt number.
+  \note    IRQn must not be negative.
+ */
+__STATIC_INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
+{
+  if ((int32_t)(IRQn) >= 0)
+  {
+    NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+  }
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get unique number for this device.
+ *
+ * @return
+ *   Unique number for this device.
+ ******************************************************************************/
+__STATIC_INLINE uint64_t SYSTEM_GetUnique(void)
+{
+#if defined (_DEVINFO_EUI64H_MASK)
+  uint32_t tmp = DEVINFO->EUI64L;
+  return (uint64_t)((uint64_t)DEVINFO->EUI64H << 32) | tmp;
+#elif defined(_DEVINFO_UNIQUEH_MASK)
+  uint32_t tmp = DEVINFO->UNIQUEL;
+  return (uint64_t)((uint64_t)DEVINFO->UNIQUEH << 32) | tmp;
+#else
+#error Location of device unique number is not defined.
+#endif
+}
+
 #endif // ZGECKO

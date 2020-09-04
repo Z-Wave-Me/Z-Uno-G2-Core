@@ -40,7 +40,6 @@ enum {
 	ZUNO_FUNC_GECKOEXT_CMUCLOCK,
 	ZUNO_FUNC_SLEEP_CONTROL,
 	ZUNO_FUNC_WUP_CONTROL,
-	ZUNO_FUNC_DBGPRINT,
 	ZUNO_FUNC_TEST = 0xFE
 };
 enum {
@@ -78,7 +77,8 @@ enum {
 	CMU_CLOCK_TYPE_USART0,
 	CMU_CLOCK_TYPE_USART1,
 	CMU_CLOCK_TYPE_USART2,
-	CMU_CLOCK_TYPE_GPIO
+	CMU_CLOCK_TYPE_GPIO,
+	CMU_CLOCK_TYPE_CSEN_HF
 };
 enum {
     ZUNO_UNKNOWN_CMD,
@@ -99,6 +99,20 @@ enum {
 	ZUNO_MODE_FLIRS_NUMBER,							//2
 };
 
+enum 
+{	
+	ZUNO_WAKEUP_REASON_PIN         = 0,   /**< Reset triggered by reset pin */
+    ZUNO_WAKEUP_REASON_WUP_EM4     = 1,   /**< Reset triggered by wake up by timer from deep sleep state  */
+//Legacy: ZW_WAKEUP_SENSOR = 2,   /**< Wake up by a Wakeup Beam */
+  	ZUNO_WAKEUP_REASON_WATCH_DOG    = 3,   /**< Reset triggered by watchdog */
+  	ZUNO_WAKEUP_REASON_EXT_EM4      = 4,
+	ZUNO_WAKEUP_REASON_POR          = 5,   /**< Reset triggered by external interrupt event in deep sleep state */
+//Legacy: ZW_WAKEUP_USB_SUSPEND= 6  /**< Wake up by USB suspend */
+    ZUNO_WAKEUP_REASON_SOFTRESET    = 7,   /**< Reset triggered by software */
+//Legacy: ZW_WAKEUP_EMRG_WD_RESET= 8,  /**< Wake up by emergency watchdog reset */
+    ZUNO_WAKEUP_REASON_BROWNOUT    = 9,   /**< Reset triggered by brownout circuit */
+    ZUNO_WAKEUP_REASON_OTHER       = 0xFF /**< Reset triggered by none of the above */
+};
 #define ZUNO_ASSOC_NO_PARAMS 							0x00
 
 enum
@@ -568,7 +582,14 @@ enum{
 #define SKETCH_FLAG_S2_AUTHENTICATED_BIT 				SECURITY_KEY_S2_AUTHENTICATED_BIT
 #define SKETCH_FLAG_S2_ACCESS_BIT						SECURITY_KEY_S2_ACCESS_BIT
 
+#define ZUNO_AWAKETIMEOUT_SLEEPNOW                      0              
+#define ZUNO_AWAKETIMEOUT_FOREVER                       0xFFFFFFFF
+#define ZUNO_SLEEPLOCK_SYSTEM                           0
+#define ZUNO_SLEEPLOCK_CUSTOM                           1
+
+
 #ifndef ZUNO_PREPROC_PHASE
+
 #include "Custom_defs.h"
 #endif
 #endif // ZUNO_DEFINITIONS

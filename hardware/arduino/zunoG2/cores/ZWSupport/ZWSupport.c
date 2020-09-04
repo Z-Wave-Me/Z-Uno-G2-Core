@@ -12,6 +12,8 @@
 #include "ZWCCDoorLock.h"
 #include "ZWCCConfiguration.h"
 #include "ZWCCAssociation.h"
+#include "ZWCCBattery.h"
+#include "ZWCCWakeup.h"
 #include "./includes/ZWSupportTimer.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -50,7 +52,14 @@ typedef struct ZUnoReportDta_s{
 }ZUnoReportDta_t;
 volatile ZUnoReportDta_t g_report_data;
 //-------------------------------------------------------------------------------------------------
-
+void ZWCCSetup(){
+	#ifdef WITH_CC_BATTERY
+	zuno_CCBattery_OnSetup();
+	#endif
+	#ifdef WITH_CC_WAKEUP
+	zuno_CCWakeup_OnSetup();
+	#endif
+}
 bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 	uint8_t	cmd_class;
 
@@ -189,6 +198,16 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);
 				break ;
+			#ifdef WITH_CC_BATTERY
+			case COMMAND_CLASS_BATTERY:
+				result = zuno_CCBattery(cmd);
+				break;
+			#endif
+			#ifdef WITH_CC_WAKEUP
+			case COMMAND_CLASS_WAKE_UP:
+				result = zuno_CCWakeupHandler(cmd);
+				break;
+			#endif
 			default:
 				return (true);
 	}
@@ -668,6 +687,10 @@ static void initCCSData() {
 	#ifdef WITH_CC_NOTIFICATION
 	zuno_CCNotificationInitData();
 	#endif
+	#ifdef WITH_CC_WAKEUP
+	zuno_CCWakeup_OnDefault();
+	#endif
+
 }
 
 byte zunoAddChannel(byte type, byte subtype, byte options) {
@@ -810,7 +833,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
 			zunoSendZWPackage(&g_outgoing_packet);
-
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			g_report_data.channels_mask &= ~(1UL<<ch); // remove channel bit from pending report bitmap

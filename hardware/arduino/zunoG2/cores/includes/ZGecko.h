@@ -2269,6 +2269,39 @@ typedef struct {
 #define TPI                 ((TPI_Type       *)     TPI_BASE      )   /*!< TPI configuration struct */
 #define CoreDebug           ((CoreDebug_Type *)     CoreDebug_BASE)   /*!< Core Debug configuration struct */
 
+/**************************************************************************//**
+ * @defgroup EFR32FG13P_CSEN CSEN
+ * @{
+ * @brief EFR32FG13P_CSEN Register Declaration
+ *****************************************************************************/
+/** CSEN Register Declaration */
+typedef struct {
+  __IOM uint32_t CTRL;          /**< Control  */
+  __IOM uint32_t TIMCTRL;       /**< Timing Control  */
+  __IOM uint32_t CMD;           /**< Command  */
+  __IM uint32_t  STATUS;        /**< Status  */
+  __IOM uint32_t PRSSEL;        /**< PRS Select  */
+  __IOM uint32_t DATA;          /**< Output Data  */
+  __IOM uint32_t SCANMASK0;     /**< Scan Channel Mask 0  */
+  __IOM uint32_t SCANINPUTSEL0; /**< Scan Input Selection 0  */
+  __IOM uint32_t SCANMASK1;     /**< Scan Channel Mask 1  */
+  __IOM uint32_t SCANINPUTSEL1; /**< Scan Input Selection 1  */
+  __IM uint32_t  APORTREQ;      /**< APORT Request Status  */
+  __IM uint32_t  APORTCONFLICT; /**< APORT Request Conflict  */
+  __IOM uint32_t CMPTHR;        /**< Comparator Threshold  */
+  __IOM uint32_t EMA;           /**< Exponential Moving Average  */
+  __IOM uint32_t EMACTRL;       /**< Exponential Moving Average Control  */
+  __IOM uint32_t SINGLECTRL;    /**< Single Conversion Control  */
+  __IOM uint32_t DMBASELINE;    /**< Delta Modulation Baseline  */
+  __IOM uint32_t DMCFG;         /**< Delta Modulation Configuration  */
+  __IOM uint32_t ANACTRL;       /**< Analog Control  */
+
+  uint32_t       RESERVED0[2];  /**< Reserved for future use **/
+  __IM uint32_t  IF;            /**< Interrupt Flag  */
+  __IOM uint32_t IFS;           /**< Interrupt Flag Set  */
+  __IOM uint32_t IFC;           /**< Interrupt Flag Clear  */
+  __IOM uint32_t IEN;           /**< Interrupt Enable  */
+} CSEN_TypeDef;                 /** @} */
 /**
   \brief   Clear Pending Interrupt
   \details Clears the pending bit of a device specific interrupt in the NVIC pending register.

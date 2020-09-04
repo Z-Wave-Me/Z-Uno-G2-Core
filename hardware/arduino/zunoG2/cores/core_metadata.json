@@ -1,6 +1,15 @@
 {
     "core_version":{"major":3,"minor":1,"branch":"alpha"},
     "max_channel_ccs":2,
+    "static_value_mapper":{
+        "SleepingModeValue":{
+           "values":{"1":["WITH_CC_WAKEUP", "WITH_CC_BATTERY"], "2":["WITH_CC_BATTERY"]}, 
+           "default":[]
+        },
+        "BatteryLow":{"directmap":"BATTERY_LOW"},
+        "BatteryHigh":{"directmap":"BATTERY_HIGH"},
+        "BatteryHandler":{"default":["WITH_CUSTOM_BATTERY_HANDLER"]}
+    },
     "associations":[
         {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},
         {"type_name":"ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER", "type_val":2, "preproc_flags":[]},

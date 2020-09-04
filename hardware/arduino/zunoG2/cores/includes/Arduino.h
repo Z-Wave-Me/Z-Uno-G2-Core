@@ -53,7 +53,8 @@ enum{
     OUTPUT = GPIOMODE_OUTPUT_PUSHPULL,
     INPUT = GPIOMODE_INPUT,
     INPUT_PULLUP    = 0x100 | GPIOMODE_INPUTPULL,
-    INPUT_PULLDOWN  = GPIOMODE_INPUTPULL
+    INPUT_PULLDOWN  = GPIOMODE_INPUTPULL,
+	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER 
 };
 
 enum {
@@ -66,6 +67,7 @@ enum {
 
 
 #ifndef ZUNO_PIN_V
+	#pragma message "Use default ZUNO_PIN_V==2"
 	#define ZUNO_PIN_V			2//default
 #endif
 
@@ -148,6 +150,8 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define noInterrupts() __asm volatile("cpsid i"::: "memory")
 //inable interrupts macros
 #define interrupts() __asm volatile("cpsie i"::: "memory")
+#define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
+
 // Additional libraries with "pluses"
 
 void * zunoSysCall(int vec, int num, ...);
@@ -188,6 +192,9 @@ int zunoEEPROMErase();
 void _zme_memcpy(byte *dst, byte *src, byte count);
 uint32_t zunoLoadCFGParam(uint8_t param);
 void zunoSaveCFGParam(uint8_t param, uint32_t value);
+
+void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
+void zunoSetWUPTimer(uint32_t timeout);
 
 // Associations
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);

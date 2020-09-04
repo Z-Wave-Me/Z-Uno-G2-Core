@@ -13,6 +13,7 @@
 #endif
 #endif
 
+
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
 
@@ -72,6 +73,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     
 };
 #elif ZUNO_PIN_V == 2
+#pragma message "ZUNO_PIN_V==2"
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
@@ -106,6 +108,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{5, 2}//27 - PF2 - USB Serial
 };
 #elif ZUNO_PIN_V == 3
+#pragma message "ZUNO_PIN_V==3"
 static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
@@ -136,8 +139,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 11},//24 - PC11 - TX0 
 	{3, 13},//25 - PD13 - RX0 
 	// DO NOT USE !!!
-	{5, 2},//26 - PF2 - USB Serial
-	{5, 3}//27 - PF3 - USB Serial
+	{5, 3},//26 - PF3 - USB Serial
+	{5, 2}//27 - PF2 - USB Serial
 };
 #endif
 
@@ -164,7 +167,10 @@ extern void (*__init_array_start []) (void) __attribute__((weak));
 extern void (*__init_array_end []) (void) __attribute__((weak));
 extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
-
+extern "C"{
+    void _init();
+    void _fini();
+};
 // Universal pin location index
 const uint8_t g_loc_pa0_pf7_all[] = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05,// LOC 0-5 = PA0-PA5
@@ -179,19 +185,22 @@ uint8_t pin2HWPin(uint8_t pin){
     return (ZUNO_PIN_DEFS[pin].port << 4) | (ZUNO_PIN_DEFS[pin].pin&0x0F);
 }
 void LLInit() {
+    // Constructors....
+    size_t count, i;
     // Global values initialization
     uint32_t * cd = &__etext;
     for(uint32_t * p=&__data_start__; p<&__data_end__; p++, cd++){
         *p = *cd;
+        WDOG_Feed();
     }
     for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
         *p = 0;
+        WDOG_Feed();
     }
-    // Constructors....
-    size_t count, i;
     count = __preinit_array_end - __preinit_array_start;
     for (i = 0; i < count; i++)
         __preinit_array_start[i]();
+    _init();
     count = __init_array_end - __init_array_start;
     for (i = 0; i < count; i++)
         __init_array_start[i]();
@@ -199,7 +208,34 @@ void LLInit() {
     memset(&g_zuno_odhw_cfg,0,sizeof(ZUNOOnDemandHW_t));
     g_zuno_odhw_cfg.pwm_freq_scaller = 100UL;//0xFFFF;
 
+}
 
+void LLDestroy() {
+   
+    // Destructors....
+    int count;
+    int i;
+    /*for (i = 0; i < atexit_count; i++) {
+            atexit_funcs[i]();
+    }*/
+    count = __fini_array_end - __fini_array_start;
+    #ifdef LOGGING_DBG
+    LOGGING_UART.print("DESTROY Count:");
+    LOGGING_UART.print(count);
+    LOGGING_UART.println(" Items: ");
+    for (i = count-1; i >= 0; i--){
+        LOGGING_UART.print("ADDR:");
+        LOGGING_UART.println((unsigned long)__fini_array_start[i], HEX);
+    }
+    #endif
+    
+    for (i = count-1; i >= 0; i--)
+        __fini_array_start[i]();
+    _fini();
+    #ifdef LOGGING_DBG
+    LOGGING_UART.println("DESTOY STOP!!!");
+    #endif
+    
 }
 #ifdef WITH_AUTOSETUP
 // this is managing using "preproc" util
@@ -213,7 +249,7 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            delay(2000);// ! DBG - что бы информацию выводила отладочную окуратно без разброса - в Realese - убрать
+            //delay(2000);// ! DBG - что бы информацию выводила отладочную окуратно без разброса - в Realese - убрать
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
@@ -248,6 +284,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         #ifdef LOGGING_DBG
         case ZUNO_JUMPTBL_DEBUGPRINT:{
+            #pragma message "DEBUGPRINT"
             ZUNOSysDbgMessage_t * msg = (ZUNOSysDbgMessage_t *)data;
             LOGGING_UART.print("[");
             LOGGING_UART.print(millis());
@@ -274,6 +311,12 @@ void * zunoJumpTable(int vec, void * data) {
             }
             break;
          #endif
+        case ZUNO_JUMPTBL_SLEEP:
+            #ifdef LOGGING_DBG
+            LOGGING_UART.println("!SLEEP");
+            #endif
+            LLDestroy();
+            break;
         default:
             break; // UNKNOWN VECTOR
     }
@@ -322,7 +365,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         va_end (args);
                         break;
                     case ZUNO_HANDLER_ZW_BATTERY:
-                        result = (void*)((zuno_battery_handler_t*)(base_addr))();
+                        result = (void*)(((zuno_battery_handler_t*)(base_addr))());
                         break;
                 }
         }
@@ -354,6 +397,13 @@ int zunoDetachSysHandler(void * handler){
     }
     return -1;
 }
+void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
+    zunoSysCall(ZUNO_FUNC_SLEEP_CONTROL, 2, index, timeout);
+}
+void zunoSetWUPTimer(uint32_t timeout){
+    zunoSysCall(ZUNO_FUNC_WUP_CONTROL, 1, timeout);
+}
+
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
 }
@@ -388,27 +438,29 @@ void digitalWrite(uint8_t pin, uint8_t val){
 }
 
 void pinMode(uint8_t pin, int mode){
-    int real_port = ZUNO_PIN_DEFS[pin].port;
-    int real_pin = ZUNO_PIN_DEFS[pin].pin;
-    int real_mode = mode & 0xFF;
+    uint32_t real_port = ZUNO_PIN_DEFS[pin].port;
+    uint32_t real_pin = ZUNO_PIN_DEFS[pin].pin;
+    uint32_t real_mode = mode & 0x0F;
     bool on_off    = ((mode & 0x100)  != 0);
-
+    
     if( real_mode != DISABLED ){
         digitalWrite(pin, on_off);
     }
     if(real_pin < 8){
-      GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin << 2)))
-                          | (real_mode << (real_pin << 2 ));
+      real_pin <<= 2;
+      GPIO->P[real_port].MODEL &=  ~(0xFu << real_pin);
+      GPIO->P[real_port].MODEL |= (real_mode << real_pin);
     } else {
-      GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2)))
-                          | (mode << ((real_pin - 8) << 2));
+      real_pin -= 8;
+      real_pin <<= 2;
+      GPIO->P[real_port].MODEH &= ~(0xFu << real_pin);
+      GPIO->P[real_port].MODEH |= (real_mode << real_pin);
     }
     if( real_mode == DISABLED ){
         digitalWrite(pin, on_off);
     }
 
 }
-
 int getRealPin(uint8_t pin)
 {
     int real_pin = ZUNO_PIN_DEFS[pin].pin;

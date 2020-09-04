@@ -2,7 +2,7 @@
 #define DALLAS_DS_18B20LIB
 
 #include "Arduino.h"
-#include "/home/kirill/job/G2/cores/libraries/ZUNOG2_OneWire/ZUNOG2_OneWire.h"
+#include "ZUNO_OneWire.h"
 
 #define BAD_TEMP -32767
 

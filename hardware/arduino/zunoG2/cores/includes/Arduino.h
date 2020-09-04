@@ -67,8 +67,7 @@ enum {
 
 
 #ifndef ZUNO_PIN_V
-	#pragma message "Use default ZUNO_PIN_V==2"
-	#define ZUNO_PIN_V			2//default
+	#define ZUNO_PIN_V			3//default
 #endif
 
 #if ZUNO_PIN_V == 1

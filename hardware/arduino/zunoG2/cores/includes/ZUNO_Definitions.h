@@ -8,7 +8,7 @@
 #define ZUNO_MAX_ASSOC_NUMBER_LIMITATION				16
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
-#define ZUNO_CODE_START                                 0x3A000L
+#define ZUNO_CODE_START                                 0x30000L
 #define USER_SPACE_FLASH_ADDR                           0x10000
 #define ZUNO_CUSTOM_CODESPACE_SIZE                      (0xA000-0x100)
 

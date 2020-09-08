@@ -15,6 +15,8 @@ static int _assotiation_groupings_report(uint8_t cmdClass, uint8_t cmd) {
 	lp = (ZwAssociationGroupingsReportFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = cmdClass;
 	lp->cmd = cmd;
+	//Serial0.print("(!) Groups:");
+	//Serial0.println(ZUNO_CFG_ASSOCIATION_COUNT);
 	lp->supportedGroupings = ZUNO_CFG_ASSOCIATION_COUNT + 1;//+1 for Lifeline group
 	CMD_REPLY_LEN = sizeof(ZwAssociationGroupingsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);

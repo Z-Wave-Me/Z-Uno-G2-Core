@@ -23,13 +23,13 @@
 #define WAKEUP_INTERVAL_STEP                                                          1 // One second
 #endif 
 #define WAKEUP_ADDR                                                                   0x290
-#define WAKEUP_SLEEP_TIMEOUT                                                          30000
+#define WAKEUP_SLEEP_TIMEOUT                                                          3000
 
 void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();
 void zuno_CCWakeup_OnDefault();
 int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd);
-
+void zuno_CCWakeup_OnAnyRx();
 
 
 #endif // ZWCC_WAKEUP

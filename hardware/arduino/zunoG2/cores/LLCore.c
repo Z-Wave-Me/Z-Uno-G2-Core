@@ -254,6 +254,7 @@ void * zunoJumpTable(int vec, void * data) {
             zuno_static_autosetup();
             #endif
             setup();
+            ZWCCSetup();
             break;
         case ZUNO_JUMPTBL_LOOP:
             loop();
@@ -328,7 +329,7 @@ void * zunoJumpTable(int vec, void * data) {
 void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     uint8_t i;
     void * result = NULL;
-    byte * base_addr = (byte*) ZUNO_CODE_START;
+    byte * base_addr;
     va_list args;
     for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
         if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0) // Empty handler
@@ -337,6 +338,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
             (g_zuno_odhw_cfg.h_sys_handler[i].sub_type  == sub_type || 
             g_zuno_odhw_cfg.h_sys_handler[i].sub_type == 0xFF)) // 0xFF is "wild card"
             {
+                base_addr = (byte*) ZUNO_CODE_START;
                 base_addr += g_zuno_odhw_cfg.h_sys_handler[i].code_offset;
                 switch(type){
                     case ZUNO_HANDLER_SYSTIMER:
@@ -365,6 +367,9 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         va_end (args);
                         break;
                     case ZUNO_HANDLER_ZW_BATTERY:
+                        Serial0.print("BATTERY ADDR:");
+                        Serial0.println((uint32_t)base_addr, HEX);
+                        
                         result = (void*)(((zuno_battery_handler_t*)(base_addr))());
                         break;
                 }
@@ -374,7 +379,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
 }
 int zunoAttachSysHandler(byte type, byte sub_type, void * handler){
     byte i;
-    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFF;
+    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
     // Searching for vacant ceil to add the handler
     for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
         if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0){
@@ -388,7 +393,7 @@ int zunoAttachSysHandler(byte type, byte sub_type, void * handler){
 }
 int zunoDetachSysHandler(void * handler){
     byte i;
-    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFF;
+    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
     for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
         if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == offset){
             g_zuno_odhw_cfg.h_sys_handler[i].code_offset = 0;

@@ -1477,5 +1477,142 @@ typedef enum {
 #endif
 } GPIO_Mode_TypeDef;
 
+__STATIC_INLINE void GPIO_EM4SetPinRetention(bool enable){
+  if (enable) {
+    EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
+                   | EMU_EM4CTRL_EM4IORETMODE_EM4EXIT;
+
+  } else {
+    EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
+                   | EMU_EM4CTRL_EM4IORETMODE_DISABLE;
+  }
+}
+/***************************************************************************//**
+ * @brief
+ *   Enable/disable input sensing.
+ *
+ * @details
+ *   Disabling input sensing if not used, can save some energy consumption.
+ *
+ * @param[in] val
+ *   Bitwise logic OR of one or more of:
+ *   @li GPIO_INSENSE_INT - interrupt input sensing.
+ *   @li GPIO_INSENSE_PRS - peripheral reflex system input sensing.
+ *
+ * @param[in] mask
+ *   Mask containing bitwise logic OR of bits similar as for @p val used to
+ *   indicate which input sense options to disable/enable.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_InputSenseSet(uint32_t val, uint32_t mask){
+  GPIO->INSENSE = (GPIO->INSENSE & ~mask) | (val & mask);
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Clear one or more pending GPIO interrupts.
+ *
+ * @param[in] flags
+ *   Bitwise logic OR of GPIO interrupt sources to clear.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_IntClear(uint32_t flags)
+{
+  GPIO->IFC = flags;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Disable one or more GPIO interrupts.
+ *
+ * @param[in] flags
+ *   GPIO interrupt sources to disable.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_IntDisable(uint32_t flags)
+{
+  GPIO->IEN &= ~flags;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Enable one or more GPIO interrupts.
+ *
+ * @note
+ *   Depending on the use, a pending interrupt may already be set prior to
+ *   enabling the interrupt. Consider using @ref GPIO_IntClear() prior to enabling
+ *   if such a pending interrupt should be ignored.
+ *
+ * @param[in] flags
+ *   GPIO interrupt sources to enable.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_IntEnable(uint32_t flags)
+{
+  GPIO->IEN |= flags;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get pending GPIO interrupts.
+ *
+ * @return
+ *   GPIO interrupt sources pending.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t GPIO_IntGet(void)
+{
+  return GPIO->IF;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get enabled and pending GPIO interrupt flags.
+ *   Useful for handling more interrupt sources in the same interrupt handler.
+ *
+ * @note
+ *   Interrupt flags are not cleared by the use of this function.
+ *
+ * @return
+ *   Pending and enabled GPIO interrupt sources.
+ *   The return value is the bitwise AND combination of
+ *   - the OR combination of enabled interrupt sources in GPIO_IEN register
+ *     and
+ *   - the OR combination of valid interrupt flags in GPIO_IF register.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t GPIO_IntGetEnabled(void)
+{
+  uint32_t tmp;
+
+  /* Store GPIO->IEN in temporary variable in order to define explicit order
+   * of volatile accesses. */
+  tmp = GPIO->IEN;
+
+  /* Bitwise AND of pending and enabled interrupts */
+  return GPIO->IF & tmp;
+}
+
+/**************************************************************************//**
+ * @brief
+ *   Set one or more pending GPIO interrupts from SW.
+ *
+ * @param[in] flags
+ *   GPIO interrupt sources to set to pending.
+ *****************************************************************************/
+__STATIC_INLINE void GPIO_IntSet(uint32_t flags)
+{
+  GPIO->IFS = flags;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Locks the GPIO configuration.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_Lock(void)
+{
+  GPIO->LOCK = GPIO_LOCK_LOCKKEY_LOCK;
+}
+void GPIO_EM4EnablePinWakeup(uint32_t pinmask, uint32_t polaritymask);
+void GPIO_ExtIntConfig(uint8_t port,
+                       unsigned int pin,
+                       unsigned int intNo,
+                       bool risingEdge,
+                       bool fallingEdge,
+                       bool enable);
 
 #endif // CORTEXGPIO_H

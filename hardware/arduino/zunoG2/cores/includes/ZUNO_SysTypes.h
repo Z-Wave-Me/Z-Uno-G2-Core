@@ -57,6 +57,7 @@ typedef struct ZUNOSetupSysState_s {
 	uint8_t enclusion_state;
 	uint8_t node_id;
 	uint8_t avaliable_keys;
+	uint32_t gpio_em4flags;
 	ZUNODeviceConfiguation_t * zwave_cfg;
 }ZUNOSetupSysState_t;
 
@@ -101,7 +102,7 @@ typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 typedef void zuno_configuartionhandler_t(uint8_t, uint32_t);
-typedef void *zuno_battery_handler_t(void);
+typedef uint8_t zuno_battery_handler_t(void);
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{

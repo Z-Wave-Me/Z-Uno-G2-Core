@@ -225,6 +225,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	zuno_dbgdumpZWPacakge(cmd);
 	#pragma message "LOGGING ON"
 	#endif
+	#ifdef WITH_CC_WAKEUP
+ 	zuno_CCWakeup_OnAnyRx();
+	#endif
 	// prepare packet for report
 	fillOutgoingPacket(cmd);
 	// If we have multichannel support enabled.
@@ -874,6 +877,9 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 		return;
 		
 	}
+	#ifdef WITH_CC_WAKEUP
+	zuno_CCWakeup_OnAnyRx();
+	#endif
     #ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print(" OUTGOING PACAKAGE");

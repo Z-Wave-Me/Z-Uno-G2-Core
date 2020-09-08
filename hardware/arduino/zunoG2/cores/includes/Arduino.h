@@ -194,6 +194,7 @@ void zunoSaveCFGParam(uint8_t param, uint32_t value);
 
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 void zunoSetWUPTimer(uint32_t timeout);
+void zunoSendBatteryReport();
 
 // Associations
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);

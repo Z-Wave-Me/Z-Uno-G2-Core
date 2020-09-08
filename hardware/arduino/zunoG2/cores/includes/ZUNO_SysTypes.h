@@ -102,7 +102,7 @@ typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 typedef void zuno_configuartionhandler_t(uint8_t, uint32_t);
-typedef uint8_t zuno_battery_handler_t(void);
+typedef void *zuno_battery_handler_t(void);
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{

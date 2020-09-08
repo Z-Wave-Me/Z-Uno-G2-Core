@@ -127,7 +127,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 15},//12 - PD15 - 12
 	{0, 0},//13 - PA0 - PWM1 
 	{0, 1},//14 - PA1 - PWM2
-	{0, 2},//15 - PA2 - PWM3
+	{0, 2},//15 - PA2 - PWM3 and ARDURINO LED
 	{0, 3},//16 - PA3 - PWM4
 	{0, 4},//17 - PA4 - 17
 	{0, 5},//18 - PA5 - 18
@@ -140,7 +140,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 13},//25 - PD13 - RX0
 	// DO NOT USE !!!
 	{5, 2},//26 - PF2 - USB Serial
-	{5, 3}//27 - PF3 - USB Serial		{5, 3}//27 - PF3 - USB Serial
+	{5, 3}//27 - PF3 - USB Serial
 };
 #endif
 

@@ -130,7 +130,7 @@ enum {
 
 	#define HIGH                1
 	#define LOW                 0
-	#define LED_BUILTIN         13
+	#define LED_BUILTIN         15
 
 	#define SPI_BUS_NOMBER		1//Bus number used for SPI
 	//PA0 - PF7 - all

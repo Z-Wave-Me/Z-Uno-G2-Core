@@ -139,8 +139,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 11},//24 - PC11 - TX0
 	{3, 13},//25 - PD13 - RX0
 	// DO NOT USE !!!
-	{5, 3},//26 - PF3 - USB Serial
-	{5, 2}//27 - PF2 - USB Serial
+	{5, 2},//26 - PF2 - USB Serial
+	{5, 3}//27 - PF3 - USB Serial		{5, 3}//27 - PF3 - USB Serial
 };
 #endif
 

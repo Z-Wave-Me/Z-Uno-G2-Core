@@ -35,6 +35,7 @@ typedef struct PinDef{
 
 #if ZUNO_PIN_V == 1
 // "NIKBOARD" map
+#pragma message "ZUNO_PIN_V==1"
 static const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
     {1, 14},  //  0 - B14
@@ -61,8 +62,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
     {3, 13}, //  20 - D13
     {3, 14}, //  21 - D14
     {3, 15}, //  22 - D15
-    {0, 0},  //  23 - A0 (RX)
-    {0, 1},  //  24 - A1 (TX)
+    {0, 0},  //  23 - A0 (tX)
+    {0, 1},  //  24 - A1 (rX)
     {0, 2},  //  25 - A2 (ADC0)
     {0, 3},  //  26 - A3 
     {0, 4},  //  27 - A4
@@ -104,8 +105,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 11},//24 - PC11 - TX0 
 	{5, 3},//25 - PF3 - RX0 
 	// DO NOT USE !!!
-	{3, 13},//26 - PD13 - USB Serial
-	{5, 2}//27 - PF2 - USB Serial
+	{3, 13},//26 - PD13 - USB Serial rx
+	{5, 2}//27 - PF2 - USB Serial tx
 };
 #elif ZUNO_PIN_V == 3
 #pragma message "ZUNO_PIN_V==3"
@@ -139,8 +140,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 11},//24 - PC11 - TX0
 	{3, 13},//25 - PD13 - RX0
 	// DO NOT USE !!!
-	{5, 2},//26 - PF2 - USB Serial
-	{5, 3}//27 - PF3 - USB Serial
+	{5, 2},//26 - PF2 - USB Serial tx
+	{5, 3}//27 - PF3 - USB Serial rx
 };
 #endif
 

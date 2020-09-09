@@ -49,8 +49,8 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 			uint32_t					lmiso;
 			uint32_t					lsck;
 			lmosi = getLocation(SPI_LOCATION, SPI_LOCATION_SIZE, this->mosi_pin);
-			lmiso = (getLocation(SPI_LOCATION, SPI_LOCATION_SIZE, this->miso_pin) + 1)%SPI_LOCATION_SIZE;
-			lsck =  (getLocation(SPI_LOCATION, SPI_LOCATION_SIZE, this->sck_pin) + 2)%SPI_LOCATION_SIZE;
+			lmiso = (getLocation(SPI_LOCATION, SPI_LOCATION_SIZE, this->miso_pin) - 1)%SPI_LOCATION_SIZE;
+			lsck =  (getLocation(SPI_LOCATION, SPI_LOCATION_SIZE, this->sck_pin) - 2)%SPI_LOCATION_SIZE;
 			SPI_BUS->ROUTELOC0 |= (lmosi << _USART_ROUTELOC0_TXLOC_SHIFT) | (lmiso << _USART_ROUTELOC0_RXLOC_SHIFT) | (lsck << _USART_ROUTELOC0_CLKLOC_SHIFT);
 		#elif SPI_BUS_NOMBER == 2
 			//PA5 = 5 real

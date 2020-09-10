@@ -147,6 +147,17 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 6},//28 - PC6 - green
 	{1, 15}//29 - PB15 - red
 };
+#elif ZUNO_PIN_V == 1000
+// Rasberi v0
+#pragma message "ZUNO_PIN_V==1000"
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{0, 0},//1 - A0 (tX)
+	{0, 1},//2 - A1 (rX)
+	{2, 7},//3 - PC7 - green
+	{2, 8}//4 - PC8 - red
+	{2, 6},//5 - C6
+	{2, 7}//6 - C7
+};
 #endif
 
 /*

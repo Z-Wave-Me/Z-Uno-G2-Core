@@ -138,6 +138,10 @@ enum {
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
+#elif ZUNO_PIN_V == 1000
+	#define HIGH                1
+	#define LOW                 0
+	#define BATTERY             0xFF
 #endif
 
 // system data

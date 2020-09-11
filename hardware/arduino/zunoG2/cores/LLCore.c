@@ -106,7 +106,9 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{5, 3},//25 - PF3 - RX0 
 	// DO NOT USE !!!
 	{3, 13},//26 - PD13 - USB Serial rx
-	{5, 2}//27 - PF2 - USB Serial tx
+	{5, 2},//27 - PF2 - USB Serial tx
+	{3, 15},//28 - PD15 - green
+	{3, 14}//29 - PD14 - red
 };
 #elif ZUNO_PIN_V == 3
 #pragma message "ZUNO_PIN_V==3"
@@ -141,7 +143,20 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 13},//25 - PD13 - RX0
 	// DO NOT USE !!!
 	{5, 2},//26 - PF2 - USB Serial tx
-	{5, 3}//27 - PF3 - USB Serial rx
+	{5, 3},//27 - PF3 - USB Serial rx
+	{2, 6},//28 - PC6 - green
+	{1, 15}//29 - PB15 - red
+};
+#elif ZUNO_PIN_V == 1000
+// Rasberi v0
+#pragma message "ZUNO_PIN_V==1000"
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{0, 0},//1 - A0 (tX)
+	{0, 1},//2 - A1 (rX)
+	{2, 7},//3 - PC7 - green
+	{2, 8},//4 - PC8 - red
+	{2, 6},//5 - C6
+	{2, 7}//6 - C7
 };
 #endif
 

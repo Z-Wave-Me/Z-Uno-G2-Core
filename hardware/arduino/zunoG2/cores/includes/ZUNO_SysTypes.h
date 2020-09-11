@@ -58,6 +58,7 @@ typedef struct ZUNOSetupSysState_s {
 	uint8_t node_id;
 	uint8_t avaliable_keys;
 	uint32_t gpio_em4flags;
+	uint32_t flags;
 	ZUNODeviceConfiguation_t * zwave_cfg;
 }ZUNOSetupSysState_t;
 

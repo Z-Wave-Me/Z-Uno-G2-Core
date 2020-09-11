@@ -65,6 +65,9 @@ enum {
 	CTRL_GROUP_5
 };
 
+#ifndef DEFAULT_CONFIG_FLAGS
+#define DEFAULT_CONFIG_FLAGS 0
+#endif
 
 #ifndef ZUNO_PIN_V
 	#define ZUNO_PIN_V			3//default

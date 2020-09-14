@@ -124,8 +124,11 @@ typedef struct HandlerFunc_s{
 
 typedef struct ZUNOOnDemandHW_s {
 	uint32_t		pwm_freq;
+	uint32_t		tone_freq_set;
 	uint8_t			pwm_pins[MAX_ZUNO_PWMS];
 	uint8_t			pwm_pins_state;
+	uint8_t			tone_pin;
+	uint16_t		tone_freq;
 
     bool        ADCInitialized;
     // HANDLERS

@@ -6,6 +6,7 @@
 #include "CrtxTimer.h"
 #include "Stub.h"
 #include <stdarg.h>
+#include "Tone.h"
 
 #ifdef LOGGING_DBG
 #ifndef LOGGING_UART 
@@ -222,8 +223,6 @@ void LLInit() {
         __init_array_start[i]();
     // Initialize Hardware default CFG
     memset(&g_zuno_odhw_cfg,0,sizeof(ZUNOOnDemandHW_t));
-    g_zuno_odhw_cfg.pwm_freq_scaller = 100UL;//0xFFFF;
-
 }
 
 void LLDestroy() {
@@ -543,14 +542,6 @@ int analogRead(uint8_t pin) {
     // zme_ADC_Disable(); // Move to "BEFORESLEEP" hadler
     return sampleValue;
 }
-byte aux_findPWMChannel(byte pin){
-    int i;
-    for(i=0;i<MAX_ZUNO_PWMS;i++){
-        if(g_zuno_odhw_cfg.pwm_pins[i] == pin)
-            return i;
-    }
-    return INVALID_PIN_INDEX;
-}
 
 void delayMicroseconds(word tdelay){
     while(tdelay--){
@@ -561,63 +552,9 @@ void delayMicroseconds(word tdelay){
    }
 }
 
-static inline dword map_pwmloc2ch(int loc, int ch){
-    loc = (loc + 32-ch) & 0x1F;
-    ch <<= 3;
-    return loc << ch;
-}
-bool analogWrite(uint8_t pin, word value){
-    
-    if(!g_zuno_odhw_cfg.PWMInitialized){
-        memset(g_zuno_odhw_cfg.pwm_pins, INVALID_PIN_INDEX, sizeof(g_zuno_odhw_cfg.pwm_pins));
-        CMU_ClockEnable(cmuClock_TIMER1, true);
-        TIMER_TopSet(TIMER1, g_zuno_odhw_cfg.pwm_freq_scaller);
-        // Set the PWM duty cycle to zero for all channels!
-        TIMER_CompareBufSet(TIMER1, 0, 0);
-        TIMER_CompareBufSet(TIMER1, 1, 0);
-        TIMER_CompareBufSet(TIMER1, 2, 0);
-        TIMER_CompareBufSet(TIMER1, 3, 0);
-        // Create a timerInit object, based on the API default
-        TIMER_Init_TypeDef timerInit = TIMER_INIT_DEFAULT;
-        TIMER_Init(TIMER1, &timerInit);
-        g_zuno_odhw_cfg.PWMInitialized = true;
-        // const uint8_t g_loc_pa0_pf7_all[]
 
-    }
-    byte ch =  aux_findPWMChannel(pin);
-    if(value == 0){
-        // switch off the led if it was enabled already
-        if(ch == INVALID_PIN_INDEX)
-            return false; // We don't have this pin is occupied by the PWM - go out
-        g_zuno_odhw_cfg.pwm_pins[ch] = INVALID_PIN_INDEX;
-        // disable CC
-        TIMER1->ROUTEPEN &= ~(1UL<<ch);
-        // Switch off this pin anyway
-        digitalWrite(pin, 0);  
-        return true;
-    } 
-    if(ch == INVALID_PIN_INDEX){    
-        ch = aux_findPWMChannel(INVALID_PIN_INDEX);
-        if(ch == INVALID_PIN_INDEX)
-            return false;
-        TIMER_InitCC_TypeDef timerCCInit = TIMER_INITCC_DEFAULT;
-        timerCCInit.mode      = timerCCModePWM;
-        timerCCInit.cmoa      = timerOutputActionToggle;
-        timerCCInit.outInvert = 0;
-        TIMER_InitCC(TIMER1, ch, &timerCCInit);
-        g_zuno_odhw_cfg.pwm_pins[ch] = pin; // We occupied this channel with the needed pin
-        uint32_t pwm_loc = getLocation(g_loc_pa0_pf7_all, g_loc_pa0_pf7_all_size, pin);
-        pwm_loc =  map_pwmloc2ch(pwm_loc, ch);
-        TIMER1->ROUTELOC0 &=  ~(0x1FUL<<(ch<<3));
-        TIMER1->ROUTELOC0 |=  pwm_loc;
-        TIMER1->ROUTEPEN |= (1UL<<ch);
-        // enable the output
-        digitalWrite(pin, 0);
-
-    } 
-    TIMER_CompareBufSet(TIMER1, ch, value);
-    
-    return true;
+bool analogWrite(uint8_t pin, word value) {
+	return (_analogWrite(pin, (value > 0xFF) ? 0xFF : value));
 }
 void WDOG_Feed(){
   WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog

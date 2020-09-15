@@ -7,7 +7,6 @@
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
-#include "GpioInterrupt.h"
 #include "Debug.h"
 
 #ifdef LOGGING_DBG
@@ -231,8 +230,6 @@ void LLInit() {
     count = __init_array_end - __init_array_start;
     for (i = 0; i < count; i++)
         __init_array_start[i]();
-    // Initialize Hardware default CFG
-    memset(&g_zuno_odhw_cfg,0,sizeof(ZUNOOnDemandHW_t));
 }
 
 void LLDestroy() {
@@ -470,28 +467,7 @@ void digitalWrite(uint8_t pin, uint8_t val){
 }
 
 void pinMode(uint8_t pin, int mode){
-    uint32_t real_port = ZUNO_PIN_DEFS[pin].port;
-    uint32_t real_pin = ZUNO_PIN_DEFS[pin].pin;
-    uint32_t real_mode = mode & 0x0F;
-    bool on_off    = ((mode & 0x100)  != 0);
-    
-    if( real_mode != DISABLED ){
-        digitalWrite(pin, on_off);
-    }
-    if(real_pin < 8){
-      real_pin <<= 2;
-      GPIO->P[real_port].MODEL &=  ~(0xFu << real_pin);
-      GPIO->P[real_port].MODEL |= (real_mode << real_pin);
-    } else {
-      real_pin -= 8;
-      real_pin <<= 2;
-      GPIO->P[real_port].MODEH &= ~(0xFu << real_pin);
-      GPIO->P[real_port].MODEH |= (real_mode << real_pin);
-    }
-    if( real_mode == DISABLED ){
-        digitalWrite(pin, on_off);
-    }
-
+	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
 }
 int getRealPin(uint8_t pin)
 {

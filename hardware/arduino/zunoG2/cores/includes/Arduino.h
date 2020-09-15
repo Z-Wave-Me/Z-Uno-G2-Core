@@ -78,6 +78,10 @@ enum {
 	#define ZUNO_PIN_V			3//default
 #endif
 
+#define ZEROX					3
+#define INT0					17
+#define INT1					18
+
 #if ZUNO_PIN_V == 1
 	#define A0                  14
 	#define A1                  15

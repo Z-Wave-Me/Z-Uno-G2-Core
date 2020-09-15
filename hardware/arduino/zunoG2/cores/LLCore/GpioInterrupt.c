@@ -19,9 +19,8 @@ static void _IRQDispatcher(uint32_t iflags) {
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
 		callback = gpioCallbacks[irqIdx];
-		if (callback != 0) {
+		if (callback != 0)
 			callback();/* call user callback */
-		}
 	}
 }
 
@@ -45,6 +44,10 @@ static void _CallbackRegister(uint8_t intNo, GPIOINT_IrqCallbackPtr_t callbackPt
 	CORE_ATOMIC_SECTION(
 		gpioCallbacks[intNo] = callbackPtr;/* Dispatcher is used */
 	)
+}
+
+void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
+	_CallbackRegister(getRealPin(interruptPin), userFunc);
 }
 
 void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
@@ -86,6 +89,15 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
 }
 
+void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
+	pinMode(interruptPin, INPUT_PULLUP);
+	attachInterrupt(interruptPin, gpioCallbacks[getRealPin(interruptPin)], mode);
+}
+
 void detachInterrupt(uint8_t interruptPin) {
-	_CallbackRegister(getRealPin(interruptPin), 0);
+	uint8_t						pin;
+
+	pin = getRealPin(interruptPin);
+	GPIO_IntDisable(pin);
+	_CallbackRegister(pin, 0);
 }

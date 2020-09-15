@@ -118,11 +118,19 @@ typedef struct HandlerFunc_s{
 	uint16_t code_offset;
 }HandlerFunc_t;
 
+#if MAX_ZUNO_PWMS > 8
+	#error "Error pin pwm!"
+#endif
+
 typedef struct ZUNOOnDemandHW_s {
+	uint32_t		pwm_freq;
+	uint32_t		tone_freq_set;
+	uint8_t			pwm_pins[MAX_ZUNO_PWMS];
+	uint8_t			pwm_pins_state;
+	uint8_t			tone_pin;
+	uint16_t		tone_freq;
+
     bool        ADCInitialized;
-    bool        PWMInitialized;
-    uint8_t        pwm_pins[MAX_ZUNO_PWMS];
-    uint32_t       pwm_freq_scaller;
     // HANDLERS
 	HandlerFunc_t  h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
     

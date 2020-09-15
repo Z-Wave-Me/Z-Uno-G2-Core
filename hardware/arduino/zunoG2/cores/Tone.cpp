@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "CrtxTimer.h"
 #include "CrtxCmu.h"
-#include "includes\Tone_private.h"
+#include "Tone_private.h"
 
 static uint8_t _aux_findPWMChannel(uint8_t pin) {
 	int							i;

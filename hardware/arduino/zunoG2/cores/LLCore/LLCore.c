@@ -7,6 +7,7 @@
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
+#include "GpioInterrupt.h"
 #include "Debug.h"
 
 #ifdef LOGGING_DBG

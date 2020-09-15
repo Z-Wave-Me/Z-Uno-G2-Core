@@ -7,11 +7,14 @@
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
+#include "Debug.h"
 
 #ifdef LOGGING_DBG
-#ifndef LOGGING_UART 
-#define LOGGING_UART Serial0
+	#pragma message "LOGGING_DBG: ON"
 #endif
+
+#ifdef ASSERT_DBG
+	#pragma message "ASSERT_DBG: ON"
 #endif
 
 #ifndef SKETCH_FWID
@@ -270,10 +273,12 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            //delay(2000);// ! DBG - что бы информацию выводила отладочную окуратно без разброса - в Realese - убрать
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
+			#if defined(LOGGING_DBG) || defined(ASSERT_DBG)
+				LOGGING_UART.begin(115200);
+			#endif
             setup();
             ZWCCSetup();
             break;
@@ -306,7 +311,6 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         #ifdef LOGGING_DBG
         case ZUNO_JUMPTBL_DEBUGPRINT:{
-            #pragma message "DEBUGPRINT"
             ZUNOSysDbgMessage_t * msg = (ZUNOSysDbgMessage_t *)data;
             LOGGING_UART.print("[");
             LOGGING_UART.print(millis());

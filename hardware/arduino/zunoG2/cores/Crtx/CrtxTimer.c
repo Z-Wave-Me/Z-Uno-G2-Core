@@ -25,7 +25,7 @@
  ******************************************************************************/
 void TIMER_Init(TIMER_TypeDef *timer, const TIMER_Init_TypeDef *init)
 {
-  EFM_ASSERT(TIMER_REF_VALID(timer));
+  //EFM_ASSERT(TIMER_REF_VALID(timer));
   uint32_t ctrlRegVal = 0;
 
 #if defined (_TIMER_CFG_PRESC_SHIFT)
@@ -101,8 +101,8 @@ void TIMER_InitCC(TIMER_TypeDef *timer,
                   unsigned int ch,
                   const TIMER_InitCC_TypeDef *init)
 {
-  EFM_ASSERT(TIMER_REF_VALID(timer));
-  EFM_ASSERT(TIMER_CH_VALID(ch));
+  //EFM_ASSERT(TIMER_REF_VALID(timer));
+  //EFM_ASSERT(TIMER_CH_VALID(ch));
 
 #if defined (_TIMER_CC_CFG_MASK)
   TIMER_SyncWait(timer);
@@ -162,7 +162,7 @@ void TIMER_InitCC(TIMER_TypeDef *timer,
  ******************************************************************************/
 void TIMER_InitDTI(TIMER_TypeDef *timer, const TIMER_InitDTI_TypeDef *init)
 {
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
 
   /* Make sure the DTI unit is disabled while initializing. */
   TIMER_EnableDTI(timer, false);
@@ -259,7 +259,7 @@ void TIMER_Reset(TIMER_TypeDef *timer)
 {
   int i;
 
-  EFM_ASSERT(TIMER_REF_VALID(timer));
+  //EFM_ASSERT(TIMER_REF_VALID(timer));
 
   /* Make sure disabled first, before resetting other registers. */
   timer->CMD = TIMER_CMD_STOP;

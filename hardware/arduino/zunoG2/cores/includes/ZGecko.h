@@ -23,9 +23,6 @@
 #define     __IO    volatile             /*!< Defines 'read / write' permissions */
 
 
-
-#define EFM_ASSERT(expr)		((void)(expr))
-
 /** Interrupt Number Definition */
 typedef enum IRQn{
 /******  Cortex-M4 Processor Exceptions Numbers ********************************************/

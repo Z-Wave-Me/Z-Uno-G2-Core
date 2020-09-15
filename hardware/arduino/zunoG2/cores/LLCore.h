@@ -12,6 +12,7 @@ typedef struct ZUNOCodeHeader_s{
     uint16_t    code_size;
     uint16_t    crc16;
     uint32_t    flags;
+    uint16_t    fwId;
 } ZUNOCodeHeader_t;
 
 // Universal pin location index

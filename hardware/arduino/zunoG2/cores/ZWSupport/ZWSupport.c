@@ -15,6 +15,7 @@
 #include "ZWCCBattery.h"
 #include "ZWCCWakeup.h"
 #include "./includes/ZWSupportTimer.h"
+#include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
 
@@ -223,7 +224,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print("INCOMING  "); 
 	zuno_dbgdumpZWPacakge(cmd);
-	#pragma message "LOGGING ON"
 	#endif
 	#ifdef WITH_CC_WAKEUP
  	zuno_CCWakeup_OnAnyRx();

@@ -4,147 +4,88 @@
 #include "CrtxCore.h"
 #include "GpioInterrupt.h"
 
-/*******************************************************************************
- ********************************   MACROS   ***********************************
- ******************************************************************************/
 
-/*******************************************************************************
- *******************************   STRUCTS   ***********************************
- ******************************************************************************/
+typedef void (*GPIOINT_IrqCallbackPtr_t)(void);
 
-/** @cond DO_NOT_INCLUDE_WITH_DOXYGEN */
+static GPIOINT_IrqCallbackPtr_t		gpioCallbacks[16] = { 0 };/* Array of user callbacks. One for each pin interrupt number. */
+static uint8_t						gInit = false;
 
-typedef struct {
-  /* Pin interrupt number in range of 0 to 15 */
-  uint32_t intNo;
+static void _IRQDispatcher(uint32_t iflags) {
+	uint32_t						irqIdx;
+	GPIOINT_IrqCallbackPtr_t		callback;
 
-  /* Pointer to the callback function */
-  GPIOINT_IrqCallbackPtr_t callback;
-} GPIOINT_CallbackDesc_t;
-
-/*******************************************************************************
- ********************************   GLOBALS   **********************************
- ******************************************************************************/
-
-/* Array of user callbacks. One for each pin interrupt number. */
-static GPIOINT_IrqCallbackPtr_t gpioCallbacks[16] = { 0 };
-
-/*******************************************************************************
- ******************************   PROTOTYPES   *********************************
- ******************************************************************************/
-static void GPIOINT_IRQDispatcher(uint32_t iflags);
-
-/** @endcond */
-
-/*******************************************************************************
- ***************************   GLOBAL FUNCTIONS   ******************************
- ******************************************************************************/
-
-/***************************************************************************//**
- * @brief
- *   Initialization of GPIOINT module.
- *
- ******************************************************************************/
-void GPIOINT_Init(void)
-{
-  NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
-  NVIC_EnableIRQ(GPIO_ODD_IRQn);
-  NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
-  NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+	/* check for all flags set in IF register */
+	while (iflags != 0U) {
+		irqIdx = SL_CTZ(iflags);
+		iflags &= ~(1 << irqIdx);/* clear flag*/
+		callback = gpioCallbacks[irqIdx];
+		if (callback != 0) {
+			callback();/* call user callback */
+		}
+	}
 }
 
-/***************************************************************************//**
- * @brief
- *   Registers user callback for given pin interrupt number.
- *
- * @details
- *   Use this function to register a callback which shall be called upon
- *   interrupt generated for a given pin interrupt number.
- *   Interrupt itself must be configured externally. Function overwrites previously
- *   registered callback.
- *
- * @param[in] pin
- *   Pin number for the callback.
- * @param[in] callbackPtr
- *   A pointer to callback function.
- ******************************************************************************/
-void GPIOINT_CallbackRegister(uint8_t intNo, GPIOINT_IrqCallbackPtr_t callbackPtr)
-{
-  CORE_ATOMIC_SECTION(
-    /* Dispatcher is used */
-    gpioCallbacks[intNo] = callbackPtr;
-    )
+static void _IRQHandlerOdd(void) {
+	uint32_t				iflags;
+
+	iflags = GPIO_IntGetEnabled() & 0x0000AAAA;/* Get all odd interrupts. */
+	GPIO_IntClear(iflags);/* Clean only odd interrupts. */
+	_IRQDispatcher(iflags);
 }
 
-/** @cond DO_NOT_INCLUDE_WITH_DOXYGEN */
+static void _IRQHandlerEven(void) {
+	uint32_t				iflags;
 
-/***************************************************************************//**
- * @brief
- *   Function calls users callback for registered pin interrupts.
- *
- * @details
- *   This function is called when GPIO interrupts are handled by the dispatcher.
- *   Function gets even or odd interrupt flags and calls user callback
- *   registered for that pin. Function iterates on flags starting from MSB.
- *
- * @param iflags
- *  Interrupt flags which shall be handled by the dispatcher.
- *
- ******************************************************************************/
-static void GPIOINT_IRQDispatcher(uint32_t iflags)
-{
-  uint32_t irqIdx;
-  GPIOINT_IrqCallbackPtr_t callback;
-
-  /* check for all flags set in IF register */
-  while (iflags != 0U) {
-    irqIdx = SL_CTZ(iflags);
-
-    /* clear flag*/
-    iflags &= ~(1 << irqIdx);
-
-    callback = gpioCallbacks[irqIdx];
-    if (callback) {
-      /* call user callback */
-      callback(irqIdx);
-    }
-  }
+	iflags = GPIO_IntGetEnabled() & 0x00005555;/* Get all even interrupts. */
+	GPIO_IntClear(iflags);/* Clean only odd interrupts. */
+	_IRQDispatcher(iflags);
 }
 
-/***************************************************************************//**
- * @brief
- *   GPIO EVEN interrupt handler. Interrupt handler clears all IF even flags and
- *   call the dispatcher passing the flags which triggered the interrupt.
- *
- ******************************************************************************/
-void GPIO_EVEN_IRQHandler(void)
-{
-  uint32_t iflags;
-
-  /* Get all even interrupts. */
-  iflags = GPIO_IntGetEnabled() & 0x00005555;
-
-  /* Clean only even interrupts. */
-  GPIO_IntClear(iflags);
-
-  GPIOINT_IRQDispatcher(iflags);
+static void _CallbackRegister(uint8_t intNo, GPIOINT_IrqCallbackPtr_t callbackPtr) {
+	CORE_ATOMIC_SECTION(
+		gpioCallbacks[intNo] = callbackPtr;/* Dispatcher is used */
+	)
 }
 
-/***************************************************************************//**
- * @brief
- *   GPIO ODD interrupt handler. Interrupt handler clears all IF odd flags and
- *   call the dispatcher passing the flags which triggered the interrupt.
- *
- ******************************************************************************/
-void GPIO_ODD_IRQHandler(void)
-{
-  uint32_t iflags;
+void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+	uint8_t						risingEdge;
+	uint8_t						fallingEdge;
+	uint8_t						port;
+	uint8_t						pin;
 
-  /* Get all odd interrupts. */
-  iflags = GPIO_IntGetEnabled() & 0x0000AAAA;
+	if (gInit == false) {
+		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
+		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven);
+		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
+		NVIC_EnableIRQ(GPIO_ODD_IRQn);
+		NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
+		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
+		gInit = true;
+	}
+	switch (mode) {
+		case LOW:
+			risingEdge = false;
+			fallingEdge = false;
+			break ;
+		case FALLING:
+			risingEdge = false;
+			fallingEdge = true;
+			break ;
+		case RISING:
+			risingEdge = true;
+			fallingEdge = false;
+			break ;
+		default:
+			risingEdge = true;
+			fallingEdge = true;
+			break ;
+	}
+	port = getRealPort(interruptPin);
+	pin = getRealPin(interruptPin);
+	_CallbackRegister(pin, userFunc);
+	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
+}
 
-  /* Clean only odd interrupts. */
-  GPIO_IntClear(iflags);
-
-  GPIOINT_IRQDispatcher(iflags);
+void detachInterrupt(uint8_t interruptPin) {
+	_CallbackRegister(getRealPin(interruptPin), 0);
 }

@@ -13,9 +13,15 @@
 #endif
 #endif
 
+#ifndef SKETCH_FWID
+#define SKETCH_FWID 0x0101
+#endif
+#ifndef SKETCH_FLAGS
+#define SKETCH_FLAGS 0x00
+#endif
 
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
-ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, 0x00};
+ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
@@ -337,8 +343,9 @@ void * zunoJumpTable(int vec, void * data) {
         default:
             break; // UNKNOWN VECTOR
     }
-    if(vec >= ZUNO_JUMPTBL_SYSEVENT){
-        zunoSysHandlerCall(vec-ZUNO_JUMPTBL_SYSEVENT,sub_handler_type, data);
+    
+    if(vec >= ZUNO_JUMPTBL_SYSTIMER){
+        zunoSysHandlerCall(vec-ZUNO_JUMPTBL_SYSTIMER,sub_handler_type, data);
     }
     return (void*)0;
 }

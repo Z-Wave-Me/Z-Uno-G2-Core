@@ -4,7 +4,7 @@
 #include "CrtxCore.h"
 #include "GpioInterrupt.h"
 
-
+#define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
 typedef void (*GPIOINT_IrqCallbackPtr_t)(void);
 
 static GPIOINT_IrqCallbackPtr_t		gpioCallbacks[16] = { 0 };/* Array of user callbacks. One for each pin interrupt number. */
@@ -56,6 +56,8 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 	uint8_t						port;
 	uint8_t						pin;
 
+	if (interruptPin == INT_SLEEPING)
+		return ;
 	if (gInit == false) {
 		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
 		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven);
@@ -90,6 +92,8 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 }
 
 void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
+	if (interruptPin == INT_SLEEPING)
+		return ;
 	pinMode(interruptPin, INPUT_PULLUP);
 	attachInterrupt(interruptPin, gpioCallbacks[getRealPin(interruptPin)], mode);
 }

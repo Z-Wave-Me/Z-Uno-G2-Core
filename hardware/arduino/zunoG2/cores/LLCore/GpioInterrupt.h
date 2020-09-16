@@ -17,12 +17,10 @@ enum {
 #define ZUNO_EXT_INT0				INT0
 #define ZUNO_EXT_INT1				INT1
 
+
 #define ZUNO_SETUP_ISR_ZEROX(FUNCTION_NAME)		zunoExtIntCallbackRegister(ZUNO_EXT_ZEROX, FUNCTION_NAME)
-#define ZUNO_SETUP_ISR_ZEROX_DEFAULT()			zunoExtIntCallbackRegister(ZUNO_EXT_ZEROX, 0)
 #define ZUNO_SETUP_ISR_INT0(FUNCTION_NAME)		zunoExtIntCallbackRegister(ZUNO_EXT_INT0, FUNCTION_NAME)
-#define ZUNO_SETUP_ISR_INT0_DEFAULT()			zunoExtIntCallbackRegister(ZUNO_EXT_INT0, 0)
 #define ZUNO_SETUP_ISR_INT1(FUNCTION_NAME)		zunoExtIntCallbackRegister(ZUNO_EXT_INT1, FUNCTION_NAME)
-#define ZUNO_SETUP_ISR_INT1_DEFAULT()			zunoExtIntCallbackRegister(ZUNO_EXT_INT1, 0)
 
 
 #endif // GPIO_INTERRPUT_H

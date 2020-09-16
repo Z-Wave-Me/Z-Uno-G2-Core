@@ -54,7 +54,12 @@ enum{
     INPUT = GPIOMODE_INPUT,
     INPUT_PULLUP    = 0x100 | GPIOMODE_INPUTPULL,
     INPUT_PULLDOWN  = GPIOMODE_INPUTPULL,
-	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER 
+	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER,
+	INPUT_PULLDOWN_FILTER = GPIOMODE_INPUTPULLFILTER,
+    OUTPUT_UP = 0x100 | GPIOMODE_OUTPUT_PUSHPULL,
+    OUTPUT_DOWN = GPIOMODE_OUTPUT_PUSHPULL,
+    INPUT_UP = 0x100 | GPIOMODE_INPUT,
+    INPUT_DOWN = GPIOMODE_INPUT
 };
 
 enum {
@@ -72,6 +77,10 @@ enum {
 #ifndef ZUNO_PIN_V
 	#define ZUNO_PIN_V			3//default
 #endif
+
+#define ZEROX					3
+#define INT0					17
+#define INT1					18
 
 #if ZUNO_PIN_V == 1
 	#define A0                  14
@@ -208,5 +217,7 @@ void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
+
+#include "GpioInterrupt.h"
 
 #endif // ZUNO_ARDUINOH

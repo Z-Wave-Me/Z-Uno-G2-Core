@@ -2182,9 +2182,9 @@ __STATIC_INLINE void TIMER_CompareBufSet(TIMER_TypeDef *timer,
                                          unsigned int ch,
                                          uint32_t val)
 {
-  EFM_ASSERT(val <= TIMER_MaxCount(timer));
+  //EFM_ASSERT(val <= TIMER_MaxCount(timer));
 #if defined (_TIMER_CC_CFG_MASK)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
   timer->CC[ch].OCB = val;
 #else
   timer->CC[ch].CCVB = val;
@@ -2209,9 +2209,9 @@ __STATIC_INLINE void TIMER_CompareSet(TIMER_TypeDef *timer,
                                       unsigned int ch,
                                       uint32_t val)
 {
-  EFM_ASSERT(val <= TIMER_MaxCount(timer));
+  //EFM_ASSERT(val <= TIMER_MaxCount(timer));
 #if defined (_TIMER_CC_CFG_MASK)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
   timer->CC[ch].OC = val;
 #else
   timer->CC[ch].CCV = val;
@@ -2245,7 +2245,7 @@ __STATIC_INLINE uint32_t TIMER_CounterGet(TIMER_TypeDef *timer)
  ******************************************************************************/
 __STATIC_INLINE void TIMER_CounterSet(TIMER_TypeDef *timer, uint32_t val)
 {
-  EFM_ASSERT(val <= TIMER_MaxCount(timer));
+  //EFM_ASSERT(val <= TIMER_MaxCount(timer));
 #if defined(TIMER_HAS_SET_CLEAR)
   bool enabled = (timer->EN & TIMER_EN_EN) != 0UL;
   timer->EN_SET = TIMER_EN_EN;
@@ -2271,7 +2271,7 @@ __STATIC_INLINE void TIMER_CounterSet(TIMER_TypeDef *timer, uint32_t val)
  ******************************************************************************/
 __STATIC_INLINE void TIMER_Enable(TIMER_TypeDef *timer, bool enable)
 {
-  EFM_ASSERT(TIMER_REF_VALID(timer));
+  //EFM_ASSERT(TIMER_REF_VALID(timer));
 
   if (enable) {
     timer->CMD = TIMER_CMD_START;
@@ -2311,7 +2311,7 @@ __STATIC_INLINE void TIMER_EnableDTI(TIMER_TypeDef *timer, bool enable)
   }
   timer->EN_SET = timerEn;
 #else
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
 
   if (enable) {
     timer->DTCTRL |= TIMER_DTCTRL_DTEN;
@@ -2337,7 +2337,7 @@ __STATIC_INLINE void TIMER_EnableDTI(TIMER_TypeDef *timer, bool enable)
  ******************************************************************************/
 __STATIC_INLINE uint32_t TIMER_GetDTIFault(TIMER_TypeDef *timer)
 {
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
   return timer->DTFAULT;
 }
 
@@ -2355,9 +2355,9 @@ __STATIC_INLINE uint32_t TIMER_GetDTIFault(TIMER_TypeDef *timer)
 __STATIC_INLINE void TIMER_ClearDTIFault(TIMER_TypeDef *timer, uint32_t flags)
 
 {
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
 #if defined (TIMER_EN_EN)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
 #endif
 
   timer->DTFAULTC = flags;
@@ -2510,9 +2510,9 @@ __STATIC_INLINE void TIMER_IntSet(TIMER_TypeDef *timer, uint32_t flags)
  ******************************************************************************/
 __STATIC_INLINE void TIMER_Lock(TIMER_TypeDef *timer)
 {
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
 #if defined (TIMER_EN_EN)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
 #endif
 
   timer->DTLOCK = TIMER_DTLOCK_LOCKKEY_LOCK;
@@ -2538,9 +2538,9 @@ void TIMER_Reset(TIMER_TypeDef *timer);
  ******************************************************************************/
 __STATIC_INLINE void TIMER_TopBufSet(TIMER_TypeDef *timer, uint32_t val)
 {
-  EFM_ASSERT(val <= TIMER_MaxCount(timer));
+  //EFM_ASSERT(val <= TIMER_MaxCount(timer));
 #if defined (TIMER_EN_EN)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
 #endif
 
   timer->TOPB = val;
@@ -2573,9 +2573,9 @@ __STATIC_INLINE uint32_t TIMER_TopGet(TIMER_TypeDef *timer)
  ******************************************************************************/
 __STATIC_INLINE void TIMER_TopSet(TIMER_TypeDef *timer, uint32_t val)
 {
-  EFM_ASSERT(val <= TIMER_MaxCount(timer));
+  //EFM_ASSERT(val <= TIMER_MaxCount(timer));
 #if defined (TIMER_EN_EN)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
 #endif
 
   timer->TOP = val;
@@ -2591,9 +2591,9 @@ __STATIC_INLINE void TIMER_TopSet(TIMER_TypeDef *timer, uint32_t val)
  ******************************************************************************/
 __STATIC_INLINE void TIMER_Unlock(TIMER_TypeDef *timer)
 {
-  EFM_ASSERT(TIMER0 == timer);
+  //EFM_ASSERT(TIMER0 == timer);
 #if defined (TIMER_EN_EN)
-  EFM_ASSERT(timer->EN & TIMER_EN_EN);
+  //EFM_ASSERT(timer->EN & TIMER_EN_EN);
 #endif
 
   timer->DTLOCK = TIMER_DTLOCK_LOCKKEY_UNLOCK;

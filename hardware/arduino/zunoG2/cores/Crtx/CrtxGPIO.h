@@ -1418,6 +1418,27 @@ typedef struct {
 #define GPIO_LOCK_LOCKKEY_LOCKED                        (_GPIO_LOCK_LOCKKEY_LOCKED << 0)   /**< Shifted mode LOCKED for GPIO_LOCK */
 #define GPIO_LOCK_LOCKKEY_UNLOCK                        (_GPIO_LOCK_LOCKKEY_UNLOCK << 0)   /**< Shifted mode UNLOCK for GPIO_LOCK */
 
+#if defined(_GPIO_P_CTRL_DRIVESTRENGTH_MASK) && defined(_GPIO_P_CTRL_DRIVESTRENGTHALT_MASK)
+/** GPIO drive strength. */
+typedef enum {
+  /** GPIO weak 1mA and alternate function weak 1mA. */
+  gpioDriveStrengthWeakAlternateWeak     = GPIO_P_CTRL_DRIVESTRENGTH_WEAK | GPIO_P_CTRL_DRIVESTRENGTHALT_WEAK,
+
+  /** GPIO weak 1mA and alternate function strong 10mA. */
+  gpioDriveStrengthWeakAlternateStrong   = GPIO_P_CTRL_DRIVESTRENGTH_WEAK | GPIO_P_CTRL_DRIVESTRENGTHALT_STRONG,
+
+  /** GPIO strong 10mA and alternate function weak 1mA. */
+  gpioDriveStrengthStrongAlternateWeak   = GPIO_P_CTRL_DRIVESTRENGTH_STRONG | GPIO_P_CTRL_DRIVESTRENGTHALT_WEAK,
+
+  /** GPIO strong 10mA and alternate function strong 10mA. */
+  gpioDriveStrengthStrongAlternateStrong = GPIO_P_CTRL_DRIVESTRENGTH_STRONG | GPIO_P_CTRL_DRIVESTRENGTHALT_STRONG,
+} GPIO_DriveStrength_TypeDef;
+
+/* Deprecated enums. */
+#define gpioDriveStrengthStrong   gpioDriveStrengthStrongAlternateStrong
+#define gpioDriveStrengthWeak     gpioDriveStrengthWeakAlternateWeak
+#endif
+
 /** @} */
 /** @} End of group EFR32FG13P_GPIO */
 /** @} End of group Parts */
@@ -1477,16 +1498,191 @@ typedef enum {
 #endif
 } GPIO_Mode_TypeDef;
 
-__STATIC_INLINE void GPIO_EM4SetPinRetention(bool enable){
+/*******************************************************************************
+ *****************************   PROTOTYPES   **********************************
+ ******************************************************************************/
+
+void GPIO_DbgLocationSet(unsigned int location);
+
+/***************************************************************************//**
+ * @brief
+ *   Enable/disable serial wire clock pin.
+ *
+ * @note
+ *   Disabling SWDClk will disable the debug interface, which may result in
+ *   a lockout if done early in startup (before debugger is able to halt core).
+ *
+ * @param[in] enable
+ *   @li false - disable serial wire clock.
+ *   @li true - enable serial wire clock (default after reset).
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_DbgSWDClkEnable(bool enable)
+{
+#if defined(_GPIO_ROUTE_SWCLKPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTE), _GPIO_ROUTE_SWCLKPEN_SHIFT, enable);
+#elif defined(_GPIO_ROUTEPEN_SWCLKTCKPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTEPEN), _GPIO_ROUTEPEN_SWCLKTCKPEN_SHIFT, enable);
+#elif defined(_GPIO_DBGROUTEPEN_SWCLKTCKPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->DBGROUTEPEN), _GPIO_DBGROUTEPEN_SWCLKTCKPEN_SHIFT, enable);
+#else
+#warning "ROUTE enable for SWCLK pin is not defined."
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Enable/disable serial wire data I/O pin.
+ *
+ * @note
+ *   Disabling SWDClk will disable the debug interface, which may result in
+ *   a lockout if done early in startup (before debugger is able to halt core).
+ *
+ * @param[in] enable
+ *   @li false - disable serial wire data pin.
+ *   @li true - enable serial wire data pin (default after reset).
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_DbgSWDIOEnable(bool enable)
+{
+#if defined(_GPIO_ROUTE_SWDIOPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTE), _GPIO_ROUTE_SWDIOPEN_SHIFT, enable);
+#elif defined(_GPIO_ROUTEPEN_SWDIOTMSPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTEPEN), _GPIO_ROUTEPEN_SWDIOTMSPEN_SHIFT, enable);
+#elif defined(_GPIO_DBGROUTEPEN_SWDIOTMSPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->DBGROUTEPEN), _GPIO_DBGROUTEPEN_SWDIOTMSPEN_SHIFT, enable);
+#else
+#warning "ROUTE enable for SWDIO pin is not defined."
+#endif
+}
+
+#if defined(_GPIO_ROUTE_SWOPEN_MASK) || defined(_GPIO_ROUTEPEN_SWVPEN_MASK) \
+  || defined(_GPIO_TRACEROUTEPEN_SWVPEN_MASK)
+/***************************************************************************//**
+ * @brief
+ *   Enable/Disable serial wire output pin.
+ *
+ * @note
+ *   Enabling this pin is not sufficient to fully enable serial wire output,
+ *   which is also dependent on issues outside the GPIO module. Refer to
+ *   @ref DBG_SWOEnable().
+ *
+ * @param[in] enable
+ *   @li false - disable serial wire viewer pin (default after reset).
+ *   @li true - enable serial wire viewer pin.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_DbgSWOEnable(bool enable)
+{
+#if defined(_GPIO_ROUTE_SWOPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTE), _GPIO_ROUTE_SWOPEN_SHIFT, enable);
+#elif defined(_GPIO_ROUTEPEN_SWVPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->ROUTEPEN), _GPIO_ROUTEPEN_SWVPEN_SHIFT, enable);
+#elif defined(_GPIO_TRACEROUTEPEN_SWVPEN_MASK)
+  BUS_RegBitWrite(&(GPIO->TRACEROUTEPEN), _GPIO_TRACEROUTEPEN_SWVPEN_SHIFT, enable);
+#else
+#warning "ROUTE enable for SWO/SWV pin is not defined."
+#endif
+}
+#endif
+
+#if defined (_GPIO_P_CTRL_DRIVEMODE_MASK)
+void GPIO_DriveModeSet(uint8_t port, GPIO_DriveMode_TypeDef mode);
+#endif
+
+#if defined(_GPIO_P_CTRL_DRIVESTRENGTH_MASK)
+void GPIO_DriveStrengthSet(uint8_t port, GPIO_DriveStrength_TypeDef strength);
+#endif
+
+# if defined(_GPIO_EM4WUEN_MASK)
+/**************************************************************************//**
+ * @brief
+ *   Disable GPIO pin wake-up from EM4.
+ *
+ * @param[in] pinmask
+ *   Bit mask containing the bitwise logic OR of which GPIO pin(s) to disable.
+ *   Refer to Reference Manuals for pinmask to GPIO port/pin mapping.
+ *****************************************************************************/
+__STATIC_INLINE void GPIO_EM4DisablePinWakeup(uint32_t pinmask)
+{
+  //EFM_ASSERT((pinmask & ~_GPIO_EM4WUEN_MASK) == 0);
+
+  GPIO->EM4WUEN &= ~pinmask;
+}
+#endif
+
+# if defined(_GPIO_EM4WUEN_MASK)
+void GPIO_EM4EnablePinWakeup(uint32_t pinmask, uint32_t polaritymask);
+#endif
+
+#if defined(_GPIO_EM4WUCAUSE_MASK) || defined(_GPIO_IF_EM4WU_MASK)
+/**************************************************************************//**
+ * @brief
+ *   Check which GPIO pin(s) that caused a wake-up from EM4.
+ *
+ * @return
+ *   Bit mask containing the bitwise logic OR of which GPIO pin(s) caused the
+ *   wake-up. Refer to Reference Manuals for pinmask to GPIO port/pin mapping.
+ *****************************************************************************/
+__STATIC_INLINE uint32_t GPIO_EM4GetPinWakeupCause(void)
+{
+#if defined(_GPIO_EM4WUCAUSE_MASK)
+  return GPIO->EM4WUCAUSE & _GPIO_EM4WUCAUSE_MASK;
+#else
+  return GPIO->IF & _GPIO_IF_EM4WU_MASK;
+#endif
+}
+#endif
+
+#if defined(GPIO_CTRL_EM4RET) || defined(_EMU_EM4CTRL_EM4IORETMODE_MASK)
+/**************************************************************************//**
+ * @brief
+ *   Enable GPIO pin retention of output enable, output value, pull enable, and
+ *   pull direction in EM4.
+ *
+ * @note
+ *   On series 0 devices EM4 gpio retention can either be turned on or off. On
+ *   series 1 devices there are three EM4 GPIO retention modes available. These
+ *   modes are "Disabled", "EM4EXIT" and "SWUNLATCH". Use the @ref EMU_EM4Init()
+ *   to configure the GPIO retention mode on a series 1 device.
+ *
+ *   The behavior of this function depends on the configured GPIO retention mode.
+ *   If the GPIO retention mode is configured to be "SWUNLATCH" then this
+ *   function will not change anything. If the retention mode is anything else
+ *   then this function will set the GPIO retention mode to "EM4EXIT" when the
+ *   enable argument is true, and "Disabled" when false.
+ *
+ * @param[in] enable
+ *   @li true - enable EM4 pin retention.
+ *   @li false - disable EM4 pin retention.
+ *****************************************************************************/
+__STATIC_INLINE void GPIO_EM4SetPinRetention(bool enable)
+{
+#if defined(GPIO_CTRL_EM4RET)
+  BUS_RegBitWrite(&GPIO->CTRL, _GPIO_CTRL_EM4RET_SHIFT, enable);
+#else
+
+  // Leave configuration alone when software unlatch is used.
+  uint32_t mode = EMU->EM4CTRL & _EMU_EM4CTRL_EM4IORETMODE_MASK;
+  if (mode == EMU_EM4CTRL_EM4IORETMODE_SWUNLATCH) {
+    return;
+  }
+
   if (enable) {
     EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
                    | EMU_EM4CTRL_EM4IORETMODE_EM4EXIT;
-
   } else {
     EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
                    | EMU_EM4CTRL_EM4IORETMODE_DISABLE;
   }
+#endif
 }
+#endif
+
+void GPIO_ExtIntConfig(uint8_t port,
+                       unsigned int pin,
+                       unsigned int intNo,
+                       bool risingEdge,
+                       bool fallingEdge,
+                       bool enable);
+
 /***************************************************************************//**
  * @brief
  *   Enable/disable input sensing.
@@ -1503,8 +1699,14 @@ __STATIC_INLINE void GPIO_EM4SetPinRetention(bool enable){
  *   Mask containing bitwise logic OR of bits similar as for @p val used to
  *   indicate which input sense options to disable/enable.
  ******************************************************************************/
-__STATIC_INLINE void GPIO_InputSenseSet(uint32_t val, uint32_t mask){
+__STATIC_INLINE void GPIO_InputSenseSet(uint32_t val, uint32_t mask)
+{
+#if defined(_GPIO_INSENSE_MASK)
   GPIO->INSENSE = (GPIO->INSENSE & ~mask) | (val & mask);
+#else
+  (void) val;
+  (void) mask;
+#endif
 }
 
 /***************************************************************************//**
@@ -1516,7 +1718,11 @@ __STATIC_INLINE void GPIO_InputSenseSet(uint32_t val, uint32_t mask){
  ******************************************************************************/
 __STATIC_INLINE void GPIO_IntClear(uint32_t flags)
 {
+#if defined(GPIO_HAS_SET_CLEAR)
+  GPIO->IF_CLR = flags;
+#else
   GPIO->IFC = flags;
+#endif
 }
 
 /***************************************************************************//**
@@ -1537,8 +1743,8 @@ __STATIC_INLINE void GPIO_IntDisable(uint32_t flags)
  *
  * @note
  *   Depending on the use, a pending interrupt may already be set prior to
- *   enabling the interrupt. Consider using @ref GPIO_IntClear() prior to enabling
- *   if such a pending interrupt should be ignored.
+ *   enabling the interrupt. To ignore a pending interrupt, consider using
+ *   GPIO_IntClear() prior to enabling the interrupt.
  *
  * @param[in] flags
  *   GPIO interrupt sources to enable.
@@ -1596,7 +1802,11 @@ __STATIC_INLINE uint32_t GPIO_IntGetEnabled(void)
  *****************************************************************************/
 __STATIC_INLINE void GPIO_IntSet(uint32_t flags)
 {
+#if defined (GPIO_HAS_SET_CLEAR)
+  GPIO->IF_SET = flags;
+#else
   GPIO->IFS = flags;
+#endif
 }
 
 /***************************************************************************//**
@@ -1605,14 +1815,387 @@ __STATIC_INLINE void GPIO_IntSet(uint32_t flags)
  ******************************************************************************/
 __STATIC_INLINE void GPIO_Lock(void)
 {
-  GPIO->LOCK = GPIO_LOCK_LOCKKEY_LOCK;
+  GPIO->LOCK = ~GPIO_LOCK_LOCKKEY_UNLOCK;
 }
-void GPIO_EM4EnablePinWakeup(uint32_t pinmask, uint32_t polaritymask);
-void GPIO_ExtIntConfig(uint8_t port,
-                       unsigned int pin,
-                       unsigned int intNo,
-                       bool risingEdge,
-                       bool fallingEdge,
-                       bool enable);
+
+/***************************************************************************//**
+ * @brief
+ *   Read the pad value for a single pin in a GPIO port.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin number to read.
+ *
+ * @return
+ *   The pin value, 0 or 1.
+ ******************************************************************************/
+__STATIC_INLINE unsigned int GPIO_PinInGet(uint8_t port,
+                                           unsigned int pin)
+{
+  //EFM_ASSERT(GPIO_PORT_PIN_VALID(port, pin));
+  return BUS_RegBitRead(&GPIO->P[port].DIN, pin);
+}
+
+#if defined (_GPIO_P_PINLOCKN_MASK)
+/***************************************************************************//**
+ * @brief
+ *   Lock all GPIO configuration settings for a given pin.
+ *   The lock can only be cleared by a chip reset.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin number to lock.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PinLock(uint8_t port, unsigned int pin)
+{
+  BUS_RegBitWrite(&GPIO->P[port].PINLOCKN, pin, 0);
+}
+#endif
+
+GPIO_Mode_TypeDef GPIO_PinModeGet(uint8_t port,
+                                  unsigned int pin);
+
+void GPIO_PinModeSet(uint8_t port,
+                     unsigned int pin,
+                     GPIO_Mode_TypeDef mode,
+                     unsigned int out);
+
+/***************************************************************************//**
+ * @brief
+ *   Set a single pin in GPIO data out port register to 0.
+ *
+ * @note
+ *   In order for the setting to take effect on the output pad, the pin must
+ *   have been configured properly. If not, it will take effect whenever the
+ *   pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin to set.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PinOutClear(uint8_t port, unsigned int pin)
+{
+  //EFM_ASSERT(GPIO_PORT_PIN_VALID(port, pin));
+#if defined(_GPIO_P_DOUTCLR_MASK)
+  GPIO->P[port].DOUTCLR = 1 << pin;
+#elif defined(GPIO_HAS_SET_CLEAR)
+  GPIO->P_CLR[port].DOUT = 1 << pin;
+#else
+  BUS_RegMaskedClear(&GPIO->P[port].DOUT, 1 << pin);
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get current setting for a pin in a GPIO port data out register.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin to get setting for.
+ *
+ * @return
+ *   The DOUT setting for the requested pin, 0 or 1.
+ ******************************************************************************/
+__STATIC_INLINE unsigned int GPIO_PinOutGet(uint8_t port,
+                                            unsigned int pin)
+{
+  //EFM_ASSERT(GPIO_PORT_PIN_VALID(port, pin));
+  return BUS_RegBitRead(&GPIO->P[port].DOUT, pin);
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set a single pin in GPIO data out register to 1.
+ *
+ * @note
+ *   In order for the setting to take effect on the output pad, the pin must
+ *   have been configured properly. If not, it will take effect whenever the
+ *   pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin to set.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PinOutSet(uint8_t port, unsigned int pin)
+{
+ // EFM_ASSERT(GPIO_PORT_PIN_VALID(port, pin));
+#if defined(_GPIO_P_DOUTSET_MASK)
+  GPIO->P[port].DOUTSET = 1 << pin;
+#elif defined(GPIO_HAS_SET_CLEAR)
+  GPIO->P_SET[port].DOUT = 1 << pin;
+#else
+  BUS_RegMaskedSet(&GPIO->P[port].DOUT, 1 << pin);
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Toggle a single pin in GPIO port data out register.
+ *
+ * @note
+ *   In order for the setting to take effect on the output pad, the pin must
+ *   have been configured properly. If not, it will take effect whenever the
+ *   pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pin
+ *   The pin to toggle.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PinOutToggle(uint8_t port, unsigned int pin)
+{
+  //EFM_ASSERT(GPIO_PORT_PIN_VALID(port, pin));
+
+#if defined (_GPIO_P_DOUTTGL_MASK)
+  GPIO->P[port].DOUTTGL = 1 << pin;
+#elif defined(GPIO_HAS_SET_CLEAR)
+  GPIO->P_TGL[port].DOUT = 1 << pin;
+#else
+  GPIO->P[port].DOUT ^= 1 << pin;
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Read the pad values for GPIO port.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t GPIO_PortInGet(uint8_t port)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+
+  return GPIO->P[port].DIN;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set bits in DOUT register for a port to 0.
+ *
+ * @note
+ *   In order for the setting to take effect on the output pad, the pin must
+ *   have been configured properly. If not, it will take effect whenever the
+ *   pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pins
+ *   Bit mask for bits to clear in DOUT register.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PortOutClear(uint8_t port, uint32_t pins)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+#if defined(_GPIO_P_DOUTCLR_MASK)
+  GPIO->P[port].DOUTCLR = pins;
+#elif defined(GPIO_HAS_SET_CLEAR)
+  GPIO->P_CLR[port].DOUT = pins;
+#else
+  BUS_RegMaskedClear(&GPIO->P[port].DOUT, pins);
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get current setting for a GPIO port data out register.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @return
+ *   The data out setting for the requested port.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t GPIO_PortOutGet(uint8_t port)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+
+  return GPIO->P[port].DOUT;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set bits GPIO data out register to 1.
+ *
+ * @note
+ *   In order for the setting to take effect on the respective output pads, the
+ *   pins must have been configured properly. If not, it will take effect
+ *   whenever the pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pins
+ *   Bit mask for bits to set to 1 in DOUT register.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PortOutSet(uint8_t port, uint32_t pins)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+#if defined(_GPIO_P_DOUTSET_MASK)
+  GPIO->P[port].DOUTSET = pins;
+#elif defined(GPIO_HAS_SET_CLEAR)
+  GPIO->P_SET[port].DOUT = pins;
+#else
+  BUS_RegMaskedSet(&GPIO->P[port].DOUT, pins);
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set GPIO port data out register.
+ *
+ * @note
+ *   In order for the setting to take effect on the respective output pads, the
+ *   pins must have been configured properly. If not, it will take effect
+ *   whenever the pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] val
+ *   Value to write to port data out register.
+ *
+ * @param[in] mask
+ *   Mask indicating which bits to modify.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PortOutSetVal(uint8_t port,
+                                        uint32_t val,
+                                        uint32_t mask)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+
+  GPIO->P[port].DOUT = (GPIO->P[port].DOUT & ~mask) | (val & mask);
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Toggle pins in GPIO port data out register.
+ *
+ * @note
+ *   In order for the setting to take effect on the output pad, the pin must
+ *   have been configured properly. If not, it will take effect whenever the
+ *   pin has been properly configured.
+ *
+ * @param[in] port
+ *   The GPIO port to access.
+ *
+ * @param[in] pins
+ *   Bit mask with pins to toggle.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_PortOutToggle(uint8_t port, uint32_t pins)
+{
+  //EFM_ASSERT(GPIO_PORT_VALID(port));
+#if defined (GPIO_HAS_SET_CLEAR)
+  GPIO->P_TGL[port].DOUT = pins;
+#else
+  GPIO->P[port].DOUTTGL = pins;
+#endif
+}
+
+#if defined(_GPIO_P_CTRL_SLEWRATE_MASK)
+/***************************************************************************//**
+ * @brief
+ *   Set slewrate for pins on a GPIO port.
+ *
+ * @param[in] port
+ *   The GPIO port to configure.
+ *
+ * @param[in] slewrate
+ *   The slewrate to configure for pins on this GPIO port.
+ *
+ * @param[in] slewrateAlt
+ *   The slewrate to configure for pins using alternate modes on this GPIO port.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_SlewrateSet(uint8_t port,
+                                      uint32_t slewrate,
+                                      uint32_t slewrateAlt)
+{
+//   EFM_ASSERT(GPIO_PORT_VALID(port));
+//   EFM_ASSERT(slewrate <= (_GPIO_P_CTRL_SLEWRATE_MASK
+//                           >> _GPIO_P_CTRL_SLEWRATE_SHIFT));
+//   EFM_ASSERT(slewrateAlt <= (_GPIO_P_CTRL_SLEWRATEALT_MASK
+//                              >> _GPIO_P_CTRL_SLEWRATEALT_SHIFT));
+
+  GPIO->P[port].CTRL = (GPIO->P[port].CTRL
+                        & ~(_GPIO_P_CTRL_SLEWRATE_MASK
+                            | _GPIO_P_CTRL_SLEWRATEALT_MASK))
+                       | (slewrate << _GPIO_P_CTRL_SLEWRATE_SHIFT)
+                       | (slewrateAlt << _GPIO_P_CTRL_SLEWRATEALT_SHIFT);
+}
+#endif
+
+/***************************************************************************//**
+ * @brief
+ *   Unlocks the GPIO configuration.
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_Unlock(void)
+{
+  GPIO->LOCK = GPIO_LOCK_LOCKKEY_UNLOCK;
+}
+
+/*******************************************************************************
+ ***********************   DEPRECATED PROTOTYPES   *****************************
+ ***********************     (will be removed)     *****************************
+ ******************************************************************************/
+
+/***************************************************************************//**
+ * @brief
+ *   Configure GPIO interrupt.
+ *
+ * @details
+ *   If reconfiguring a GPIO interrupt that is already enabled, it is generally
+ *   recommended to disable it first, see @ref GPIO_Disable().
+ *
+ *   The actual GPIO interrupt handler must be in place before enabling the
+ *   interrupt.
+ *
+ *   Notice that any pending interrupt for the selected pin is cleared by this
+ *   function.
+ *
+ * @deprecated
+ *   Deprecated function. New code should use @ref GPIO_ExtIntConfig().
+ *
+ * @note
+ *   A certain pin number can only be associated with one port; i.e., if GPIO
+ *   interrupt 1 is assigned to port A/pin 1, then it is not possible to use
+ *   pin 1 from any other ports for interrupts. Refer to the reference
+ *   manual. On devices which implement GPIO_EXTIPINSEL registers a more
+ *   flexible approach is possible, refer to @ref GPIO_ExtIntConfig().
+ *
+ * @param[in] port
+ *   The port to associate with @p pin.
+ *
+ * @param[in] pin
+ *   The pin number on the port ( == GPIO EXTI interrupt number).
+ *
+ * @param[in] risingEdge
+ *   Set to true if interrupts will be enabled on rising edge, otherwise false.
+ *
+ * @param[in] fallingEdge
+ *   Set to true if interrupts will be enabled on falling edge, otherwise false.
+ *
+ * @param[in] enable
+ *   Set to true if interrupt will be enabled after configuration completed,
+ *   false to leave disabled. See @ref GPIO_IntDisable() and @ref GPIO_IntEnable().
+ ******************************************************************************/
+__STATIC_INLINE void GPIO_IntConfig(uint8_t port,
+                                    unsigned int pin,
+                                    bool risingEdge,
+                                    bool fallingEdge,
+                                    bool enable)
+{
+  GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, enable);
+}
 
 #endif // CORTEXGPIO_H

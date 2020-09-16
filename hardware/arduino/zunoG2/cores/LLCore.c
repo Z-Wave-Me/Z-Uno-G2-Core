@@ -389,9 +389,6 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         va_end (args);
                         break;
                     case ZUNO_HANDLER_ZW_BATTERY:
-                        Serial0.print("BATTERY ADDR:");
-                        Serial0.println((uint32_t)base_addr, HEX);
-                        
                         result = (void*)(((zuno_battery_handler_t*)(base_addr))());
                         break;
                 }

@@ -447,23 +447,16 @@ void delay(dword ms){
 dword millis(){
     return (dword) zunoSysCall(ZUNO_FUNC_MILLIS, 0);
 }
-void digitalWrite(uint8_t pin, uint8_t val){
+void digitalWrite(uint8_t pin, uint8_t mode) {
+	uint8_t						real_port;
+	uint8_t						real_pin;
 
-    int real_port = ZUNO_PIN_DEFS[pin].port;
-    int real_pin = ZUNO_PIN_DEFS[pin].pin;
-    /*if(val)
-        GPIO->P[real_port].DOUT |= (1<< real_pin);
-    else
-        GPIO->P[real_port].DOUT &= ~(1<< real_pin);*/
-    uint32_t aliasAddr = ((uint32_t)&GPIO->P[real_port].DOUT); //PER_BITSET_MEM_BASE + ((uint32_t)(&GPIO->P[real_port].DOUT) - PER_MEM_BASE);  
-    //val = (val > 0);
-    //   BITBAND_PER_BASE + (((uint32_t)addr - PER_MEM_BASE) * (uint32_t) 32) + (bit * (uint32_t) 4);
-    aliasAddr -= PER_MEM_BASE;
-    aliasAddr <<= 5;
-    aliasAddr += BITBAND_PER_BASE;
-    aliasAddr +=  (real_pin << 2);
-
-    *(volatile uint32_t *)aliasAddr = (uint32_t)val;
+	real_port = getRealPort(pin);
+	real_pin = getRealPin(pin);
+	if (mode == true)
+		GPIO_PinOutSet(real_port, real_pin);
+	else
+		GPIO_PinOutClear(real_port, real_pin);
 }
 
 void pinMode(uint8_t pin, int mode){

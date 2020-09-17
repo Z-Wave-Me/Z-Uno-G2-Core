@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "ReportHandler.h"
 
-float zunoReportFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
+float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
 	uint32_t				number;
 	float					out;
 

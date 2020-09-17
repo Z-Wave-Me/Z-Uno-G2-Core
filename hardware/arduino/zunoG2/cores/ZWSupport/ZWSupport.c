@@ -248,71 +248,72 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 		}
 	}
 	#endif
-	if(result != ZUNO_COMMAND_ANSWERED)
+	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
 		zunoReportHandler(cmd);
-	// Check if command fits to any existing channel
-	if((result != ZUNO_COMMAND_ANSWERED) && (result != ZUNO_COMMAND_PROCESSED) && _multiinstance(cmd, &result) == true){
-		byte zuno_ch = zuno_findTargetChannel(cmd);
-		if(zuno_ch == UNKNOWN_CHANNEL){
+		// Check if command fits to any existing channel
+		if(_multiinstance(cmd, &result) == true) {
+			byte zuno_ch = zuno_findTargetChannel(cmd);
+			if(zuno_ch == UNKNOWN_CHANNEL){
+				#ifdef LOGGING_DBG
+				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
+				#endif
+				return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
+			}
 			#ifdef LOGGING_DBG
-			LOGGING_UART.println("**** Can't find channel for last cmd!"); 
+			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
+			LOGGING_UART.println(zuno_ch);
 			#endif
-			return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
-		}
-		#ifdef LOGGING_DBG
-		LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
-		LOGGING_UART.println(zuno_ch);
-		#endif
-		switch(ZW_CMD_CLASS) {
-			#ifdef WITH_CC_BASIC
-			case COMMAND_CLASS_BASIC:
-				result = zuno_CCBasicHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_SWITCH_BINARY
-			case COMMAND_CLASS_SWITCH_BINARY:
-				result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_NOTIFICATION
-			case COMMAND_CLASS_NOTIFICATION:
-				result = zuno_CCNotificationHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_SWITCH_MULTILEVEL
-			case COMMAND_CLASS_SWITCH_MULTILEVEL:
-				result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_METER
-			case COMMAND_CLASS_METER:
-				result = zuno_CCMeterHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_DOORLOCK
-			case COMMAND_CLASS_DOOR_LOCK:
-				result = zuno_CCDoorLockHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_SENSORMULTILEVEL
-			case COMMAND_CLASS_SENSOR_MULTILEVEL:
-				result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
-			#endif
-			#ifdef WITH_CC_SWITCH_COLOR
-			case COMMAND_CLASS_SWITCH_COLOR:
-				result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_THERMOSTAT_MODE
-			case COMMAND_CLASS_THERMOSTAT_MODE:
-				result = zuno_CCThermostatModeHandler(zuno_ch, cmd);
-				break;
-			#endif
-			#ifdef WITH_CC_THERMOSTAT_SETPOINT
-			case COMMAND_CLASS_THERMOSTAT_SETPOINT:
-				result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd);
-				break;
-			#endif
+			switch(ZW_CMD_CLASS) {
+				#ifdef WITH_CC_BASIC
+				case COMMAND_CLASS_BASIC:
+					result = zuno_CCBasicHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_SWITCH_BINARY
+				case COMMAND_CLASS_SWITCH_BINARY:
+					result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_NOTIFICATION
+				case COMMAND_CLASS_NOTIFICATION:
+					result = zuno_CCNotificationHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_SWITCH_MULTILEVEL
+				case COMMAND_CLASS_SWITCH_MULTILEVEL:
+					result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_METER
+				case COMMAND_CLASS_METER:
+					result = zuno_CCMeterHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_DOORLOCK
+				case COMMAND_CLASS_DOOR_LOCK:
+					result = zuno_CCDoorLockHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_SENSORMULTILEVEL
+				case COMMAND_CLASS_SENSOR_MULTILEVEL:
+					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
+				#endif
+				#ifdef WITH_CC_SWITCH_COLOR
+				case COMMAND_CLASS_SWITCH_COLOR:
+					result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_THERMOSTAT_MODE
+				case COMMAND_CLASS_THERMOSTAT_MODE:
+					result = zuno_CCThermostatModeHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_THERMOSTAT_SETPOINT
+				case COMMAND_CLASS_THERMOSTAT_SETPOINT:
+					result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd);
+					break;
+				#endif
+			}
 		}
 	}
 	// Do we have any report to send?

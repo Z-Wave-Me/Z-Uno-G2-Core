@@ -1,9 +1,27 @@
 #include "Arduino.h"
 #include "ReportHandler.h"
 
+float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
+	uint32_t				number;
+	float					out;
+
+	switch (len) {
+		case sizeof(uint16_t):
+			number = ((array[0] << 0x8) | array[1]);
+			break ;
+		case sizeof(uint32_t):
+			number = ((array[0] << 0x18) | (array[1] << 0x10) | (array[2] << 0x8) | array[3]);
+			break ;
+		default:
+			number = array[0];
+			break ;
+	}
+	out = (int32_t)number / (10 * (10 * precision));
+	return (out);
+}
 
 void zunoReportHandler(ZUNOCommandPacket_t *cmd) {
-	ReportAuxDataAdd_t		report_data;
+	ReportAuxData_t			report_data;
 	uint8_t					cmdClass;
 	uint8_t					sub_type;
 	uint8_t					zwcmd;
@@ -49,9 +67,9 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd) {
 			default:
 				return ;
 	}
-	report_data.main.cmdClass = cmdClass;
-	report_data.main.channelSource = cmd->src_zw_channel;
-	report_data.main.nodeIdSource = cmd->src_node;
-	report_data.main.rawReportData = cmd->cmd;
+	report_data.cmdClass = cmdClass;
+	report_data.channelSource = cmd->src_zw_channel;
+	report_data.nodeIdSource = cmd->src_node;
+	report_data.rawReportData = cmd->cmd;
 	zunoSysHandlerCall(ZUNO_HANDLER_REPORT, sub_type, &report_data);
 }

@@ -17,12 +17,6 @@ typedef struct						ReportAuxData_s
 	uint8_t							*rawReportData;
 }									ReportAuxData_t;
 
-typedef struct						ReportAuxDataAdd_s
-{
-	ReportAuxData_t					main;
-	float							value;
-}									ReportAuxDataAdd_t;
-
 typedef enum
 {
 	Basic = COMMAND_CLASS_BASIC,
@@ -42,6 +36,8 @@ static inline void zunoSetReportHandler(ZunoReportHandlerType_t type, void(*hand
 }
 
 void zunoReportHandler(ZUNOCommandPacket_t *cmd);
+float zunoReportFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
+
 
 //#undef ZUNO_REPORTS_HANDLER
 //#define ZUNO_REPORTS_HANDLER(reportType, reportHandler)		zunoSetReportHandler(reportType, reportHandler)
@@ -54,8 +50,8 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd);
 
 #define REPORT_SWITCH_MULTILEVEL_VALUE(report_data)			(((SwitchMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v1.value)
 
-#define REPORT_SENSOR_BINARY_VALUE(report_data)				((void)0)
-#define REPORT_SENSOR_BINARY_TYPE(report_data)				((void)0)
+#define REPORT_SENSOR_BINARY_VALUE(report_data)				((uint8_t)0)
+#define REPORT_SENSOR_BINARY_TYPE(report_data)				((uint8_t)0)
 
 #define REPORT_SENSOR_MULTILEVEL_TYPE(report_data)			(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte1.sensorType)
 #define REPORT_SENSOR_MULTILEVEL_SIZE(report_data)			(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte1.level & SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK)
@@ -64,6 +60,7 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd);
 #define REPORT_SENSOR_MULTILEVEL_VALUE_1B(report_data)		(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte1.sensorValue1)
 #define REPORT_SENSOR_MULTILEVEL_VALUE_2B(report_data)		((uint16_t)(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte2.sensorValue1 << 0x8) | ((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte2.sensorValue2)
 #define REPORT_SENSOR_MULTILEVEL_VALUE_4B(report_data)		((uint32_t)((((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.sensorValue1 << 0x18) | (((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.sensorValue2 << 0x10) | (((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.sensorValue3 << 0x8) | ((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.sensorValue4))
+#define REPORT_SENSOR_MULTILEVEL_VALUE(report_data)			zunoFixToFloat(REPORT_SENSOR_MULTILEVEL_SIZE(report_data), REPORT_SENSOR_MULTILEVEL_PRECISION(report_data), &((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte1.sensorValue1)
 
 #define REPORT_METER_TYPE(report_data)						(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte1.properties1 & METER_PROPERTIES_TYPE_MASK)
 #define REPORT_METER_SIZE(report_data)						(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte1.properties2 & METER_PROPERTIES_SIZE_MASK)
@@ -72,6 +69,7 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd);
 #define REPORT_METER_VALUE_1B(report_data)					(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte1.meterValue1)
 #define REPORT_METER_VALUE_2B(report_data)					((uint16_t)(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte2.meterValue1 << 0x8) | ((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte2.meterValue2)
 #define REPORT_METER_VALUE_4B(report_data)					((uint32_t)((((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte4.meterValue1 << 0x18) | (((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte4.meterValue2 << 0x10) | (((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte4.meterValue3 << 0x8) | ((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte4.meterValue4))
+#define REPORT_METER_VALUE(report_data)						zunoFixToFloat(REPORT_METER_SIZE(report_data), REPORT_METER_PRECISION(report_data), &((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.byte1.meterValue1)
 
 #define REPORT_NOTIFICATION_STATUS(report_data)				(((ZwNotificationReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.notificationStatus)
 #define REPORT_NOTIFICATION_TYPE(report_data)				(((ZwNotificationReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte4.notificationType)

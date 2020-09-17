@@ -43,8 +43,8 @@ static inline void zunoSetReportHandler(ZunoReportHandlerType_t type, void(*hand
 
 void zunoReportHandler(ZUNOCommandPacket_t *cmd);
 
-#undef ZUNO_REPORTS_HANDLER
-#define ZUNO_REPORTS_HANDLER(reportType, reportHandler)		zunoSetReportHandler(reportType, reportHandler)
+//#undef ZUNO_REPORTS_HANDLER
+//#define ZUNO_REPORTS_HANDLER(reportType, reportHandler)		zunoSetReportHandler(reportType, reportHandler)
 
 #define REPORT_NODE_ID(report_data)							(((ReportAuxData_t *)report_data)->nodeIdSource)
 

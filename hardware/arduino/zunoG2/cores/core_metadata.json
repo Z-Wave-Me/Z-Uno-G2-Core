@@ -33,10 +33,19 @@
         "___zunoISR*"
     ],
     "static_handler_mapper":{
-        "CFGHandler":       {"type":"ZUNO_HANDLER_ZW_CFG","sub_type":"0"},
-        "BatteryHandler":   {"type":"ZUNO_HANDLER_ZW_BATTERY","sub_type":"0"},
-        "EventHandler":     {"type":"ZUNO_HANDLER_SYSEVENT","sub_type":"0"},
-        "SysTimerHandler":  {"type":"ZUNO_HANDLER_SYSTIMER","sub_type":"0"}
+        "CFGHandler":              {"type":"ZUNO_HANDLER_ZW_CFG","sub_type":"0"},
+        "BatteryHandler":          {"type":"ZUNO_HANDLER_ZW_BATTERY","sub_type":"0"},
+        "EventHandler":            {"type":"ZUNO_HANDLER_SYSEVENT","sub_type":"0"},
+        "SysTimerHandler":         {"type":"ZUNO_HANDLER_SYSTIMER","sub_type":"0"},
+        "ISR1MSHandler":           {"type":"ZUNO_HANDLER_SYSTIMER","sub_type":"0"},
+        "ISRINT0Handler":          {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_INT0)"},
+        "ISRINT1Handler":          {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_INT1)"},
+        "ISRZEROXHandler":         {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_ZEROX)"},
+        "ISRGPTHandler":           {"type":"ZUNO_HANDLER_IRQ","sub_type":"ZUNO_IRQVEC_WTIMER0"},
+        
+        "ReportsHandler_Battery":            {"type":"ZUNO_HANDLER_REPORT","sub_type":"Battery"},
+        "ReportsHandler_SensorMultilevel":   {"type":"ZUNO_HANDLER_REPORT","sub_type":"SensorMultilevel"}
+
     },
     "associations":[
         {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},

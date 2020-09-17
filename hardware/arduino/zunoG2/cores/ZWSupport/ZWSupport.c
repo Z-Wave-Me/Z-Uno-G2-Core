@@ -248,6 +248,8 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 		}
 	}
 	#endif
+	if(result != ZUNO_COMMAND_ANSWERED)
+		zunoReportHandler(cmd);
 	// Check if command fits to any existing channel
 	if((result != ZUNO_COMMAND_ANSWERED) && (result != ZUNO_COMMAND_PROCESSED) && _multiinstance(cmd, &result) == true){
 		byte zuno_ch = zuno_findTargetChannel(cmd);
@@ -261,7 +263,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 		LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
 		LOGGING_UART.println(zuno_ch);
 		#endif
-		switch(ZW_CMD_CLASS){
+		switch(ZW_CMD_CLASS) {
 			#ifdef WITH_CC_BASIC
 			case COMMAND_CLASS_BASIC:
 				result = zuno_CCBasicHandler(zuno_ch, cmd);

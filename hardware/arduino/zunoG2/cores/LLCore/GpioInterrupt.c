@@ -6,7 +6,6 @@
 
 #define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
 
-static uint8_t						gInit = false;
 
 static void _IRQDispatcher(uint32_t iflags) {
 	uint32_t						irqIdx;
@@ -51,14 +50,14 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 
 	if (interruptPin == INT_SLEEPING)
 		return ;
-	if (gInit == false) {
+	if (g_bit_field.bExtInit == false) {
 		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
 		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven);
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);
 		NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
 		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
-		gInit = true;
+		g_bit_field.bExtInit = true;
 	}
 	switch (mode) {
 		case LOW:

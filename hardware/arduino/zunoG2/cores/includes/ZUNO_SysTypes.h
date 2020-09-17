@@ -122,7 +122,13 @@ typedef struct HandlerFunc_s{
 	#error "Error pin pwm!"
 #endif
 
+typedef struct				ZunoBitField_s
+{
+	bool					bExtInit: 1;
+}							ZunoBitField_t;
+
 typedef struct ZUNOOnDemandHW_s {
+
 	uint32_t		pwm_freq;
 	uint32_t		tone_freq_set;
 	uint8_t			pwm_pins[MAX_ZUNO_PWMS];
@@ -136,6 +142,7 @@ typedef struct ZUNOOnDemandHW_s {
     
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
+extern ZunoBitField_t g_bit_field;
 
  
 #endif // __ZUNO_SYS_TYPES__

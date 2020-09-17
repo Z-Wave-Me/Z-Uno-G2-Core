@@ -190,7 +190,7 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
 int zunoAttachSysHandler(byte type, byte sub_type, void * handler);
-int zunoDetachSysHandler(void * handler);
+int zunoDetachSysHandler(byte type, byte sub_type, void *handler);
 void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...);
 void zunoSetZWChannel(byte ch, byte zw_channel);
 byte zunoAddChannel(byte type, byte subtype, byte options);
@@ -219,5 +219,6 @@ void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
 #include "GpioInterrupt.h"
+#include "ReportHandler.h"
 
 #endif // ZUNO_ARDUINOH

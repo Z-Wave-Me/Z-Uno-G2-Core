@@ -370,6 +370,11 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
                         va_end (args);
                         break;
+					case ZUNO_HANDLER_REPORT:
+						va_start (args, sub_type);
+						((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
+						va_end (args);
+						break;
                     case ZUNO_HANDLER_SYSEVENT:
                         va_start (args, sub_type);
                         ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
@@ -401,31 +406,51 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     }
     return result;
 }
-int zunoAttachSysHandler(byte type, byte sub_type, void * handler){
-    byte i;
-    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-    // Searching for vacant ceil to add the handler
-    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
-        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0){
-            g_zuno_odhw_cfg.h_sys_handler[i].main_type = type;
-            g_zuno_odhw_cfg.h_sys_handler[i].sub_type = sub_type;
-            g_zuno_odhw_cfg.h_sys_handler[i].code_offset = offset;
-            return 0;
-        }
-    }
-    return -1;
+
+int zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	uint16_t					code_offset;
+
+	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset)
+			return (0);
+		lp_b++;
+	}
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->code_offset == 0) {
+			lp_b->main_type = type;
+			lp_b->sub_type = sub_type;
+			lp_b->code_offset = code_offset;
+			return (0);
+		}
+		lp_b++;
+	}
+	return (-1);
 }
-int zunoDetachSysHandler(void * handler){
-    byte i;
-    word offset = (word) ((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
-        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == offset){
-            g_zuno_odhw_cfg.h_sys_handler[i].code_offset = 0;
-            return 0;
-        }
-    }
-    return -1;
+
+int zunoDetachSysHandler(byte type, byte sub_type, void *handler){
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	uint16_t					code_offset;
+
+	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset) {
+			lp_b->code_offset = 0;
+			return (0);
+		}
+		lp_b++;
+	}
+	return (-1);
 }
+
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
     zunoSysCall(ZUNO_FUNC_SLEEP_CONTROL, 2, index, timeout);
 }

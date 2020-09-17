@@ -10,6 +10,34 @@
         "BatteryHigh":{"directmap":"BATTERY_HIGH"},
         "BatteryHandler":{"default":["WITH_CUSTOM_BATTERY_HANDLER"]}
     },
+    "static_svar_list":[
+        "___zunoSleepingModeValue", 
+        "___zunoBatteryLow",
+        "___zunoBatteryHigh",
+        "___zunoProductType",
+        "___zunoProductIDMaj",
+        "___zunoProductIDMin",
+        "___zunoS2Access"
+    ],
+    "static_strlst_list":[
+        "___zunoDisableList",
+        "___zunoEnableList",
+        "___zunoCustomLnk"
+    ],
+    "static_handler_list":[
+        "___zunoCFGHandler",
+        "___zunoBatteryHandler",
+        "___zunoEventHandler",
+        "___zunoSysTimerHandler",
+        "___zunoReportsHandler_*",
+        "___zunoISR*"
+    ],
+    "static_handler_mapper":{
+        "CFGHandler":       {"type":"ZUNO_HANDLER_ZW_CFG","sub_type":"0"},
+        "BatteryHandler":   {"type":"ZUNO_HANDLER_ZW_BATTERY","sub_type":"0"},
+        "EventHandler":     {"type":"ZUNO_HANDLER_SYSEVENT","sub_type":"0"},
+        "SysTimerHandler":  {"type":"ZUNO_HANDLER_SYSTIMER","sub_type":"0"}
+    },
     "associations":[
         {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},
         {"type_name":"ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER", "type_val":2, "preproc_flags":[]},

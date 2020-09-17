@@ -115,13 +115,23 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 								GENERIC_POINTER ___zunoBatteryHandler = ((void*)H)
 #define ZUNO_REPORTS_HANDLER(N, H) 		\
 								GENERIC_POINTER ___zunoReportsHandler_##N = ((void*)H)
+#define ZUNO_SETUP_ISR_INT0(H) \
+								GENERIC_POINTER ___zunoISRINT0Handler = ((void*)H)
+#define ZUNO_SETUP_ISR_INT1(H) \
+								GENERIC_POINTER ___zunoISRINT1Handler = ((void*)H)
+#define ZUNO_SETUP_ISR_ZEROX(H) \
+								GENERIC_POINTER ___zunoISRZEROXHandler = ((void*)H)
+#define ZUNO_SETUP_ISR_1MSTIMER(H) \
+								GENERIC_POINTER ___zunoISR1MSHandler = ((void*)H)
+#define ZUNO_SETUP_ISR_GPTIMER(H) \
+								GENERIC_POINTER ___zunoISRGPTHandler = ((void*)H)						
 #define ZUNO_SETUP_SYSEVENT_HANDLER(H)\
 								GENERIC_POINTER ___zunoEventHandler = ((void*)H)
 #define ZUNO_SETUP_SYSTIMER_HANDLER(H)\
 								GENERIC_POINTER ___zunoSysTimerHandler = ((void*)H)
-#define ZUNO_SETUP_PRODUCT_AUTO() \
+#define ZUNO_SETUP_PRODUCT_AUTO()\
 								unsigned char ___zunoProductType = 1
-#define ZUNO_SETUP_PRODUCT_ID(MAJ,MIN) \
+#define ZUNO_SETUP_PRODUCT_ID(MAJ,MIN)\
 								unsigned char ___zunoProductType = 2;\
 								unsigned char ___zunoProductIDMaj = MAJ;\
 								unsigned char ___zunoProductIDMin = MIN
@@ -175,6 +185,10 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_SWITCH_COLOR(COLORS, GETTER, SETTER)											
 #define ZUNO_DOORLOCK(GETTER, SETTER)   													
 #define ZUNO_METER(TYPE, RESETABLE,  SCALE, SIZE, PRECISION, GETTER, RESETTER) 				
-
+#define ZUNO_SETUP_ISR_INT0(H)
+#define ZUNO_SETUP_ISR_INT1(H)
+#define ZUNO_SETUP_ISR_ZEROX(H)
+#define ZUNO_SETUP_ISR_1MSTIMER(H) 
+#define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
 #endif // ZUNO_STATIC_DATA_H

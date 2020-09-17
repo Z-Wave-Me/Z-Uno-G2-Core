@@ -370,6 +370,9 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
                         va_end (args);
                         break;
+					case ZUNO_HANDLER_EXTINT:
+						((zuno_user_zuno_handler_extint*)(base_addr))();
+						break ;
 					case ZUNO_HANDLER_REPORT:
 						va_start (args, sub_type);
 						((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
@@ -433,7 +436,7 @@ int zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
 	return (-1);
 }
 
-int zunoDetachSysHandler(byte type, byte sub_type, void *handler){
+int zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
 	HandlerFunc_t				*lp_b;
 	HandlerFunc_t				*lp_e;
 	uint16_t					code_offset;
@@ -449,6 +452,24 @@ int zunoDetachSysHandler(byte type, byte sub_type, void *handler){
 		lp_b++;
 	}
 	return (-1);
+}
+
+int zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	int							out;
+
+	out = -1;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type) {
+			lp_b->code_offset = 0;
+			out = 0;
+		}
+		lp_b++;
+	}
+	return (out);
 }
 
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){

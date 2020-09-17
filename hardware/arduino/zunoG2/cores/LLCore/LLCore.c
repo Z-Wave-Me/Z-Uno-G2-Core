@@ -444,6 +444,7 @@ void delay(dword ms){
 dword millis(){
     return (dword) zunoSysCall(ZUNO_FUNC_MILLIS, 0);
 }
+
 void digitalWrite(uint8_t pin, uint8_t mode) {
 	uint8_t						real_port;
 	uint8_t						real_pin;
@@ -455,10 +456,10 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
 	else
 		GPIO_PinOutClear(real_port, real_pin);
 }
-
 void pinMode(uint8_t pin, int mode){
 	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
 }
+
 int getRealPin(uint8_t pin)
 {
     int real_pin = ZUNO_PIN_DEFS[pin].pin;

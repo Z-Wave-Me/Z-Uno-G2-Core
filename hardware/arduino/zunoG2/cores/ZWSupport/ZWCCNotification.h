@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#define NOTIFICATION_PROPERTIES_PARAMLENGTH_MASK	0x1F
+
 #define NOTIFICATION_REPORT_LEN                     11
 #define NOTIFICATION_REPORT_DATA_LEN                (NOTIFICATION_REPORT_LEN-2)
 #define NOTIFICATION_SUPPORTED_DATA_LEN             2
@@ -137,8 +139,84 @@
 #define NOTIFICATION_EVENT_GAS_COMBUSTIBLE				0x02
 #define NOTIFICATION_EVENT_GAS_TOXIC					0x04
 
+/************************************************************/
+/* Notification Report command class structs */    
+/************************************************************/
+typedef struct								ZwNotificationReportByte1Frame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									v1AlarmType;/**/
+	uint8_t									v1AlarmLevel;/**/
+	uint8_t									reserved;/**/
+	uint8_t									notificationStatus;/**/
+	uint8_t									notificationType;/**/
+	uint8_t									mevent;/**/
+	uint8_t									properties1;/* masked byte */
+	uint8_t									eventParameter1;
+	uint8_t									sequenceNumber;/**/
+}											ZwNotificationReportByte1Frame_t;
+
+typedef struct								ZwNotificationReportByte2Frame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									v1AlarmType;/**/
+	uint8_t									v1AlarmLevel;/**/
+	uint8_t									reserved;/**/
+	uint8_t									notificationStatus;/**/
+	uint8_t									notificationType;/**/
+	uint8_t									mevent;/**/
+	uint8_t									properties1;/* masked byte */
+	uint8_t									eventParameter1;/* MSB */
+	uint8_t									eventParameter2;/* LSB */
+	uint8_t									sequenceNumber;/**/
+}											ZwNotificationReportByte2Frame_t;
+
+typedef struct								ZwNotificationReportByte3Frame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									v1AlarmType;/**/
+	uint8_t									v1AlarmLevel;/**/
+	uint8_t									reserved;/**/
+	uint8_t									notificationStatus;/**/
+	uint8_t									notificationType;/**/
+	uint8_t									mevent;/**/
+	uint8_t									properties1;/* masked byte */
+	uint8_t									eventParameter1;/* MSB */
+	uint8_t									eventParameter2;
+	uint8_t									eventParameter3;/* LSB */
+	uint8_t									sequenceNumber;/**/
+}											ZwNotificationReportByte3Frame_t;
+
+typedef struct								ZwNotificationReportByte4Frame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									v1AlarmType;/**/
+	uint8_t									v1AlarmLevel;/**/
+	uint8_t									reserved;/**/
+	uint8_t									notificationStatus;/**/
+	uint8_t									notificationType;/**/
+	uint8_t									mevent;/**/
+	uint8_t									properties1;/* masked byte */
+	uint8_t									eventParameter1;/* MSB */
+	uint8_t									eventParameter2;
+	uint8_t									eventParameter3;
+	uint8_t									eventParameter4;/* LSB */
+	uint8_t									sequenceNumber;/**/
+}											ZwNotificationReportByte4Frame_t;
+
+typedef union								ZwNotificationReportFrame_u {//For more convenient support, several versions of commands
+	ZwNotificationReportByte1Frame_t		byte1;
+	ZwNotificationReportByte2Frame_t		byte2;
+	ZwNotificationReportByte3Frame_t		byte3;
+	ZwNotificationReportByte4Frame_t		byte4;
+}											ZwNotificationReportFrame_t;
 
 void zuno_CCNotificationInitData();
 int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd);
 int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t * cmd);
+
 #endif // NOTIFICATION_CC_H

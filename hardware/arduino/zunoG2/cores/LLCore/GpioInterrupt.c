@@ -5,22 +5,17 @@
 #include "GpioInterrupt.h"
 
 #define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
-typedef void (*GPIOINT_IrqCallbackPtr_t)(void);
 
-static GPIOINT_IrqCallbackPtr_t		gpioCallbacks[16] = { 0 };/* Array of user callbacks. One for each pin interrupt number. */
 static uint8_t						gInit = false;
 
 static void _IRQDispatcher(uint32_t iflags) {
 	uint32_t						irqIdx;
-	GPIOINT_IrqCallbackPtr_t		callback;
 
-	/* check for all flags set in IF register */
-	while (iflags != 0U) {
+	GPIO_IntClear(iflags);/* Clean interrupts. */
+	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
-		callback = gpioCallbacks[irqIdx];
-		if (callback != 0)
-			callback();/* call user callback */
+		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx);
 	}
 }
 
@@ -28,7 +23,6 @@ static void _IRQHandlerOdd(void) {
 	uint32_t				iflags;
 
 	iflags = GPIO_IntGetEnabled() & 0x0000AAAA;/* Get all odd interrupts. */
-	GPIO_IntClear(iflags);/* Clean only odd interrupts. */
 	_IRQDispatcher(iflags);
 }
 
@@ -36,13 +30,12 @@ static void _IRQHandlerEven(void) {
 	uint32_t				iflags;
 
 	iflags = GPIO_IntGetEnabled() & 0x00005555;/* Get all even interrupts. */
-	GPIO_IntClear(iflags);/* Clean only odd interrupts. */
 	_IRQDispatcher(iflags);
 }
 
-static void _CallbackRegister(uint8_t intNo, GPIOINT_IrqCallbackPtr_t callbackPtr) {
+static void _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
 	CORE_ATOMIC_SECTION(
-		gpioCallbacks[intNo] = callbackPtr;/* Dispatcher is used */
+		zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc);
 	)
 }
 
@@ -87,7 +80,8 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 	}
 	port = getRealPort(interruptPin);
 	pin = getRealPin(interruptPin);
-	_CallbackRegister(pin, userFunc);
+	if (userFunc != 0)
+		_CallbackRegister(pin, userFunc);
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
 }
 
@@ -95,7 +89,7 @@ void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
 	if (interruptPin == INT_SLEEPING)
 		return ;
 	pinMode(interruptPin, INPUT_PULLUP);
-	attachInterrupt(interruptPin, gpioCallbacks[getRealPin(interruptPin)], mode);
+	attachInterrupt(interruptPin, 0, mode);
 }
 
 void detachInterrupt(uint8_t interruptPin) {
@@ -103,5 +97,5 @@ void detachInterrupt(uint8_t interruptPin) {
 
 	pin = getRealPin(interruptPin);
 	GPIO_IntDisable(pin);
-	_CallbackRegister(pin, 0);
+	zunoDetachSysHandlerAllSubType(ZUNO_HANDLER_EXTINT, pin);
 }

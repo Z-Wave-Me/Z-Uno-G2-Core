@@ -76,6 +76,55 @@ typedef struct					ZwSwitchMultilevelStopLevelChangeFrame_s
 	uint8_t						cmd;/* The command */
 }								ZwSwitchMultilevelStopLevelChangeFrame_t;
 
+
+/************************************************************/
+/* Switch Multilevel Set command class structs */           
+/************************************************************/
+typedef struct					SwitchMultilevelSetV1Frame_s
+{
+	uint8_t						cmdClass; /* The command class */
+	uint8_t						cmd; /* The command */
+	uint8_t						value; /**/
+}								SwitchMultilevelSetV1Frame_t;
+
+typedef struct					SwitchMultilevelSetV4Frame_s
+{
+	uint8_t						cmdClass; /* The command class */
+	uint8_t						cmd; /* The command */
+	uint8_t						value; /**/
+	uint8_t						dimmingDuration; /**/
+}								SwitchMultilevelSetV4Frame_t;
+
+
+typedef union					SwitchMultilevelSetFrame_u {//For more convenient support, several versions of commands
+	SwitchMultilevelSetV1Frame_t	v1;
+	SwitchMultilevelSetV4Frame_t	v4;
+}								SwitchMultilevelSetFrame_t;
+
+/************************************************************/
+/* Switch Multilevel Report command class structs */        
+/************************************************************/
+typedef struct					SwitchMultilevelReportV1Frame_s
+{
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	uint8_t						value;/**/
+}								SwitchMultilevelReportV1Frame_t;
+
+typedef struct					SwitchMultilevelReportV4Frame_s
+{
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	uint8_t						currentValue;/**/
+	uint8_t						targetValue;/**/
+	uint8_t						duration;/**/
+}								SwitchMultilevelReportV4Frame_t;
+
+typedef union					SwitchMultilevelReportFrame_u {//For more convenient support, several versions of commands
+	SwitchMultilevelReportV1Frame_t	v1;
+	SwitchMultilevelReportV4Frame_t	v4;
+}								SwitchMultilevelReportFrame_t;
+
 int zuno_CCSwitchMultilevelReport(byte channel);
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
 void zuno_CCSwitchMultilevelTimer(uint32_t ticks);

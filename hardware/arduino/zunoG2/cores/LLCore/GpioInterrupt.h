@@ -1,7 +1,9 @@
 #ifndef GPIO_INTERRPUT_H
 #define GPIO_INTERRPUT_H
 
-//ExtInt
+typedef void zuno_user_zuno_handler_extint(void);
+
+
 void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode);
 void detachInterrupt(uint8_t interruptPin);
 void zunoExtIntMode(uint8_t interruptPin, uint8_t mode);

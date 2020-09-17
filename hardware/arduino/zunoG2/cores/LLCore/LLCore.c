@@ -371,9 +371,6 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
                         va_end (args);
                         break;
-					case ZUNO_HANDLER_EXTINT:
-						((zuno_user_zuno_handler_extint*)(base_addr))();
-						break ;
 					case ZUNO_HANDLER_REPORT:
 						va_start (args, sub_type);
 						((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
@@ -384,6 +381,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
                         va_end (args);
                         break;
+					case ZUNO_HANDLER_GPT:
+					case ZUNO_HANDLER_EXTINT:
                     case ZUNO_HANDLER_IRQ:
                     case ZUNO_HANDLER_SLEEP:
                     case ZUNO_HANDLER_WUP:

@@ -221,5 +221,6 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
 #include "GpioInterrupt.h"
 #include "ReportHandler.h"
+#include "GeneralPurposeTimer.h"
 
 #endif // ZUNO_ARDUINOH

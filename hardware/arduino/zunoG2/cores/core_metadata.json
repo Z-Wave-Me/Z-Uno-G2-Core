@@ -44,8 +44,12 @@
         "ISRGPTHandler":           {"type":"ZUNO_HANDLER_IRQ","sub_type":"ZUNO_IRQVEC_WTIMER0"},
         
         "ReportsHandler_Battery":            {"type":"ZUNO_HANDLER_REPORT","sub_type":"Battery"},
-        "ReportsHandler_SensorMultilevel":   {"type":"ZUNO_HANDLER_REPORT","sub_type":"SensorMultilevel"}
-
+		"ReportsHandler_Basic":              {"type":"ZUNO_HANDLER_REPORT","sub_type":"Basic"},
+		"ReportsHandler_SwitchBinary":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"SwitchBinary"},
+		"ReportsHandler_SwitchMultilevel":   {"type":"ZUNO_HANDLER_REPORT","sub_type":"SwitchMultilevel"},
+		"ReportsHandler_SensorBinary":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"SensorBinary"},
+		"ReportsHandler_Meter":              {"type":"ZUNO_HANDLER_REPORT","sub_type":"Meter"},
+		"ReportsHandler_Notification":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"Notification"}
     },
     "associations":[
         {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},

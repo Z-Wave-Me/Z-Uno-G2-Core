@@ -2196,8 +2196,8 @@ typedef struct {
       cmuClock_USART1 = CMU_CLOCK_TYPE_USART1,
       cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
       cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO,
-	    cmuClock_CSEN_HF = CMU_CLOCK_TYPE_CSEN_HF
-
+	    cmuClock_CSEN_HF = CMU_CLOCK_TYPE_CSEN_HF,
+      cmuClock_WTIMER0 = CMU_CLOCK_TYPE_WTIMER0
   } CMU_Clock_TypeDef;
 #elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 /** Clock points in CMU. See CMU overview in the reference manual. */

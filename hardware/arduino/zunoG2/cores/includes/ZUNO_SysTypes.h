@@ -137,8 +137,6 @@ typedef struct ZUNOOnDemandHW_s {
 	uint8_t			tone_pin;
 	uint8_t			GPTflags;
 	uint16_t		tone_freq;
-
-    
     // HANDLERS
 	HandlerFunc_t  h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
     

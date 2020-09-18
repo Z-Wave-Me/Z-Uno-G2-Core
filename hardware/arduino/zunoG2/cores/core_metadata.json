@@ -41,7 +41,7 @@
         "ISRINT0Handler":          {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_INT0)"},
         "ISRINT1Handler":          {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_INT1)"},
         "ISRZEROXHandler":         {"type":"ZUNO_HANDLER_EXTINT","sub_type":"getRealPin(ZUNO_EXT_ZEROX)"},
-        "ISRGPTHandler":           {"type":"ZUNO_HANDLER_IRQ","sub_type":"ZUNO_IRQVEC_WTIMER0"},
+        "ISRGPTHandler":           {"type":"ZUNO_HANDLER_GPT","sub_type":"ZUNO_GPT_BASIC"},
         
         "ReportsHandler_Battery":            {"type":"ZUNO_HANDLER_REPORT","sub_type":"Battery"},
 		"ReportsHandler_Basic":              {"type":"ZUNO_HANDLER_REPORT","sub_type":"Basic"},

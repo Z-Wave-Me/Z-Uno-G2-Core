@@ -11,9 +11,6 @@ typedef enum
 #define ZUNO_GPT_IMWRITE			0x2
 #define ZUNO_GPT_SCALE1024			0x4
 
-#undef ZUNO_SETUP_ISR_GPTIMER
-#define ZUNO_SETUP_ISR_GPTIMER(handler)					zunoAttachSysHandler(ZUNO_HANDLER_GPT, ZUNO_GPT_BASIC, (void *)handler)
-
 void zunoGPTInit(uint8_t flags);
 void zunoGPTEnable(uint8_t bEnable);
 void zunoGPTSet(uint16_t interval);

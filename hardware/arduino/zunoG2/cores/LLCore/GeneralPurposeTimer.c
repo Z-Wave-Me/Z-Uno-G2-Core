@@ -42,7 +42,7 @@ void zunoGPTInit(uint8_t flags) {
 void zunoGPTEnable(uint8_t bEnable) {
 	TIMER_Init_TypeDef			timerInit;
 	TIMER_TypeDef				*timer;
-	size_t						freq;
+	size_t						interval;
 
 	timer = GPT_TIMER;
 	if (g_bit_field.bGPTInit == false) {
@@ -56,13 +56,13 @@ void zunoGPTEnable(uint8_t bEnable) {
 		TIMER_IntEnable(timer, TIMER_IF_OF);/* Enable TIMER0 IRQ on Overflow */
 		g_bit_field.bGPTInit = true;
 	}
-	if (bEnable == true)
-		TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(((gInterval != 0) ? gInterval : GPT_DEFAULT_INTERVAL)));
+	if (bEnable == true) {
+		interval = gInterval;
+		TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(((interval != 0) ? interval : GPT_DEFAULT_INTERVAL)));
+	}
 	TIMER_Enable(timer, bEnable);
 }
 void zunoGPTSet(uint16_t interval) {
-	size_t					freq;
-
 	if ((gFlags & ZUNO_GPT_IMWRITE) == 0)
 		TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(interval));
 	gInterval = interval;

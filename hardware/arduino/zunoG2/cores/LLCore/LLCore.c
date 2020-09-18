@@ -551,10 +551,10 @@ int digitalRead(uint8_t pin) {
 
 int analogRead(uint8_t pin) {
     uint32_t sampleValue;
-    if(!g_zuno_odhw_cfg.ADCInitialized){
+    if(!g_bit_field.ADCInitialized){
         // Initialize ADC only the first time we need it
         zme_ADC_Enable();
-        g_zuno_odhw_cfg.ADCInitialized = true;
+        g_bit_field.ADCInitialized = true;
     }
     ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
     // Init for single conversion use, use 5V reference

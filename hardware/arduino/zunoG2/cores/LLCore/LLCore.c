@@ -275,9 +275,10 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
+            /*
 			#if defined(LOGGING_DBG) || defined(ASSERT_DBG)
 				LOGGING_UART.begin(115200);
-			#endif
+			#endif*/
             setup();
             ZWCCSetup();
             break;
@@ -310,6 +311,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         #ifdef LOGGING_DBG
         case ZUNO_JUMPTBL_DEBUGPRINT:{
+            
             ZUNOSysDbgMessage_t * msg = (ZUNOSysDbgMessage_t *)data;
             LOGGING_UART.print("[");
             LOGGING_UART.print(millis());

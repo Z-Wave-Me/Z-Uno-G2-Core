@@ -220,7 +220,10 @@ void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
 #include "GpioInterrupt.h"
-#include "ReportHandler.h"
 #include "GeneralPurposeTimer.h"
+
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+	#include "ReportHandler.h"
+#endif
 
 #endif // ZUNO_ARDUINOH

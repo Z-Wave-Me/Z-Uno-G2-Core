@@ -249,7 +249,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	}
 	#endif
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
+		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 		zunoReportHandler(cmd);
+		#endif
 		// Check if command fits to any existing channel
 		if(_multiinstance(cmd, &result) == true) {
 			byte zuno_ch = zuno_findTargetChannel(cmd);

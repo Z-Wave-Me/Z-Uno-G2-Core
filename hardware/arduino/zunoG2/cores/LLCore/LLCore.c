@@ -373,11 +373,13 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
                         va_end (args);
                         break;
+					#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 					case ZUNO_HANDLER_REPORT:
 						va_start (args, sub_type);
 						((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
 						va_end (args);
 						break;
+					#endif
                     case ZUNO_HANDLER_SYSEVENT:
                         va_start (args, sub_type);
                         ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));

@@ -90,6 +90,8 @@ SECTIONS
     _sketch_code_start = . ;
     *(.rodata.*)
     *(.text*)
+	_sbrk = .;
+	KEEP(*(._sbrk))
     KEEP(*(.init))
     KEEP(*(.fini))
 

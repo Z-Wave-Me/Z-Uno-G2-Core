@@ -8,6 +8,28 @@
 #include <stdarg.h>
 #include "Tone.h"
 #include "Debug.h"
+#include "errno.h"
+
+void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
+void *sbrk(intptr_t delta) {
+	extern uint8_t		*__bss_end__;
+	extern uint8_t		*__StackTop;
+	static uint8_t		*heap_end;
+	uint8_t				*prev_heap_end;
+
+	if (heap_end == 0)
+		heap_end = __bss_end__;
+	prev_heap_end = heap_end;
+
+	if (heap_end + delta > __StackTop)
+	{
+		errno = ENOMEM;
+		return (void *) -1;
+	}
+
+	heap_end = heap_end + delta;
+	return (prev_heap_end);
+}
 
 #ifdef LOGGING_DBG
 	#pragma message "LOGGING_DBG: ON"

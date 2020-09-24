@@ -10,6 +10,24 @@
 #include "Debug.h"
 #include "errno.h"
 
+#ifdef LOGGING_DBG
+	#pragma message "LOGGING_DBG: ON"
+#endif
+
+#ifdef ASSERT_DBG
+	#pragma message "ASSERT_DBG: ON"
+#endif
+
+#ifndef SKETCH_FWID
+#define SKETCH_FWID 0x0101
+#endif
+#ifndef SKETCH_FLAGS
+#define SKETCH_FLAGS 0x00
+#endif
+
+void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
+ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
+
 void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
 void *sbrk(intptr_t delta) {
 	extern uint8_t		*__bss_end__;
@@ -31,23 +49,6 @@ void *sbrk(intptr_t delta) {
 	return (prev_heap_end);
 }
 
-#ifdef LOGGING_DBG
-	#pragma message "LOGGING_DBG: ON"
-#endif
-
-#ifdef ASSERT_DBG
-	#pragma message "ASSERT_DBG: ON"
-#endif
-
-#ifndef SKETCH_FWID
-#define SKETCH_FWID 0x0101
-#endif
-#ifndef SKETCH_FLAGS
-#define SKETCH_FLAGS 0x00
-#endif
-
-void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
-ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 

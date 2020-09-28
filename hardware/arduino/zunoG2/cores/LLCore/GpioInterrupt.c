@@ -6,16 +6,38 @@
 
 #define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
 
+static uint8_t _getPin(uint8_t pin) {
+	uint8_t				port;
+
+	if (pin < 8)
+		port = (GPIO->EXTIPSELL >> (_GPIO_EXTIPSELL_EXTIPSEL1_SHIFT * pin)) & _GPIO_EXTIPSELL_EXTIPSEL0_MASK;
+	else {
+	#if defined(_GPIO_EXTIPSELH_MASK)
+		port = pin - 8;
+		#if defined(_GPIO_EXTIPSELH_EXTIPSEL0_MASK)
+			port = (GPIO->EXTIPSELH >> (_GPIO_EXTIPSELH_EXTIPSEL1_SHIFT * port) & _GPIO_EXTIPSELH_EXTIPSEL0_MASK);
+		#elif defined(_GPIO_EXTIPSELH_EXTIPSEL8_MASK)
+			port = (GPIO->EXTIPSELH >> (_GPIO_EXTIPSELH_EXTIPSEL9_SHIFT * port) & _GPIO_EXTIPSELH_EXTIPSEL8_MASK);
+		#else
+			#error Invalid GPIO_EXTIPINSELH bit fields
+		#endif
+	#endif /* #if defined(_GPIO_EXTIPSELH_MASK) */
+	}
+	return (getPin(port, pin));
+}
 
 static void _IRQDispatcher(uint32_t iflags) {
 	uint32_t						irqIdx;
+	uint32_t						intFlags;
 
-	GPIO_IntClear(iflags);/* Clean interrupts. */
+	intFlags = iflags;
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
+		g_zuno_odhw_cfg.ExtPin = _getPin(irqIdx);
 		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx);
 	}
+	GPIO_IntClear(intFlags);/* Clean interrupts. */
 }
 
 static void _IRQHandlerOdd(void) {
@@ -32,10 +54,8 @@ static void _IRQHandlerEven(void) {
 	_IRQDispatcher(iflags);
 }
 
-static void _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
-	CORE_ATOMIC_SECTION(
-		zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc);
-	)
+static inline void _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
+	zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc);
 }
 
 void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {

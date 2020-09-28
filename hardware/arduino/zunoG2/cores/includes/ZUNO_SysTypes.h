@@ -130,16 +130,15 @@ typedef struct				ZunoBitField_s
 }							ZunoBitField_t;
 
 typedef struct ZUNOOnDemandHW_s {
-	uint32_t		pwm_freq;
-	uint32_t		tone_freq_set;
-	uint8_t			pwm_pins[MAX_ZUNO_PWMS];
-	uint8_t			pwm_pins_state;
-	uint8_t			tone_pin;
-	uint8_t			GPTflags;
-	uint16_t		tone_freq;
-    // HANDLERS
-	HandlerFunc_t  h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-    
+	uint32_t			pwm_freq;
+	uint32_t			tone_freq_set;
+	uint8_t				pwm_pins[MAX_ZUNO_PWMS];
+	uint8_t				pwm_pins_state;
+	uint8_t				tone_pin;
+	volatile uint8_t	ExtPin;// The index of the processed pin
+	uint16_t			tone_freq;
+	// HANDLERS
+	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 extern ZunoBitField_t g_bit_field;

@@ -25,26 +25,28 @@
 #define SKETCH_FLAGS 0x00
 #endif
 
+extern unsigned long  __etext;
+extern unsigned long  __data_start__;
+extern unsigned long  __data_end__;
+extern unsigned long  __bss_start__;
+extern unsigned long  __bss_end__;
+extern unsigned long  __StackTop;
+
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
 
 void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
 void *sbrk(intptr_t delta) {
-	extern uint8_t		*__bss_end__;
-	extern uint8_t		*__StackTop;
 	static uint8_t		*heap_end;
 	uint8_t				*prev_heap_end;
 
 	if (heap_end == 0)
-		heap_end = __bss_end__;
+		heap_end = (uint8_t *)&__bss_end__;
 	prev_heap_end = heap_end;
-
-	if (heap_end + delta > __StackTop)
-	{
+	if (heap_end + delta > (uint8_t *)&__StackTop) {
 		errno = ENOMEM;
 		return (void *) -1;
 	}
-
 	heap_end = heap_end + delta;
 	return (prev_heap_end);
 }
@@ -204,12 +206,6 @@ ZunoBitField_t g_bit_field;
 // prototypes 
 void loop();
 void setup();
-
-extern unsigned long  __etext; 
-extern unsigned long  __data_start__;
-extern unsigned long  __data_end__;
-extern unsigned long  __bss_start__;
-extern unsigned long  __bss_end__;
 
 extern void (*__preinit_array_start []) (void) __attribute__((weak));
 extern void (*__preinit_array_end []) (void) __attribute__((weak));
@@ -531,6 +527,20 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
 }
 void pinMode(uint8_t pin, int mode){
 	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
+}
+
+uint8_t getPin(uint8_t port, uint8_t pin) {
+	const PinDef_t			*lp_b;
+	const PinDef_t			*lp_e;
+
+	lp_b = &ZUNO_PIN_DEFS[0];
+	lp_e = &ZUNO_PIN_DEFS[sizeof(ZUNO_PIN_DEFS) / sizeof(PinDef_t)];
+	while (lp_b < lp_e) {
+		if (lp_b->port == port && lp_b->pin == pin)
+			return (lp_b - &ZUNO_PIN_DEFS[0]);
+		lp_b++;
+	}
+	return (INVALID_PIN_INDEX);
 }
 
 int getRealPin(uint8_t pin)

@@ -23,6 +23,14 @@
 #include "CrtxCmu.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
+typedef enum
+{
+	ZunoErrorOk,//Good!!!
+	ZunoErrorExtInt,//Failed to configure interrupt
+	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
+	ZunoErrorMemory//Failed to allocate memory
+} ZunoError_t;
+
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */
   GPIOMODE_DISABLED                  = _GPIO_P_MODEL_MODE0_DISABLED,

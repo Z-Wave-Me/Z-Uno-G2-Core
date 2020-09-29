@@ -6,7 +6,7 @@
 
 #define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
 
-static uint8_t _getPin(uint8_t pin) {
+static uint8_t _getPort(uint8_t pin) {
 	uint8_t				port;
 
 	if (pin < 8)
@@ -23,7 +23,7 @@ static uint8_t _getPin(uint8_t pin) {
 		#endif
 	#endif /* #if defined(_GPIO_EXTIPSELH_MASK) */
 	}
-	return (getPin(port, pin));
+	return (port);
 }
 
 static void _IRQDispatcher(uint32_t iflags) {
@@ -34,7 +34,7 @@ static void _IRQDispatcher(uint32_t iflags) {
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
-		g_zuno_odhw_cfg.ExtPin = _getPin(irqIdx);
+		g_zuno_odhw_cfg.ExtPin = getPin(_getPort(irqIdx), irqIdx);
 		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx);
 	}
 	GPIO_IntClear(intFlags);/* Clean interrupts. */
@@ -54,25 +54,29 @@ static void _IRQHandlerEven(void) {
 	_IRQDispatcher(iflags);
 }
 
-static inline void _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
-	zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc);
+static inline int _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
+	return (zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc));
 }
 
 void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
 	_CallbackRegister(getRealPin(interruptPin), userFunc);
 }
 
-void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
 	uint8_t						risingEdge;
 	uint8_t						fallingEdge;
 	uint8_t						port;
 	uint8_t						pin;
 
 	if (interruptPin == INT_SLEEPING)
-		return ;
+		return (ZunoErrorExtInt);
 	if (g_bit_field.bExtInit == false) {
-		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
-		zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven);
+		if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd) == -1)
+			return (ZunoErrorAttachSysHandler);
+		if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven) == -1) {
+			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
+			return (ZunoErrorAttachSysHandler);
+		}
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);
 		NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
@@ -99,16 +103,20 @@ void attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode)
 	}
 	port = getRealPort(interruptPin);
 	pin = getRealPin(interruptPin);
+	if ((GPIO->IEN & (1 << pin)) != 0 && port != _getPort(pin))//Check whether this interrupt is busy or not
+		return (ZunoErrorExtInt);
 	if (userFunc != 0)
-		_CallbackRegister(pin, userFunc);
+		if (_CallbackRegister(pin, userFunc) == -1)
+			return (ZunoErrorAttachSysHandler);
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
+	return (ZunoErrorOk);
 }
 
 void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
-	if (interruptPin == INT_SLEEPING)
-		return ;
-	pinMode(interruptPin, INPUT_PULLUP);
-	attachInterrupt(interruptPin, 0, mode);
+	if (interruptPin == ZUNO_EXT_ZEROX || interruptPin == ZUNO_EXT_INT0 || interruptPin == ZUNO_EXT_INT1) {
+		pinMode(interruptPin, INPUT_PULLUP);
+		attachInterrupt(interruptPin, 0, mode);
+	}
 }
 
 void detachInterrupt(uint8_t interruptPin) {

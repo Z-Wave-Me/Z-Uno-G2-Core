@@ -122,6 +122,8 @@ void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
 void detachInterrupt(uint8_t interruptPin) {
 	uint8_t						pin;
 
+	if (interruptPin == INT_SLEEPING)
+		return ;
 	pin = getRealPin(interruptPin);
 	GPIO_IntDisable(pin);
 	zunoDetachSysHandlerAllSubType(ZUNO_HANDLER_EXTINT, pin);

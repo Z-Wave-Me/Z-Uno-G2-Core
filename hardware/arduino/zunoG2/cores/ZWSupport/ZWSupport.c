@@ -751,6 +751,11 @@ void zunoSetSleepingMode(byte mode){
 	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	g_zuno_sys->zwave_cfg->flags |= (mode & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 }
+
+uint8_t zunoGetSleepingMode(void) {
+	return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+}
+
 void zunoSetZWChannel(byte ch, byte zw_channel) {
 	ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 }

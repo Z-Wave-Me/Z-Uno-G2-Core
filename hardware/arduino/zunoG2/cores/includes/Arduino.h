@@ -209,6 +209,7 @@ void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name);
 bool zunoStartDeviceConfiguration();
 void zunoSetS2Keys(byte keys);
 void zunoSetSleepingMode(byte mode);
+uint8_t zunoGetSleepingMode(void);
 void zunoStartLearn(byte timeout, bool secured);
 void zunoSendReport(byte ch);
 int zunoEEPROMWrite(word address, word size, byte * data);

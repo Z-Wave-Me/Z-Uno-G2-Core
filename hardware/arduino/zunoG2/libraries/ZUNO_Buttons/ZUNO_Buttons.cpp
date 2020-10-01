@@ -250,9 +250,9 @@ ZunoError_t PinBtn::_activeButton(ZunoButtonMode_t mode, uint8_t pin) {
 		case BtnButtonModeTimer:
 			if (this->bSysTimerInit++ != 0)
 				break ;
-			if (zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer) == -1) {
+			if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer)) != ZunoErrorOk) {
 				this->bSysTimerInit--;
-				return (ZunoErrorAttachSysHandler);
+				return (ret);
 			}
 			break ;
 		case BtnButtonModeExtInt:

@@ -54,7 +54,7 @@ static void _IRQHandlerEven(void) {
 	_IRQDispatcher(iflags);
 }
 
-static inline int _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
+static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
 	return (zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc));
 }
 
@@ -63,6 +63,7 @@ void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
 }
 
 ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+	ZunoError_t					ret;
 	uint8_t						risingEdge;
 	uint8_t						fallingEdge;
 	uint8_t						port;
@@ -71,11 +72,11 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	if (interruptPin == INT_SLEEPING)
 		return (ZunoErrorExtInt);
 	if (g_bit_field.bExtInit == false) {
-		if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd) == -1)
-			return (ZunoErrorAttachSysHandler);
-		if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven) == -1) {
+		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd)) != ZunoErrorOk)
+			return (ret);
+		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven)) != ZunoErrorOk) {
 			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
-			return (ZunoErrorAttachSysHandler);
+			return (ret);
 		}
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);
@@ -106,8 +107,8 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	if ((GPIO->IEN & (1 << pin)) != 0 && port != _getPort(pin))//Check whether this interrupt is busy or not
 		return (ZunoErrorExtInt);
 	if (userFunc != 0)
-		if (_CallbackRegister(pin, userFunc) == -1)
-			return (ZunoErrorAttachSysHandler);
+		if ((ret = _CallbackRegister(pin, userFunc)) != ZunoErrorOk)
+			return (ret);
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
 	return (ZunoErrorOk);
 }

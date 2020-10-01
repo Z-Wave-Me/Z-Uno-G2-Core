@@ -430,7 +430,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     return result;
 }
 
-int zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
+ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
 	HandlerFunc_t				*lp_b;
 	HandlerFunc_t				*lp_e;
 	uint16_t					code_offset;
@@ -440,7 +440,7 @@ int zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
 	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
 	while (lp_b < lp_e) {
 		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset)
-			return (0);
+			return (ZunoErrorOk);
 		lp_b++;
 	}
 	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
@@ -449,14 +449,14 @@ int zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
 			lp_b->main_type = type;
 			lp_b->sub_type = sub_type;
 			lp_b->code_offset = code_offset;
-			return (0);
+			return (ZunoErrorOk);
 		}
 		lp_b++;
 	}
-	return (-1);
+	return (ZunoErrorAttachSysHandler);
 }
 
-int zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
+ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
 	HandlerFunc_t				*lp_b;
 	HandlerFunc_t				*lp_e;
 	uint16_t					code_offset;
@@ -467,25 +467,25 @@ int zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
 	while (lp_b < lp_e) {
 		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset) {
 			lp_b->code_offset = 0;
-			return (0);
+			return (ZunoErrorOk);
 		}
 		lp_b++;
 	}
-	return (-1);
+	return (ZunoErrorAttachSysHandler);
 }
 
-int zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
+ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
 	HandlerFunc_t				*lp_b;
 	HandlerFunc_t				*lp_e;
-	int							out;
+	ZunoError_t					out;
 
-	out = -1;
+	out = ZunoErrorAttachSysHandler;
 	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
 	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
 	while (lp_b < lp_e) {
 		if (lp_b->main_type == type && lp_b->sub_type == sub_type) {
 			lp_b->code_offset = 0;
-			out = 0;
+			out = ZunoErrorOk;
 		}
 		lp_b++;
 	}

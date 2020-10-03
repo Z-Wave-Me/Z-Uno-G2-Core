@@ -26,10 +26,11 @@ ZunoError_t PinBtn::addButton(uint8_t pin) {
 void PinBtn::deleteButton(uint8_t pin) {
 	ZunoBtnHeader_t		*list;
 
-	noInterrupts();
-	if ((list = (ZunoBtnHeader_t *)this->_findList(pin)) != 0)
+	if ((list = (ZunoBtnHeader_t *)this->_findList(pin)) != 0) {
+		noInterrupts();
 		this->_deleteButton(list);
-	interrupts();
+		interrupts();
+	}
 }
 
 uint8_t PinBtn::isSingleClick(uint8_t pin) {
@@ -142,16 +143,19 @@ ZunoError_t PinBtn::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
 			return (ZunoErrorBtnInvalidType);
 			break ;
 	}
-	noInterrupts();
 	if ((list = (ZunoBtnHeader_t *)this->_findList(pin)) == 0)
 		ret = this->_addNewButton(pin, type, init);
 	else if (type != list->type) {
+		noInterrupts();
 		this->_deleteButton(list);
+		interrupts();
 		ret = this->_addNewButton(pin, type, init);
 	}
-	else
+	else {
+		noInterrupts();
 		ret = this->_initList(list, pin, type, init, false);
-	interrupts();
+		interrupts();
+	}
 	return (ret);
 }
 
@@ -176,6 +180,7 @@ inline ZunoError_t PinBtn::_addNewButton(uint8_t pin, ZunoBtnType_t type, void *
 		free(list);
 		return (ret);
 	}
+	noInterrupts();
 	if ((list_next = this->list) != 0) {
 		while ((list_tmp = list_next->next) != 0)
 			list_next = list_tmp;
@@ -183,6 +188,7 @@ inline ZunoError_t PinBtn::_addNewButton(uint8_t pin, ZunoBtnType_t type, void *
 	}
 	else
 		this->list = list;
+	interrupts();
 	return (ZunoErrorOk);
 }
 

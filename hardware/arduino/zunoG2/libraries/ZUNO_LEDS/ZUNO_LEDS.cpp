@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "stdlib.h"
-#include "ZUNO_LEDS.h"
+#include "ZUNO_LEDS_private.h"
 
 /* Public Constructors */
 ZunoLed::ZunoLed(void): list(0), bSysTimerInit(0) {

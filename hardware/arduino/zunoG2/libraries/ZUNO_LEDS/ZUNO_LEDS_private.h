@@ -49,7 +49,7 @@ class ZunoLed {
 		void					_addList(ZunoLedListGroups_t *list);
 		static void				_updateTimer(void);
 		ZunoLedListGroups_t		*list;
-		uint8_t					bSysTimerInit;
+		volatile uint8_t		bSysTimerInit;
 };
 
 

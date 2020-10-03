@@ -56,7 +56,6 @@ ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uin
 		pinMode(led_pin, OUTPUT);
 		this->_addList(list);
 	}
-	interrupts();
 	return (ret);
 }
 
@@ -83,7 +82,6 @@ ZunoError_t ZunoLed::addLed(const ZunoLedModeGroups_t *led_groups, uint8_t num_g
 		}
 		this->_addList(list);
 	}
-	interrupts();
 	return (ret);
 }
 
@@ -146,7 +144,6 @@ ZunoLedListGroups_t *ZunoLed::_addLedPre(size_t name, uint8_t num_groups, ZunoEr
 	ZunoLedListGroups_t			*list;
 	 ZunoError_t				tmp;
 
-	noInterrupts();
 	if (this->bSysTimerInit++ == 0) {
 		if ((tmp = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer)) != ZunoErrorOk) {
 			this->bSysTimerInit--;
@@ -172,6 +169,7 @@ void ZunoLed::_addList(ZunoLedListGroups_t *list) {
 	ZunoLedListGroups_t			*list_next;
 	ZunoLedListGroups_t			*list_tmp;
 
+	noInterrupts();
 	if ((list_next = this->list) != 0) {
 		while ((list_tmp = list_next->next) != 0)
 			list_next = list_tmp;
@@ -179,6 +177,7 @@ void ZunoLed::_addList(ZunoLedListGroups_t *list) {
 	}
 	else
 		this->list = list;
+	interrupts();
 }
 
 ZunoLedListGroups_t *ZunoLed::_findList(size_t name) {
@@ -214,10 +213,8 @@ void ZunoLed::_setMode(size_t name, uint8_t mode) {
 		return ;
 	if((mode + LED_MODE_OFFSET) == list->current_mode)
 		return;
-	noInterrupts();
 	list->current_mode = mode + LED_MODE_OFFSET;
 	list->patt_index = 0; // Always start from first stick in case of the new pattern
-	interrupts();
 }
 
 

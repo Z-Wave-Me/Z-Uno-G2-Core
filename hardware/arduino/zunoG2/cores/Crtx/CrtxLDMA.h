@@ -1869,6 +1869,7 @@ typedef struct {
     .xfer =                                               \
     {                                                     \
       .structType   = ldmaCtrlStructTypeXfer,             \
+	  .reserved0 = 0,\
       .structReq    = 0,                                  \
       .xferCnt      = (count) - 1,                        \
       .byteSwap     = 0,                                  \
@@ -1935,6 +1936,7 @@ typedef struct {
     .xfer =                                               \
     {                                                     \
       .structType   = ldmaCtrlStructTypeXfer,             \
+	  .reserved0 = 0,\
       .structReq    = 0,                                  \
       .xferCnt      = (count) - 1,                        \
       .byteSwap     = 0,                                  \

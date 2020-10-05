@@ -26,6 +26,7 @@
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
+	ZunoErrorTimerAlredy,//the timer is already in use
 	ZunoErrorExtInt,//Failed to configure interrupt
 	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
 	ZunoErrorBtnInvalidType,//Failed to change type

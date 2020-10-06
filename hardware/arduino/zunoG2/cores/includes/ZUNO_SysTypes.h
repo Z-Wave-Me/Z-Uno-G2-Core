@@ -127,6 +127,7 @@ typedef struct				ZunoBitField_s
 	bool					bExtInit: 1;
 	bool					bGPTInit: 1;
 	bool					bNeoInit: 1;
+	bool					bSPIInit: 1;
 	bool					ADCInitialized: 1;
 }							ZunoBitField_t;
 

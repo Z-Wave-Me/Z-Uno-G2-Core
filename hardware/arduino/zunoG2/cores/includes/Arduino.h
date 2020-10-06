@@ -123,20 +123,17 @@ enum {
 	#define LOW                 0
 	#define LED_BUILTIN         13//PA2
 
-	#define SPI_BUS_NOMBER			0//Bus number used for SPI
-	#if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1
-		//PA0 - PF7 - all
-		#define SCK					0//by default PC8 USART0/USART1
-		#define MISO				1//by default PC9 USART0/USART1 - RX
-		#define MOSI				2//by default PC10 USART0/USART1 - TX
-		#define SS					8//by default PF5
-	#elif SPI_BUS_NOMBER == 2
-		//PF0,PF1,PF3-PF7
-		#define SCK					16//by default PA5  USART2 
-		#define MISO				25//by default PF3 USART2 - RX
-		#define MOSI				7//by default PF4 USART2 - TX
-		#define SS					8//by default PF5
-	#endif
+	#define SPI_BUS_NOMBER		1//Bus number used for SPI
+	//PA0 - PF7 - all
+	#define SCK					0//by default USART1
+	#define MISO				1//by default USART1 - RX
+	#define MOSI				2//by default USART1 - TX
+	#define SS					8//by default
+
+	#define SCK2				16//by default PA5  USART2 
+	#define MISO2				25//by default PF3 USART2 - RX
+	#define MOSI2				7//by default PF4 USART2 - TX
+	#define SS2					8//by default PF5
 #elif ZUNO_PIN_V == 3
 	#define PWM1				13
 	#define PWM2                14
@@ -161,6 +158,11 @@ enum {
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
+
+	#define SCK2				16//by default PA5  USART2 
+	#define MISO2				25//by default PF3 USART2 - RX
+	#define MOSI2				7//by default PF4 USART2 - TX
+	#define SS2					8//by default PF5
 #elif ZUNO_PIN_V == 1000
 	#define HIGH                1
 	#define LOW                 0

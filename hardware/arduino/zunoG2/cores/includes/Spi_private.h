@@ -1,28 +1,19 @@
 #ifndef SPI_PRIVATE_H
 #define SPI_PRIVATE_H
 
-#include "Arduino.h"
-#include "Spi_define.h"
+#define SPI_INIT_DEFAULT					{usartEnable, 0, 0, usartDatabits8, true, MSBFIRST, SPI_MODE0, false, usartPrsRxCh0, false, false, 0, 0}
 
-#if SPI_BUS_NOMBER == 0 || SPI_BUS_NOMBER == 1 //We select the necessary settings depending on the bus USART
-	#define SPI_LOCATION		g_loc_pa0_pf7_all
-	#define SPI_LOCATION_SIZE	g_loc_pa0_pf7_all_size
-	
-	#if SPI_BUS_NOMBER == 0
-		#define SPI_BUS_CLOCK	cmuClock_USART0
-		#define SPI_BUS			USART0
-	#else
-		#define SPI_BUS_CLOCK	cmuClock_USART1
-		#define SPI_BUS			USART1
-	#endif
-#elif SPI_BUS_NOMBER == 2
-	#define SPI_LOCATION		g_loc_pf0_pf1_pf3_pf7
-	#define SPI_LOCATION_SIZE	sizeof(g_loc_pf0_pf1_pf3_pf7)
-	#define SPI_BUS_CLOCK		cmuClock_USART2
-	#define SPI_BUS				USART2
-#else
-	#define SPI_BUS_NOMBER		Incorrectly defined!
-#endif
+typedef struct								ZunoSpiUsartTypeConfig_s
+{
+	USART_TypeDef							*usart;
+	const uint8_t							*location;
+	uint8_t									size_location;
+	CMU_Clock_TypeDef						bus_clock;
+	uint8_t									sck;
+	uint8_t									miso;
+	uint8_t									mosi;
+	uint8_t									ss;
+}											ZunoSpiUsartTypeConfig_t;
 
 class SPISettings {
 	public:
@@ -39,6 +30,7 @@ class SPISettings {
 
 class SPIClass {
 	public:
+		SPIClass(USART_TypeDef *usart);
 		SPIClass(void);
 		void		begin(void);
 		void		begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
@@ -54,7 +46,10 @@ class SPIClass {
 		void		end(void);
 
 	private:
-		USART_InitSync_TypeDef				init_spi;
+		const ZunoSpiUsartTypeConfig_t		*usart_config;
+		uint32_t							clock;
+		uint8_t								bitOrder;
+		USART_ClockMode_TypeDef				dataMode;
 		uint8_t								sck_pin;
 		uint8_t								miso_pin;
 		uint8_t								mosi_pin;

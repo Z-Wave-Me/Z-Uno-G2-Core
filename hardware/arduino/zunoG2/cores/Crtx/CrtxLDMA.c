@@ -2,7 +2,6 @@
 #include "CrtxLDMA.h"
 #include "CrtxCore.h"
 
-#define cmuClock_LDMA 6
 
 /***************************************************************************//**
  * @brief

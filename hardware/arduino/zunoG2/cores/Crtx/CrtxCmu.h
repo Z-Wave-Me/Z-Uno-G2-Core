@@ -2185,7 +2185,7 @@ typedef struct {
 
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-  enum{
+typedef  enum{
       cmuClock_HFPER = CMU_CLOCK_TYPE_HFPER,
       cmuClock_ADC0 = CMU_CLOCK_TYPE_ADC0,
       cmuClock_TIMER0 = CMU_CLOCK_TYPE_TIMER0,

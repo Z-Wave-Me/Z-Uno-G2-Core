@@ -11,6 +11,7 @@ class SPISettings {
 
 class SPIClass {
 	public:
+		SPIClass(USART_TypeDef *usart);
 		SPIClass(void);
 		void		begin(void);
 		void		begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);

@@ -7,6 +7,7 @@ typedef struct								ZunoSpiUsartTypeConfig_s
 {
 	USART_TypeDef							*usart;
 	const uint8_t							*location;
+	ZDMA_PeripheralSignal_t					dmaSignal;
 	uint8_t									size_location;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
@@ -48,8 +49,9 @@ class SPIClass {
 	private:
 		const ZunoSpiUsartTypeConfig_t		*usart_config;
 		uint32_t							clock;
-		uint8_t								bitOrder;
 		USART_ClockMode_TypeDef				dataMode;
+		ZunoZDmaUser_t						userLp;
+		uint8_t								bitOrder;
 		uint8_t								sck_pin;
 		uint8_t								miso_pin;
 		uint8_t								mosi_pin;

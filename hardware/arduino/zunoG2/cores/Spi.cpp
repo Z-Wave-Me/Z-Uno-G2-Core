@@ -1,10 +1,11 @@
 #include "Arduino.h"
+#include "ZDma.h"
 #include "Spi_define.h"
 #include "Spi_private.h"
 
-static const ZunoSpiUsartTypeConfig_t usart0_config = {USART0, &g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), cmuClock_USART0, SCK, MISO, MOSI, SS};
-static const ZunoSpiUsartTypeConfig_t usart1_config = {USART1, &g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), cmuClock_USART1, SCK, MISO, MOSI, SS};
-static const ZunoSpiUsartTypeConfig_t usart2_config = {USART2, &g_loc_pf0_pf1_pf3_pf7[0], sizeof(g_loc_pf0_pf1_pf3_pf7), cmuClock_USART2, SCK2, MISO2, MOSI2, SS2};
+static const ZunoSpiUsartTypeConfig_t usart0_config = {USART0, &g_loc_pa0_pf7_all[0], zdmaPeripheralSignal_USART0_TXBL, sizeof(g_loc_pa0_pf7_all), cmuClock_USART0, SCK, MISO, MOSI, SS};
+static const ZunoSpiUsartTypeConfig_t usart1_config = {USART1, &g_loc_pa0_pf7_all[0], zdmaPeripheralSignal_USART1_TXBL, sizeof(g_loc_pa0_pf7_all), cmuClock_USART1, SCK, MISO, MOSI, SS};
+static const ZunoSpiUsartTypeConfig_t usart2_config = {USART2, &g_loc_pf0_pf1_pf3_pf7[0], zdmaPeripheralSignal_USART2_TXBL, sizeof(g_loc_pf0_pf1_pf3_pf7), cmuClock_USART2, SCK2, MISO2, MOSI2, SS2};
 
 /* Public Constructors */
 SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {
@@ -105,13 +106,25 @@ uint16_t SPIClass::transfer16(uint16_t data) {
 }
 
 void SPIClass::transfer(void *b, size_t count) {
-	void			*e;
+	uint32_t					clock;
+	USART_TypeDef				*usart;
+	void						*e;
 
-	e = (char *)b + count;
-	while (b < e)
-	{
-		transfer(((uint8_t *)b)[0]);
-		b = (char *)b + 1;
+	usart = this->usart_config->usart;
+	if ((ZDMA.toMemoryPeripheral(&this->userLp, this->usart_config->dmaSignal, (void*)&(usart->TXDATA), b, count, zdmaData8) == ZunoErrorOk) {
+		clock = this->clock / 1000;
+		if (clock != 0 && (clock = count * 8 / clock) != 0)
+			delay(count);
+		while (this->userLp.bProcessing == true)
+			__NOP();
+	}
+	else {
+		e = (char *)b + count;
+		while (b < e)
+		{
+			transfer(((uint8_t *)b)[0]);
+			b = (char *)b + 1;
+		}
 	}
 }
 

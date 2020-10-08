@@ -111,7 +111,7 @@ void SPIClass::transfer(void *b, size_t count) {
 	void						*e;
 
 	usart = this->usart_config->usart;
-	if ((ZDMA.toMemoryPeripheral(&this->userLp, this->usart_config->dmaSignal, (void*)&(usart->TXDATA), b, count, zdmaData8) == ZunoErrorOk) {
+	if (ZDMA.toMemoryPeripheral(&this->userLp, this->usart_config->dmaSignal, (void*)&(usart->TXDATA), b, count, zdmaData8) == ZunoErrorOk) {
 		clock = this->clock / 1000;
 		if (clock != 0 && (clock = count * 8 / clock) != 0)
 			delay(count);

@@ -38,10 +38,10 @@ void SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
 	this->mosi_pin = mosi;
 	this->ss_pin = ss;
 	CMU_ClockEnable(this->usart_config->bus_clock, true);
-	pinMode(sck, _GPIO_P_MODEL_MODE0_PUSHPULL);
-	pinMode(miso, _GPIO_P_MODEL_MODE0_INPUT);
-	pinMode(mosi, _GPIO_P_MODEL_MODE0_PUSHPULL);
-	pinMode(ss, _GPIO_P_MODEL_MODE0_PUSHPULL);
+	pinMode(sck, OUTPUT);//_GPIO_P_MODEL_MODE0_PUSHPULL
+	pinMode(miso, INPUT);//_GPIO_P_MODEL_MODE0_INPUT
+	pinMode(mosi, OUTPUT);
+	pinMode(ss, OUTPUT);
 }
 
 void SPIClass::begin(void) {
@@ -66,22 +66,21 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 		usart_config = this->usart_config;
 		usart = usart_config->usart;
 		USART_InitSync(usart, &init_spi);
-		usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
-		usart->ROUTELOC0 &= ~(_USART_ROUTELOC0_TXLOC_MASK | _USART_ROUTELOC0_RXLOC_MASK | _USART_ROUTELOC0_CLKLOC_MASK);
 		if (usart == USART2) {
 			location = &g_loc_pf0_pf1_pf3_pf7[0];
-			usart->ROUTELOC0 |= 
+			usart->ROUTELOC0 = 
 			(((((getRealPort(this->mosi_pin) << 4) | getRealPin(this->mosi_pin)) == 5) ? 0 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), this->mosi_pin) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT)
 			| (((((getRealPort(this->miso_pin) << 4) | getRealPin(this->miso_pin)) == 5) ? 31 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), this->miso_pin) + 13) << _USART_ROUTELOC0_RXLOC_SHIFT)
 			| (((((getRealPort(this->sck_pin) << 4) | getRealPin(this->sck_pin)) == 5) ? 30 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), this->sck_pin) + 12) << _USART_ROUTELOC0_CLKLOC_SHIFT);
 		}
 		else {
 			location = &g_loc_pa0_pf7_all[0];
-			usart->ROUTELOC0 |= 
+			usart->ROUTELOC0 = 
 			((getLocation(location, sizeof(g_loc_pa0_pf7_all), this->mosi_pin)) << _USART_ROUTELOC0_TXLOC_SHIFT)
 			| (((getLocation(location, sizeof(g_loc_pa0_pf7_all), this->miso_pin) - 1) % sizeof(g_loc_pa0_pf7_all)) << _USART_ROUTELOC0_RXLOC_SHIFT)
 			| ((getLocation(location, sizeof(g_loc_pa0_pf7_all), this->sck_pin) - 2) % sizeof(g_loc_pa0_pf7_all) << _USART_ROUTELOC0_CLKLOC_SHIFT);
 		}
+		usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
 	}
 	digitalWrite(this->ss_pin, LOW);//We inform slave about receiving data
 }

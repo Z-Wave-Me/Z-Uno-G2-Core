@@ -6,9 +6,7 @@
 typedef struct								ZunoSpiUsartTypeConfig_s
 {
 	USART_TypeDef							*usart;
-	const uint8_t							*location;
 	ZDMA_PeripheralSignal_t					dmaSignal;
-	uint8_t									size_location;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
 	uint8_t									miso;

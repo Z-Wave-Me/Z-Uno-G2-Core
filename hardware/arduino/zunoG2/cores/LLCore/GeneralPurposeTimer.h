@@ -11,8 +11,9 @@ typedef enum
 #define ZUNO_GPT_IMWRITE			0x2
 #define ZUNO_GPT_SCALE1024			0x4
 
+void zunoGPTDeInit(void);
 void zunoGPTInit(uint8_t flags);
-void zunoGPTEnable(uint8_t bEnable);
+ZunoError_t zunoGPTEnable(uint8_t bEnable);
 void zunoGPTSet(uint16_t interval);
 
 #endif // GENERAL_PURPOSE_H

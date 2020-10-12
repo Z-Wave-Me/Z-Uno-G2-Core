@@ -560,6 +560,15 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
 	return (0);
 }
 
+uint8_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
+	uint8_t				loc;
+
+	loc = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
+	loc = (loc + 32 - ch) & 0x1F;
+	ch <<= 3;
+	return (loc << ch);
+}
+
 int digitalRead(uint8_t pin) {
     int real_port = ZUNO_PIN_DEFS[pin].port;
     int real_pin = ZUNO_PIN_DEFS[pin].pin;

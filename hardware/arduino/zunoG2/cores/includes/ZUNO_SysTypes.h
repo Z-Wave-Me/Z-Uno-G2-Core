@@ -124,9 +124,14 @@ typedef struct HandlerFunc_s{
 
 typedef struct				ZunoBitField_s
 {
+	bool					bLockTimer0: 1;
+	bool					bLockTimer1: 1;
+	bool					bLockWTimer0: 1;
+	bool					bLockUsart0: 1;
+	bool					bLockUsart1: 1;
+	bool					bLockUsart2: 1;
 	bool					bExtInit: 1;
 	bool					bGPTInit: 1;
-	bool					bNeoInit: 1;
 	bool					bZDMAInit: 1;
 	bool					ADCInitialized: 1;
 }							ZunoBitField_t;

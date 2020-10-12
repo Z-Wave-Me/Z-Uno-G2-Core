@@ -15,13 +15,6 @@ static uint8_t _aux_findPWMChannel(uint8_t pin) {
 	return INVALID_PIN_INDEX;
 }
 
-
-static uint32_t _map_pwmloc2ch(uint8_t loc, uint8_t ch) {
-	loc = (loc + 32 - ch) & 0x1F;
-	ch <<= 3;
-	return (loc << ch);
-}
-
 void noTone(uint8_t pin) {
 	ZUNOOnDemandHW_t			*lp;
 
@@ -96,7 +89,7 @@ uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 		lp->pwm_pins[channel] = pin;// We occupied this channel with the needed pin
 		lp->pwm_pins_state = lp->pwm_pins_state | (1 << channel);
 		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
-		timer->ROUTELOC0 |= _map_pwmloc2ch( getLocation(g_loc_pa0_pf7_all, g_loc_pa0_pf7_all_size, pin), channel);
+		timer->ROUTELOC0 |= getLocationTimer0AndTimer1Chanell(pin, channel);
 		timer->ROUTEPEN |= (1UL << channel);//enabled CC
 		pinMode(pin, OUTPUT);// enable the output
 	}
@@ -159,7 +152,7 @@ void tone(uint8_t pin, uint16_t freq) {
 	if (lp->tone_pin != pin) {
 		lp->tone_pin = pin;
 		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (TONE_CHANNEL << 3));
-		timer->ROUTELOC0 |= _map_pwmloc2ch(getLocation(g_loc_pa0_pf7_all, g_loc_pa0_pf7_all_size, pin), TONE_CHANNEL);
+		timer->ROUTELOC0 |= getLocationTimer0AndTimer1Chanell(pin, TONE_CHANNEL);
 		timer->ROUTEPEN |= (1UL << TONE_CHANNEL);
 	}
 }

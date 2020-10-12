@@ -81,10 +81,8 @@ ZunoError_t zunoGPTEnable(uint8_t bEnable) {
 		TIMER_Init(timer, &timerInit);
 		NVIC_EnableIRQ(GPT_TIMER_IRQ);/* Enable TIMER0 interrupt in NVIC */
 		TIMER_IntEnable(timer, TIMER_IF_OF);/* Enable TIMER0 IRQ on Overflow */
-		CORE_EXIT_CRITICAL();
 	}
-	else
-		CORE_EXIT_CRITICAL();
+	CORE_EXIT_CRITICAL();
 	if (bEnable == true) {
 		interval = gInterval;
 		TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(((interval != 0) ? interval : GPT_DEFAULT_INTERVAL)));

@@ -1,7 +1,10 @@
 #include "Arduino.h"
 #include "CrtxTimer.h"
 #include "CrtxCmu.h"
+#include "CrtxCore.h"
 #include "Tone_private.h"
+
+static void _noTone(uint8_t pin);
 
 static uint8_t _aux_findPWMChannel(uint8_t pin) {
 	int							i;
@@ -15,18 +18,17 @@ static uint8_t _aux_findPWMChannel(uint8_t pin) {
 	return INVALID_PIN_INDEX;
 }
 
-void noTone(uint8_t pin) {
+static uint8_t _analogWriteDisable(uint8_t pin, uint8_t channel) {
 	ZUNOOnDemandHW_t			*lp;
 
-	if (pin == INVALID_PIN_INDEX)
-		return ;
+	if(channel == INVALID_PIN_INDEX)
+		return (false); // We don't have this pin is occupied by the PWM - go out
 	lp = &g_zuno_odhw_cfg;
-	if (lp->tone_pin != pin)
-		return ;
-	lp->tone_pin = INVALID_PIN_INDEX;
-	lp->tone_freq = 0;
-	TONE_TIMER->ROUTEPEN &= ~(1UL << TONE_CHANNEL);//disable CC
+	lp->pwm_pins[channel] = INVALID_PIN_INDEX;
+	lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
+	PWM_TIMER->ROUTEPEN &= ~(1UL << channel);//disable CC
 	digitalWrite(pin, LOW);// Switch off this pin anyway
+	return (true);
 }
 
 uint8_t _analogWrite(uint8_t pin, uint8_t value) {
@@ -42,6 +44,9 @@ uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	timer = PWM_TIMER;
 	lp = &g_zuno_odhw_cfg;
 	if((freq = lp->pwm_freq) == 0) {
+		if (PWM_TIMER_BLOCK == true)
+			return (false);
+		PWM_TIMER_BLOCK = true;
 		memset(&lp->pwm_pins[0], INVALID_PIN_INDEX, sizeof(lp->pwm_pins));
 		CMU_ClockEnable(PWM_TIMER_CLOCK, true);
 		timerInit = TIMER_INIT_DEFAULT;
@@ -54,20 +59,14 @@ uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	channel = _aux_findPWMChannel(pin);
 	switch (value) {
 		case PWM_DISABLED:// switch off the led if it was enabled already
-			if(channel == INVALID_PIN_INDEX)
-				return (false); // We don't have this pin is occupied by the PWM - go out
-			lp->pwm_pins[channel] = INVALID_PIN_INDEX;
-			lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
-			timer->ROUTEPEN &= ~(1UL << channel);//disable CC
-			digitalWrite(pin, LOW);// Switch off this pin anyway
-			return (true);
+			return (_analogWriteDisable(pin, channel));
 		case PWM_ENABLED:
 			if(channel == INVALID_PIN_INDEX) {
 				channel = _aux_findPWMChannel(INVALID_PIN_INDEX);
 				if(channel == INVALID_PIN_INDEX)
 					return (false);
 				lp->pwm_pins[channel] = pin;
-				noTone(pin);
+				_noTone(pin);
 				pinMode(pin, OUTPUT);// enable the output
 			}
 			else if ((lp->pwm_pins_state & (1 << channel)) != 0) {
@@ -81,7 +80,7 @@ uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 		channel = _aux_findPWMChannel(INVALID_PIN_INDEX);
 		if(channel == INVALID_PIN_INDEX)
 			return (false);
-		noTone(pin);
+		_noTone(pin);
 		timerCCInit = TIMER_INITCC_DEFAULT;
 		timerCCInit.mode = timerCCModePWM;
 		timerCCInit.cmoa = timerOutputActionToggle;
@@ -101,7 +100,28 @@ uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	return (true);
 }
 
-uint8_t _tonePrescale(size_t freq) {
+static void _noTone(uint8_t pin) {
+	ZUNOOnDemandHW_t			*lp;
+
+	lp = &g_zuno_odhw_cfg;
+	if (lp->tone_pin != pin)
+		return ;
+	lp->tone_pin = INVALID_PIN_INDEX;
+	lp->tone_freq = 0;
+	TONE_TIMER_BLOCK = false;
+	TONE_TIMER->ROUTEPEN &= ~(1UL << TONE_CHANNEL);//disable CC
+	digitalWrite(pin, LOW);// Switch off this pin anyway
+}
+
+void noTone(uint8_t pin) {
+	if (pin == INVALID_PIN_INDEX)
+		return ;
+	CORE_CRITICAL_SECTION(
+		_noTone(pin);
+	);
+}
+
+static uint8_t _tonePrescale(size_t freq) {
 	uint8_t					prescale;
 
 	prescale = timerPrescale1;
@@ -110,7 +130,7 @@ uint8_t _tonePrescale(size_t freq) {
 	return (prescale);
 }
 
-void tone(uint8_t pin, uint16_t freq) {
+ZunoError_t tone(uint8_t pin, uint16_t freq) {
 	TIMER_Init_TypeDef			timerInit;
 	TIMER_InitCC_TypeDef		timerCCInit;
 	TIMER_TypeDef				*timer;
@@ -119,12 +139,18 @@ void tone(uint8_t pin, uint16_t freq) {
 	uint8_t						prescale;
 
 	if (pin == INVALID_PIN_INDEX)
-		return ;
-	if (_aux_findPWMChannel(pin) != INVALID_PIN_INDEX)
-		_analogWrite(pin, 0);//disable pwm
+		return (ZunoErrorInvalidPin);
+	CORE_DECLARE_IRQ_STATE;
+	CORE_ENTER_CRITICAL();
+	_analogWriteDisable(pin, _aux_findPWMChannel(pin));//disable pwm
 	lp = &g_zuno_odhw_cfg;
 	timer = TONE_TIMER;
 	if ((tone_freq_set = lp->tone_freq_set) == 0) {
+		if (TONE_TIMER_BLOCK == true) {
+			CORE_EXIT_CRITICAL();
+			return (ZunoErrorTimerAlredy);
+		}
+		TONE_TIMER_BLOCK = true;
 		lp->tone_pin = INVALID_PIN_INDEX;
 		CMU_ClockEnable(TONE_TIMER_CLOCK, true);
 		tone_freq_set = CMU_ClockFreqGet(TONE_TIMER_CLOCK) / 2;//0x25317C0 get the frequency for one hertz
@@ -135,10 +161,15 @@ void tone(uint8_t pin, uint16_t freq) {
 		TIMER_InitCC(timer, TONE_CHANNEL, &timerCCInit);
 	}
 	if (lp->tone_pin == pin) {
-		if (lp->tone_freq == freq)
-			return ;
-		if (freq == 0)
-			return (noTone(pin));
+		if (lp->tone_freq == freq) {
+			CORE_EXIT_CRITICAL();
+			return (ZunoErrorOk);
+		}
+		if (freq == 0) {
+			_noTone(pin);
+			CORE_EXIT_CRITICAL();
+			return (ZunoErrorOk);
+		}
 	}
 	lp->tone_freq = freq;
 	timerInit = TIMER_INIT_DEFAULT;
@@ -151,10 +182,11 @@ void tone(uint8_t pin, uint16_t freq) {
 	TIMER_CompareBufSet(timer, TONE_CHANNEL, 1);
 	if (lp->tone_pin != pin) {
 		lp->tone_pin = pin;
-		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (TONE_CHANNEL << 3));
-		timer->ROUTELOC0 |= getLocationTimer0AndTimer1Chanell(pin, TONE_CHANNEL);
-		timer->ROUTEPEN |= (1UL << TONE_CHANNEL);
+		timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(pin, TONE_CHANNEL);
+		timer->ROUTEPEN = (1UL << TONE_CHANNEL);
 	}
+	CORE_EXIT_CRITICAL();
+	return (ZunoErrorOk);
 }
 
 void toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration) {
@@ -162,3 +194,4 @@ void toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration) {
 	delay(duration);
 	noTone(pin);
 }
+

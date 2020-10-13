@@ -4,6 +4,7 @@
 #include "CrtxGPIO.h"
 #include "CrtxADC.h"
 #include "CrtxTimer.h"
+#include "CrtxCore.h"
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
@@ -616,7 +617,12 @@ void delayMicroseconds(word tdelay){
 
 
 bool analogWrite(uint8_t pin, word value) {
-	return (_analogWrite(pin, (value > 0xFF) ? 0xFF : value));
+	bool			out;
+	
+	CORE_CRITICAL_SECTION(
+		out = _analogWrite(pin, (value > 0xFF) ? 0xFF : value);
+	);
+	return (out);
 }
 void WDOG_Feed(){
   WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog

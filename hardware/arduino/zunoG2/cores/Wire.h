@@ -1,9 +1,12 @@
 #ifndef WIRE_H
 #define WIRE_H
 
+#include "CrtxI2C.h"
+
 class TwoWire {
 	public:
-		TwoWire();
+		TwoWire(I2C_TypeDef *i2c);
+		TwoWire(void);
 		void		begin(void);
 		void		begin(uint8_t scl, uint8_t sda);
 		void		begin(uint8_t adress);

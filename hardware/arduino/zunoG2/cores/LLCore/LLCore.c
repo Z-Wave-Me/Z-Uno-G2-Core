@@ -26,6 +26,8 @@
 #define SKETCH_FLAGS 0x00
 #endif
 
+#define svc(code) asm volatile ("svc %[immediate]"::[immediate] "I" (code))
+
 extern unsigned long  __etext;
 extern unsigned long  __data_start__;
 extern unsigned long  __data_end__;
@@ -33,8 +35,13 @@ extern unsigned long  __bss_start__;
 extern unsigned long  __bss_end__;
 extern unsigned long  __StackTop;
 
-void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
-ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
+#ifndef ZUNO_SKETCH_BUILD_TS
+#define ZUNO_SKETCH_BUILD_TS 0
+#endif
+
+//void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
+void * zunoJumpTable(int vec, void * data);
+ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID, (uint32_t)&zunoJumpTable, ZUNO_SKETCH_BUILD_TS};
 
 void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
 void *sbrk(intptr_t delta) {
@@ -278,6 +285,7 @@ void zuno_static_autosetup();
 
 
 void * zunoJumpTable(int vec, void * data) {
+   
     byte sub_handler_type = 0x00;
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
@@ -320,35 +328,6 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_IRQ:
             sub_handler_type = (uint8_t)((uint32_t)data)&0x0FF;
             break;
-        #ifdef LOGGING_DBG
-        case ZUNO_JUMPTBL_DEBUGPRINT:{
-            
-            ZUNOSysDbgMessage_t * msg = (ZUNOSysDbgMessage_t *)data;
-            LOGGING_UART.print("[");
-            LOGGING_UART.print(millis());
-            LOGGING_UART.print("] ");
-            switch(msg->type){
-                case ZUNO_DBGPRT_SYS:
-                    LOGGING_UART.print("SYS");
-                    break;
-                case ZUNO_DBGPRT_CUSTOM_ERR:
-                    LOGGING_UART.print("ERR");
-                    break;
-                case ZUNO_DBGPRT_CUSTOM_WARN:
-                    LOGGING_UART.print("WRN");
-                    break;
-                case ZUNO_DBGPRT_CUSTOM_INFO:
-                    LOGGING_UART.print("INF");
-                    break;
-                case ZUNO_DBGPRT_CUSTOM_DBG:
-                     LOGGING_UART.print("DBG");
-                    break;
-            }
-            LOGGING_UART.print(" ");
-            LOGGING_UART.println(msg->p_text);
-            }
-            break;
-         #endif
         case ZUNO_JUMPTBL_SLEEP:
             #ifdef LOGGING_DBG
             LOGGING_UART.println("!SLEEP");
@@ -494,9 +473,10 @@ void zunoSetWUPTimer(uint32_t timeout){
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
 }
+/*
 void * __zunoJTBL(int vec, void * data) {
     return zunoJumpTable(vec, data);
-}
+}*/
 
 void delay(dword ms){
     void * ret = zunoSysCall(ZUNO_FUNC_DELAY_MS, 1, ms);
@@ -747,6 +727,27 @@ void _zme_memcpy(byte * dst, byte * src, byte count)
         dst++;
     }
 }
+
+// -----------------------------------------------------------------------------------------
+// SUPERVISOR Call
+// Do not modify!!!
+__attribute__ ((noinline)) void __callSVC( ...){
+  svc(ZUNO_SYSSVC_VECTOR);
+}
+void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...){
+    zuno_svc_calldata_t call_data;
+    call_data.call_number = call_type;
+    call_data.param_count = param_num;
+    va_list argptr;
+	va_start (argptr, param_num);
+    for(int i=0;i<param_num;i++){
+        call_data.params[i] = va_arg(argptr,int);
+    }
+	va_end(argptr);
+    __callSVC(&call_data);
+    return (void*) call_data.ret_val;
+}
+// -----------------------------------------------------------------------------------------
 
 int main(){
 

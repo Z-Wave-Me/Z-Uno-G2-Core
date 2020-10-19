@@ -185,9 +185,8 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 
 // Additional libraries with "pluses"
-
-void * zunoSysCall(int vec, int num, ...);
-
+//  Supervisor call
+void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...);
 // prototypes
 void delay(dword ms);
 dword millis();

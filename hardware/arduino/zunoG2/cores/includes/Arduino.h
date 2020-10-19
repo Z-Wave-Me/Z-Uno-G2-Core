@@ -127,8 +127,6 @@ enum {
 	#define LOW                 0
 	#define LED_BUILTIN         13//PA2
 
-	#define SPI_BUS_NOMBER		1//Bus number used for SPI
-	//PA0 - PF7 - all
 	#define SCK					0//by default USART1
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
@@ -156,8 +154,33 @@ enum {
 	#define LOW                 0
 	#define LED_BUILTIN         15
 
-	#define SPI_BUS_NOMBER		1//Bus number used for SPI
-	//PA0 - PF7 - all
+	#define SCK					0//by default USART1
+	#define MISO				1//by default USART1 - RX
+	#define MOSI				2//by default USART1 - TX
+	#define SS					8//by default
+
+	#define SCK2				16//by default PA5  USART2 
+	#define MISO2				25//by default PF3 USART2 - RX
+	#define MOSI2				7//by default PF4 USART2 - TX
+	#define SS2					8//by default PF5
+#elif ZUNO_PIN_V == 4
+	#define PWM1				13
+	#define PWM2                14
+	#define PWM3                15
+	#define PWM4                16
+	#define A0                  3
+	#define A1                  4
+	#define A2                  5
+	#define A3                  6
+	#define SCL                 9
+	#define SDA                 10
+
+	#define BATTERY             0xFF
+
+	#define HIGH                1
+	#define LOW                 0
+	#define LED_BUILTIN         13
+
 	#define SCK					0//by default USART1
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
@@ -171,6 +194,8 @@ enum {
 	#define HIGH                1
 	#define LOW                 0
 	#define BATTERY             0xFF
+#else
+	#error ZUNO_PIN_V
 #endif
 
 // system data

@@ -183,6 +183,43 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 6},//28 - PC6 - green
 	{1, 15}//29 - PB15 - red
 };
+#elif ZUNO_PIN_V == 4
+#pragma message "ZUNO_PIN_V==4"
+static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	// LEFT SIDE
+	{2, 8},//0 - PC8 - 0 
+	{2, 9},//1 - PC9 - 1 
+	{5, 2},//2 - PF2  - 2 
+	{5, 6},//3 - PF6 - A0 
+	{5, 7},//4 - PF7 - A1 
+	{3, 9},//5 - PD9 - A2 
+	{3, 10},//6 - PD10 -A3
+	{5, 4},//7 - PF4 - 7
+	{5, 5},//8 - PF5 - 8
+	// RIGHT SIDE
+	{3, 11},//9 - PD11 - 9
+	{3, 12},//10 - PD12 - 10
+	{3, 14},//11 - PD14 - 11
+	{3, 15},//12 - PD15 - 12
+	{0, 0},//13 - PA0 - PWM1 and ARDURINO LED
+	{0, 1},//14 - PA1 - PWM2
+	{0, 2},//15 - PA2 - PWM3
+	{0, 3},//16 - PA3 - PWM4
+	{0, 4},//17 - PA4 - 17
+	{1, 11},//18 - PB11 - 18
+	{1, 12},//19 - PB12 - 19 
+	{1, 13},//20 - PB13 - 20 
+	{2, 6},//21 - PC6 - 21
+	{2, 7},//22 - PC7 - 22
+	{2, 10},//23 - PC10 - BTN
+	{3, 13},//24 - PD13 - TX0
+	{2, 11},//25 - PC11 - RX0
+	// DO NOT USE !!!
+	{5, 3},//26 - PF3 - USB Serial tx
+	{0, 5},//27 - PA5 - USB Serial rx
+	{1, 15}//28 - PB15 - green
+	{1, 14}//29 - PB14 - red
+};
 #elif ZUNO_PIN_V == 1000
 // Rasberi v0
 #pragma message "ZUNO_PIN_V==1000"
@@ -194,6 +231,8 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 6},//4 - C6
 	{2, 7}//5 - C7
 };
+#else
+	#error ZUNO_PIN_V
 #endif
 
 /*

@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "stdlib.h"
 #include "CrtxI2C.h"
 #include "Wire_private.h"
 
@@ -29,33 +30,48 @@ static void _setBusFreq(I2C_TypeDef *i2c, uint32_t freqScl) {
 }
 
 /* Public Constructors */
-TwoWire::TwoWire(I2C_TypeDef *i2c): _freqScl(0), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, &this->seq_buffer[0], 0, 0, 0}) {
+TwoWire::TwoWire(I2C_TypeDef *i2c): _freqScl(0), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, 0, 0, 0, 0}) {
 	if (i2c == I2C1)
 		this->_i2c_config = &i2c1_config;
 	else
 		this->_i2c_config = &i2c0_config;
 }
 
-TwoWire::TwoWire(): _freqScl(0), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, &this->seq_buffer[0], 0, 0, 0}) {
+TwoWire::TwoWire(): _freqScl(0), seq_return(i2cTransferDone), available_bytes(0), seq( {0, 0, 0, 0, 0, 0}) {
 	this->_i2c_config = &i2c0_config;
 }
 
 /* Public Methods */
-void TwoWire::begin(void) {
-	begin(0, this->_i2c_config->scl, this->_i2c_config->sda);//0 - master
+ZunoError_t TwoWire::begin(void) {
+	return (this->begin(0));//0 - master
 }
 
-void TwoWire::begin(uint8_t scl, uint8_t sda) {
-	begin(0, scl, sda);//0 - master
+ZunoError_t TwoWire::begin(uint8_t scl, uint8_t sda) {
+	return (this->begin(0, scl, sda));//0 - master
 }
 
-void TwoWire::begin(uint8_t address) {
-	begin(address, this->_i2c_config->scl, this->_i2c_config->sda);
+ZunoError_t TwoWire::begin(uint8_t address) {
+	return (this->begin(address, this->_i2c_config->scl, this->_i2c_config->sda));
 }
 
-void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
+ZunoError_t TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
+	void				*b;
+	size_t				len;
+
+	if ((b = malloc(WIRE_BUFFER_LENGTH)) == 0)
+		return (ZunoErrorMemory);
+	return (this->begin(address, scl, sda, b, WIRE_BUFFER_LENGTH));
+}
+
+ZunoError_t TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, uint16_t len) {
 	I2C_TypeDef					*i2c;
+	void						*data;
 
+	data = (void *)this->seq.buf->data;
+	if (zunoIsMalloc(data) == true)
+		free(data);
+	this->seq.buf->data = (uint8_t *)b;
+	this->_doubleBuffer_len = len;
 	this->end();
 	CMU_ClockEnable(this->_i2c_config->bus_clock, true);
 	pinMode(scl, GPIOMODE_OUTPUT_OPENDRAINPUP);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
@@ -73,7 +89,10 @@ void TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	else
 		i2c->ROUTELOC0 = ((sda == SDA1 ? 20 : 19) << _I2C_ROUTELOC0_SDALOC_SHIFT) | ((scl == SCL1 ? 18 : 19) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
 	i2c->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
+	return (ZunoErrorOk);
 }
+
+
 
 void TwoWire::beginTransmission(uint8_t address) {
 	this->beginTransmission(address, false);
@@ -98,12 +117,12 @@ size_t TwoWire::write(const uint8_t *data, size_t quantity) {
 		this->seq_return = i2cTransferDone;
 		return (0);
 	}
-	if ((len = this->seq.buf->len) + quantity > WIRE_BUFFER_LENGTH) {
+	if ((len = this->seq.buf->len) + quantity > this->_doubleBuffer_len) {
 		this->seq_return = WIRE_ERORR_TRANSMISSION_LONG_I2C;
 		return (0);
 	}
 	this->seq.buf->len = len + quantity;
-	b = &this->seq_buffer[len];
+	b = &this->seq.buf->data[len];
 	len = 0;
 	while (len < quantity) {
 		b[len] = data[len];
@@ -114,6 +133,36 @@ size_t TwoWire::write(const uint8_t *data, size_t quantity) {
 
 size_t TwoWire::write(const char *data) {
 	return (this->write((const uint8_t *)data, strlen(data)));
+}
+
+uint8_t TwoWire::transfer(uint8_t adress, void *b) {
+	this->transfer(adress, b, strlen((char *)b));
+}
+
+uint8_t TwoWire::transfer(uint8_t adress, const char *b) {
+	this->transfer(adress, (void *)b);
+}
+
+uint8_t TwoWire::transfer(uint8_t adress, void *b, uint16_t count) {
+	I2C_TypeDef							*i2c;
+	I2C_TransferReturn_TypeDef			tempos;
+	uint32_t							timeout;
+	I2C_TransferSeq_TypeDef				seq;
+
+	seq = this->seq;
+	this->seq.addr = WIRE_ADDRESS(adress);
+	this->seq.flags = I2C_FLAG_WRITE;
+	this->seq.buf->len = count;
+	this->seq.buf->data = (uint8_t *)b;
+	timeout = 0x1FFFF;
+	i2c = this->_i2c_config->i2c;
+	tempos = I2C_TransferInit(i2c, &this->seq);
+	while (tempos == i2cTransferInProgress && timeout-- != 0)
+		tempos = I2C_Transfer(i2c);
+	this->seq = seq;
+	if (tempos == i2cTransferDone)
+		return (WIRE_ERORR_TRANSMISSION_SUCCESS);
+	return (WIRE_ERORR_TRANSMISSION_OTHER);
 }
 
 uint8_t TwoWire::endTransmission(uint8_t sendStop) {
@@ -179,7 +228,7 @@ uint8_t TwoWire::read(void) {
 		return (0);
 	len = this->seq.buf->len - len;
 	this->available_bytes--;
-	return (this->seq_buffer[len]);
+	return (this->seq.buf->data[len]);
 }
 
 void TwoWire::enableTS(uint8_t on_off) {

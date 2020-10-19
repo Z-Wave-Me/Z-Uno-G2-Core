@@ -65,6 +65,12 @@ size_t HardwareSerial::write(uint8_t value) {
 		HardwareSerial Serial(1, 27, 26);// USB
 		HardwareSerial Serial1(1, 8, 7); // UART1 // Пока не поддерживается 2
 		HardwareSerial Serial0(0, 25, 24); // UART0
+	#elif ZUNO_PIN_V == 4
+		HardwareSerial Serial(1, 27, 26);// USB
+		HardwareSerial Serial1(1, 8, 7); // UART1 // Пока не поддерживается 2
+		HardwareSerial Serial0(0, 25, 24); // UART0
+	#else
+		#error ZUNO_PIN_V
 	#endif
 #elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 #else

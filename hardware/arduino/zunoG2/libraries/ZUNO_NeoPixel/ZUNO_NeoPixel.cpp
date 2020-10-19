@@ -343,52 +343,61 @@ void NeoPixel::deleteNeo(uint8_t neo_pin) {
 }
 
 ZunoNeoColor_t NeoPixel::HSV(uint16_t hue) {
-	this->HSV(hue, 255, 255);
+	this->HSV(hue, 100, 100);
 }
 
 ZunoNeoColor_t NeoPixel::HSV(uint16_t hue, uint8_t sat, uint8_t val) {
-	uint8_t					base;
+	float					r;
+	float					g;
+	float					b;
 	ZunoNeoColor_t			color;
+	float					x;
+	float					m;
+	float					c;
+	float					v;
 
-	if (sat == 0 || hue > 360) { // Achromatic color (gray).
-		color.red = val;
-		color.green = val;
-		color.blue = val;
-	} else {
-		base = ((255 - sat) * val) >> 8;
-		switch (hue / 60) {
-		case 0:
-			color.red = val;
-			color.green = (((val - base) * hue) / 60) + base;
-			color.blue = base;
-			break;
-		case 1:
-			color.red = (((val - base) * (60 - (hue % 60))) / 60) + base;
-			color.green = val;
-			color.blue = base;
-			break;
-		case 2:
-			color.red = base;
-			color.green = val;
-			color.blue = (((val - base) * (hue % 60)) / 60) + base;
-			break;
-		case 3:
-			color.red = base;
-			color.green = (((val - base) * (60 - (hue % 60))) / 60) + base;
-			color.blue = val;
-			break;
-		case 4:
-			color.red = (((val - base) * (hue % 60)) / 60) + base;
-			color.green = base;
-			color.blue = val;
-			break;
-		case 5:
-			color.red = val;
-			color.green = base;
-			color.blue = (((val - base) * (60 - (hue % 60))) / 60) + base;
-			break;
-		}
+	if (sat > 100)
+		sat = 100;
+	if (val > 100)
+		val = 100;
+	if (hue > 360)
+		hue = 360;
+	v = (float)val / 100;
+	c = v * ((float)sat / 100);
+	x = c * (1 - fabsf(fmodf(((float)hue / 60), 2) - 1));
+	m = v - c;
+	if (hue >= 0 && hue < 60) {
+		r = c;
+		g = x;
+		b = 0;
+	} else if (hue >= 60 && hue < 120) {
+		r = x;
+		g = c;
+		b = 0;
 	}
+	else if (hue >= 120 && hue < 180) {
+		r = 0;
+		g = c;
+		b = x;
+	}
+	else if (hue >= 180 && hue < 240) {
+		r = 0;
+		g = x;
+		b = c;
+	}
+	else if (hue >= 240 && hue < 300) {
+		r = x;
+		g = 0;
+		b = c;
+	} else {
+		r = c;
+		g = 0;
+		b = x;
+	}
+	color.red = (r + m) * 255;
+	color.green = (g + m) * 255;
+	color.blue = (b + m) * 255;
+	color.white = 0;
 	return (color);
 }
 

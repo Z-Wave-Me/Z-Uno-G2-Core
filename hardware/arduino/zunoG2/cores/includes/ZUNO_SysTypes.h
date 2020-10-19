@@ -89,7 +89,6 @@ typedef struct		zuno_handler_multi_thermostat_s {
 	void			*setter2;
 	uint8_t			offset;
 }					zuno_handler_multi_thermostat_t;
-
 typedef struct ZUNOSysEvent_s{
 	uint8_t event;
 	uint32_t params[2];
@@ -98,6 +97,16 @@ typedef struct ZUNOSysDbgMessage_s{
 	uint8_t type;
 	char *  p_text;
 }ZUNOSysDbgMessage_t;
+
+// Supervisor Call
+typedef struct zuno_svc_calldata_s{
+    uint8_t  call_number;
+    uint8_t  param_count;
+    uint32_t params[MAX_SYS_PARAMS];
+    uint32_t ret_val;
+}zuno_svc_calldata_t;
+
+// Handler types
 typedef void zuno_void_handler(void);
 typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);

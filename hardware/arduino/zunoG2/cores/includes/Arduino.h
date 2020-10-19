@@ -104,6 +104,8 @@ enum {
 	#define A3                  17
 	#define SCL                 24//by default PA1/RX - SCL
 	#define SDA                 23//by default and PA0/TX - SDA
+	#define SCL1                6//by default PA1/RX - SCL
+	#define SDA1                7//by default and PA0/TX - SDA
 	#define BATTERY             0xFF
 
 	#define HIGH                1
@@ -120,6 +122,8 @@ enum {
 	#define A3                  6//PD10
 	#define SCL                 9//by default PD11 I2C0
 	#define SDA                 10//by default PD12 I2C0
+	#define SCL1                 2//by default PD11 I2C0
+	#define SDA1                 24//by default PD12 I2C0
 
 	#define BATTERY             0xFF
 
@@ -147,6 +151,8 @@ enum {
 	#define A3                  6
 	#define SCL                 9
 	#define SDA                 10
+	#define SCL1                2
+	#define SDA1                24
 
 	#define BATTERY             0xFF
 
@@ -174,6 +180,8 @@ enum {
 	#define A3                  6
 	#define SCL                 9
 	#define SDA                 10
+	#define SCL1                23
+	#define SDA1                25
 
 	#define BATTERY             0xFF
 

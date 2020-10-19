@@ -36,6 +36,12 @@ extern unsigned long  __StackTop;
 void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID};
 
+uint8_t zunoIsMalloc(void *b) {
+	if (b >= (void *)&__bss_end__ && b < (void *)&__StackTop)
+		return (true);
+	return (false);
+}
+
 void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
 void *sbrk(intptr_t delta) {
 	static uint8_t		*heap_end;

@@ -31,4 +31,7 @@ const uint8_t g_loc_pf0_pf1_pf3_pf7[] = {
 	};
 
 #define INVALID_PIN_INDEX 0xFF
+
+uint8_t zunoIsMalloc(void *b);
+
 #endif

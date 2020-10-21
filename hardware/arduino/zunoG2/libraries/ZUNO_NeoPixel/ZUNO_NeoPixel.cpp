@@ -4,7 +4,6 @@
 #include "ZDma.h"
 #include "ZUNO_NeoPixel_define.h"
 #include "ZUNO_NeoPixel_private.h"
-#include "CrtxCore.h"
 
 static const ZunoNeoTypeConfig_t	usart0_config = {
 	{.usart = USART0},
@@ -337,9 +336,7 @@ ZunoError_t NeoPixel::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led) {
 }
 
 void NeoPixel::deleteNeo(uint8_t neo_pin) {
-	CORE_CRITICAL_SECTION(
-		this->_deleteNeo(neo_pin);
-	)
+	this->_deleteNeo(neo_pin);
 }
 
 ZunoNeoColor_t NeoPixel::HSV(uint16_t hue) {
@@ -470,8 +467,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 	size_t							len;
 	ZunoNeoOption_t					flag;
 
-	CORE_DECLARE_IRQ_STATE;
-	CORE_ENTER_CRITICAL();
 	flag.option = option;
 	this->_deleteNeo(neo_pin);
 	pinMode(neo_pin, OUTPUT);
@@ -480,7 +475,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &timer0_config;
 			if (this->_bInitTimer0++ == 0) {
 				if (g_bit_field.bLockTimer0 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorTimerAlredy);
 				}
 				g_bit_field.bLockTimer0 = true;
@@ -491,7 +485,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &timer1_config;
 			if (this->_bInitTimer1++ == 0) {
 				if (g_bit_field.bLockTimer1 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorTimerAlredy);
 				}
 				g_bit_field.bLockTimer1 = true;
@@ -502,7 +495,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &wtimer0_config;
 			if (this->_bInitWTimer0++ == 0) {
 				if (g_bit_field.bLockWTimer0 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorTimerAlredy);
 				}
 				g_bit_field.bLockWTimer0 = true;
@@ -513,7 +505,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &usart0_config;
 			if (this->_bInitUsart0++ == 0) {
 				if (g_bit_field.bLockUsart0 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorUsartAlredy);
 				}
 				g_bit_field.bLockUsart0 = true;
@@ -524,7 +515,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &usart1_config;
 			if (this->_bInitUsart1++ == 0) {
 				if (g_bit_field.bLockUsart1 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorUsartAlredy);
 				}
 				g_bit_field.bLockUsart1 = true;
@@ -535,7 +525,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			config = &usart2_config;
 			if (this->_bInitUsart2++ == 0) {
 				if (g_bit_field.bLockUsart2 == true) {
-					CORE_EXIT_CRITICAL();
 					return (ZunoErrorUsartAlredy);
 				}
 				g_bit_field.bLockUsart2 = true;
@@ -543,13 +532,11 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 			}
 			break ;
 		default:
-			CORE_EXIT_CRITICAL();
 			return (ZunoErrorNeo);
 			break ;
 	}
 	len = count_led * ((flag.redOffset == flag.whiteOffset) ? 3 : 4) * config->coder + 1;// + 1 LOW
 	if ((list = (ZunoNeoList_t *)malloc(sizeof(ZunoNeoList_t) + len)) == 0) {
-		CORE_EXIT_CRITICAL();
 		return (ZunoErrorMemory);
 	}
 	memset(&list->array[0], 0, len);
@@ -562,7 +549,6 @@ ZunoError_t NeoPixel::_addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_
 	if (config->type == NEO_TYPE_TIMER)
 		list->freq_timer = CMU_ClockFreqGet(config->bus_clock) / (((flag.option & NEO_KHZ400) != 0)? NEO_TIMER_HZ400 : NEO_TIMER_HZ800);//0x25317C0
 	this->_addList(list);
-	CORE_EXIT_CRITICAL();
 	return (ZunoErrorOk);
 }
 

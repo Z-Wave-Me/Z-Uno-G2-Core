@@ -156,14 +156,12 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out) {
 	}
 	if ((bitZDmaLock = this->bitZDmaLock) == 0xFF) 
 		return (ZunoErrorDma);
-	noInterrupts();
 	chZDma = 0;
 	while ((bitZDmaLock & 0x1) != 0) {
 		chZDma++;
 		bitZDmaLock = bitZDmaLock >> 1;
 	}
 	this->bitZDmaLock |= 1 << chZDma;
-	interrupts();
 	if ((list = this->_findList(chZDma)) == 0) {
 		if ((list = (ZunoZDmaList_t *)malloc(sizeof(ZunoZDmaList_t))) == 0) {
 			this->bitZDmaLock ^= 1 << chZDma;
@@ -181,7 +179,6 @@ inline void ZDMAClass::_addList(ZunoZDmaList_t *list) {
 	ZunoZDmaList_t			*list_next;
 	ZunoZDmaList_t			*list_tmp;
 
-	noInterrupts();
 	if ((list_next = this->list) != 0) {
 		while ((list_tmp = list_next->next) != 0)
 			list_next = list_tmp;
@@ -189,7 +186,6 @@ inline void ZDMAClass::_addList(ZunoZDmaList_t *list) {
 	}
 	else
 		this->list = list;
-	interrupts();
 }
 
 inline ZunoZDmaList_t *ZDMAClass::_findList(uint8_t chZDma) {

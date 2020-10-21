@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include "CrtxTimer.h"
 #include "CrtxCmu.h"
-#include "CrtxCore.h"
 #include "Tone_private.h"
 
 static void _noTone(uint8_t pin);
@@ -116,9 +115,7 @@ static void _noTone(uint8_t pin) {
 void noTone(uint8_t pin) {
 	if (pin == INVALID_PIN_INDEX)
 		return ;
-	CORE_CRITICAL_SECTION(
-		_noTone(pin);
-	);
+	_noTone(pin);
 }
 
 static uint8_t _tonePrescale(size_t freq) {
@@ -140,14 +137,11 @@ ZunoError_t tone(uint8_t pin, uint16_t freq) {
 
 	if (pin == INVALID_PIN_INDEX)
 		return (ZunoErrorInvalidPin);
-	CORE_DECLARE_IRQ_STATE;
-	CORE_ENTER_CRITICAL();
 	_analogWriteDisable(pin, _aux_findPWMChannel(pin));//disable pwm
 	lp = &g_zuno_odhw_cfg;
 	timer = TONE_TIMER;
 	if ((tone_freq_set = lp->tone_freq_set) == 0) {
 		if (TONE_TIMER_BLOCK == true) {
-			CORE_EXIT_CRITICAL();
 			return (ZunoErrorTimerAlredy);
 		}
 		TONE_TIMER_BLOCK = true;
@@ -162,12 +156,10 @@ ZunoError_t tone(uint8_t pin, uint16_t freq) {
 	}
 	if (lp->tone_pin == pin) {
 		if (lp->tone_freq == freq) {
-			CORE_EXIT_CRITICAL();
 			return (ZunoErrorOk);
 		}
 		if (freq == 0) {
 			_noTone(pin);
-			CORE_EXIT_CRITICAL();
 			return (ZunoErrorOk);
 		}
 	}
@@ -185,7 +177,6 @@ ZunoError_t tone(uint8_t pin, uint16_t freq) {
 		timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(pin, TONE_CHANNEL);
 		timer->ROUTEPEN = (1UL << TONE_CHANNEL);
 	}
-	CORE_EXIT_CRITICAL();
 	return (ZunoErrorOk);
 }
 

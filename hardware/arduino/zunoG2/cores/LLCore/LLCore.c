@@ -644,9 +644,7 @@ void delayMicroseconds(word tdelay){
 bool analogWrite(uint8_t pin, word value) {
 	bool			out;
 	
-	CORE_CRITICAL_SECTION(
-		out = _analogWrite(pin, (value > 0xFF) ? 0xFF : value);
-	);
+	out = _analogWrite(pin, (value > 0xFF) ? 0xFF : value);
 	return (out);
 }
 void WDOG_Feed(){

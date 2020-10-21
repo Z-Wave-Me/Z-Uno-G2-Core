@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include "CrtxTimer.h"
 #include "CrtxCmu.h"
-#include "CrtxCore.h"
 #include "GeneralPurposeTimer.h"
 
 #ifndef size_t
@@ -39,15 +38,13 @@ static void _timer_handler(void) {
 }
 
 void zunoGPTDeInit(void) {
-	CORE_CRITICAL_SECTION(
-		if (g_bit_field.bGPTInit == true) {
-			NVIC_DisableIRQ(GPT_TIMER_IRQ);
-			TIMER_Enable(GPT_TIMER, false);
-			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler);
-			g_bit_field.bGPTInit = false;
-			GPT_TIMER_BLOCK = false;
-		}
-	);
+	if (g_bit_field.bGPTInit == true) {
+		NVIC_DisableIRQ(GPT_TIMER_IRQ);
+		TIMER_Enable(GPT_TIMER, false);
+		zunoDetachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler);
+		g_bit_field.bGPTInit = false;
+		GPT_TIMER_BLOCK = false;
+	}
 }
 
 void zunoGPTInit(uint8_t flags) {
@@ -61,15 +58,11 @@ ZunoError_t zunoGPTEnable(uint8_t bEnable) {
 	size_t						interval;
 
 	timer = GPT_TIMER;
-	CORE_DECLARE_IRQ_STATE;
-	CORE_ENTER_CRITICAL();
 	if (g_bit_field.bGPTInit == false) {
 		if (GPT_TIMER_BLOCK == true) {
-			CORE_EXIT_CRITICAL();
 			return (ZunoErrorTimerAlredy);
 		}
 		if((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler)) != ZunoErrorOk) {
-			CORE_EXIT_CRITICAL();
 			return (ret);
 		}
 		GPT_TIMER_BLOCK = true;
@@ -82,7 +75,6 @@ ZunoError_t zunoGPTEnable(uint8_t bEnable) {
 		NVIC_EnableIRQ(GPT_TIMER_IRQ);/* Enable TIMER0 interrupt in NVIC */
 		TIMER_IntEnable(timer, TIMER_IF_OF);/* Enable TIMER0 IRQ on Overflow */
 	}
-	CORE_EXIT_CRITICAL();
 	if (bEnable == true) {
 		interval = gInterval;
 		TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(((interval != 0) ? interval : GPT_DEFAULT_INTERVAL)));

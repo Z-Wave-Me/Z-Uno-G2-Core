@@ -1,8 +1,6 @@
 #include "Arduino.h"
 #include "ZGecko.h"
 #include "CrtxGPIO.h"
-#include "CrtxCore.h"
-#include "CrtxCore.h"
 #include "GpioInterrupt.h"
 
 #define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
@@ -72,16 +70,12 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 
 	if (interruptPin == INT_SLEEPING)
 		return (ZunoErrorExtInt);
-	CORE_DECLARE_IRQ_STATE;
-	CORE_ENTER_CRITICAL();
 	if (g_bit_field.bExtInit == false) {
 		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd)) != ZunoErrorOk) {
-			CORE_EXIT_CRITICAL();
 			return (ret);
 		}
 		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven)) != ZunoErrorOk) {
 			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
-			CORE_EXIT_CRITICAL();
 			return (ret);
 		}
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
@@ -111,17 +105,14 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	port = getRealPort(interruptPin);
 	pin = getRealPin(interruptPin);
 	if ((GPIO->IEN & (1 << pin)) != 0 && port != _getPort(pin)){//Check whether this interrupt is busy or not
-		CORE_EXIT_CRITICAL();
 		return (ZunoErrorExtInt);
 	}
 	if (userFunc != 0) {
 		if ((ret = _CallbackRegister(pin, userFunc)) != ZunoErrorOk) {
-			CORE_EXIT_CRITICAL();
 			return (ret);
 		}
 	}
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
-	CORE_EXIT_CRITICAL();
 	return (ZunoErrorOk);
 }
 
@@ -137,9 +128,7 @@ void detachInterrupt(uint8_t interruptPin) {
 
 	if (interruptPin == INT_SLEEPING)
 		return ;
-	CORE_CRITICAL_SECTION(
-		pin = getRealPin(interruptPin);
-		GPIO_IntDisable(pin);
-		zunoDetachSysHandlerAllSubType(ZUNO_HANDLER_EXTINT, pin);
-	);
+	pin = getRealPin(interruptPin);
+	GPIO_IntDisable(pin);
+	zunoDetachSysHandlerAllSubType(ZUNO_HANDLER_EXTINT, pin);
 }

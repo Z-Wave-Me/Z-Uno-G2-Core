@@ -2197,6 +2197,7 @@ typedef  enum{
       cmuClock_USART2 = CMU_CLOCK_TYPE_USART2,
       cmuClock_GPIO = CMU_CLOCK_TYPE_GPIO,
 	    cmuClock_CSEN_HF = CMU_CLOCK_TYPE_CSEN_HF,
+      cmuClock_CSEN_LF = CMU_CLOCK_TYPE_CSEN_LF, 
       cmuClock_WTIMER0 = CMU_CLOCK_TYPE_WTIMER0,
 	  cmuClock_LDMA  = CMU_CLOCK_TYPE_LDMA
   } CMU_Clock_TypeDef;

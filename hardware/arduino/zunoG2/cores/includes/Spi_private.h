@@ -48,7 +48,6 @@ class SPIClass {
 		const ZunoSpiUsartTypeConfig_t		*usart_config;
 		uint32_t							clock;
 		USART_ClockMode_TypeDef				dataMode;
-		ZunoZDmaUser_t						userLp;
 		uint8_t								bitOrder;
 		uint8_t								sck_pin;
 		uint8_t								miso_pin;

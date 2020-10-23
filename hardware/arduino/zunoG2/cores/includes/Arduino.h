@@ -111,6 +111,8 @@ enum {
 	#define HIGH                1
 	#define LOW                 0
 	#define LED_BUILTIN         12 // !!! FIXME on prod
+	
+	#define ZUNO_PIN_LAST_INDEX	31
 #elif ZUNO_PIN_V == 2
 	#define PWM1				13
 	#define PWM2                14
@@ -169,6 +171,8 @@ enum {
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 4
 	#define PWM1				13
 	#define PWM2                14
@@ -198,6 +202,8 @@ enum {
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 1000
 	#define HIGH                1
 	#define LOW                 0

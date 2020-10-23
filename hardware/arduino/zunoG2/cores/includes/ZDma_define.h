@@ -459,7 +459,7 @@ typedef struct							ZunoZDmaExt_s
 
 #define ZDMA_EXT_INIT_DEFAULT			\
 {										\
-	.loop = 1		\
+	.loop = 1							\
 }
 
 #endif // ZDMA_DEFINE_H

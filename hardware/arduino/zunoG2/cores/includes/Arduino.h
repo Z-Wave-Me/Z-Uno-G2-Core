@@ -21,6 +21,7 @@
 #include "HardwareSerial.h"
 #include "ZWSupport.h"
 #include "CrtxCmu.h"
+#include "CrtxCSEN.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 typedef enum
@@ -96,6 +97,8 @@ enum {
 #define ZEROX					3
 #define INT0					17
 #define INT1					18
+
+#define ZUNO_SYSTIMER_PERIOD_MC			0xA
 
 #if ZUNO_PIN_V == 1
 	#define A0                  14

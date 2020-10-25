@@ -426,7 +426,14 @@ inline void PinBtn::_deactiveTouch(ZunoBtnTouch_t *list) {
 	uint8_t						block;
 	btn_touch_value				*blockBuffer;
 	ZunoZDmaExt_t				lpExt;
+	uint8_t						index;
 
+	index = list->index;
+
+	if (index <= 0x1F)
+		CSEN->SCANMASK0 ^= (1 << index);
+	else
+		CSEN->SCANMASK1 ^= (1 << (index - 0x20));
 	blockBuffer = this->_toushAutoScanBufferLp;
 	if ((block = --this->_bCsenInit) == 0) {
 		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_DATA, true);
@@ -434,6 +441,7 @@ inline void PinBtn::_deactiveTouch(ZunoBtnTouch_t *list) {
 		free(blockBuffer);
 		if (--this->_bSysTimerInit == 0)
 			zunoDetachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer);
+		CSEN_Disable(CSEN);
 		return ;
 	}
 	lpExt = ZDMA_EXT_INIT_DEFAULT;

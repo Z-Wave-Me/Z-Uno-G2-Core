@@ -21,7 +21,6 @@
 #include "HardwareSerial.h"
 #include "ZWSupport.h"
 #include "CrtxCmu.h"
-#include "CrtxCSEN.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 typedef enum

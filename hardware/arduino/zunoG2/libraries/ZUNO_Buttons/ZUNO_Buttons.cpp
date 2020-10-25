@@ -16,18 +16,6 @@ PinBtn::PinBtn(): _list(0), _bSysTimerInit(0), _bCsenInit(0), _touchFullClick(0)
 }
 
 /* Public Methods */
-void  PinBtn::test(void) {
-	uint8_t			i;
-	i = 0;
-	Serial0.print("CSEN:");
-	while (i < this->_bCsenInit) {
-		Serial0.print(" ");
-		Serial0.print(this->_toushAutoScanBufferLp[i++]);
-	}
-	Serial0.print("\n");
-}
-
-
 ZunoError_t PinBtn::addButton(uint8_t pin) {
 	return (this->addButton(pin, BtnTypeButton));
 }

@@ -93,13 +93,21 @@ ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripher
 
 	if (uniqId == 0)
 		return (ZunoErrorDma);
-	if (this->_findListUniqId(uniqId, &chZDma) != 0)
-		return (ZunoErrorDma);
 	if (len == 0 || (loop = lpExt->loop) == 0)
 		return (ZunoErrorOk);
-	if ((ret = this->_getZDma(&list, &chZDma)) != ZunoErrorOk)
-		return (ret);
-	list->uniqId = uniqId;
+	list = this->_findListUniqId(uniqId, &chZDma);
+	if ((lpExt->bReconfig == true)) {
+		if (list == 0)
+			return (ZunoErrorDma);
+		LDMA_StopTransfer(chZDma);
+	}
+	else {
+		if (list != 0)
+			return (ZunoErrorDma);
+		if ((ret = this->_getZDma(&list, &chZDma)) != ZunoErrorOk)
+			return (ret);
+		list->uniqId = uniqId;
+	}
 	list->len = len;
 	list->loop = (loop == ZDMA_EXT_LOOP_INFINITY) ? loop : loop - 1;
 	transfer_desc = &list->transfer_desc;

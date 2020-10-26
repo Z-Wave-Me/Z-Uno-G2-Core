@@ -9,6 +9,22 @@
 // 	#define ZUNO_ASSEMBLY_TYPE			ZUNO_UNO//default
 // #endif
 
+typedef enum
+{
+	ZunoErrorOk,//Good!!!
+	ZunoErrorTimerAlredy,//the timer is already in use
+	ZunoErrorUsartAlredy,//the usart is already in use
+	ZunoErrorExtInt,//Failed to configure interrupt
+	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
+	ZunoErrorBtnInvalidType,//Failed to change type
+	ZunoErrorBtnChangeMode,//Failed to change button operation mode
+	ZunoErrorDma,//Failed DMA
+	ZunoErrorNeo,//Failed NEO
+	ZunoErrorInvalidPin,//Invalid pin
+	ZunoErrorResourceAlready,//resource is already taken
+	ZunoErrorMemory//Failed to allocate memory
+} ZunoError_t;
+
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"
@@ -23,20 +39,6 @@
 #include "CrtxCmu.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
-typedef enum
-{
-	ZunoErrorOk,//Good!!!
-	ZunoErrorTimerAlredy,//the timer is already in use
-	ZunoErrorUsartAlredy,//the usart is already in use
-	ZunoErrorExtInt,//Failed to configure interrupt
-	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
-	ZunoErrorBtnInvalidType,//Failed to change type
-	ZunoErrorBtnChangeMode,//Failed to change button operation mode
-	ZunoErrorDma,//Failed DMA
-	ZunoErrorNeo,//Failed NEO
-	ZunoErrorInvalidPin,//Invalid pin
-	ZunoErrorMemory//Failed to allocate memory
-} ZunoError_t;
 
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */

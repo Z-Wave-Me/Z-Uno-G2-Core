@@ -42,8 +42,8 @@ public:
     word    dumpPrint(uint8_t *, uint8_t);
     uint8_t formatPrint(int n, uint8_t format);
 
-    virtual size_t write(uint8_t) = 0;
-    virtual size_t write(const uint8_t *buffer, size_t size);
+    virtual uint8_t write(uint8_t) = 0;
+    virtual size_t write(const uint8_t *buffer, size_t size) = 0;
 
     size_t write(const char *str);
     size_t write(const char *buffer, size_t size) {

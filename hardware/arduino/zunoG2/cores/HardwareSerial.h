@@ -4,32 +4,30 @@
 #include "Stream.h"
 
 class HardwareSerial : public Stream {
-	
-	private:
-		
-		byte serial_num;
-		ZUNOUARTOptions_t uart_conf;
-
 	public:
-
-		HardwareSerial(byte number, byte rx, byte tx);  // bfn = like ZUNO_FUNC_SERIAL1_BEGIN
-
-		void begin(DWORD baudrate = 115200);
-    	void begin(DWORD baudrate, byte, byte);
-    	void end();
-    	virtual size_t available(void);
-    	virtual int peek(void);
-    	virtual uint8_t read(void);
-   		//virtual void flush(void);
-
-    	virtual size_t write(uint8_t);
-
-    	uint8_t write(unsigned long n) {  write((uint8_t)n); return 1; }
-    	uint8_t write(long n) { write((uint8_t)n); return 1; }
-    	uint8_t write(unsigned int n) { write((uint8_t)n); return 1; }
-    	uint8_t write(int n) { write((uint8_t)n); return 1; }
-
-
+		HardwareSerial(uint8_t number, uint8_t rx, uint8_t tx);
+		HardwareSerial(uint8_t numberConfig);
+		ZunoError_t								begin(void);
+		ZunoError_t								begin(size_t baudrate);
+		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx);
+		void									end();
+		uint8_t									write(unsigned long value);
+		uint8_t									write(long value);
+		uint8_t									write(unsigned int value);
+		uint8_t									write(int value);
+		virtual uint8_t							write(uint8_t value);
+		virtual size_t							write(const uint8_t *b, size_t count);
+		virtual size_t available(void);
+		virtual int peek(void);
+		virtual uint8_t read(void);
+	private:
+		size_t					_baudrate;
+		uint8_t					_numberConfig;
+		struct
+		{
+			uint8_t				_bLockUsart: 1;
+		};
+		byte serial_num;
 };
 
 extern HardwareSerial Serial;

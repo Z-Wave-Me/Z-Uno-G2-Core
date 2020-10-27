@@ -11,6 +11,7 @@ class HardwareSerial : public Stream {
 		ZunoError_t								begin(size_t baudrate);
 		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx);
 		void									end();
+		size_t									printf(const char *format, ...);
 		uint8_t									write(unsigned long value);
 		uint8_t									write(long value);
 		uint8_t									write(unsigned int value);

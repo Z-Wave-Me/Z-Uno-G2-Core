@@ -90,11 +90,20 @@ SECTIONS
     _sketch_code_start = . ;
     *(.rodata.*)
     *(.text*)
+
+	_write = . ;
+	KEEP(*(._write))
+	_close = . ;
+	KEEP(*(._close))
+	_lseek = . ;
+	KEEP(*(._lseek))
+	_read = . ;
+	KEEP(*(._read))
 	_sbrk = .;
 	KEEP(*(._sbrk))
+
     KEEP(*(.init))
     KEEP(*(.fini))
-
     /* .ctors */
     *crtbegin.o(.ctors)
     *crtbegin?.o(.ctors)

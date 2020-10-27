@@ -1,4 +1,6 @@
 #include "Arduino.h"
+#include "stdio.h"
+#include "stdarg.h"
 #include "ZDma.h"
 #include "CrtxUSART.h"
 #include "HardwareSerial.h"
@@ -50,7 +52,8 @@
 	#error Set ZUNO_ASSEMBLY_TYPE
 #endif
 
-#define HARDWARE_SERIAL_UNIQ_ZDMA			((size_t)&this->_numberConfig)
+#define HARDWARE_SERIAL_UNIQ_ZDMA_WRITE			((size_t)&this->_numberConfig)
+#define HARDWARE_SERIAL_UNIQ_ZDMA_READ			((size_t)&this->_baudrate)
 
 typedef struct							ZunoHardwareSerialConfig_s
 {
@@ -180,10 +183,20 @@ uint8_t HardwareSerial::read(void) {
 	zunoSysCall(ZUNO_FUNC_SERIAL_READ, 4, serial_num, true, &readval, 1);
 	return readval;
 }
+
+size_t HardwareSerial::printf(const char *format, ...) {
+	va_list				args;
+
+	va_start (args, format);
+	vdprintf(this->_numberConfig, format, args);
+	va_end (args);
+	return (0);
+}
+
 uint8_t HardwareSerial::write(uint8_t value) {
 	if (this->_bLockUsart == false)
 		return (0);
-	USART_SpiTransfer(gConfig[this->_numberConfig].usart, value);
+	USART_Tx(gConfig[this->_numberConfig].usart, value);
 	return (1);
 }
 
@@ -213,13 +226,13 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 		return (0);
 	config = &gConfig[this->_numberConfig];
 	usart = config->usart;
-	if (count > HARDWARE_SERIAL_MIN_WRITE_ZDMA && ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
+	if (count > HARDWARE_SERIAL_MIN_WRITE_ZDMA && ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
 		baudrate = this->_baudrate / 1000;
-		if (baudrate != 0 && (baudrate = baudrate * 4 / baudrate) != 0)
+		if (baudrate != 0 && (baudrate = baudrate * 8 / baudrate) != 0)
 			delay(baudrate);
-		while (ZDMA.isProcessing(HARDWARE_SERIAL_UNIQ_ZDMA) == true)
+		while (ZDMA.isProcessing(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE) == true)
 			__NOP();
-		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
+		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
 			__NOP();
 	}
 	else {

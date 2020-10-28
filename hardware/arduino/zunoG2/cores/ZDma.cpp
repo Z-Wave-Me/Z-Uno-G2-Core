@@ -92,18 +92,18 @@ ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripher
 	uint8_t					chZDma;
 
 	if (uniqId == 0)
-		return (ZunoErrorDma);
+		return (ZunoErrorInvalidValue);
 	if (len == 0 || (loop = lpExt->loop) == 0)
 		return (ZunoErrorOk);
 	list = this->_findListUniqId(uniqId, &chZDma);
 	if ((lpExt->bReconfig == true)) {
 		if (list == 0)
-			return (ZunoErrorDma);
+			return (ZunoErrorInvalidValue);
 		LDMA_StopTransfer(chZDma);
 	}
 	else {
 		if (list != 0)
-			return (ZunoErrorDma);
+			return (ZunoErrorInvalidValue);
 		if ((ret = this->_getZDma(&list, &chZDma)) != ZunoErrorOk)
 			return (ret);
 		list->uniqId = uniqId;
@@ -233,7 +233,7 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, uint8_t *outch
 		LDMA_Init(&ldmaInit);
 	}
 	if ((bitZDmaLock = this->bitZDmaLock) == 0xFF) 
-		return (ZunoErrorDma);
+		return (ZunoErrorDmaLimitChannel);
 	chZDma = 0;
 	while ((bitZDmaLock & 0x1) != 0) {
 		chZDma++;

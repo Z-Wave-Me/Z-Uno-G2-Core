@@ -228,8 +228,9 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	usart = config->usart;
 	if (count > HARDWARE_SERIAL_MIN_WRITE_ZDMA && ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
 		baudrate = this->_baudrate / 1000;
-		if (baudrate != 0 && (baudrate = baudrate * 8 / baudrate) != 0)
-			delay(baudrate);
+		if (baudrate != 0)
+			baudrate = baudrate * 8 / baudrate;
+		delay((baudrate == 0)? 1 : baudrate);
 		while (ZDMA.isProcessing(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE) == true)
 			__NOP();
 		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */

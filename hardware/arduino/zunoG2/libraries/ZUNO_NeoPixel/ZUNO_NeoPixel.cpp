@@ -286,7 +286,7 @@ void NeoPixel::show(uint8_t neo_pin) {
 	delayMicroseconds(NEO_RESET_MICROSECONDS);
 	uniqId = (size_t)&this->_list;
 	if (ZDMA.toMemoryPeripheral(uniqId, config->dmaSignal, config->dst, &list->array[0], len, zdmaData8) == ZunoErrorOk) {
-		delay(freq);
+		delay((freq == 0)? 1 : freq);
 		while (ZDMA.isProcessing(uniqId) == true)
 			__NOP();
 	}

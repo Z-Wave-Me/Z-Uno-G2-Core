@@ -18,7 +18,8 @@ typedef enum
 	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
 	ZunoErrorBtnInvalidType,//Failed to change type
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
-	ZunoErrorDma,//Failed DMA
+	ZunoErrorInvalidValue,
+	ZunoErrorDmaLimitChannel,//
 	ZunoErrorNeo,//Failed NEO
 	ZunoErrorInvalidPin,//Invalid pin
 	ZunoErrorResourceAlready,//resource is already taken

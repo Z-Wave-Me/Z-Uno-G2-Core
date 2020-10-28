@@ -282,6 +282,11 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
+//
+#include "stdlib.h"
+void *malloc(size_t size);
+void free(void *ptr);
+
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
 

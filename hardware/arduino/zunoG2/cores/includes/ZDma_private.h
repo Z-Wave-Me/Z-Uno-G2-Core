@@ -27,6 +27,7 @@ class ZDMAClass {
 		ZunoError_t								toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
 		uint8_t									isProcessing(size_t uniqId);
 		void									stopTransfer(size_t uniqId, uint8_t bForce);
+		size_t									transferRemainingCount(size_t uniqId);
 	
 	private:
 		ZunoError_t								_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt);

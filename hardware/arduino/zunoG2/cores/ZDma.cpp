@@ -44,6 +44,15 @@ uint8_t ZDMAClass::isProcessing(size_t uniqId) {
 	return (true);
 }
 
+size_t ZDMAClass::transferRemainingCount(size_t uniqId) {
+	ZunoZDmaList_t			*list;
+	uint8_t					chZDma;
+
+	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
+		return (0);
+	return (LDMA_TransferRemainingCount(chZDma) + list->counter);
+}
+
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
 	ZunoZDmaList_t			*list;
 	uint8_t					chZDma;

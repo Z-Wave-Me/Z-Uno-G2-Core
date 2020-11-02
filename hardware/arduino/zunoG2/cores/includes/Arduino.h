@@ -219,7 +219,8 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 
 // Additional libraries with "pluses"
 //  Supervisor call
-void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...);
+//void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...);
+extern zuno_syscall_func_t * zunoSysCall;
 // prototypes
 void delay(dword ms);
 dword millis();

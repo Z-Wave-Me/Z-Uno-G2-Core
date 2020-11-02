@@ -25,34 +25,16 @@ static uint8_t _getPort(uint8_t pin) {
 	return (port);
 }
 
-static void _IRQDispatcher(uint32_t iflags) {
+static void _IRQDispatcher(void * p) {
 	uint32_t						irqIdx;
-	uint32_t						intFlags;
-
-	intFlags = iflags;
+	uint32_t iflags = (uint32_t)p;
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
 		g_zuno_odhw_cfg.ExtPin = getPin(_getPort(irqIdx), irqIdx);
 		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx);
 	}
-	GPIO_IntClear(intFlags);/* Clean interrupts. */
 }
-
-static void _IRQHandlerOdd(void) {
-	uint32_t				iflags;
-
-	iflags = GPIO_IntGetEnabled() & 0x0000AAAA;/* Get all odd interrupts. */
-	_IRQDispatcher(iflags);
-}
-
-static void _IRQHandlerEven(void) {
-	uint32_t				iflags;
-
-	iflags = GPIO_IntGetEnabled() & 0x00005555;/* Get all even interrupts. */
-	_IRQDispatcher(iflags);
-}
-
 static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
 	return (zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc));
 }
@@ -71,11 +53,11 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	if (interruptPin == INT_SLEEPING)
 		return (ZunoErrorExtInt);
 	if (g_bit_field.bExtInit == false) {
-		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd)) != ZunoErrorOk) {
+		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) != ZunoErrorOk) {
 			return (ret);
 		}
-		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQHandlerEven)) != ZunoErrorOk) {
-			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQHandlerOdd);
+		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQDispatcher)) != ZunoErrorOk) {
+			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher);
 			return (ret);
 		}
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);

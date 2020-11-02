@@ -41,16 +41,16 @@ typedef struct ZUNODeviceConfiguation_s {
 }ZUNODeviceConfiguation_t;
 // Z-Wave packet
 typedef struct ZUNOCommandPacket_s{
-	uint8_t   flags;
-	uint8_t * cmd;
-	uint8_t   len;
-	uint8_t   src_zw_channel;
-	uint8_t   dst_zw_channel;
-	uint8_t   src_node;
-	uint8_t   dst_node;
-	uint8_t   zw_rx_opts;
-	uint8_t   zw_rx_secure_opts;
-}ZUNOCommandPacket_t;
+	uint8_t * cmd;   // 4B
+	uint8_t   flags; // 5B
+	uint8_t   len;   // 6B
+	uint8_t   src_zw_channel;// 7
+	uint8_t   dst_zw_channel;// 8
+	uint8_t   src_node;// 9
+	uint8_t   dst_node;// 10
+	uint8_t   zw_rx_opts;// 11
+	uint8_t   zw_rx_secure_opts;//12
+} __attribute__((aligned(1),packed)) ZUNOCommandPacket_t;
 // System variables mapping
 typedef struct ZUNOSetupSysState_s {
 	uint8_t reset_reason;
@@ -90,7 +90,7 @@ typedef struct		zuno_handler_multi_thermostat_s {
 	uint8_t			offset;
 }					zuno_handler_multi_thermostat_t;
 typedef struct ZUNOSysEvent_s{
-	uint8_t event;
+	uint32_t event;
 	uint32_t params[2];
 }ZUNOSysEvent_t;
 typedef struct ZUNOSysDbgMessage_s{
@@ -108,11 +108,15 @@ typedef struct zuno_svc_calldata_s{
 
 // Handler types
 typedef void zuno_void_handler(void);
+typedef void zuno_irq_handler(void *p);
 typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 typedef void zuno_configuartionhandler_t(uint8_t, uint32_t);
 typedef void *zuno_battery_handler_t(void);
+//void * (* zunoSysCall) (uint8_t call_type, uint8_t param_num, ...) = ZUNO_SYSCALL_ADDR;
+
+typedef void *zuno_syscall_func_t(uint8_t ct, uint8_t n, ...);
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{

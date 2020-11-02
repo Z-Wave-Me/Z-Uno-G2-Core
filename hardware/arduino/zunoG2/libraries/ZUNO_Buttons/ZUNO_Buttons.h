@@ -8,7 +8,8 @@ class PinBtn {
 		PinBtn();
 		ZunoError_t				addButton(uint8_t pin);
 		ZunoError_t				addButton(uint8_t pin, ZunoBtnType_t type);
-		ZunoError_t				addButton(uint8_t pin, ZunoBtnType_t type, ZunoBtnButtonInit_t *init);
+		ZunoError_t				addButton(uint8_t pin, ZunoBtnButtonInit_t *init);
+		ZunoError_t				addButton(uint8_t pin, ZunoBtnTouchInit_t *init);
 		void					deleteButton(uint8_t pin);
 		uint8_t					isSingleClick(uint8_t pin);
 		uint8_t					isDoubleClick(uint8_t pin);
@@ -16,6 +17,7 @@ class PinBtn {
 		uint8_t					isLongClick(uint8_t pin);
 		uint8_t					isReleased(uint8_t pin);
 		uint8_t					isFree(uint8_t pin);
+		void					test(void);
 };
 
 extern PinBtn Btn;

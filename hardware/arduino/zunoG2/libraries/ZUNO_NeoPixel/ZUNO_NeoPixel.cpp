@@ -246,10 +246,10 @@ void NeoPixel::show(uint8_t neo_pin) {
 	size_t							base;
 	ZunoNeoList_t					*list;
 	const ZunoNeoTypeConfig_t		*config;
-	ZunoZDmaUser_t					userLp;
 	ZunoNeoOption_t					flag;
 	ZunoNeoCountLed					len;
 	size_t							freq;
+	size_t							uniqId;
 
 	if ((list = this->_findList(neo_pin)) == 0 || (len = list->count_led) == 0)
 		return ;
@@ -284,9 +284,10 @@ void NeoPixel::show(uint8_t neo_pin) {
 			break;
 	}
 	delayMicroseconds(NEO_RESET_MICROSECONDS);
-	if (ZDMA.toMemoryPeripheral(&userLp, config->dmaSignal, config->dst, &list->array[0], len, zdmaData8) == ZunoErrorOk) {
-		delay(freq);
-		while (userLp.bProcessing == true)
+	uniqId = (size_t)&this->_list;
+	if (ZDMA.toMemoryPeripheral(uniqId, config->dmaSignal, config->dst, &list->array[0], len, zdmaData8) == ZunoErrorOk) {
+		delay((freq == 0)? 1 : freq);
+		while (ZDMA.isProcessing(uniqId) == true)
 			__NOP();
 	}
 	switch (config->type) {
@@ -294,6 +295,8 @@ void NeoPixel::show(uint8_t neo_pin) {
 			TIMER_Enable(((TIMER_TypeDef *)base), false);
 			break;
 		case NEO_TYPE_USART:
+			while (!(((USART_TypeDef *)base)->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
+				__NOP();
 			USART_Enable(((USART_TypeDef *)base), usartDisable);
 			break;
 	}

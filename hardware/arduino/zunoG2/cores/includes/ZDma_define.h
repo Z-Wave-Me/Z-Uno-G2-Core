@@ -441,16 +441,6 @@ typedef enum {
   #endif
 } ZDMA_PeripheralSignal_t;
 
-typedef enum {
-	zdmaDirectionMemToPeripheral,
-	zdmaDirectionPeripheralToMem
-} ZDmaDirection_t;
-
-typedef enum {
-	zdmaModeBasic,
-	zdmaModePingPong
-} ZDmaMode_t;
-
 /// Data size of one LDMA transfer item.
 typedef enum {
 	zdmaData8 = ldmaCtrlSizeByte, ///< Byte
@@ -458,10 +448,25 @@ typedef enum {
 	zdmaData32 = ldmaCtrlSizeWord  ///< Word
 } ZDma_DataSize_t;
 
-typedef struct							ZunoZDmaUser_s
-{
-	uint8_t								bProcessing;
-}										ZunoZDmaUser_t;
 
+typedef struct							ZunoZDmaExt_s
+{
+	size_t								loop;
+	struct
+	{
+		uint8_t							bReconfig: 1;
+	};
+}										ZunoZDmaExt_t;
+
+
+#define ZDMA_EXT_LOOP_INFINITY			((size_t)-1)
+
+#define ZDMA_EXT_INIT_DEFAULT			\
+{										\
+	.loop = 1,							\
+	{									\
+		.bReconfig = false				\
+	}									\
+}
 
 #endif // ZDMA_DEFINE_H

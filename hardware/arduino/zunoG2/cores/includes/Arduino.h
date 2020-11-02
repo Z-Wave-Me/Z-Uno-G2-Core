@@ -107,15 +107,25 @@ enum {
 	#define A1                  15
 	#define A2                  16
 	#define A3                  17
+
 	#define SCL                 24//by default PA1/RX - SCL
 	#define SDA                 23//by default and PA0/TX - SDA
 	#define SCL1                6//by default PA1/RX - SCL
 	#define SDA1                7//by default and PA0/TX - SDA
+
+	#define RX0					11
+	#define TX0					7
+	#define RX1					13
+	#define TX1					12
+	#define RX2					20
+	#define TX2					10
+
 	#define BATTERY             0xFF
 
 	#define HIGH                1
 	#define LOW                 0
-	#define LED_BUILTIN         12 // !!! FIXME on prod
+
+	#define LED_BUILTIN         12
 	
 	#define ZUNO_PIN_LAST_INDEX	31
 #elif ZUNO_PIN_V == 2
@@ -123,20 +133,23 @@ enum {
 	#define PWM2                14
 	#define PWM3                15
 	#define PWM4                16
+
 	#define A0                  3//PF6
 	#define A1                  4//PF7
 	#define A2                  5//PD9
 	#define A3                  6//PD10
+
 	#define SCL                 9//by default PD11 I2C0
 	#define SDA                 10//by default PD12 I2C0
 	#define SCL1                 2//by default PD11 I2C0
 	#define SDA1                 24//by default PD12 I2C0
 
-	#define BATTERY             0xFF
-
-	#define HIGH                1
-	#define LOW                 0
-	#define LED_BUILTIN         13//PA2
+	#define RX0					25
+	#define TX0					24
+	#define RX1					8
+	#define TX1					7
+	#define RX2					26
+	#define TX2					27
 
 	#define SCK					0//by default USART1
 	#define MISO				1//by default USART1 - RX
@@ -147,35 +160,53 @@ enum {
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define BATTERY             0xFF
+
+	#define HIGH                1
+	#define LOW                 0
+
+	#define LED_BUILTIN         13
+
+	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 3
 	#define PWM1				13
 	#define PWM2                14
 	#define PWM3                15
 	#define PWM4                16
+
 	#define A0                  3
 	#define A1                  4
 	#define A2                  5
 	#define A3                  6
+
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                2
 	#define SDA1                24
 
-	#define BATTERY             0xFF
-
-	#define HIGH                1
-	#define LOW                 0
-	#define LED_BUILTIN         15
+	#define RX0					25
+	#define TX0					24
+	#define RX1					8
+	#define TX1					7
+	#define RX2					27
+	#define TX2					26
 
 	#define SCK					0//by default USART1
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
-
 	#define SCK2				16//by default PA5  USART2 
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define BATTERY             0xFF
+
+	#define HIGH                1
+	#define LOW                 0
+
+	#define LED_BUILTIN         15
 
 	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 4
@@ -183,30 +214,39 @@ enum {
 	#define PWM2                14
 	#define PWM3                15
 	#define PWM4                16
+
 	#define A0                  3
 	#define A1                  4
 	#define A2                  5
 	#define A3                  6
+
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
 	#define SDA1                25
 
-	#define BATTERY             0xFF
-
-	#define HIGH                1
-	#define LOW                 0
-	#define LED_BUILTIN         13
+	#define RX0					25
+	#define TX0					24
+	#define RX1					8
+	#define TX1					7
+	#define RX2					27
+	#define TX2					26
 
 	#define SCK					0//by default USART1
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
-
 	#define SCK2				16//by default PA5  USART2 
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define BATTERY             0xFF
+
+	#define HIGH                1
+	#define LOW                 0
+
+	#define LED_BUILTIN         13
 
 	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 1000

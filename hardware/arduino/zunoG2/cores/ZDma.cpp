@@ -80,7 +80,7 @@ ZunoError_t ZDMAClass::_transfer(ZunoZDmaUser_t *userLp, ZDMA_PeripheralSignal_t
 	return (ZunoErrorOk);
 }
 
-void ZDMAClass::_LDMA_IRQHandler(void) {
+void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	LDMA_Descriptor_t	*transfer_desc;
 	size_t				pending;
 	size_t				chZDma;
@@ -88,7 +88,7 @@ void ZDMAClass::_LDMA_IRQHandler(void) {
 	ZunoZDmaList_t		*list;
 	size_t				len;
 
-	pending = LDMA_IntGetEnabled();
+	pending = (uint32_t) param;//LDMA_IntGetEnabled();
 	if (pending & LDMA_IF_ERROR)/* Check for LDMA error. */
 		while (true)/* Loop to enable debugger to see what has happened. */
 			__NOP();/* Wait forever. */
@@ -117,7 +117,7 @@ void ZDMAClass::_LDMA_IRQHandler(void) {
 				transfer_desc[0].xfer.srcAddr = transfer_desc[1].xfer.srcAddr + transfer_desc[1].xfer.xferCnt + 1;
 				list->len = ZDMA._modeBasicLen(transfer_desc, len);
 			}
-			LDMA_IntClear(chmask);
+			//LDMA_IntClear(chmask);
 		}
 		chZDma++;
 	}

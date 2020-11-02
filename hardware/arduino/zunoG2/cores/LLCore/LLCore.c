@@ -26,8 +26,6 @@
 #define SKETCH_FLAGS 0x00
 #endif
 
-#define svc(code) asm volatile ("svc %[immediate]"::[immediate] "I" (code))
-
 extern unsigned long  __etext;
 extern unsigned long  __data_start__;
 extern unsigned long  __data_end__;
@@ -39,7 +37,7 @@ extern unsigned long  __StackTop;
 #define ZUNO_SKETCH_BUILD_TS 0
 #endif
 
-//void * __zunoJTBL(int vec, void * data) __attribute__((section(".sketch_jmptbl")));
+zuno_syscall_func_t * zunoSysCall = (zuno_syscall_func_t*)ZUNO_SYSCALL_ADDR;
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID, (uint32_t)&zunoJumpTable, ZUNO_SKETCH_BUILD_TS};
 
@@ -327,7 +325,7 @@ void LLDestroy() {
 // this is managing using "preproc" util
 void zuno_static_autosetup();
 #endif
-
+//unsigned long g_irq_couter = 0;
 
 void * zunoJumpTable(int vec, void * data) {
    
@@ -364,14 +362,22 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(evnt->params[0], HEX);
                 LOGGING_UART.print(" ");
                 LOGGING_UART.println(evnt->params[1], HEX);
+                //LOGGING_UART.println("SYSEV!");  
             }
             break;
         #endif
         case ZUNO_JUMPTBL_SYSTIMER:
-            zuno_CCTimer((uint32_t)data);
+            WDOG_Feed();
+            zuno_CCTimer(((uint32_t*)data)[0]);
             break;
         case ZUNO_JUMPTBL_IRQ:
-            sub_handler_type = (uint8_t)((uint32_t)data)&0x0FF;
+            sub_handler_type = (uint8_t)(((uint32_t*)data)[0])&0x0FF;
+            //g_irq_couter++;
+            /*
+            LOGGING_UART.print("\n   IRQ TYPE:");
+            LOGGING_UART.print(sub_handler_type,HEX);
+            LOGGING_UART.print(" PARAM:");
+            LOGGING_UART.println(((uint32_t*)data)[1],HEX);*/
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #ifdef LOGGING_DBG
@@ -420,9 +426,15 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
                         va_end (args);
                         break;
+                    case ZUNO_HANDLER_IRQ:{
+                            va_start (args, sub_type);
+                            uint32_t interrupt_param = va_arg(args,uint32_t*)[1];
+                            ((zuno_irq_handler*)(base_addr))((void*)interrupt_param);
+                            va_end (args);
+                        }
+                        break;
 					case ZUNO_HANDLER_GPT:
 					case ZUNO_HANDLER_EXTINT:
-                    case ZUNO_HANDLER_IRQ:
                     case ZUNO_HANDLER_SLEEP:
                     case ZUNO_HANDLER_WUP:
                         ((zuno_void_handler*)(base_addr))();
@@ -770,27 +782,6 @@ void _zme_memcpy(byte * dst, byte * src, byte count)
         dst++;
     }
 }
-
-// -----------------------------------------------------------------------------------------
-// SUPERVISOR Call
-// Do not modify!!!
-__attribute__ ((noinline)) void __callSVC( ...){
-  svc(ZUNO_SYSSVC_VECTOR);
-}
-void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...){
-    zuno_svc_calldata_t call_data;
-    call_data.call_number = call_type;
-    call_data.param_count = param_num;
-    va_list argptr;
-	va_start (argptr, param_num);
-    for(int i=0;i<param_num;i++){
-        call_data.params[i] = va_arg(argptr,int);
-    }
-	va_end(argptr);
-    __callSVC(&call_data);
-    return (void*) call_data.ret_val;
-}
-// -----------------------------------------------------------------------------------------
 
 int main(){
 

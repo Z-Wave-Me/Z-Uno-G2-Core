@@ -21,7 +21,7 @@ static volatile uint8_t			gTopSetPrescale = 0;
 static volatile uint8_t			gFlags = 0;
 
 
-static void _timer_handler(void) {
+static void _timer_handler(void * p) {
 	TIMER_TypeDef				*timer;
 	size_t						interval;
 
@@ -34,7 +34,6 @@ static void _timer_handler(void) {
 			TIMER_TopSet(GPT_TIMER, GPT_TOP_SET_FREQ(interval));
 	}
 	zunoSysHandlerCall(ZUNO_HANDLER_GPT, ZUNO_GPT_BASIC);
-	TIMER_IntClear(timer, TIMER_IF_OF);/* Clear the interrupt flag in the beginning */
 }
 
 void zunoGPTDeInit(void) {
@@ -72,6 +71,7 @@ ZunoError_t zunoGPTEnable(uint8_t bEnable) {
 		timerInit = TIMER_INIT_DEFAULT;
 		timerInit.enable = false;
 		TIMER_Init(timer, &timerInit);
+		NVIC_SetPriority(GPT_TIMER_IRQ,5);
 		NVIC_EnableIRQ(GPT_TIMER_IRQ);/* Enable TIMER0 interrupt in NVIC */
 		TIMER_IntEnable(timer, TIMER_IF_OF);/* Enable TIMER0 IRQ on Overflow */
 	}

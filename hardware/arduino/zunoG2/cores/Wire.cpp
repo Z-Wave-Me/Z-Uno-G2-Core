@@ -58,19 +58,11 @@ static void _I2C_IRQHandler(const ZunoWireI2CTypeConfig_t *i2c_config, size_t fl
 	ZDMA.stopTransfer(uniqId, true);
 }
 
-void _I2C1_IRQHandler(void) {
-	size_t					flags;
-
-	flags = I2C_IntGetEnabled(i2c1_config.i2c);
-	I2C_IntClear(i2c1_config.i2c, flags);
+void _I2C1_IRQHandler(size_t flags) {
 	_I2C_IRQHandler(&i2c1_config, flags);
 }
 
-void _I2C0_IRQHandler(void) {
-	size_t					flags;
-
-	flags = I2C_IntGetEnabled(i2c0_config.i2c);
-	I2C_IntClear(i2c0_config.i2c, flags);
+void _I2C0_IRQHandler(size_t flags) {
 	_I2C_IRQHandler(&i2c0_config, flags);
 }
 

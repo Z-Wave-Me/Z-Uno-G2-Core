@@ -606,7 +606,7 @@ inline void PinBtn::_updateTimerTouch(size_t time_now, ZunoBtnHeader_t *list) {
 	_updateTimerCommon(time_now, list, pressed);
 }
 
-void PinBtn::_updateExtIntButton(void) {
+void PinBtn::_updateExtIntButton(uint8_t pinExtInt) {
 	ZunoBtnButton_t						*list;
 	size_t								time_now;
 	size_t								time_diff;
@@ -614,7 +614,7 @@ void PinBtn::_updateExtIntButton(void) {
 	size_t								delayDebounce;
 	ZunoBtnStateButton_t				state_next;
 
-	list = (ZunoBtnButton_t *)Btn._findList(g_zuno_odhw_cfg.ExtPin);
+	list = (ZunoBtnButton_t *)Btn._findList(pinExtInt);
 	pressed = digitalRead(list->header.pin);
 	if (list->bInvert == true)
 		pressed = !pressed;

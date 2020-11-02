@@ -246,7 +246,6 @@ void TwoWire::end(void) {
 }
 
 /* Private Methods */
-
 ZunoError_t TwoWire::_begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, wire_buffer_len len, uint8_t bufferFree) {
 	const ZunoWireI2CTypeConfig_t		*i2c_config;
 	I2C_TypeDef							*i2c;

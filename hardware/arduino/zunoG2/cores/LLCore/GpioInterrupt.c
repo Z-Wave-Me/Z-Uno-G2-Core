@@ -31,8 +31,7 @@ static void _IRQDispatcher(void * p) {
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
-		g_zuno_odhw_cfg.ExtPin = getPin(_getPort(irqIdx), irqIdx);
-		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx);
+		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx, getPin(_getPort(irqIdx), irqIdx));
 	}
 }
 static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {

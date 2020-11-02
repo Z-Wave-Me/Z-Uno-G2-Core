@@ -86,7 +86,7 @@ class PinBtn {
 		void					_deactiveButton(ZunoBtnButton_t *list);
 		inline void				_deactiveTouch(ZunoBtnTouch_t *list);
 		static void				_updateTimer(void);
-		static void				_updateExtIntButton(void);
+		static void				_updateExtIntButton(uint8_t pinExtInt);
 		inline void				_updateTimerButtom(size_t time_now, ZunoBtnHeader_t *list);
 		inline void				_updateTimerTouch(size_t time_now, ZunoBtnHeader_t *list);
 		ZunoError_t				_initList(ZunoBtnHeader_t *list, uint8_t pin, ZunoBtnType_t type, void *init, uint8_t bNew);

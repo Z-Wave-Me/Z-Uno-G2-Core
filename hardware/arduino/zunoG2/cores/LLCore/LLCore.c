@@ -478,8 +478,12 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                             va_end (args);
                         }
                         break;
-					case ZUNO_HANDLER_GPT:
 					case ZUNO_HANDLER_EXTINT:
+						va_start (args, sub_type);
+                        ((zuno_void_handler_ext_int*)(base_addr))((uint8_t)va_arg(args,size_t));
+						va_end (args);
+                        break;
+					case ZUNO_HANDLER_GPT:
                     case ZUNO_HANDLER_SLEEP:
                     case ZUNO_HANDLER_WUP:
                         ((zuno_void_handler*)(base_addr))();

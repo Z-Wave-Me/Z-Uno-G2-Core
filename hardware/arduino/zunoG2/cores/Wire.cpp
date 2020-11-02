@@ -101,37 +101,6 @@ ZunoError_t TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, w
 	return (this->_begin(address, scl, sda, b, len, false));
 }
 
-ZunoError_t TwoWire::_begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, wire_buffer_len len, uint8_t bufferFree) {
-	const ZunoWireI2CTypeConfig_t		*i2c_config;
-	I2C_TypeDef							*i2c;
-
-	if (this->_bufferFree == true)
-		free(this->_buffer);
-	this->_bufferFree = bufferFree;
-	this->_buffer = (uint8_t *)b;
-	this->_buffer_max = len;
-	this->end();
-	i2c_config = this->_i2c_config;
-	CMU_ClockEnable(i2c_config->bus_clock, true);
-	pinMode(scl, GPIOMODE_OUTPUT_OPENDRAINPUP);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
-	pinMode(sda, GPIOMODE_OUTPUT_OPENDRAINPUP);
-	i2c = i2c_config->i2c;
-	i2c->CTRL = I2C_CTRL_CLTO_320PCC//Enable the Clock Low Timeout counter.
-	| I2C_CTRL_AUTOSE | I2C_CTRL_AUTOACK//Auto Stop and Ack
-	| (((address == 0) ? 0 : 1) << _I2C_CTRL_SLAVE_SHIFT);// Set SLAVE select mode. 0 == master
-	if (this->_freqScl == 0)
-		this->_freqScl = I2C_FREQ_STANDARD_MAX;
-	_setBusFreq(i2c, this->_freqScl);
-	I2C_Enable(i2c, true);
-	if (i2c == I2C0)
-		i2c->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (((getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, scl) -1) % WIRE_LOCATION_SIZE) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
-	else
-		i2c->ROUTELOC0 = ((sda == SDA1 ? 20 : 19) << _I2C_ROUTELOC0_SDALOC_SHIFT) | ((scl == SCL1 ? 18 : 19) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
-	i2c->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
-	NVIC_EnableIRQ(i2c_config->irqType);/* Enable interrupts in NVIC */
-	return (ZunoErrorOk);
-}
-
 void TwoWire::beginTransmission(uint8_t address) {
 	this->beginTransmission(address, false);
 }
@@ -277,6 +246,38 @@ void TwoWire::end(void) {
 }
 
 /* Private Methods */
+
+ZunoError_t TwoWire::_begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, wire_buffer_len len, uint8_t bufferFree) {
+	const ZunoWireI2CTypeConfig_t		*i2c_config;
+	I2C_TypeDef							*i2c;
+
+	if (this->_bufferFree == true)
+		free(this->_buffer);
+	this->_bufferFree = bufferFree;
+	this->_buffer = (uint8_t *)b;
+	this->_buffer_max = len;
+	this->end();
+	i2c_config = this->_i2c_config;
+	CMU_ClockEnable(i2c_config->bus_clock, true);
+	pinMode(scl, GPIOMODE_OUTPUT_OPENDRAINPUP);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
+	pinMode(sda, GPIOMODE_OUTPUT_OPENDRAINPUP);
+	i2c = i2c_config->i2c;
+	i2c->CTRL = I2C_CTRL_CLTO_320PCC//Enable the Clock Low Timeout counter.
+	| I2C_CTRL_AUTOSE | I2C_CTRL_AUTOACK//Auto Stop and Ack
+	| (((address == 0) ? 0 : 1) << _I2C_CTRL_SLAVE_SHIFT);// Set SLAVE select mode. 0 == master
+	if (this->_freqScl == 0)
+		this->_freqScl = I2C_FREQ_STANDARD_MAX;
+	_setBusFreq(i2c, this->_freqScl);
+	I2C_Enable(i2c, true);
+	if (i2c == I2C0)
+		i2c->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (((getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, scl) -1) % WIRE_LOCATION_SIZE) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
+	else
+		i2c->ROUTELOC0 = ((sda == SDA1 ? 20 : 19) << _I2C_ROUTELOC0_SDALOC_SHIFT) | ((scl == SCL1 ? 18 : 19) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
+	i2c->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
+	NVIC_EnableIRQ(i2c_config->irqType);/* Enable interrupts in NVIC */
+	return (ZunoErrorOk);
+}
+
 uint8_t TwoWire::_transferMasterToSlave(uint16_t address, void *b, size_t len) {
 	const ZunoWireI2CTypeConfig_t		*i2c_config;
 	I2C_TypeDef							*i2c;

@@ -9,6 +9,23 @@
 // 	#define ZUNO_ASSEMBLY_TYPE			ZUNO_UNO//default
 // #endif
 
+typedef enum
+{
+	ZunoErrorOk,//Good!!!
+	ZunoErrorTimerAlredy,//the timer is already in use
+	ZunoErrorUsartAlredy,//the usart is already in use
+	ZunoErrorExtInt,//Failed to configure interrupt
+	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
+	ZunoErrorBtnInvalidType,//Failed to change type
+	ZunoErrorBtnChangeMode,//Failed to change button operation mode
+	ZunoErrorInvalidValue,
+	ZunoErrorDmaLimitChannel,//
+	ZunoErrorNeo,//Failed NEO
+	ZunoErrorInvalidPin,//Invalid pin
+	ZunoErrorResourceAlready,//resource is already taken
+	ZunoErrorMemory//Failed to allocate memory
+} ZunoError_t;
+
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"
@@ -23,20 +40,6 @@
 #include "CrtxCmu.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
-typedef enum
-{
-	ZunoErrorOk,//Good!!!
-	ZunoErrorTimerAlredy,//the timer is already in use
-	ZunoErrorUsartAlredy,//the usart is already in use
-	ZunoErrorExtInt,//Failed to configure interrupt
-	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
-	ZunoErrorBtnInvalidType,//Failed to change type
-	ZunoErrorBtnChangeMode,//Failed to change button operation mode
-	ZunoErrorDma,//Failed DMA
-	ZunoErrorNeo,//Failed NEO
-	ZunoErrorInvalidPin,//Invalid pin
-	ZunoErrorMemory//Failed to allocate memory
-} ZunoError_t;
 
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */
@@ -97,6 +100,8 @@ enum {
 #define INT0					17
 #define INT1					18
 
+#define ZUNO_SYSTIMER_PERIOD_MC			0xA
+
 #if ZUNO_PIN_V == 1
 	#define A0                  14
 	#define A1                  15
@@ -111,6 +116,8 @@ enum {
 	#define HIGH                1
 	#define LOW                 0
 	#define LED_BUILTIN         12 // !!! FIXME on prod
+	
+	#define ZUNO_PIN_LAST_INDEX	31
 #elif ZUNO_PIN_V == 2
 	#define PWM1				13
 	#define PWM2                14
@@ -169,6 +176,8 @@ enum {
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 4
 	#define PWM1				13
 	#define PWM2                14
@@ -198,6 +207,8 @@ enum {
 	#define MISO2				25//by default PF3 USART2 - RX
 	#define MOSI2				7//by default PF4 USART2 - TX
 	#define SS2					8//by default PF5
+
+	#define ZUNO_PIN_LAST_INDEX	25
 #elif ZUNO_PIN_V == 1000
 	#define HIGH                1
 	#define LOW                 0
@@ -271,6 +282,11 @@ void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
+
+//
+#include "stdlib.h"
+void *malloc(size_t size);
+void free(void *ptr);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"

@@ -10,15 +10,6 @@ size_t  Print::write(const char *str) {
       if (str == NULL) return 0;
       return write((const uint8_t *)str, strlen(str));
 }
-size_t Print::write(const uint8_t *buffer, size_t size)
-{
-  size_t n = 0;
-  while (size--) {
-    if (write(*buffer++)) n++;
-    else break;
-  }
-  return n;
-}
 
 size_t Print::print(const char str[])
 {

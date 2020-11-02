@@ -105,13 +105,18 @@ void SPIClass::transfer(void *b, size_t count) {
 	uint32_t					clock;
 	USART_TypeDef				*usart;
 	void						*e;
+	size_t						uniqId;
 
 	usart = this->usart_config->usart;
-	if (ZDMA.toMemoryPeripheral(&this->userLp, this->usart_config->dmaSignal, (void*)&(usart->TXDATA), b, count, zdmaData8) == ZunoErrorOk) {
+	uniqId = (size_t)&this->clock;
+	if (ZDMA.toMemoryPeripheral(uniqId, this->usart_config->dmaSignal, (void*)&(usart->TXDATA), b, count, zdmaData8) == ZunoErrorOk) {
 		clock = this->clock / 1000;
-		if (clock != 0 && (clock = count * 8 / clock) != 0)
-			delay(clock);
-		while (this->userLp.bProcessing == true)
+		if (clock != 0)
+			clock = count * 8 / clock;
+		delay((clock == 0)? 1 : clock);
+		while (ZDMA.isProcessing(uniqId) == true)
+			__NOP();
+		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
 			__NOP();
 	}
 	else {

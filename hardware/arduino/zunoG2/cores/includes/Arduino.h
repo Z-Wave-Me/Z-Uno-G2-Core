@@ -35,9 +35,9 @@ typedef enum
 #endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "CrtxGPIO.h"
-#include "HardwareSerial.h"
 #include "ZWSupport.h"
 #include "CrtxCmu.h"
+#include "HardwareSerial.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 

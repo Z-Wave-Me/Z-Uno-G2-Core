@@ -108,6 +108,7 @@ typedef struct zuno_svc_calldata_s{
 
 // Handler types
 typedef void zuno_void_handler(void);
+typedef void zuno_void_handler_ext_int(uint8_t pin);
 typedef void zuno_irq_handler(void *p);
 typedef void zuno_dbgprint_handler(ZUNOSysDbgMessage_t * msg);
 typedef void zuno_user_systimer_handler(uint32_t);
@@ -155,7 +156,6 @@ typedef struct ZUNOOnDemandHW_s {
 	uint8_t				pwm_pins[MAX_ZUNO_PWMS];
 	uint8_t				pwm_pins_state;
 	uint8_t				tone_pin;
-	volatile uint8_t	ExtPin;// The index of the processed pin
 	uint16_t			tone_freq;
 	// HANDLERS
 	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];

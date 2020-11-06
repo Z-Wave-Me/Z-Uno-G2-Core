@@ -30,7 +30,7 @@ protected:
 public:
 
 	virtual size_t available() {return 0; };
-	virtual uint8_t read() {return 0; };
+	virtual int read() {return 0; };
 	virtual	int peek() {return 0; };
 	//virtual void flush () {};
 	

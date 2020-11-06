@@ -67,6 +67,7 @@ class znThread{
         void suspend();
         void resume();
         bool isValid(){return _handle != NULL; };
+        void * getHandle(){return _handle; };
     private:
        uint32_t  _stack_size;
        uint32_t * _stack;
@@ -74,4 +75,7 @@ class znThread{
        _znSysThData_t _th_data;
 };
 
+void * zunoGetCurrentThreadHandle();
+void   zunoSuspendThread(void * handle);
+void   zunoResumeThread(void * handle);
 #endif // ZUNO_THREADING

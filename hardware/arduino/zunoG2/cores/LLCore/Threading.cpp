@@ -96,3 +96,13 @@ void znThread::suspend(){
 void znThread::resume(){
     zunoSysCall(ZUNO_THREAD_RESUME, 1, _handle);
 }
+// C API
+void * zunoGetCurrentThreadHandle(){
+    return zunoSysCall(ZUNO_THREAD_GETCURRENTHANDLE, 0);
+}
+void   zunoSuspendThread(void * handle){
+    zunoSysCall(ZUNO_THREAD_SUSPEND, 1, handle);
+}
+void   zunoResumeThread(void * handle){
+    zunoSysCall(ZUNO_THREAD_RESUME, 1, handle);
+}

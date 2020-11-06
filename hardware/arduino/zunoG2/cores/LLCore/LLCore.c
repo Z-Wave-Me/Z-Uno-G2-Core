@@ -39,7 +39,6 @@ extern unsigned long  __StackTop;
 #define ZUNO_SKETCH_BUILD_TS 0
 #endif
 
-zuno_syscall_func_t * zunoSysCall = (zuno_syscall_func_t*)ZUNO_SYSCALL_ADDR;
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID, (uint32_t)&zunoJumpTable, ZUNO_SKETCH_BUILD_TS};
 

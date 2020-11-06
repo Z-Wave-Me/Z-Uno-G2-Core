@@ -20,6 +20,7 @@ typedef enum
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
 	ZunoErrorInvalidValue,
 	ZunoErrorDmaLimitChannel,//
+	ZunoErrorSyncInvalidType,
 	ZunoErrorNeo,//Failed NEO
 	ZunoErrorInvalidPin,//Invalid pin
 	ZunoErrorResourceAlready,//resource is already taken

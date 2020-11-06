@@ -29,6 +29,7 @@ typedef enum
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"
+#include "Threading.h"
 #include "ZUNO_StaticData.h"
 #ifndef ZUNO_PREPROC_PHASE
 #include <string.h>

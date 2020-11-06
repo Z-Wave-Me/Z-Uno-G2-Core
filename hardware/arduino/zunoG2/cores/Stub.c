@@ -7,3 +7,7 @@ void * zunoSysCall(int vec, int num, ...) {
     return (void*) (num*vec);
 }
 */
+
+void *zunoSysCall(uint8_t ct, uint8_t n, ...) __attribute__((section(".sketch_syscall")));
+void *zunoSysCall(uint8_t ct, uint8_t n, ...) {
+}

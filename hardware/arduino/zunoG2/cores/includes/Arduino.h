@@ -29,7 +29,6 @@ typedef enum
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"
-#include "Threading.h"
 #include "ZUNO_StaticData.h"
 #ifndef ZUNO_PREPROC_PHASE
 #include <string.h>
@@ -258,6 +257,9 @@ enum {
 	#error ZUNO_PIN_V
 #endif
 
+//Supervisor call
+void *zunoSysCall(uint8_t ct, uint8_t n, ...);
+
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
@@ -269,10 +271,6 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define interrupts() __asm volatile("cpsie i"::: "memory")
 #define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 
-// Additional libraries with "pluses"
-//  Supervisor call
-//void * zunoSysCall(uint8_t call_type, uint8_t param_num, ...);
-extern zuno_syscall_func_t * zunoSysCall;
 // prototypes
 void delay(dword ms);
 dword millis();

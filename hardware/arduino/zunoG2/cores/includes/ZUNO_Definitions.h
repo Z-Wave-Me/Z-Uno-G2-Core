@@ -15,8 +15,6 @@
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
 #define MAX_SYS_PARAMS 									8
-#define ZUNO_SYSCALL_ADDR								(0x0002FF81)
-
 
 enum {
 	ZUNO_FUNC_DELAY_MS,

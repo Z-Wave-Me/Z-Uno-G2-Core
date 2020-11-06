@@ -1,6 +1,7 @@
 #ifndef __ZUNO_SYS_TYPES__
 #define __ZUNO_SYS_TYPES__
 #include "ZUNO_Definitions.h"
+
 // Sketch setup
 typedef struct ZUNOChannel_s {
 	uint8_t type;
@@ -115,9 +116,6 @@ typedef void zuno_user_systimer_handler(uint32_t);
 typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 typedef void zuno_configuartionhandler_t(uint8_t, uint32_t);
 typedef void *zuno_battery_handler_t(void);
-//void * (* zunoSysCall) (uint8_t call_type, uint8_t param_num, ...) = ZUNO_SYSCALL_ADDR;
-
-typedef void *zuno_syscall_func_t(uint8_t ct, uint8_t n, ...);
 
 // Hardware
 typedef struct ZUNOUARTOptions_s{
@@ -163,5 +161,4 @@ typedef struct ZUNOOnDemandHW_s {
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 extern ZunoBitField_t g_bit_field;
 
- 
 #endif // __ZUNO_SYS_TYPES__

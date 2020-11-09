@@ -148,20 +148,54 @@ void DHT::_deInit(size_t param) {
 	g_config = 0;
 }
 
+static const TIMER_Init_TypeDef gInitTimer =
+{
+	.enable = false,						/* Enable timer when initialization completes. */           \
+	.debugRun = false,						/* Stop counter during debug halt. */                       \
+	.prescale = timerPrescale1,				/* No prescaling. */                                        \
+	.clkSel = timerClkSelHFPerClk,			/* Select HFPER / HFPERB clock. */                          \
+	.count2x = false,						/* Not 2x count mode. */                                    \
+	.ati = false,							/* No ATI. */                                               \
+	.fallAction = timerInputActionNone,		/* No action on falling input edge. */                      \
+	.riseAction = timerInputActionNone,		/* No action on rising input edge. */                       \
+	.mode = timerModeUp,					/* Up-counting. */                                          \
+	.dmaClrAct = true,						/* Do not clear DMA requests when DMA channel is active. */ \
+	.quadModeX4 = false,					/* Select X2 quadrature decode mode (if used). */           \
+	.oneShot = false,						/* Disable one shot. */                                     \
+	.sync = false							/* Not started/stopped/reloaded by other timers. */         \
+};
+
 ZunoError_t DHT::_init(size_t param) {
-	TIMER_Init_TypeDef					timerInit;
 	TIMER_TypeDef						*timer;
 	const ZunoDhtTypeConfig_t			*config;
 
 	config = (const ZunoDhtTypeConfig_t *)param;
 	CMU_ClockEnable(config->bus_clock, true);
-	timerInit = TIMER_INIT_DEFAULT;
-	timerInit.dmaClrAct = true;
-	timerInit.enable = false;
 	timer = config->timer;
 	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * 18);
-	TIMER_Init(timer, &timerInit);
+	TIMER_Init(timer, &gInitTimer);
 	return (ZunoErrorOk);
+}
+
+static uint32_t *_whileBit(uint32_t *b, uint32_t *e, uint32_t mask, size_t iMax, uint32_t *value) {
+	size_t						i;
+	uint32_t					tempos;
+	uint32_t					*bTmp;
+
+	i = 0;
+	tempos = 0;
+	while (b < e && i < iMax) {
+		while (b < e && (b[0] & mask) == 0)
+			b++;
+		bTmp = b;
+		while (b < e && (b[0] & mask) != 0)
+			b++;
+		tempos = tempos << 1;
+		tempos |= (b - bTmp > 2) ? 1 : 0;
+		i++;
+	}
+	value[0] = tempos;
+	return (b);
 }
 
 inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
@@ -172,12 +206,10 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	ZunoError_t								ret;
 	uint32_t								buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN];
 	uint32_t								*b;
-	uint32_t								*bTmp;
 	uint32_t								*e;
 	DHT_TYPE_VALUE_t						value;
 	uint32_t								crc;
 	uint32_t								mask;
-	size_t									i;
 	TIMER_TypeDef							*timer;
 
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
@@ -221,30 +253,8 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 		b++;
 	while (b < e && (b[0] & mask) != 0)
 		b++;
-	value.value = 0;
-	i = 0;
-	while (b < e && i < 32) {
-		while (b < e && (b[0] & mask) == 0)
-			b++;
-		bTmp = b;
-		while (b < e && (b[0] & mask) != 0)
-			b++;
-		value.value = value.value << 1;
-		value.value |= (b - bTmp > 2) ? 1 : 0;
-		i++;
-	}
-	crc = 0;
-	i = 0;
-	while (b < e && i < 8) {
-		while (b < e && (b[0] & mask) == 0)
-			b++;
-		bTmp = b;
-		while (b < e && (b[0] & mask) != 0)
-			b++;
-		crc = crc << 1;
-		crc |= (b - bTmp > 2) ? 1 : 0;
-		i++;
-	}
+	b = _whileBit(b, e, mask, 32, &value.value);
+	b = _whileBit(b, e, mask, 8, &crc);
 	if (b == e || (uint8_t)(value.byte0 + value.byte1 + value.byte2 + value.byte3) != (uint8_t)crc)
 		return (ZunoErrorDhtCrc);
 	this->_value = value;

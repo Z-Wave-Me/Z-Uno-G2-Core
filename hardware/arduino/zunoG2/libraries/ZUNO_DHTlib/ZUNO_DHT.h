@@ -45,7 +45,7 @@ class DHT {
 		inline int16_t							readHumidityH10(void) {return (this->readHumidityH10(false));};
 		inline float							readTemperature(void) {return (this->readTemperature(false));};
 		inline float							readHumidity(void) {return (this->readHumidity(false));};
-		inline void getRawData(uint8_t *ptr) {
+		inline void								getRawData(uint8_t *ptr) {
 			DHT_TYPE_VALUE_t						value;
 
 			value = this->_value;

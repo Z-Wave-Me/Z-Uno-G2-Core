@@ -1,70 +1,70 @@
-/* DHT library
 
-MIT license
-written by Adafruit Industries
+#ifndef ZUNO_DHT_H
+#define ZUNO_DHT_H
 
-UPGRADED/Rewritten by Z-Wave>ME for project Z-Uno 2016
+#define DHT_RESULT_OK				ZunoErrorOk
+#define DHT_RESULT_PREVIOUS			ZunoErrorDhtResultPrevisous
+#define DHT_RESULT_ERROR_NOSYNC		ZunoErrorDhtNoSync
+#define DHT_RESULT_ERROR_TIMEOUT	ZunoErrorDhtTimeout
+#define DHT_RESULT_ERROR_CRC		ZunoErrorDhtCrc
 
-*/
-#ifndef DHT_H
-#define DHT_H
+#define BAD_DHT_VALUE				0xFFFF
 
-#include "Arduino.h"
+typedef enum			DHT_TYPE_SENSORS_e
+{
+	DHT11,
+	DHT21,
+	DHT22,
+	AM2301 = DHT21
+}						DHT_TYPE_SENSORS_t;
 
-// Define types of sensors.
-#define DHT11 11
-#define DHT22 22
-#define DHT21 21
-#define AM2301 21
-
-#define BAD_DHT_VALUE 0xFFFF
-
-enum {
-    DHT_RESULT_OK = 0,
-    DHT_RESULT_PREVIOUS,
-    DHT_RESULT_ERROR_NOSYNC,
-    DHT_RESULT_ERROR_TIMEOUT,
-    DHT_RESULT_ERROR_CRC
-
-};
+typedef union			DHT_TYPE_VALUE_u
+{
+	uint32_t			value;
+	struct
+	{
+		uint8_t			byte3;
+		uint8_t			byte2;
+		uint8_t			byte1;
+		uint8_t			byte0;
+	};
+}						DHT_TYPE_VALUE_t;
 
 class DHT {
-public:
-    DHT(byte pin, uint8_t type = DHT22);
-    void begin(void);
-    // returns temperature in 10 th of Celsius
-    int readTemperatureC10(bool force = false);
-    // returns humidity in 10 th of percent
-    int readHumidityH10(bool force = false);
+	public:
+		DHT(uint8_t pin, DHT_TYPE_SENSORS_t type = DHT22);
+		ZunoError_t								begin(void);
+		void									end(void);
+		inline ZunoError_t						read(void) {return (this->_read(false));};
+		inline ZunoError_t						read(uint8_t bForce) {return (this->_read(bForce));};
+		int16_t									readTemperatureC10(uint8_t bForce);// returns temperature in 10 th of Celsius
+		int16_t									readHumidityH10(uint8_t bForce);// returns humidity in 10 th of percent
+		float									readTemperature(uint8_t bForce);// Returns temperature as float in Celsius
+		float									readHumidity(uint8_t bForce);// Returns humidity as float in pecents
+		inline int16_t							readTemperatureC10(void) {return (this->readTemperatureC10(false));};
+		inline int16_t							readHumidityH10(void) {return (this->readHumidityH10(false));};
+		inline float							readTemperature(void) {return (this->readTemperature(false));};
+		inline float							readHumidity(void) {return (this->readHumidity(false));};
+		void getRawData(uint8_t *ptr) {
+			DHT_TYPE_VALUE_t						value;
 
-    // Returns temperature as float in Celsius
-    float readTemperature(bool force = false);
-    // Returns humidity as float in pecents
-    float readHumidity(bool force = false);
-
-    // Just read raw data from sensor
-    // Returns result code of operation (see enum)
-    byte read(bool force = false);
-
-    // Copies raw data from the last "read" operation to user buffer
-    void getRawData(byte* ptr)
-    {
-        byte i;
-        for (i = 0; i < 5; i++)
-            ptr[i] = data_ptr[i];
-    };
-
-private:
-    byte _pin;
-    byte data_ptr[5];
-
-    int16_t humidity;
-    int16_t temperature;
-    uint8_t crc;
-
-    uint8_t _type;
-    uint32_t _lastreadtime, _maxcycles;
-    bool _lastresult;
+			value = this->_value;
+			ptr[0] = value.byte0;
+			ptr[1] = value.byte1;
+			ptr[2] = value.byte2;
+			ptr[3] = value.byte3;
+			ptr[4] = this->_crc;
+		};
+	private:
+		static ZunoError_t						_init(size_t param);
+		static void						_deInit(size_t param);
+		ZunoError_t								_read(uint8_t bForce);
+		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
+		size_t									_lastreadtime;
+		DHT_TYPE_VALUE_t						_value;
+		uint8_t									_crc;
+		uint8_t									_pin;
+		DHT_TYPE_SENSORS_t						_type;
 };
 
-#endif
+#endif//ZUNO_DHT_H

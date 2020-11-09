@@ -1,219 +1,252 @@
-/* DHT library
-
-  MIT license
-  written by Adafruit Industries
-
-  UPGRADED/Rewriten by Z-Wave>ME for project Z-Uno 2016
-*/
-
+#include "Arduino.h"
+#include "CrtxTimer.h"
+#include "CrtxCmu.h"
+#include "ZDma.h"
+#include "Sync.h"
 #include "ZUNO_DHT.h"
 
-#define MIN_INTERVAL 2000
+#define DHT_MIN_INTERVAL						2000
+#define DHT_UINIQID_DMA_WRITE					((size_t)&this->_lastreadtime)
+#define DHT_BUFFER_DMA_WRITE_LEN				250
 
-#define DEBUG_DHT 0
-
-
-
-DHT::DHT(uint8_t pin, uint8_t type) : _pin(pin)
+typedef struct							ZunoDhtTypeConfig_s
 {
-    _type = type;
-    // reading pulses from DHT sensor.
-}
+	TIMER_TypeDef						*timer;
+	ZunoSync_t							*lpLock;
+	ZDMA_PeripheralSignal_t				dmaSignal;
+	CMU_Clock_TypeDef					bus_clock;
+}										ZunoDhtTypeConfig_t;
 
-void DHT::begin(void)
-{
-// set up the pins!
-#if DEBUG_DHT
-    Serial.println("STARTING DHT");
-#endif
-    pinMode(_pin, INPUT_PULLUP);
-    _lastreadtime = 0xFFFFFFF;
-}
+static const ZunoDhtTypeConfig_t		*g_config = 0;
 
-// returns temperature in 10 th of Celsius
-int DHT::readTemperatureC10(bool force)
-{
-    if (read(force) > DHT_RESULT_PREVIOUS)
-        return BAD_DHT_VALUE;
-
-    return temperature;
-}
-// returns humidity in 10 th of percent
-int DHT::readHumidityH10(bool force)
-{
-    if (read(force) > DHT_RESULT_PREVIOUS)
-       return BAD_DHT_VALUE;
-    // read(force);
-	return humidity;
-}
-
-// Returns temperature in float in Celsius
-float DHT::readTemperature(bool force)
-{
-    return readTemperatureC10(force) / 10.0;
-}
-// Returns humidity in floats
-float DHT::readHumidity(bool force) 
-{ 
-	return readHumidityH10(force) / 10.0;
-}
-
-// DBG
-#if DEBUG_DHT
-byte dbg_timings_s[80];
-#endif
-
-byte DHT::read(bool force)
-{
-    byte time_i1, time_i2;
-    word wi = 0;
-    byte time_ref;
-    // s_pin tp = 12;
-    byte i = 0;
-    byte ci = 0;
-    byte cb = 0;
-
-    // pinMode(tp, OUTPUT);
-    // digitalWrite(tp, 0);
-
-    // Чтобы не опрашивать сенсор слишком часто
-    uint32_t currenttime = millis();
-    if (!force && ((currenttime - _lastreadtime) < MIN_INTERVAL)) {
-        return DHT_RESULT_PREVIOUS; // return last correct measurement
-    }
-    _lastreadtime = currenttime;
-
-    // Посылаем стартовый импульс
-    // 0 на 1 мс и болльше
-    // noInterrupts();
-	noInterrupts();
-
-    pinMode(_pin, OUTPUT);
-    digitalWrite(_pin, 0); // Send start signal
-    switch (_type) {
-    case DHT11:
-        delay(20); // Датчик долго думает
-        break;
-    default:
-        delayMicroseconds(1100); // Гораздо быстрее откликается
-        break;
-    }
-    pinMode(_pin, INPUT_PULLUP);
-    time_i1 = 0;
-    while (digitalRead(_pin)) // digitalRead(_pin))
-    {
-        wi++;
-        if (!wi) {
-			interrupts();
-            return DHT_RESULT_ERROR_NOSYNC;
-        }
-        delayMicroseconds(1);
-    }
-    time_i1 = 0;
-    while (!digitalRead(_pin)) {
-        time_i1++;
-        if (!time_i1)
-            break;
-    }
-    time_i2 = 0;
-    while (digitalRead(_pin)) {
-        time_i2++;
-        if (!time_i2)
-            break;
-    }
-
-    if (time_i1 < 10 || time_i2 < 10)
+const ZunoDhtTypeConfig_t gconfigTable[3] = {
 	{
-        interrupts();
-		return DHT_RESULT_ERROR_NOSYNC;
+		.timer = WTIMER0,
+		.lpLock = &gSyncWTIMER0,
+		.dmaSignal = zdmaPeripheralSignal_WTIMER0_UFOF,
+		.bus_clock = cmuClock_WTIMER0
+	},
+	{
+		.timer = TIMER1,
+		.lpLock = &gSyncTIMER1,
+		.dmaSignal = zdmaPeripheralSignal_TIMER1_UFOF,
+		.bus_clock = cmuClock_TIMER1
+	},
+	{
+		.timer = TIMER0,
+		.lpLock = &gSyncTIMER0,
+		.dmaSignal = zdmaPeripheralSignal_TIMER0_UFOF,
+		.bus_clock = cmuClock_TIMER0
 	}
+};
 
-    // Вычисляем опорное время для "1"
-    // == Половина среднего времени отклика датчика
-    // Вычисляется здесь т.к.
-    // время стартового интервала будет плавать в цикле чтения битов
-    // особенно это заметно на каждом 8-ом бите
-    time_ref = time_i1 + time_i2;
-    time_ref >>= 2;
+/* Public Constructors */
+DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime(-1), _value({0}), _crc(0), _pin(pin), _type(type) {
+}
 
-    while (i < 80) {
-        switch (i & 0x01) {
-        case 0:
-            time_i1 = 0;
-            while (!digitalRead(_pin))
-                time_i1++;
-#if DEBUG_DHT
-            dbg_timings_s[i] = time_i1;
-#endif
-            break;
-        case 1:
-            time_i2 = 0;
-            while (digitalRead(_pin))
-                time_i2++;
-#if DEBUG_DHT
-            dbg_timings_s[i] = time_i2;
-#endif
-            cb <<= 1;
-            cb |= (time_i2 > time_ref);
-            break;
-        }
+/* Public Methods */
+ZunoError_t DHT::begin(void) {
+	const ZunoDhtTypeConfig_t			*gconfigTable_b;
+	const ZunoDhtTypeConfig_t			*gconfigTable_e;
+	ZunoError_t							ret;
 
-        i++;
-        if ((i & 0x0F) == 0) {
-            data_ptr[ci++] = cb;
-            cb = 0;
-        }
-    }
+	gconfigTable_b = &gconfigTable[0];
+	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
+	while (gconfigTable_b < gconfigTable_e) {
+		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b);
+		if (ret == ZunoErrorOk) {
+			g_config = gconfigTable_b;
+			break ;
+		}
+		else if (ret != ZunoErrorResourceAlready)
+			return (ret);
+		gconfigTable_b++;
+	}
+	pinMode(this->_pin, INPUT_PULLUP);
+	return (ZunoErrorOk);
+}
 
-#if DEBUG_DHT
-    Serial.print("TIMINGS \n");
-    for (i = 0; i < 80; i++) {
-        Serial.print("EDGE #");
-        Serial.print(i);
-        Serial.print(" ");
-        Serial.println(dbg_timings_s[i]);
-    }
-    Serial.print("RAW ");
-    for (i = 0; i < 5; i++) {
-        Serial.print((uint16_t)data_ptr[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println(" ");
-#endif
+void DHT::end(void) {
+	const ZunoDhtTypeConfig_t			*config;
 
-    byte sum = data_ptr[0];
-    sum += data_ptr[1];
-    sum += data_ptr[2];
-    sum += data_ptr[3];
+	if ((config = g_config) == 0)
+		return ;
+	zunoSyncClose(config->lpLock, SyncMasterDht, this->_deInit, (size_t)config);
+}
 
-    if (sum != data_ptr[4]) {
-#if DEBUG_DHT
-        Serial.print(" Calculated sum: ");
-        Serial.print(sum, HEX);
-        Serial.println(" ");
-#endif
-        return DHT_RESULT_ERROR_CRC;
-    }
+int16_t DHT::readTemperatureC10(uint8_t bForce) {
+	ZunoError_t								ret;
+	DHT_TYPE_VALUE_t						value;
+	int16_t									out;
 
+	ret = this->_read(bForce);
+	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
+		value = this->_value;
+		switch (this->_type) {
+		case DHT11:
+			return (value.byte2 * 10 + value.byte3);
+			break ;
+		default:
+			out = ((value.byte2 & 0x7F) << 8) | value.byte3;
+			if ((value.byte2 & 0x80) != 0)
+				out = -out;
+			return (out);
+			break ;
+		}
+	}
+	return (BAD_DHT_VALUE);
+}
+
+int16_t DHT::readHumidityH10(uint8_t bForce) {
+	ZunoError_t								ret;
+	DHT_TYPE_VALUE_t						value;
+
+	ret = this->_read(bForce);
+	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
+		value = this->_value;
+		switch (this->_type) {
+		case DHT11:
+			return (value.byte0 * 10 + value.byte1);
+			break ;
+		default:
+			return ((value.byte0 << 8) | value.byte1);
+			break ;
+		}
+	}
+	return (BAD_DHT_VALUE);
+}
+
+float DHT::readTemperature(uint8_t bForce) {
+	return (this->readTemperatureC10(bForce) / (float)10.0);
+}
+
+float DHT::readHumidity(uint8_t bForce) {
+	return (this->readHumidityH10(bForce) / (float)10.0);
+}
+
+/* Private Methods */
+inline ZunoError_t DHT::_read(uint8_t bForce) {
+	ZunoError_t								ret;
+	const ZunoDhtTypeConfig_t				*config;
+
+	if ((config = g_config) == 0)
+		return (ZunoErrorNotInit);
+	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterDht)) != ZunoErrorOk)
+		return (ret);
+	ret = this->_readBody(config, bForce);
+	zunoSyncReleseRead(config->lpLock, SyncMasterDht);
+	return (ret);
+}
+
+void DHT::_deInit(size_t param) {
+	TIMER_Init_TypeDef					timerInit;
+	TIMER_TypeDef						*timer;
+	const ZunoDhtTypeConfig_t			*config;
+
+	config = (const ZunoDhtTypeConfig_t *)param;
+	TIMER_Reset(config->timer);
+	g_config = 0;
+}
+
+ZunoError_t DHT::_init(size_t param) {
+	TIMER_Init_TypeDef					timerInit;
+	TIMER_TypeDef						*timer;
+	const ZunoDhtTypeConfig_t			*config;
+
+	config = (const ZunoDhtTypeConfig_t *)param;
+	CMU_ClockEnable(config->bus_clock, true);
+	timerInit = TIMER_INIT_DEFAULT;
+	timerInit.dmaClrAct = true;
+	timerInit.enable = false;
+	timer = config->timer;
+	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * 20);
+	TIMER_Init(timer, &timerInit);
+	return (ZunoErrorOk);
+}
+
+inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
+	const ZunoDhtTypeConfig_t				*config;
+	size_t									currenttime;
+	size_t									pin;
+	DHT_TYPE_SENSORS_t						type;
+	ZunoError_t								ret;
+	uint32_t								buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN];
+	uint32_t								*b;
+	uint32_t								*bTmp;
+	uint32_t								*e;
+	DHT_TYPE_VALUE_t						value;
+	uint32_t								crc;
+	uint32_t								mask;
+	size_t									i;
+	TIMER_TypeDef							*timer;
+
+	config = (ZunoDhtTypeConfig_t *)lpConfig;
+	currenttime = millis();
+	if (bForce == false && ((currenttime - this->_lastreadtime) < DHT_MIN_INTERVAL))// Чтобы не опрашивать сенсор слишком часто
+		return (ZunoErrorDhtResultPrevisous);
+	pin = this->_pin;
+	if ((ret = ZDMA.toPeripheralMemory(DHT_UINIQID_DMA_WRITE, config->dmaSignal, &buffWriteDma[0], (void *)&GPIO->P[getRealPort(pin)].DIN, DHT_BUFFER_DMA_WRITE_LEN, zdmaData32)) != ZunoErrorOk)
+		return (ret);
+	this->_lastreadtime = currenttime;
+	pinMode(pin, OUTPUT);
+	digitalWrite(pin, LOW); // Send start signal
+	type = this->_type;
+	switch (type) {
+		case DHT11:// Датчик долго думает
+			currenttime = 20;
+			break ;
+		default:// Гораздо быстрее откликается
+			currenttime = 2;
+			break ;
+	}
+	delay(currenttime);
+	noInterrupts();
+	pinMode(pin, INPUT_PULLUP);
+	timer = config->timer;
+	TIMER_Enable(timer, true);
 	interrupts();
-    if (_type == DHT11) {
-        humidity = data_ptr[0];
-        temperature = data_ptr[2];
-        humidity *= 10;
-        temperature *= 10;
-        humidity += data_ptr[1];
-        temperature += data_ptr[3];
-    }
-    else {
-        humidity = data_ptr[0];
-        humidity <<= 8;
-        humidity |= data_ptr[1];
-
-        temperature = data_ptr[2] & 0x7F;
-        temperature <<= 8;
-        temperature |= data_ptr[3];
-        if (data_ptr[2] & 0x80)
-            temperature = -temperature;
-    }
-    return DHT_RESULT_OK;
+	delay(8);
+	TIMER_Enable(timer, false);
+	mask = 1 << getRealPin(pin);
+	b = &buffWriteDma[0];
+	if ((b[0] & mask) == 0)
+		return (ZunoErrorDhtNoSync);
+	e = &b[DHT_BUFFER_DMA_WRITE_LEN];
+	while (b < e && (b[0] & mask) != 0)
+		b++;
+	while (b < e && (b[0] & mask) == 0)
+		b++;
+	while (b < e && (b[0] & mask) != 0)
+		b++;
+	if (b == e || (b[0] & mask) != 0)
+		return (ZunoErrorDhtNoSync);
+	value.value = 0;
+	i = 0;
+	while (b < e && i < 32) {
+		while (b < e && (b[0] & mask) == 0)
+			b++;
+		bTmp = b;
+		while (b < e && (b[0] & mask) != 0)
+			b++;
+		value.value = value.value << 1;
+		value.value |= (b - bTmp > 2) ? 1 : 0;
+		i++;
+	}
+	crc = 0;
+	i = 0;
+	while (b < e && i < 8) {
+		while (b < e && (b[0] & mask) == 0)
+			b++;
+		bTmp = b;
+		while (b < e && (b[0] & mask) != 0)
+			b++;
+		crc = crc << 1;
+		crc |= (b - bTmp > 2) ? 1 : 0;
+		i++;
+	}
+	if (b == e || (uint8_t)(value.byte0 + value.byte1 + value.byte2 + value.byte3) != (uint8_t)crc)
+		return (ZunoErrorDhtCrc);
+	this->_value = value;
+	this->_crc = crc;
+	return (ZunoErrorOk);
 }

@@ -20,10 +20,18 @@ typedef enum
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
 	ZunoErrorInvalidValue,
 	ZunoErrorDmaLimitChannel,//
+	ZunoErrorDmaInvalidUniqId,//
+	ZunoErrorDmaInvalidReconfig,//
+	ZunoErrorDmaUniqIdAlready,//
 	ZunoErrorSyncInvalidType,
 	ZunoErrorNeo,//Failed NEO
 	ZunoErrorInvalidPin,//Invalid pin
+	ZunoErrorNotInit,
 	ZunoErrorResourceAlready,//resource is already taken
+	ZunoErrorDhtResultPrevisous,
+	ZunoErrorDhtNoSync,
+	ZunoErrorDhtTimeout,
+	ZunoErrorDhtCrc,
 	ZunoErrorMemory//Failed to allocate memory
 } ZunoError_t;
 

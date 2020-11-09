@@ -101,18 +101,18 @@ ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripher
 	uint8_t					chZDma;
 
 	if (uniqId == 0)
-		return (ZunoErrorInvalidValue);
+		return (ZunoErrorDmaInvalidUniqId);
 	if (len == 0 || (loop = lpExt->loop) == 0)
 		return (ZunoErrorOk);
 	list = this->_findListUniqId(uniqId, &chZDma);
 	if ((lpExt->bReconfig == true)) {
 		if (list == 0)
-			return (ZunoErrorInvalidValue);
+			return (ZunoErrorDmaInvalidReconfig);
 		LDMA_StopTransfer(chZDma);
 	}
 	else {
 		if (list != 0)
-			return (ZunoErrorInvalidValue);
+			return (ZunoErrorDmaUniqIdAlready);
 		if ((ret = this->_getZDma(&list, &chZDma)) != ZunoErrorOk)
 			return (ret);
 		list->uniqId = uniqId;

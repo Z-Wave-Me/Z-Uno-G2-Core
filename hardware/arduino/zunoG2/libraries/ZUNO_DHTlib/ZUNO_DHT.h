@@ -45,7 +45,7 @@ class DHT {
 		inline int16_t							readHumidityH10(void) {return (this->readHumidityH10(false));};
 		inline float							readTemperature(void) {return (this->readTemperature(false));};
 		inline float							readHumidity(void) {return (this->readHumidity(false));};
-		void getRawData(uint8_t *ptr) {
+		inline void getRawData(uint8_t *ptr) {
 			DHT_TYPE_VALUE_t						value;
 
 			value = this->_value;
@@ -57,7 +57,7 @@ class DHT {
 		};
 	private:
 		static ZunoError_t						_init(size_t param);
-		static void						_deInit(size_t param);
+		static void								_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
 		size_t									_lastreadtime;

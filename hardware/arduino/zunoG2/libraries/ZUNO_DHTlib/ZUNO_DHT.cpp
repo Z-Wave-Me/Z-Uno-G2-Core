@@ -159,7 +159,7 @@ ZunoError_t DHT::_init(size_t param) {
 	timerInit.dmaClrAct = true;
 	timerInit.enable = false;
 	timer = config->timer;
-	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * 20);
+	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * 18);
 	TIMER_Init(timer, &timerInit);
 	return (ZunoErrorOk);
 }
@@ -187,6 +187,7 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	pin = this->_pin;
 	if ((ret = ZDMA.toPeripheralMemory(DHT_UINIQID_DMA_WRITE, config->dmaSignal, &buffWriteDma[0], (void *)&GPIO->P[getRealPort(pin)].DIN, DHT_BUFFER_DMA_WRITE_LEN, zdmaData32)) != ZunoErrorOk)
 		return (ret);
+	buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN - 1] = 0;
 	this->_lastreadtime = currenttime;
 	pinMode(pin, OUTPUT);
 	digitalWrite(pin, LOW); // Send start signal
@@ -209,17 +210,17 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	TIMER_Enable(timer, false);
 	mask = 1 << getRealPin(pin);
 	b = &buffWriteDma[0];
-	if ((b[0] & mask) == 0)
-		return (ZunoErrorDhtNoSync);
 	e = &b[DHT_BUFFER_DMA_WRITE_LEN];
+	if ((buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN - 1] & mask) == 0)
+		return (ZunoErrorDhtNoSync);
+	while (b < e && (b[0] & mask) == 0)
+		b++;
 	while (b < e && (b[0] & mask) != 0)
 		b++;
 	while (b < e && (b[0] & mask) == 0)
 		b++;
 	while (b < e && (b[0] & mask) != 0)
 		b++;
-	if (b == e || (b[0] & mask) != 0)
-		return (ZunoErrorDhtNoSync);
 	value.value = 0;
 	i = 0;
 	while (b < e && i < 32) {

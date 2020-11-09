@@ -39,27 +39,6 @@ static void _sectionLeave(volatile uint8_t *lp) {
 	lp[0] = 0;// releasing lock
 }
 
-SyncMaster_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value) {
-	SyncMaster_t		master;
-
-	_sectionEnter(&lpLock->bLock);
-	if ((master = lpLock->master) == SyncMasterFree) {
-		lpLock->master = value;
-		master = value;
-	}
-	_sectionLeave(&lpLock->bLock);
-	return (master);
-}
-
-void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value) {
-	SyncMaster_t		master;
-
-	_sectionEnter(&lpLock->bLock);
-	if (lpLock->master == value)
-		lpLock->master = SyncMasterFree;
-	_sectionLeave(&lpLock->bLock);
-}
-
 static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode) {
 	volatile uint16_t		counter;
 
@@ -97,9 +76,14 @@ static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode
 			if (out == ZUNO_SYNC_TRUE)
 				return (ZunoErrorOk);
 		}
-		handle = zunoGetCurrentThreadHandle();
-		lpLock->handle = handle;
-		zunoSuspendThread(handle);
+		delay(1);
+		// while (lpLock->handle != 0)
+		// 	delay(1);
+		// _sectionEnter(&lpLock->bLock);
+		// handle = zunoGetCurrentThreadHandle();
+		// lpLock->handle = handle;
+		// _sectionLeave(&lpLock->bLock);
+		// zunoSuspendThread(handle);
 	}
 }
 
@@ -123,10 +107,10 @@ static void _relese(ZunoSync_t *lpLock, SyncMaster_t value) {
 		}
 		else
 			counter = --lpLock->counter;
-		if ((handle = lpLock->handle) != 0) {
-			zunoResumeThread((void *)handle);
-			lpLock->handle = 0;
-		}
+		// if (counter == 0 && (handle = lpLock->handle) != 0) {
+		// 	zunoResumeThread((void *)handle);
+		// 	lpLock->handle = 0;
+		// }
 	}
 	_sectionLeave(&lpLock->bLock);
 }
@@ -137,4 +121,39 @@ void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value) {
 
 void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value) {
 	_relese(lpLock, value);
+}
+
+ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param) {
+	SyncMaster_t		master;
+	volatile uint8_t	*lp;
+
+	lp = &lpLock->bLock;
+	_sectionEnter(lp);
+	if ((master = lpLock->master) == SyncMasterFree) {
+		if (f(param) != ZunoErrorOk) {
+			_sectionLeave(lp);
+			return (ZunoErrorSyncInvalidInit);
+		}
+		lpLock->master = value;
+		lpLock->master_count++;
+	}
+	else if (master == value)
+		lpLock->master_count++;
+	else {
+		_sectionLeave(lp);
+		return (ZunoErrorResourceAlready);
+	}
+	_sectionLeave(lp);
+	return (ZunoErrorOk);
+}
+
+void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), size_t param) {
+	
+	if (_lock(lpLock, value, SyncModeWrite) != ZunoErrorOk)
+		return ;
+	if (--lpLock->master_count == 0)
+		lpLock->master = SyncMasterFree;
+	lpLock->counter = 0;
+	f(param);
+	_sectionLeave(&lpLock->bLock);
 }

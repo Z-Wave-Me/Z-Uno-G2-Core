@@ -32,6 +32,7 @@ class ZDMAClass {
 		size_t									transferRemainingCount(size_t uniqId);
 	
 	private:
+		inline uint8_t							_stopTransfer(size_t uniqId, uint8_t bForce);
 		inline ZunoError_t						_transferLock(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt);
 		inline ZunoError_t						_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt);
 		inline size_t							_modeBasicLen(LDMA_Descriptor_t *transfer_desc, size_t len);

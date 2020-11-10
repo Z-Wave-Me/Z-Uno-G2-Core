@@ -152,19 +152,13 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
 	const uint8_t								*e;
-	size_t										baudrate;
 
 	if (this->_bLockUsart == false)
 		return (0);
 	config = &this->_configTable[this->_numberConfig];
 	usart = config->usart;
 	if (count > HARDWARE_SERIAL_MIN_WRITE_ZDMA && ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
-		baudrate = this->_baudrate / 1000;
-		if (baudrate != 0)
-			baudrate = baudrate * 8 / baudrate;
-		delay((baudrate == 0)? 1 : baudrate);
-		while (ZDMA.isProcessing(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE) == true)
-			__NOP();
+		ZDMA.waitTransfer(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE);
 		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
 			__NOP();
 	}

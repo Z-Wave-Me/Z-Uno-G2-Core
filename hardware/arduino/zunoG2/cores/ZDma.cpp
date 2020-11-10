@@ -81,7 +81,7 @@ void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
 			this->bitZDmaLock ^= (1 << chZDma);
 			if ((handler = list->handler) != 0) {
 				while (zunoThreadIsRunning(handler) == true)
-					delay(1);
+					__NOP();
 				zunoResumeThread(handler);
 			}
 		}

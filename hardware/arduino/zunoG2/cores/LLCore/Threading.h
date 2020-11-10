@@ -88,5 +88,7 @@ inline void zunoSuspendThread(void *handle) {
 inline void zunoResumeThread(void *handle) {
 	zunoSysCall(ZUNO_THREAD_RESUME, 1, handle);
 }
-
+inline bool zunoThreadIsRunning(void *handle){
+    return (bool)zunoSysCall(ZUNO_THREAD_ISRUNNING, 1, handle);
+}
 #endif // ZUNO_THREADING

@@ -29,6 +29,9 @@
 	#error "Error DMA_CHAN_COUNT big too - bitZDma"
 #endif
 
+#define ZDMA_STOPTRANSEFR_WAIT			false
+#define ZDMA_STOPTRANSEFR_BREAK			true
+
 extern unsigned long  __bss_start__;
 static const uint8_t _multSize[] = {1, 2, 4};
 
@@ -67,26 +70,17 @@ size_t ZDMAClass::transferRemainingCount(size_t uniqId) {
 }
 
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
-	ZunoZDmaList_t			*list;
-	uint8_t					chZDma;
-	void					*handler;
+	uint8_t			out;
 
-	g_mutex.lock();
-	if ((list = this->_findListUniqId(uniqId, &chZDma)) != 0) {
-		if (bForce == false)
-			list->loop = 0;
-		else {
-			LDMA_StopTransfer(chZDma);
-			list->uniqId = 0;
-			this->bitZDmaLock ^= (1 << chZDma);
-			if ((handler = list->handler) != 0) {
-				while (zunoThreadIsRunning(handler) == true)
-					delay(1);
-				zunoResumeThread(handler);
-			}
-		}
+
+	while (0xFF) {
+		g_mutex.lock();
+		out = this->_stopTransfer(uniqId, bForce);
+		g_mutex.unlock();
+		if (out == ZDMA_STOPTRANSEFR_BREAK)
+			break ;
+		delay(1);
 	}
-	g_mutex.unlock();
 }
 
 void ZDMAClass::waitTransfer(size_t uniqId) {
@@ -315,6 +309,27 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, uint8_t *outch
 	}
 	*list_out = list;
 	return (ZunoErrorOk);
+}
+
+inline uint8_t ZDMAClass::_stopTransfer(size_t uniqId, uint8_t bForce) {
+	ZunoZDmaList_t			*list;
+	uint8_t					chZDma;
+	void					*handler;
+
+	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
+		return (ZDMA_STOPTRANSEFR_BREAK);
+	if (bForce == false)
+		list->loop = 0;
+	else {
+		if ((handler = list->handler) != 0 && zunoThreadIsRunning(handler) == true)
+			return (ZDMA_STOPTRANSEFR_WAIT);
+		LDMA_StopTransfer(chZDma);
+		list->uniqId = 0;
+		this->bitZDmaLock ^= (1 << chZDma);
+		if (handler != 0)
+			zunoResumeThread(handler);
+	}
+	return (ZDMA_STOPTRANSEFR_BREAK);
 }
 
 inline void ZDMAClass::_addList(ZunoZDmaList_t *list, uint8_t chZDma) {

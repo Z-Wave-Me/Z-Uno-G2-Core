@@ -10,7 +10,7 @@ typedef enum {
 
 typedef struct							ZunoZDmaList_s
 {
-	void								*handler;//Tred or null
+	volatile void						*handler;//Tred or null
 	size_t								uniqId;//Unique number for external access
 	size_t								counter;//counter how much data still needs to be sent
 	size_t								loop;

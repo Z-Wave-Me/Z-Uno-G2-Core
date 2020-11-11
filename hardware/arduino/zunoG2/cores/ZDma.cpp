@@ -88,9 +88,9 @@ void ZDMAClass::waitTransfer(size_t uniqId) {
 	uint8_t					chZDma;
 	void					*handler;
 
+	handler = zunoGetCurrentThreadHandle();
 	g_mutex.lock();
 	if ((list = this->_findListUniqId(uniqId, &chZDma)) != 0 && list->handler == 0) {
-		handler = zunoGetCurrentThreadHandle();
 		list->handler = handler;
 		g_mutex.unlock();
 		zunoSuspendThread(handler);
@@ -211,7 +211,7 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	ZunoZDmaList_t		*list;
 	size_t				counter;
 	size_t				loop;
-	void				*handler;
+	volatile void		*handler;
 
 	g_mutex.lock();
 	pending = (uint32_t) param;//LDMA_IntGetEnabled();
@@ -231,9 +231,9 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 						ZDMA.bitZDmaLock ^= chmask;
 						if ((handler = list->handler) != 0) {
 							list->handler = 0;
-							while (zunoThreadIsRunning(handler) == true)
+							while (zunoThreadIsRunning((void *)handler) == true)
 								__NOP();
-							zunoResumeThread(handler);
+							zunoResumeThread((void *)handler);
 						}
 					}
 					else {
@@ -314,20 +314,20 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, uint8_t *outch
 inline uint8_t ZDMAClass::_stopTransfer(size_t uniqId, uint8_t bForce) {
 	ZunoZDmaList_t			*list;
 	uint8_t					chZDma;
-	void					*handler;
+	volatile void			*handler;
 
 	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
 		return (ZDMA_STOPTRANSEFR_BREAK);
 	if (bForce == false)
 		list->loop = 0;
 	else {
-		if ((handler = list->handler) != 0 && zunoThreadIsRunning(handler) == true)
+		if ((handler = list->handler) != 0 && zunoThreadIsRunning((void *)handler) == true)
 			return (ZDMA_STOPTRANSEFR_WAIT);
 		LDMA_StopTransfer(chZDma);
 		list->uniqId = 0;
 		this->bitZDmaLock ^= (1 << chZDma);
 		if (handler != 0)
-			zunoResumeThread(handler);
+			zunoResumeThread((void *)handler);
 	}
 	return (ZDMA_STOPTRANSEFR_BREAK);
 }

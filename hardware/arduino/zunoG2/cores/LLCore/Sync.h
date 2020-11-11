@@ -6,7 +6,8 @@ typedef enum							SyncMaster_e
 	SyncMasterFree,// do not use !!!
 	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
-	SyncMasterDht
+	SyncMasterDht,
+	SyncMasterOneWare
 }										SyncMaster_t;
 
 typedef struct							ZunoSync_s

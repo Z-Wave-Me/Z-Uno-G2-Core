@@ -3,7 +3,8 @@
 
 typedef enum							SyncMaster_e
 {
-	SyncMasterFree,
+	SyncMasterFree,// do not use !!!
+	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
 	SyncMasterDht
 }										SyncMaster_t;

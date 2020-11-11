@@ -290,7 +290,7 @@ uint8_t getPin(uint8_t port, uint8_t pin);
 int getRealPort(uint8_t);
 int getRealPin(uint8_t);
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
-uint8_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
+size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
 bool analogWrite(uint8_t pin, word value);

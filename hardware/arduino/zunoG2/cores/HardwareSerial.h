@@ -4,6 +4,7 @@
 #include "Stream.h"
 #include "stdio.h"
 #include "ZDma_define.h"
+#include "Sync.h"
 #include "CrtxUSART.h"
 
 typedef uint16_t hardware_serial_buffer_len;
@@ -12,6 +13,7 @@ typedef struct							ZunoHardwareSerialConfig_s
 {
 	USART_TypeDef						*usart;
 	void								*IRQHandler;
+	ZunoSync_t							*lpLock;
 	size_t								baudrate;
 	ZDMA_PeripheralSignal_t				dmaSignalRead;
 	ZDMA_PeripheralSignal_t				dmaSignalWrite;
@@ -41,24 +43,23 @@ class HardwareSerial : public Stream {
 		virtual int								peek(void);
 		virtual int								read(void);
 	private:
+		inline size_t							_available(void);
+		inline int								_readLock(uint8_t bOffset);
 		inline int								_read(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);
+		static ZunoError_t						_init(size_t param);
+		static void								_deInit(size_t param);
 		static void								_USART0_IRQHandler(size_t flags);
 		static void								_USART1_IRQHandler(size_t flags);
 		static void								_USART2_IRQHandler(size_t flags);
 		inline void								_USART_IRQHandler(size_t flags);
 		static const ZunoHardwareSerialConfig_t	_configTable[3];
-		size_t									_baudrate;
 		uint8_t									*_buffer;
 		hardware_serial_buffer_len				_buffer_len;
 		hardware_serial_buffer_len				_buffer_count;
 		hardware_serial_buffer_len				_buffer_count_read;
 		uint8_t									_numberConfig;
-		struct
-		{
-			uint8_t								_bLockUsart: 1;
-			uint8_t								_bFree: 1;
-		};
+		uint8_t									_bFree;
 };
 
 extern HardwareSerial Serial;

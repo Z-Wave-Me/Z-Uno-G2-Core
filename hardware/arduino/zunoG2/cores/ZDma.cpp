@@ -54,19 +54,21 @@ uint8_t ZDMAClass::isProcessing(size_t uniqId) {
 	return (true);
 }
 
-size_t ZDMAClass::transferRemainingCount(size_t uniqId) {
+ZunoError_t ZDMAClass::transferReceivedCount(size_t uniqId, size_t *count) {
 	uint8_t					chZDma;
 	ZunoZDmaList_t			*list;
-	size_t					count;
+	ZunoError_t				ret;
 
 	g_mutex.lock();
 	list = this->_findListUniqId(uniqId, &chZDma);
 	if (list == 0)
-		count = 0;
-	else
-		count = LDMA_TransferRemainingCount(chZDma) + list->counter;
+		ret = ZunoErrorDmaInvalidUniqId;
+	else {
+		count[0] = (list ->len - (LDMA_TransferRemainingCount(chZDma) + list->counter));
+		ret = ZunoErrorOk;
+	}
 	g_mutex.unlock();
-	return (count);
+	return (ret);
 }
 
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {

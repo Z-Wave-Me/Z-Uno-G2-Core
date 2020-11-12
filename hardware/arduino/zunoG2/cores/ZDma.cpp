@@ -159,6 +159,8 @@ inline ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t p
 			return (ret);
 		list->uniqId = uniqId;
 	}
+	list->f = lpExt->f;
+	list->param = lpExt->param;
 	list->handler = 0;
 	list->len = len;
 	list->loop = (loop == ZDMA_EXT_LOOP_INFINITY) ? loop : loop - 1;
@@ -214,6 +216,7 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	size_t				counter;
 	size_t				loop;
 	volatile void		*handler;
+	uint8_t				(*f)(size_t);
 
 	g_mutex.lock();
 	pending = (uint32_t) param;//LDMA_IntGetEnabled();
@@ -231,6 +234,8 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 					if ((loop = list->loop) == 0) {
 						list->uniqId = 0;
 						ZDMA.bitZDmaLock ^= chmask;
+						if ((f = list->f) != 0)
+							f(list->param);
 						if ((handler = list->handler) != 0) {
 							list->handler = 0;
 							while (zunoThreadIsRunning((void *)handler) == true)

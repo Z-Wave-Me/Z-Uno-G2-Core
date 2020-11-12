@@ -91,4 +91,7 @@ inline void zunoResumeThread(void *handle) {
 inline bool zunoThreadIsRunning(void *handle){
     return (bool)zunoSysCall(ZUNO_THREAD_ISRUNNING, 1, handle);
 }
+inline bool zunoIsIOThread(){
+	return (g_zuno_sys->hIOThread == zunoSysCall(ZUNO_THREAD_GETCURRENTHANDLE, 0));
+}
 #endif // ZUNO_THREADING

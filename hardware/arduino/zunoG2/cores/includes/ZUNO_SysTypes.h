@@ -61,6 +61,8 @@ typedef struct ZUNOSetupSysState_s {
 	uint32_t gpio_em4flags;
 	uint32_t flags;
 	ZUNODeviceConfiguation_t * zwave_cfg;
+	void *  hIOThread;
+	void *  hMainThread;
 }ZUNOSetupSysState_t;
 
 // Handlers

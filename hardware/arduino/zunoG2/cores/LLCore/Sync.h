@@ -12,7 +12,6 @@ typedef enum							SyncMaster_e
 
 typedef struct							ZunoSync_s
 {
-	volatile void						*handle;
 	volatile uint16_t					counter;
 	volatile uint8_t					bLock;
 	volatile SyncMaster_t				master;
@@ -21,7 +20,6 @@ typedef struct							ZunoSync_s
 
 #define ZUNO_SYNC_INIT_DEFAULT			\
 {										\
-	.handle = 0,						\
 	.counter = 0,						\
 	.bLock = 0,							\
 	.master = SyncMasterFree,			\

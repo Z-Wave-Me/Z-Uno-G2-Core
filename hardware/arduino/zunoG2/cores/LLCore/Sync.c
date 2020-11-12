@@ -64,10 +64,12 @@ static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, vol
 }
 
 static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, volatile uint8_t *lpKey) {
+	size_t				bIo;
 	size_t				out;
 	size_t				i;
 	void				*handle;
 
+	bIo = zunoIsIOThread();
 	while (0xFF) {
 		i = 0;
 		while (i++ < ZUNO_SYNC_SPIN_COUNT) {
@@ -76,19 +78,9 @@ static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode
 			if (out == ZUNO_SYNC_TRUE)
 				return (ZunoErrorOk);
 		}
-		while (lpLock->handle != 0)
-			delay(1);
-		handle = zunoGetCurrentThreadHandle();
-		_sectionEnter(&lpLock->bLock);
-		if (lpLock->handle != 0) {
-			_sectionLeave(&lpLock->bLock);
-			delay(1);
-		}
-		else {
-			lpLock->handle = handle;
-			_sectionLeave(&lpLock->bLock);
-			zunoSuspendThread(handle);
-		}
+		if (bIo == true)
+			return (ZunoErrorTredIo);
+		delay(1);
 	}
 }
 
@@ -101,28 +93,15 @@ ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile u
 }
 
 static void _relese(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey) {
-	size_t				counter;
-	volatile void		*handle;
 	volatile uint8_t	*lp;
 
 	lp = &lpLock->bLock;
 	_sectionEnter(lp);
 	if (lpLock->master == value && lpKey[0] == true) {
-		if ((counter = lpLock->counter) == ((uint16_t)-1))
-			counter = 0;
-		else if ((counter = --lpLock->counter) == 0)
-			lpLock->counter = ((uint16_t)-1);
-		if (counter == 0) {
-			if ((handle = lpLock->handle) != 0) {
-				_sectionLeave(lp);
-				while (zunoThreadIsRunning((void *)handle) == true)
-					delay(1);
-				zunoResumeThread((void *)handle);
-				_sectionEnter(lp);
-				lpLock->handle = 0;
-			}
+		if (lpLock->counter == ((uint16_t)-1))
 			lpLock->counter = 0;
-		}
+		else
+			lpLock->counter--;
 	}
 	_sectionLeave(lp);
 }
@@ -139,11 +118,15 @@ ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f
 	SyncMaster_t		master;
 	volatile uint8_t	*lp;
 	ZunoError_t			ret;
+	size_t				bIo;
 
+	bIo = zunoIsIOThread();
 	lp = &lpLock->bLock;
 	while (0xFF) {
 		_sectionEnter(lp);
 		if ((master = lpLock->master) == SyncMasterOpenClose) {
+			if (bIo == true)
+				return (ZunoErrorTredIo);
 			_sectionLeave(lp);
 			delay(1);
 			continue ;

@@ -1,4 +1,5 @@
 #include "Arduino.h"
+#include "Threading.h"
 #include "ZDma_private.h"
 #include "stdlib.h"
 
@@ -28,70 +29,111 @@
 	#error "Error DMA_CHAN_COUNT big too - bitZDma"
 #endif
 
+#define ZDMA_STOPTRANSEFR_WAIT			false
+#define ZDMA_STOPTRANSEFR_BREAK			true
+
 extern unsigned long  __bss_start__;
 static const uint8_t _multSize[] = {1, 2, 4};
 
+static znMutex g_mutex = znMutex();
+
 /* Public Constructors */
-ZDMAClass::ZDMAClass(void): bitZDmaLock(0) {
-	memset(&this->_listCh[0], 0, sizeof(this->_listCh));
+ZDMAClass::ZDMAClass(void): bitZDmaLock(0), _listCh{0} {
+
 }
 
 uint8_t ZDMAClass::isProcessing(size_t uniqId) {
 	uint8_t					chZDma;
+	ZunoZDmaList_t			*list;
 
-	if (this->_findListUniqId(uniqId, &chZDma) == 0)
+	g_mutex.lock();
+	list = this->_findListUniqId(uniqId, &chZDma);
+	g_mutex.unlock();
+	if (list == 0)
 		return (false);
 	return (true);
 }
 
-size_t ZDMAClass::transferRemainingCount(size_t uniqId) {
-	ZunoZDmaList_t			*list;
+ZunoError_t ZDMAClass::transferReceivedCount(size_t uniqId, size_t *count) {
 	uint8_t					chZDma;
+	ZunoZDmaList_t			*list;
+	ZunoError_t				ret;
 
-	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
-		return (0);
-	return (LDMA_TransferRemainingCount(chZDma) + list->counter);
+	g_mutex.lock();
+	list = this->_findListUniqId(uniqId, &chZDma);
+	if (list == 0)
+		ret = ZunoErrorDmaInvalidUniqId;
+	else {
+		count[0] = (list ->len - (LDMA_TransferRemainingCount(chZDma) + list->counter));
+		ret = ZunoErrorOk;
+	}
+	g_mutex.unlock();
+	return (ret);
 }
 
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
+	uint8_t			out;
+
+
+	while (0xFF) {
+		g_mutex.lock();
+		out = this->_stopTransfer(uniqId, bForce);
+		g_mutex.unlock();
+		if (out == ZDMA_STOPTRANSEFR_BREAK)
+			break ;
+		delay(1);
+	}
+}
+
+void ZDMAClass::waitTransfer(size_t uniqId) {
 	ZunoZDmaList_t			*list;
 	uint8_t					chZDma;
+	void					*handler;
 
-	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
-		return ;
-	if (bForce == false) {
-		list->loop = 0;
-		return ;
+	handler = zunoGetCurrentThreadHandle();
+	g_mutex.lock();
+	if ((list = this->_findListUniqId(uniqId, &chZDma)) != 0 && list->handler == 0) {
+		list->handler = handler;
+		g_mutex.unlock();
+		zunoSuspendThread(handler);
 	}
-	LDMA_StopTransfer(chZDma);
-	list->uniqId = 0;
-	this->bitZDmaLock ^= (1 << chZDma);
+	else
+		g_mutex.unlock();
 }
 
 ZunoError_t ZDMAClass::toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size) {
 	ZunoZDmaExt_t					lpExt;
 
 	lpExt = ZDMA_EXT_INIT_DEFAULT;
-	return (this->_transfer(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionMemToPeripheral, &lpExt));
+	return (this->_transferLock(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionMemToPeripheral, &lpExt));
 }
 
 ZunoError_t ZDMAClass::toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt) {
-	return (this->_transfer(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionMemToPeripheral, lpExt));
+	return (this->_transferLock(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionMemToPeripheral, lpExt));
 }
 
 ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size) {
 	ZunoZDmaExt_t					lpExt;
 
 	lpExt = ZDMA_EXT_INIT_DEFAULT;
-	return (this->_transfer(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionPeripheralToMem, &lpExt));
+	return (this->_transferLock(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionPeripheralToMem, &lpExt));
 }
 
 ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt) {
-	return (this->_transfer(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionPeripheralToMem, lpExt));
+	return (this->_transferLock(uniqId, peripheralSignal, dst, src, len, size, zdmaDirectionPeripheralToMem, lpExt));
 }
 
 /* Private Methods */
-ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt) {
+inline ZunoError_t ZDMAClass::_transferLock(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt) {
+	ZunoError_t				ret;
+
+	g_mutex.lock();
+	ret = this->_transfer(uniqId, peripheralSignal, dst, src, len, size, direction, lpExt);
+	g_mutex.unlock();
+	return (ret);
+}
+
+inline ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt) {
 	ZunoError_t				ret;
 	ZunoZDmaList_t			*list;
 	LDMA_TransferCfg_t		transfer_cfg;
@@ -105,8 +147,8 @@ ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripher
 	if (len == 0 || (loop = lpExt->loop) == 0)
 		return (ZunoErrorOk);
 	list = this->_findListUniqId(uniqId, &chZDma);
-	if ((lpExt->bReconfig == true)) {
-		if (list == 0)
+	if (((lpExt->flags & ZDMA_EXT_FLAGS_RECONFIG) != 0)) {
+		if (list == 0 || list->handler != 0)
 			return (ZunoErrorDmaInvalidReconfig);
 		LDMA_StopTransfer(chZDma);
 	}
@@ -117,6 +159,9 @@ ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripher
 			return (ret);
 		list->uniqId = uniqId;
 	}
+	list->f = lpExt->f;
+	list->param = lpExt->param;
+	list->handler = 0;
 	list->len = len;
 	list->loop = (loop == ZDMA_EXT_LOOP_INFINITY) ? loop : loop - 1;
 	transfer_desc = &list->transfer_desc;
@@ -170,7 +215,10 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	ZunoZDmaList_t		*list;
 	size_t				counter;
 	size_t				loop;
+	volatile void		*handler;
+	uint8_t				(*f)(size_t);
 
+	g_mutex.lock();
 	pending = (uint32_t) param;//LDMA_IntGetEnabled();
 	if (pending & LDMA_IF_ERROR)/* Check for LDMA error. */
 		while (true)/* Loop to enable debugger to see what has happened. */
@@ -186,6 +234,14 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 					if ((loop = list->loop) == 0) {
 						list->uniqId = 0;
 						ZDMA.bitZDmaLock ^= chmask;
+						if ((f = list->f) != 0)
+							f(list->param);
+						if ((handler = list->handler) != 0) {
+							list->handler = 0;
+							while (zunoThreadIsRunning((void *)handler) == true)
+								__NOP();
+							zunoResumeThread((void *)handler);
+						}
 					}
 					else {
 						list->loop = (loop == ZDMA_EXT_LOOP_INFINITY) ? loop : loop - 1;
@@ -205,13 +261,13 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 					_reload(list, transfer_desc, counter, chZDma, chmask);
 				}
 			}
-			//LDMA_IntClear(chmask);
 		}
 		chZDma++;
 	}
+	g_mutex.unlock();
 }
 
-size_t ZDMAClass::_modeBasicLen(LDMA_Descriptor_t *transfer_desc, size_t len) {
+inline size_t ZDMAClass::_modeBasicLen(LDMA_Descriptor_t *transfer_desc, size_t len) {
 	size_t					tempos;
 
 	len--;
@@ -262,6 +318,27 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, uint8_t *outch
 	return (ZunoErrorOk);
 }
 
+inline uint8_t ZDMAClass::_stopTransfer(size_t uniqId, uint8_t bForce) {
+	ZunoZDmaList_t			*list;
+	uint8_t					chZDma;
+	volatile void			*handler;
+
+	if ((list = this->_findListUniqId(uniqId, &chZDma)) == 0)
+		return (ZDMA_STOPTRANSEFR_BREAK);
+	if (bForce == false)
+		list->loop = 0;
+	else {
+		if ((handler = list->handler) != 0 && zunoThreadIsRunning((void *)handler) == true)
+			return (ZDMA_STOPTRANSEFR_WAIT);
+		LDMA_StopTransfer(chZDma);
+		list->uniqId = 0;
+		this->bitZDmaLock ^= (1 << chZDma);
+		if (handler != 0)
+			zunoResumeThread((void *)handler);
+	}
+	return (ZDMA_STOPTRANSEFR_BREAK);
+}
+
 inline void ZDMAClass::_addList(ZunoZDmaList_t *list, uint8_t chZDma) {
 	this->_listCh[chZDma] = (uint16_t)((size_t)list - (size_t)&__bss_start__);
 }
@@ -274,7 +351,7 @@ inline ZunoZDmaList_t *ZDMAClass::_findList(uint8_t chZDma) {
 	return ((ZunoZDmaList_t *)(out + (size_t)&__bss_start__));
 }
 
-ZunoZDmaList_t *ZDMAClass::_findListUniqId(size_t uniqId, uint8_t *chZDma) {
+inline ZunoZDmaList_t *ZDMAClass::_findListUniqId(size_t uniqId, uint8_t *chZDma) {
 	size_t					list;
 	uint16_t				*b;
 	uint16_t				*e;

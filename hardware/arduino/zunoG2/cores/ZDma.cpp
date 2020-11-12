@@ -84,6 +84,7 @@ void ZDMAClass::waitTransfer(size_t uniqId) {
 
 	if (zunoIsIOThread() == true)
 		return ;
+	delay(1);
 	while (this->isProcessing(uniqId) == true)
 		delay(1);
 }

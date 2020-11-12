@@ -338,7 +338,7 @@ ZunoError_t PinBtn::_activeTouch(uint8_t pin, ZunoBtnTouch_t *list) {
 		this->_bSysTimerInit++;
 	}
 	else {
-		lpExt.bReconfig = true;
+		lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
 		if (block > (blockMax = this->_toushAutoScanBufferBlockMax)) {
 			blockMax = blockMax + BTN_TOUCH_BLOCK_PERIOD;
 			if ((blockBuffer = (btn_touch_value *)malloc(blockMax * sizeof(btn_touch_value))) == 0)
@@ -434,7 +434,7 @@ inline void PinBtn::_deactiveTouch(ZunoBtnTouch_t *list) {
 	}
 	lpExt = ZDMA_EXT_INIT_DEFAULT;
 	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
-	lpExt.bReconfig = true;
+	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
 	ZDMA.toPeripheralMemory(BTN_TOUCH_UNIQ_DMA_DATA, zdmaPeripheralSignal_CSEN_DATA, (void *)blockBuffer, (void *)&CSEN->DATA, block, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt);
 	ZDMA.toMemoryPeripheral(BTN_TOUCH_UNIQ_DMA_BASELINE, zdmaPeripheralSignal_CSEN_BSLN, (void *)&CSEN->DMBASELINE, (void *)&gBaseLineTouch[0], block, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt);
 }

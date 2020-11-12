@@ -281,7 +281,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	this->_buffer_count_read = 0;
 	ZunoZDmaExt_t lpExt = ZDMA_EXT_INIT_DEFAULT;
 	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
-	lpExt.bReconfig = true;
+	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
 	ZDMA.toPeripheralMemory(HARDWARE_SERIAL_UNIQ_ZDMA_READ, config->dmaSignalRead, (void *)b, (void*)&(usart->RXDATA), len, zdmaData8, &lpExt);
 	pinMode(tx, OUTPUT_UP);
 	pinMode(rx, INPUT_DOWN);

@@ -454,9 +454,11 @@ typedef struct							ZunoZDmaExt_s
 	uint8_t								(*f)(size_t);
 	size_t								param;
 	size_t								loop;
-	uint8_t								bReconfig;
+	uint32_t							flags;
 }										ZunoZDmaExt_t;
 
+#define ZDMA_EXT_FLAGS_DEFAULT			0x0
+#define ZDMA_EXT_FLAGS_RECONFIG			0x1
 
 #define ZDMA_EXT_LOOP_INFINITY			((size_t)-1)
 
@@ -465,7 +467,7 @@ typedef struct							ZunoZDmaExt_s
 	.f = 0,								\
 	.param = 0,							\
 	.loop = 1,							\
-	.bReconfig = false					\
+	.flags = ZDMA_EXT_FLAGS_DEFAULT		\
 }
 
 #endif // ZDMA_DEFINE_H

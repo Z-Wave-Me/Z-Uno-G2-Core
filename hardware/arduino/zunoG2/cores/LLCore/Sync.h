@@ -28,14 +28,14 @@ typedef struct							ZunoSync_s
 	.master_count = 0					\
 }
 
-ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param);
-void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), size_t param);
+ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);
+void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), size_t param, volatile uint8_t *lpKey);
 
-ZunoError_t zunoSyncLockRead(ZunoSync_t *lpLock, SyncMaster_t value);
-void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value);
+ZunoError_t zunoSyncLockRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
+void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
 
-ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value);
-void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value);
+ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
+void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
 
 extern ZunoSync_t gSyncUSART0;
 extern ZunoSync_t gSyncUSART1;

@@ -25,6 +25,7 @@ typedef enum
 	ZunoErrorDmaUniqIdAlready,//
 	ZunoErrorSyncInvalidType,
 	ZunoErrorSyncInvalidInit,
+	ZunoErrorSyncAlreadyOpen,
 	ZunoErrorNeo,//Failed NEO
 	ZunoErrorInvalidPin,//Invalid pin
 	ZunoErrorNotInit,

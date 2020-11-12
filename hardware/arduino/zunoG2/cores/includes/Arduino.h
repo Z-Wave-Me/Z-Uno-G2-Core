@@ -12,6 +12,7 @@
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
+	ZunoErrorTredIo,
 	ZunoErrorTimerAlredy,//the timer is already in use
 	ZunoErrorUsartAlredy,//the usart is already in use
 	ZunoErrorExtInt,//Failed to configure interrupt

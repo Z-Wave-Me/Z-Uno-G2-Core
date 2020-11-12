@@ -147,7 +147,7 @@ inline ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t p
 	if (len == 0 || (loop = lpExt->loop) == 0)
 		return (ZunoErrorOk);
 	list = this->_findListUniqId(uniqId, &chZDma);
-	if ((lpExt->bReconfig == true)) {
+	if (((lpExt->flags & ZDMA_EXT_FLAGS_RECONFIG) != 0)) {
 		if (list == 0 || list->handler != 0)
 			return (ZunoErrorDmaInvalidReconfig);
 		LDMA_StopTransfer(chZDma);

@@ -29,7 +29,7 @@ class ZDMAClass {
 		uint8_t									isProcessing(size_t uniqId);
 		void									stopTransfer(size_t uniqId, uint8_t bForce);
 		void									waitTransfer(size_t uniqId);
-		size_t									transferRemainingCount(size_t uniqId);
+		ZunoError_t								transferReceivedCount(size_t uniqId, size_t *count);
 	
 	private:
 		inline uint8_t							_stopTransfer(size_t uniqId, uint8_t bForce);

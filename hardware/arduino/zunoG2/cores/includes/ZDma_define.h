@@ -452,10 +452,7 @@ typedef enum {
 typedef struct							ZunoZDmaExt_s
 {
 	size_t								loop;
-	struct
-	{
-		uint8_t							bReconfig: 1;
-	};
+	uint8_t								bReconfig;
 }										ZunoZDmaExt_t;
 
 
@@ -464,9 +461,7 @@ typedef struct							ZunoZDmaExt_s
 #define ZDMA_EXT_INIT_DEFAULT			\
 {										\
 	.loop = 1,							\
-	{									\
-		.bReconfig = false				\
-	}									\
+	.bReconfig = false					\
 }
 
 #endif // ZDMA_DEFINE_H

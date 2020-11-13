@@ -459,6 +459,9 @@ typedef struct							ZunoZDmaExt_s
 
 #define ZDMA_EXT_FLAGS_DEFAULT			0x0
 #define ZDMA_EXT_FLAGS_RECONFIG			0x1
+#define ZDMA_EXT_FLAGS_SRC_NOT_INC		0x2
+#define ZDMA_EXT_FLAGS_DEST_NOT_INC		0x4
+#define ZDMA_EXT_FLAGS_REQ_BLOCK		0x8
 
 #define ZDMA_EXT_LOOP_INFINITY			((size_t)-1)
 

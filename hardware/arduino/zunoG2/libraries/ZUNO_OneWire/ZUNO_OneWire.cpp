@@ -118,231 +118,151 @@ sample code bearing this copyright.
 //--------------------------------------------------------------------------
 */
 
+#include "Arduino.h"
 #include "ZUNO_OneWire.h"
 
-#include "Arduino.h"
+#define ONEWARE_INPUT()			this->_digitalWriteFast(LOW); this->_pinModeFast(INPUT & 0xFF);
+#define ONEWARE_OUTPUT()		this->_digitalWriteFast(LOW); this->_pinModeFast(OUTPUT & 0xFF);
 
-OneWire::OneWire(byte pin): bus_pin(pin) {
-	//Here we caching some values for better perfomance
-    real_pin = getRealPin(pin);
-    real_port = getRealPort(pin);
-
-    aliasAddr_in = ((uint32_t) & GPIO->P[real_port].DIN);
-
-    aliasAddr_out = ((uint32_t) & GPIO->P[real_port].DOUT);
-
-    aliasAddr_out -= PER_MEM_BASE;
-    aliasAddr_out <<= 5;
-    aliasAddr_out += BITBAND_PER_BASE;
-    aliasAddr_out += (real_pin << 2);
-
-    aliasAddr_in -= PER_MEM_BASE;
-    aliasAddr_in <<= 5;
-    aliasAddr_in += BITBAND_PER_BASE;
-    aliasAddr_in += (real_pin << 2);
-
-    pinModeFast(INPUT);
-    reset_search();
-}
-//Digital write with some cached values for better perfomance
-inline void OneWire::digitalWriteFast(uint8_t val) {
-    *(volatile uint32_t * ) aliasAddr_out = (uint32_t) val;
-}
-
-//Digital read with some cached values for better perfomance
-inline int OneWire::digitalReadFast() {
-    return ( * (volatile uint32_t * ) aliasAddr_in);
-}
-//pinMode with some cached values for better perfomance
-inline void OneWire::pinModeFast(uint8_t mode) {
-    int real_mode = mode & 0xFF;
-    bool on_off = ((mode & 0x100)  != 0);
-
-    if( real_mode != DISABLED )
-        digitalWriteFast(on_off);
-		//digitalWrite(pin, on_off);
-    
-	if(real_pin < 8)
-    	GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << 		(real_pin))) | (real_mode << (real_pin << 2 ));
-	else 
-      GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2))) | (mode << ((real_pin - 8) << 2));
+/* Public Constructors */
+OneWire::OneWire(byte pin) {//Here we caching some values for better perfomance
+	size_t			real_port;
+	size_t			real_pin;
+	size_t			aliasAddr_in;
+	size_t			aliasAddr_out;
 	
-	if( real_mode == DISABLED )
-		digitalWriteFast(on_off);
-        //digitalWrite(pin, on_off);
-
+	real_pin = getRealPin(pin);
+	real_port = getRealPort(pin);
+	this->_real_pin = real_pin;
+	this->_real_port = real_port;
+	aliasAddr_in = ((uint32_t) & GPIO->P[real_port].DIN);
+	aliasAddr_in -= PER_MEM_BASE;
+	aliasAddr_in <<= 5;
+	aliasAddr_in += BITBAND_PER_BASE;
+	aliasAddr_in += (real_pin << 2);
+	this->_aliasAddr_in = aliasAddr_in;
+	aliasAddr_out = ((uint32_t) & GPIO->P[real_port].DOUT);
+	aliasAddr_out -= PER_MEM_BASE;
+	aliasAddr_out <<= 5;
+	aliasAddr_out += BITBAND_PER_BASE;
+	aliasAddr_out += (real_pin << 2);
+	this->_aliasAddr_out = aliasAddr_out;
+	this->reset_search();
 }
+
+/* Public Methods */
+void OneWire::reset_search() {// We use global vars here to minimize stack usage
+	memset(&this->_date, 0, sizeof(this->_date));
+}
+
+/*
 // Perform the onewire reset function.  We will wait up to 250uS for
 // the bus to come high, if it doesn't then it is broken or shorted
 // and we return a 0;
 //
 // Returns 1 if a device asserted a presence pulse, 0 otherwise.
-//
+*/
 byte OneWire::reset(void) {
-    byte r;
-    byte retries = 125;
+	size_t			out;
 
+	ONEWARE_INPUT();
+	delay(1);
+	if (this->_digitalReadFast() == 0)
+		return (false);
+	ONEWARE_OUTPUT();
+	delayMicroseconds(480);
 	noInterrupts();
-    // noInterrupts();
-    // sysClockSet(SYSCLOCK_NORMAL);
-    // pinMode(bus_pin, INPUT);
-    pinModeFast(INPUT);
-	// wait until the wire is high... just in case
-    do {
-        if ((--retries) == 0)
-            return 0;
-        delayMicroseconds(2);
-    } while (!digitalReadFast());
-    // pinMode(bus_pin, OUTPUT);
-	pinModeFast(OUTPUT);
-	digitalWriteFast(0);
-    //digitalWrite(bus_pin, 0);
-    interrupts();
-	// interrupts();
-    delayMicroseconds(480);
-
-	noInterrupts();
-    // noInterrupts();
-    // pinMode(bus_pin, INPUT); // allow it to float
-    pinModeFast(INPUT);
+	ONEWARE_INPUT();
 	delayMicroseconds(70);
-    r = digitalReadFast();
+	out = this->_digitalReadFast();
 	interrupts();
-    // interrupts();
-
-    delayMicroseconds(410);
-    // sysClockNormallize();
-    return r == 0;
+	if (out != 0)
+		return (false);
+	delayMicroseconds(410);
+	return (true);
 }
 
 void OneWire::write(byte v, byte power) {
-    byte bitMask;
-    noInterrupts();
-    // sysClockSet(SYSCLOCK_NORMAL);
-    //digitalWrite(27, 0);
-    pinModeFast(OUTPUT);;
-    //digitalWrite(27, 1); //for debug purposes
-    for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+	byte					bitMask;
 
-        //digitalWrite(bus_pin, 0);
-        digitalWriteFast(0);
-
-        if ((bitMask & v)) {
-            delayMicroseconds(10);
-            //digitalWrite(bus_pin, 1);
-            digitalWriteFast(1);
-            delayMicroseconds(55);
-        } else {
-            delayMicroseconds(65);
-            //digitalWrite(bus_pin, 1);
-            digitalWriteFast(1);
-            delayMicroseconds(5);
-        }
-        interrupts();
-    }
-    if (!power) {
-        pinModeFast(INPUT);;
-    }
-    // sysClockNormallize();
+	noInterrupts();
+	ONEWARE_OUTPUT();
+	for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+		this->_digitalWriteFast(0);
+		if ((bitMask & v)) {
+			delayMicroseconds(10);
+			this->_digitalWriteFast(1);
+			delayMicroseconds(55);
+		} else {
+			delayMicroseconds(65);
+			this->_digitalWriteFast(1);
+			delayMicroseconds(5);
+		}
+		interrupts();
+	}
+	if (!power)
+		ONEWARE_INPUT();
 }
+
 byte OneWire::read() {
-    byte bitMask;
-    byte r;
-    byte res = 0;
+	byte bitMask;
+	byte r;
+	byte res = 0;
 
-    //sysClockSet(SYSCLOCK_NORMAL);
 	noInterrupts();
-
-    for (bitMask = 0x01; bitMask; bitMask <<= 1) {
-
-        pinModeFast(OUTPUT);;
-        // digitalWrite(bus_pin, 0);
-        digitalWriteFast(0);
-        delayMicroseconds(7);
-
-        pinModeFast(INPUT); // let pin float, pull up will raise
-        delayMicroseconds(15);
-
-        r = digitalReadFast();
-        delayMicroseconds(94);
-
-        if (r)
-            res |= bitMask;
-    }
+	for (bitMask = 0x01; bitMask; bitMask <<= 1) {
+		ONEWARE_OUTPUT();
+		this->_digitalWriteFast(0);
+		delayMicroseconds(7);
+		ONEWARE_INPUT(); // let pin float, pull up will raise
+		delayMicroseconds(15);
+		r = this->_digitalReadFast();
+		delayMicroseconds(94);
+		if (r)
+			res |= bitMask;
+	}
 	interrupts();
-    //sysClockNormallize();
-    return res;
+	return res;
 }
 
-//
 // Do a ROM select
-//
 void OneWire::select(byte * rom) {
-    byte i;
+	size_t				i;
 
-    write(0x55); // Choose ROM
-
-    for (i = 0; i < 8; i++)
-        write(rom[i]);
+	this->write(0x55); // Choose ROM
+	for (i = 0; i < 8; i++)
+		this->write(rom[i]);
 }
 
-void OneWire::skip() {
-    write(0xCC); // Skip ROM
-}
 void OneWire::depower() {
-    pinModeFast(INPUT);;
+	ONEWARE_INPUT();
 }
+
 void OneWire::readROM(byte * rom) {
-    byte i;
+	size_t				i;
 
-    write(0x33);
-    for (i = 0; i < 8; i++)
-        rom[i] = read();
-
+	this->write(0x33);
+	for (i = 0; i < 8; i++)
+		rom[i] = read();
 }
 
-bool OneWire::read_bit() {
-    bool r;
-    // sysClockSet(SYSCLOCK_NORMAL);
-    // noInterrupts(); 
-    noInterrupts();
-    pinModeFast(OUTPUT);;
-    digitalWrite(bus_pin, 0);
-    delayMicroseconds(3);
-    pinModeFast(INPUT);; // let pin float, pull up will raise
-    delayMicroseconds(15);
-    r = digitalReadFast();
-    delayMicroseconds(73);
-    interrupts();
-    // sysClockNormallize();
-    // interrupts();
+byte OneWire::crc8(byte * addr, byte len) {
+	uint8_t crc = 0;
 
-    return r != 0;
-}
-void OneWire::write_bit(bool bit) {
-    //Serial0.println("BIT");
-    // sysClockSet(SYSCLOCK_NORMAL);
-    // noInterrupts();
-	noInterrupts();
-    pinModeFast(OUTPUT);;
-    digitalWrite(bus_pin, 0);
-    if (bit) {
-        delayMicroseconds(10);
-		digitalWriteFast(1);
-        // digitalWrite(bus_pin, 1);
-        delayMicroseconds(55);
-    } else {
-        delayMicroseconds(65);
-		digitalWriteFast(1);
-        // digitalWrite(bus_pin, 1);
-        delayMicroseconds(5);
-    }
-	interrupts();
-    // sysClockNormallize();
-    // interrupts();
+	while (len--) {
+		byte inbyte = * addr++;
+		for (byte i = 8; i; i--) {
+			byte mix = (crc ^ inbyte) & 0x01;
+			crc >>= 1;
+			if (mix)
+				crc ^= 0x8C;
+			inbyte >>= 1;
+		}
+	}
+	return crc;
 }
 
-//
+/*
 // Perform a search. If this function returns a '1' then it has
 // enumerated the next device and you may retrieve the ROM from the
 // OneWire::address variable. If there are no devices, no further
@@ -357,141 +277,129 @@ void OneWire::write_bit(bool bit) {
 // search state.
 // Return TRUE  : device found, ROM number in ROM_NO buffer
 //        FALSE : device not found, end of search
-//
-// ------------------------------------------------------------
-// We use global vars here to minimize stack usage
-// ------------------------------------------------------------
-void OneWire::reset_search() {
-    LastDiscrepancy = 0;
-    LastDeviceFlag = FALSE;
-    LastFamilyDiscrepancy = 0;
-    byte i = 7;
-    while (i--)
-        ows_ROM_NO[i] = 0;
-}
+*/
 bool OneWire::search(uint8_t * newAddr) {
+	byte				ows_last_zero;
+	byte				ows_rom_byte_number;
+	byte				ows_search_result;
+	byte				ows_id_bit_number;
+	byte				ows_rom_byte_mask;
 
-    // initialize for search
-    ows_id_bit_number = 1;
-    ows_last_zero = 0;
-    ows_rom_byte_number = 0;
-    ows_rom_byte_mask = 1;
-    ows_search_result = false;
+	byte				ows_id_bit;
+	byte				ows_cmp_id_bit;
+	byte				ows_search_direction;
 
-    // if the last call was not the last one
-    if (!LastDeviceFlag) {
-        // 1-Wire reset
-        if (!reset()) {
-            // reset the search
-            LastDiscrepancy = 0;
-            LastDeviceFlag = false;
-            LastFamilyDiscrepancy = 0;
-            return false;
-        }
-
-        // issue the search command
-        write(0xF0);
-
-        // loop to do the search
-        do {
-            // serial number search direction write bit
-            //write_bit(1); 
-            // read a bit and its complement
-            ows_id_bit = read_bit();
-            ows_cmp_id_bit = read_bit();
-
-            //Serial0.print(0x80 | ows_id_bit << 1 | ows_cmp_id_bit ,HEX);
-
-            // check for no devices on 1-wire
-            if ((ows_id_bit == 1) && (ows_cmp_id_bit == 1))
-                break;
-            // all devices coupled have 0 or 1
-            if (ows_id_bit != ows_cmp_id_bit) {
-                ows_search_direction = ows_id_bit; // bit write value for search
-            } else {
-                // if this discrepancy if before the Last Discrepancy
-                // on a previous next then pick the same as last time
-                if (ows_id_bit_number < LastDiscrepancy) {
-                    ows_search_direction = ows_ROM_NO[ows_rom_byte_number];
-                    ows_search_direction &= ows_rom_byte_mask;
-                    ows_search_direction = (ows_search_direction > 0);
-                } else {
-                    // if equal to last pick 1, if not then pick 0
-                    ows_search_direction = (ows_id_bit_number == LastDiscrepancy);
-
-                }
-
-                // if 0 was picked then record its position in LastZero
-                if (ows_search_direction == 0) {
-                    ows_last_zero = ows_id_bit_number;
-
-                    // check for Last discrepancy in family
-                    if (ows_last_zero < 9)
-                        LastFamilyDiscrepancy = ows_last_zero;
-                }
-            }
-            // set or clear the bit in the ROM byte rom_byte_number
-            // with mask rom_byte_mask
-            if (ows_search_direction) {
-                ows_ROM_NO[ows_rom_byte_number] |= ows_rom_byte_mask;
-            } else {
-                ows_ROM_NO[ows_rom_byte_number] &= ~(ows_rom_byte_mask);
-            }
-            // serial number search direction write bit
-            write_bit(ows_search_direction);
-
-            // increment the byte counter id_bit_number
-            // and shift the mask rom_byte_mask
-            ows_id_bit_number++;
-            ows_rom_byte_mask <<= 1;
-
-            // if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask
-            if (ows_rom_byte_mask == 0) {
-                ows_rom_byte_number++;
-                ows_rom_byte_mask = 1;
-            }
-
-        }
-        while (ows_rom_byte_number < 8); // loop until through all ROM bytes 0-7
-
-        // if the search was successful then
-        if (ows_id_bit_number > 64) {
-            // search successful so set LastDiscrepancy,LastDeviceFlag,search_result
-            LastDiscrepancy = ows_last_zero;
-
-            // check for last device
-            if (LastDiscrepancy == 0)
-                LastDeviceFlag = true;
-
-            ows_search_result = true;
-        }
-    }
-
-    // if no device found then reset counters so next 'search' will be like a first
-    if (!ows_search_result || !ows_ROM_NO[0]) {
-        LastDiscrepancy = 0;
-        LastDeviceFlag = false;
-        LastFamilyDiscrepancy = 0;
-        ows_search_result = false;
-    }
-    for (byte i = 0; i < 8; i++)
-        newAddr[i] = ows_ROM_NO[i];
-    return ows_search_result;
-
+	ows_last_zero = 0;// initialize for search
+	ows_rom_byte_number = 0;
+	ows_search_result = false;
+	ows_id_bit_number = 1;
+	ows_rom_byte_mask = 1;
+	if (!this->_date.LastDeviceFlag) {// if the last call was not the last one
+		if (!reset()) {// 1-Wire reset
+			this->_date.LastDiscrepancy = 0;// reset the search
+			this->_date.LastDeviceFlag = false;
+			//this->_date.LastFamilyDiscrepancy = 0;
+			return false;
+		}
+		this->write(0xF0);// issue the search command
+		do {// loop to do the search serial number search direction write bit read a bit and its complement
+			ows_id_bit = this->_read_bit();
+			ows_cmp_id_bit = this->_read_bit();
+			if ((ows_id_bit == 1) && (ows_cmp_id_bit == 1))// check for no devices on 1-wire
+				break;
+			if (ows_id_bit != ows_cmp_id_bit) {// all devices coupled have 0 or 1
+				ows_search_direction = ows_id_bit; // bit write value for search
+			} else {// if this discrepancy if before the Last Discrepancy on a previous next then pick the same as last time
+				if (ows_id_bit_number < this->_date.LastDiscrepancy) {
+					ows_search_direction = this->_date.ows_ROM_NO[ows_rom_byte_number];
+					ows_search_direction &= ows_rom_byte_mask;
+					ows_search_direction = (ows_search_direction > 0);
+				} else// if equal to last pick 1, if not then pick 0
+					ows_search_direction = (ows_id_bit_number == this->_date.LastDiscrepancy);
+				if (ows_search_direction == 0) {// if 0 was picked then record its position in LastZero
+					ows_last_zero = ows_id_bit_number;
+					// if (ows_last_zero < 9)// check for Last discrepancy in family
+					// 	this->_date.LastFamilyDiscrepancy = ows_last_zero;
+				}
+			}
+			if (ows_search_direction)// set or clear the bit in the ROM byte rom_byte_number with mask rom_byte_mask
+				this->_date.ows_ROM_NO[ows_rom_byte_number] |= ows_rom_byte_mask;
+			else
+				this->_date.ows_ROM_NO[ows_rom_byte_number] &= ~(ows_rom_byte_mask);
+			this->_write_bit(ows_search_direction);// serial number search direction write bit
+			ows_id_bit_number++;// increment the byte counter id_bit_number and shift the mask rom_byte_mask
+			ows_rom_byte_mask <<= 1;
+			if (ows_rom_byte_mask == 0) {// if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask
+				ows_rom_byte_number++;
+				ows_rom_byte_mask = 1;
+			}
+		}
+		while (ows_rom_byte_number < 8); // loop until through all ROM bytes 0-7
+		if (ows_id_bit_number > 64) {// if the search was successful then search successful so set LastDiscrepancy,LastDeviceFlag,search_result
+			this->_date.LastDiscrepancy = ows_last_zero;
+			if (this->_date.LastDiscrepancy == 0)// check for last device
+				this->_date.LastDeviceFlag = true;
+			ows_search_result = true;
+		}
+	}
+	
+	if (!ows_search_result || !this->_date.ows_ROM_NO[0]) {// if no device found then reset counters so next 'search' will be like a first
+		this->_date.LastDiscrepancy = 0;
+		this->_date.LastDeviceFlag = false;
+		//this->_date.LastFamilyDiscrepancy = 0;
+		ows_search_result = false;
+	}
+	for (byte i = 0; i < 8; i++)
+		newAddr[i] = this->_date.ows_ROM_NO[i];
+	return (ows_search_result);
 }
 
-byte OneWire::crc8(byte * addr, byte len) {
-    uint8_t crc = 0;
 
-    while (len--) {
-        byte inbyte = * addr++;
-        for (byte i = 8; i; i--) {
-            byte mix = (crc ^ inbyte) & 0x01;
-            crc >>= 1;
-            if (mix)
-                crc ^= 0x8C;
-            inbyte >>= 1;
-        }
-    }
-    return crc;
+/* Private Methods */
+inline void OneWire::_digitalWriteFast(uint8_t val) {//Digital write with some cached values for better perfomance
+	*(volatile uint32_t *)this->_aliasAddr_out = (uint32_t) val;
+}
+
+inline size_t OneWire::_digitalReadFast() {//Digital read with some cached values for better perfomance
+	return (*(volatile uint32_t *)this->_aliasAddr_in);
+}
+
+inline void OneWire::_pinModeFast(uint8_t mode) {//pinMode with some cached values for better perfomance
+	size_t					real_pin;
+	size_t					real_port;
+
+	real_port = this->_real_port;
+	if((real_pin = this->_real_pin) < 8)
+		GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin))) | (mode << (real_pin << 2 ));
+	else 
+		GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2))) | (mode << ((real_pin - 8) << 2));
+}
+
+inline bool OneWire::_read_bit() {
+	bool			r;
+
+	noInterrupts();
+	ONEWARE_OUTPUT();
+	delayMicroseconds(3);
+	ONEWARE_INPUT(); // let pin float, pull up will raise
+	delayMicroseconds(15);
+	r = this->_digitalReadFast();
+	delayMicroseconds(73);
+	interrupts();
+	return r != 0;
+}
+
+inline void OneWire::_write_bit(bool bit) {
+	noInterrupts();
+	ONEWARE_OUTPUT();
+	if (bit) {
+		delayMicroseconds(10);
+		this->_digitalWriteFast(1);
+		delayMicroseconds(55);
+	} else {
+		delayMicroseconds(65);
+		this->_digitalWriteFast(1);
+		delayMicroseconds(5);
+	}
+	interrupts();
 }

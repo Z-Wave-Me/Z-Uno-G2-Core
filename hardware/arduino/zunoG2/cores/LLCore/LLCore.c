@@ -111,12 +111,6 @@ ssize_t _write(int fd, const void *buf, size_t count) {
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
 void zuno_CCTimer(uint32_t);
-
-typedef struct PinDef{
-    uint8_t port;
-    uint8_t pin;
-}PinDef_t;
-
 // A = 0
 // B = 1
 // C = 2
@@ -127,7 +121,7 @@ typedef struct PinDef{
 #if ZUNO_PIN_V == 1
 // "NIKBOARD" map
 #pragma message "ZUNO_PIN_V==1"
-static const PinDef_t ZUNO_PIN_DEFS[] = {
+const PinDef_t ZUNO_PIN_DEFS[] = {
     // LEFT SIDE
     {1, 14},  //  0 - B14
     {1, 15}, //  1 - B15
@@ -166,7 +160,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {
 };
 #elif ZUNO_PIN_V == 2
 #pragma message "ZUNO_PIN_V==2"
-static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
 	{2, 9},//1 - PC9 - 1 
@@ -203,7 +197,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 };
 #elif ZUNO_PIN_V == 3
 #pragma message "ZUNO_PIN_V==3"
-static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
 	{2, 9},//1 - PC9 - 1 
@@ -240,7 +234,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 };
 #elif ZUNO_PIN_V == 4
 #pragma message "ZUNO_PIN_V==4"
-static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	// LEFT SIDE
 	{2, 8},//0 - PC8 - 0 
 	{2, 9},//1 - PC9 - 1 
@@ -278,7 +272,7 @@ static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 #elif ZUNO_PIN_V == 1000
 // Rasberi v0
 #pragma message "ZUNO_PIN_V==1000"
-static const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+const PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//0 - A0 (tX)
 	{0, 1},//1 - A1 (rX)
 	{2, 7},//2 - PC7 - green
@@ -618,19 +612,6 @@ uint8_t getPin(uint8_t port, uint8_t pin) {
 		lp_b++;
 	}
 	return (INVALID_PIN_INDEX);
-}
-
-int getRealPin(uint8_t pin)
-{
-    int real_pin = ZUNO_PIN_DEFS[pin].pin;
-    return real_pin;
-}
-
-
-int getRealPort(uint8_t pin)
-{
-    int real_port = ZUNO_PIN_DEFS[pin].port;
-    return real_port;
 }
 
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {

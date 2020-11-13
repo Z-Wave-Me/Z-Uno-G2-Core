@@ -5,8 +5,8 @@
 
 DS18B20Sensor::DS18B20Sensor(OneWire * ow):
         my_ow(ow),
-        current_resolution(DS18B20_RESOLUTION_12BIT),
-        current_delay(75) // in 10th of microseconds == 750ms
+        _current_resolution(DS18B20_RESOLUTION_12BIT),
+        _current_delay(75) // in 10th of microseconds == 750ms
 {
 
 }
@@ -76,9 +76,12 @@ void DS18B20Sensor::setResolution(byte res, byte * addr)
     
 
 }
-byte dallas_data[9];
+
 int DS18B20Sensor::getTempC100(byte * addr)
 {
+	size_t				current_resolution;
+
+	byte dallas_data[9];
 	int temp = BAD_TEMP;
 	byte i;
 
@@ -94,12 +97,12 @@ int DS18B20Sensor::getTempC100(byte * addr)
 
     #if DEBUG_TEMP_CONV
     Serial0.print( " Current delay:");
-    Serial0.print(current_delay);
+    Serial0.print(this->_current_delay);
     Serial0.print( " Current resolution:");
-    Serial0.print(current_resolution);
+    Serial0.print(this->_current_resolution);
     #endif
 
-    delay(int(current_delay*10)); 
+    delay(int(this->_current_delay*10)); 
 
     if(!my_ow->reset())
     	return temp;
@@ -133,10 +136,10 @@ int DS18B20Sensor::getTempC100(byte * addr)
     temp |= dallas_data[0];
 
     // extract current resolution from control register
-    current_resolution = (dallas_data[4] >> 5) & 0x03;
-    // current_delay ~ 10*2^resolution
-    current_delay = 10;
-    current_delay <<= current_resolution;
+	current_resolution = (dallas_data[4] >> 5) & 0x03;
+    this->_current_resolution = current_resolution;
+    // this->_current_delay ~ 10*2^resolution
+    this->_current_delay = (10 << current_resolution);
     // fill low bits with zeros
     // using current resolution
     temp &= ~((1 << (3 - current_resolution))-1);
@@ -153,8 +156,6 @@ int DS18B20Sensor::getTempC100(byte * addr)
     return temp;
 }
 
-float DS18B20Sensor::getTemperature(byte * addr)
-{
-    return getTempC100(addr) / 100.0;
-       
+float DS18B20Sensor::getTemperature(byte * addr) {
+	return (getTempC100(addr) / (float)100.0);
 }

@@ -25,7 +25,8 @@ class DS18B20Sensor
 		// one by one
 		// Returns:
 		//  number of found sensors
-		byte findAllSensors(byte * rom,byte max_sensors=128);
+		byte								findAllSensors(byte *rom, byte max_sensors);
+		inline byte							findAllSensors(byte *rom) { return (this->findAllSensors(rom, 128));};
 		
 		// Search for alone sensor. 
 		// Copies found sensor's address (ROM) to buffer
@@ -35,21 +36,24 @@ class DS18B20Sensor
 		//   0 otherwise    
 		byte scanAloneSensor(byte * rom);
 
-		void setResolution(byte res, byte * addr = NULL);
-		byte getResolution(){return current_resolution;};
+		void								setResolution(byte res, byte *addr);
+		inline void							setResolution(byte res) {this->setResolution(res, NULL);};
+
+		inline byte							getResolution(){return (this->_current_resolution);};
 		
 		// Return temperarure in cents of Celsius
 		// sonsume less memory of sketch than getTemperature()
-		int getTempC100(byte * addr = NULL);
+		int									getTempC100(byte * addr = NULL);
+		inline int							getTempC100(void) {return (this->getTempC100(NULL));};
+
 		// Returns temperature as float in Celsius
-		float getTemperature(byte * addr = NULL);
-
-
+		float								getTemperature(byte * addr);
+		inline float						getTemperature(void) {return (this->getTemperature(NULL));};
 
 	private:
-		OneWire * my_ow;
-		byte current_resolution;
-		byte current_delay;	
+		OneWire								*my_ow;
+		byte								_current_resolution;
+		byte								_current_delay;
 
 };
 

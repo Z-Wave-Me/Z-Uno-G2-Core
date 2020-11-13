@@ -43,6 +43,14 @@ const uint8_t g_loc_pf0_pf1_pf3_pf7[] = {
 
 #define INVALID_PIN_INDEX 0xFF
 
+typedef struct	PinDef_s
+{
+	uint8_t		port;
+	uint8_t		pin;
+}				PinDef_t;
+
+extern const PinDef_t ZUNO_PIN_DEFS[];
+
 uint8_t zunoIsMalloc(void *b);
 
 #endif

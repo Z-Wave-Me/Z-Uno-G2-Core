@@ -23,10 +23,10 @@ typedef struct							ZunoZDmaList_s
 class ZDMAClass {
 	public:
 		ZDMAClass(void);
-		ZunoError_t								toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size);
-		ZunoError_t								toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
-		ZunoError_t								toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size);
-		ZunoError_t								toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
+		ZunoError_t								toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size);
+		ZunoError_t								toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
+		ZunoError_t								toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size);
+		ZunoError_t								toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
 		uint8_t									isProcessing(size_t uniqId);
 		void									stopTransfer(size_t uniqId, uint8_t bForce);
 		void									waitTransfer(size_t uniqId);
@@ -34,14 +34,13 @@ class ZDMAClass {
 	
 	private:
 		inline uint8_t							_stopTransfer(size_t uniqId, uint8_t bForce);
-		inline ZunoError_t						_transferLock(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt);
-		inline ZunoError_t						_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dst, void *src, size_t len, ZDma_DataSize_t size, ZDmaDirection_t direction, ZunoZDmaExt_t *lpExt);
-		inline size_t							_modeBasicLen(LDMA_Descriptor_t *transfer_desc, size_t len);
+		inline ZunoError_t						_transferLock(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
+		inline ZunoError_t						_transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt);
 		static void								_LDMA_IRQHandler(void * pdata);
-		inline ZunoError_t						_getZDma(ZunoZDmaList_t **list_out, uint8_t *outchZDma);
+		inline ZunoError_t						_getZDma(ZunoZDmaList_t **list_out, size_t *outchZDma);
 		inline void								_addList(ZunoZDmaList_t *list, uint8_t chZDma);
 		inline ZunoZDmaList_t					*_findList(uint8_t chZDma);
-		inline ZunoZDmaList_t					*_findListUniqId(size_t uniqId, uint8_t *chZDma);
+		inline ZunoZDmaList_t					*_findListUniqId(size_t uniqId, size_t *chZDma);
 		uint16_t								_listCh[DMA_CHAN_COUNT];
 		volatile uint8_t						bitZDmaLock;
 };

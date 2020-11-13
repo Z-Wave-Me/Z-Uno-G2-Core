@@ -198,8 +198,8 @@ void OneWire::write(byte v, byte power) {
 			this->_digitalWriteFast(1);
 			delayMicroseconds(5);
 		}
-		interrupts();
 	}
+	interrupts();
 	if (!power)
 		ONEWARE_INPUT();
 }

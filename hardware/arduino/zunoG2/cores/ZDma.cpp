@@ -1,6 +1,6 @@
 #include "Arduino.h"
-#include "Threading.h"
-#include "ZDma_private.h"
+#include "CrtxGcc.h"
+#include "ZDma.h"
 #include "stdlib.h"
 
 // if ( ZDMA_IRQ_PRIORITY > 7 ) {
@@ -60,22 +60,21 @@
   }
 
 extern unsigned long  __bss_start__;
-static const uint8_t _multSize[] = {1, 2, 4};
 
-static znMutex g_mutex = znMutex();
+/* Constants */
+const uint8_t ZDMAClass::_multSize[] = {1, 2, 4};
 
 /* Public Constructors */
-ZDMAClass::ZDMAClass(void): bitZDmaLock(0), _listCh{0} {
-
+ZDMAClass::ZDMAClass(void): _mutex(znMutex()), bitZDmaLock(0), _listCh{0} {
 }
 
 uint8_t ZDMAClass::isProcessing(size_t uniqId) {
 	size_t					chZDma;
 	ZunoZDmaList_t			*list;
 
-	g_mutex.lock();
+	this->_mutex.lock();
 	list = this->_findListUniqId(uniqId, &chZDma);
-	g_mutex.unlock();
+	this->_mutex.unlock();
 	if (list == 0)
 		return (false);
 	return (true);
@@ -86,7 +85,7 @@ ZunoError_t ZDMAClass::transferReceivedCount(size_t uniqId, size_t *count) {
 	ZunoZDmaList_t			*list;
 	ZunoError_t				ret;
 
-	g_mutex.lock();
+	this->_mutex.lock();
 	list = this->_findListUniqId(uniqId, &chZDma);
 	if (list == 0)
 		ret = ZunoErrorDmaInvalidUniqId;
@@ -94,14 +93,14 @@ ZunoError_t ZDMAClass::transferReceivedCount(size_t uniqId, size_t *count) {
 		count[0] = (list ->len - (LDMA_TransferRemainingCount(chZDma) + list->counter));
 		ret = ZunoErrorOk;
 	}
-	g_mutex.unlock();
+	this->_mutex.unlock();
 	return (ret);
 }
 
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
-	g_mutex.lock();
+	this->_mutex.lock();
 	this->_stopTransfer(uniqId, bForce);
-	g_mutex.unlock();
+	this->_mutex.unlock();
 }
 
 void ZDMAClass::waitTransfer(size_t uniqId) {
@@ -146,9 +145,9 @@ ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t
 inline ZunoError_t ZDMAClass::_transferLock(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt) {
 	ZunoError_t				ret;
 
-	g_mutex.lock();
+	this->_mutex.lock();
 	ret = this->_transfer(uniqId, peripheralSignal, dest, src, len, size, lpExt);
-	g_mutex.unlock();
+	this->_mutex.unlock();
 	return (ret);
 }
 
@@ -198,22 +197,6 @@ inline ZunoError_t ZDMAClass::_transfer(size_t uniqId, ZDMA_PeripheralSignal_t p
 	return (ZunoErrorOk);
 }
 
-
-static void _reload(ZunoZDmaList_t *list, LDMA_Descriptor_t *transfer_desc, size_t counter, size_t chZDma, size_t chmask) {
-	if (counter > ZDMA_MAX_XFER_COUNT) {
-		list->counter = counter - ZDMA_MAX_XFER_COUNT;
-		counter = ZDMA_MAX_XFER_COUNT - 1;
-	}
-	else {
-		list->counter = 0;
-		counter = counter - 1;
-	}
-	transfer_desc->xfer.xferCnt = counter;
-	LDMA->CH[chZDma].LINK = (uint32_t)transfer_desc & _LDMA_CH_LINK_LINKADDR_MASK;
-	BUS_RegMaskedClear(&LDMA->CHDONE, chmask);// Clear the done flag.
-	LDMA->LINKLOAD = chmask;// Start a transfer by loading the descriptor.
-}
-
 void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	LDMA_Descriptor_t	*transfer_desc;
 	size_t				pending;
@@ -224,7 +207,7 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	size_t				loop;
 	uint8_t				(*f)(size_t);
 
-	g_mutex.lock();
+	ZDMA._mutex.lock();
 	pending = (uint32_t) param;//LDMA_IntGetEnabled();
 	if (pending & LDMA_IF_ERROR)/* Check for LDMA error. */
 		while (true)/* Loop to enable debugger to see what has happened. */
@@ -232,7 +215,7 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 	chZDma = 0;
 	while (chZDma < DMA_CHAN_COUNT) {/* Iterate over all LDMA channels. */
 		chmask = 1 << chZDma;
-		if ((pending & chmask) != 0) {
+		if ((pending & chmask) != 0 && (ZDMA.bitZDmaLock & chmask) != 0) {
 			list = ZDMA._findList(chZDma);
 			if (LDMA_TransferDone(chZDma) == true) {
 				transfer_desc = &list->transfer_desc;
@@ -250,21 +233,36 @@ void ZDMAClass::_LDMA_IRQHandler(void * param) {
 						else if (transfer_desc->xfer.dstInc != ldmaCtrlDstIncNone)
 							transfer_desc->xfer.dstAddr = list->buff;
 						counter = list->len;
-						_reload(list, transfer_desc, list->len, chZDma, chmask);
+						ZDMA._reload(list, transfer_desc, list->len, chZDma, chmask);
 					}
 				}
 				else {
 					if (transfer_desc->xfer.srcInc != ldmaCtrlSrcIncNone)
-						transfer_desc->xfer.srcAddr = transfer_desc->xfer.srcAddr + ((transfer_desc->xfer.xferCnt + 1) * _multSize[transfer_desc->xfer.size]);
+						transfer_desc->xfer.srcAddr = transfer_desc->xfer.srcAddr + ((transfer_desc->xfer.xferCnt + 1) * ZDMA._multSize[transfer_desc->xfer.size]);
 					else if (transfer_desc->xfer.dstInc != ldmaCtrlDstIncNone)
-						transfer_desc->xfer.dstAddr = transfer_desc->xfer.dstAddr + ((transfer_desc->xfer.xferCnt + 1) * _multSize[transfer_desc->xfer.size]);
-					_reload(list, transfer_desc, counter, chZDma, chmask);
+						transfer_desc->xfer.dstAddr = transfer_desc->xfer.dstAddr + ((transfer_desc->xfer.xferCnt + 1) * ZDMA._multSize[transfer_desc->xfer.size]);
+					ZDMA._reload(list, transfer_desc, counter, chZDma, chmask);
 				}
 			}
 		}
 		chZDma++;
 	}
-	g_mutex.unlock();
+	ZDMA._mutex.unlock();
+}
+
+inline void ZDMAClass::_reload(ZunoZDmaList_t *list, LDMA_Descriptor_t *transfer_desc, size_t counter, size_t chZDma, size_t chmask) {
+	if (counter > ZDMA_MAX_XFER_COUNT) {
+		list->counter = counter - ZDMA_MAX_XFER_COUNT;
+		counter = ZDMA_MAX_XFER_COUNT - 1;
+	}
+	else {
+		list->counter = 0;
+		counter = counter - 1;
+	}
+	transfer_desc->xfer.xferCnt = counter;
+	LDMA->CH[chZDma].LINK = (uint32_t)transfer_desc & _LDMA_CH_LINK_LINKADDR_MASK;
+	BUS_RegMaskedClear(&LDMA->CHDONE, chmask);// Clear the done flag.
+	LDMA->LINKLOAD = chmask;// Start a transfer by loading the descriptor.
 }
 
 inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, size_t *outchZDma) {

@@ -9,6 +9,8 @@ ZunoSync_t gSyncUSART2 = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncTIMER0 = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncTIMER1 = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncWTIMER0 = ZUNO_SYNC_INIT_DEFAULT;
+ZunoSync_t gSyncIC0 = ZUNO_SYNC_INIT_DEFAULT;
+ZunoSync_t gSyncIC1 = ZUNO_SYNC_INIT_DEFAULT;
 
 typedef enum							SyncMode_e
 {

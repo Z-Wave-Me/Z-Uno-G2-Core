@@ -1114,7 +1114,29 @@ void I2C_BusFreqSet(I2C_TypeDef *i2c,
                     uint32_t freqRef,
                     uint32_t freqScl,
                     I2C_ClockHLR_TypeDef i2cMode);
-void I2C_Enable(I2C_TypeDef *i2c, bool enable);
+/***************************************************************************//**
+ * @brief
+ *   Enable/disable I2C.
+ *
+ * @note
+ *   After enabling the I2C (from being disabled), the I2C is in BUSY state.
+ *
+ * @param[in] i2c
+ *   A pointer to the I2C peripheral register block.
+ *
+ * @param[in] enable
+ *   True to enable counting, false to disable.
+ ******************************************************************************/
+__STATIC_INLINE void I2C_Enable(I2C_TypeDef *i2c, bool enable)
+{
+  //EFM_ASSERT(I2C_REF_VALID(i2c));
+
+#if defined (_I2C_EN_MASK)
+  BUS_RegBitWrite(&(i2c->EN), _I2C_EN_EN_SHIFT, enable);
+#else
+  BUS_RegBitWrite(&(i2c->CTRL), _I2C_CTRL_EN_SHIFT, enable);
+#endif
+}
 void I2C_Init(I2C_TypeDef *i2c, const I2C_Init_TypeDef *init);
 
 /***************************************************************************//**

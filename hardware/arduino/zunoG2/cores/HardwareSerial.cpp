@@ -270,6 +270,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	if ((ret = zunoSyncOpen(lpLock, SyncMasterHadwareSerial, this->_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk || (ret = zunoSyncLockWrite(lpLock, SyncMasterHadwareSerial, &this->_lpKey)) != ZunoErrorOk) {
 		if (bFree == true)
 			free(b);
+		return (ret);
 	}
 	usart = config->usart;
 	USART_BaudrateAsyncSet(usart, 0, baudrate, usartOVS16);

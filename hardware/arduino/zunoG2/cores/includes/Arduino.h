@@ -9,6 +9,8 @@
 // 	#define ZUNO_ASSEMBLY_TYPE			ZUNO_UNO//default
 // #endif
 
+#define ZUNO_ZERO_BSS				true//Раз глобально обнуляем всю bss и оператор не используем то и c++ нечего в каждом статичном класе вручную обнулять память
+
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
@@ -26,7 +28,6 @@ typedef enum
 	ZunoErrorDmaUniqIdAlready,//
 	ZunoErrorSyncInvalidType,
 	ZunoErrorSyncInvalidInit,
-	ZunoErrorSyncAlreadyOpen,
 	ZunoErrorNeo,//Failed NEO
 	ZunoErrorInvalidPin,//Invalid pin
 	ZunoErrorNotInit,

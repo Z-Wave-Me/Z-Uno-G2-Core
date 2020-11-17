@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "CrtxGcc.h"
+#include "CrtxCore.h"
 #include "Threading.h"
 #include "Sync.h"
 
@@ -24,64 +25,41 @@ typedef enum							SyncMode_e
 
 #define ZUNO_SYNC_SPIN_COUNT		0xA
 
-static void _sectionEnter(volatile uint8_t *lp) {
-	uint8_t			bLock;
-
-	bLock = 0;
-	do {
-		while (__LDREXB(lp) != 0)// Wait until
-			__NOP();
-		bLock = __STREXB(1, lp);// Try to set
-	} while (bLock !=0);//retry until lock successfully
-	__DMB();// Do not start any other memory access until memory barrier is completed
-}
-
-static void _sectionLeave(volatile uint8_t *lp) {
-	__DMB();// Ensure memory operations completed before
-	lp[0] = 0;// releasing lock
-}
-
 static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, volatile uint8_t *lpKey) {
-	volatile uint16_t		counter;
+	volatile uint8_t		counter;
 
-	_sectionEnter(&lpLock->bLock);
-	if (lpLock->master != value || lpKey[0] == false) {
-		_sectionLeave(&lpLock->bLock);
+	if (lpLock->master != value || lpKey[0] == false)
 		return (ZUNO_SYNC_NO_TYPE);
-	}
 	counter = lpLock->counter;
 	if (mode == SyncModeWrite) {
 		if (counter == 0) {
-			lpLock->counter = ((uint16_t)-1);
-			_sectionLeave(&lpLock->bLock);
+			lpLock->counter = ((uint8_t)-1);
 			return (ZUNO_SYNC_TRUE);
 		}
-	} else if (counter != ((uint16_t)-1)) {
+	} else if (counter != ((uint8_t)-1)) {
 		lpLock->counter++;
-		_sectionLeave(&lpLock->bLock);
 		return (ZUNO_SYNC_TRUE);
 	}
-	_sectionLeave(&lpLock->bLock);
 	return (ZUNO_SYNC_FALSE);
 }
 
 static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, volatile uint8_t *lpKey) {
-	size_t				bIo;
 	size_t				out;
 	size_t				i;
-	void				*handle;
 
-	bIo = zunoIsIOThread();
+	if (zunoIsIOThread() == true)
+		return (ZunoErrorTredIo);
 	while (0xFF) {
 		i = 0;
 		while (i++ < ZUNO_SYNC_SPIN_COUNT) {
-			if ((out = _wait(lpLock, value, mode, lpKey)) == ZUNO_SYNC_NO_TYPE)
+			zunoEnterCritical();
+			out = _wait(lpLock, value, mode, lpKey);
+			zunoExitCritical();
+			if (out == ZUNO_SYNC_NO_TYPE)
 				return (ZunoErrorSyncInvalidType);
 			if (out == ZUNO_SYNC_TRUE)
 				return (ZunoErrorOk);
 		}
-		if (bIo == true)
-			return (ZunoErrorTredIo);
 		delay(1);
 	}
 }
@@ -95,17 +73,17 @@ ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile u
 }
 
 static void _relese(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey) {
-	volatile uint8_t	*lp;
 
-	lp = &lpLock->bLock;
-	_sectionEnter(lp);
+	if (zunoIsIOThread() == true)
+		return ;
+	zunoEnterCritical();
 	if (lpLock->master == value && lpKey[0] == true) {
-		if (lpLock->counter == ((uint16_t)-1))
+		if (lpLock->counter == ((uint8_t)-1))
 			lpLock->counter = 0;
 		else
 			lpLock->counter--;
 	}
-	_sectionLeave(lp);
+	zunoExitCritical();
 }
 
 void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey) {
@@ -118,38 +96,36 @@ void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_
 
 ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
 	SyncMaster_t		master;
-	volatile uint8_t	*lp;
 	ZunoError_t			ret;
-	size_t				bIo;
 
-	bIo = zunoIsIOThread();
-	lp = &lpLock->bLock;
+	if (zunoIsIOThread() == true)
+		return (ZunoErrorTredIo);
 	while (0xFF) {
-		_sectionEnter(lp);
+		zunoEnterCritical();
 		if ((master = lpLock->master) == SyncMasterOpenClose) {
-			if (bIo == true)
-				return (ZunoErrorTredIo);
-			_sectionLeave(lp);
+			zunoExitCritical();
 			delay(1);
 			continue ;
 		}
 		if (lpKey[0] == true) {
-			ret = ZunoErrorSyncAlreadyOpen;
+			zunoExitCritical();
+			return (_lock(lpLock, value, SyncModeWrite, lpKey));
 			break ;
 		}
 		if (master == SyncMasterFree) {
 			lpLock->master = SyncMasterOpenClose;
-			_sectionLeave(lp);
+			zunoExitCritical();
 			if (f != 0 && f(param) != ZunoErrorOk) {
-				_sectionEnter(lp);
+				zunoEnterCritical();
 				lpLock->master = SyncMasterFree;
 				ret = ZunoErrorSyncInvalidInit;
 				break ;
 			}
 			else {
-				_sectionEnter(lp);
+				zunoEnterCritical();
 				lpLock->master = value;
 				lpLock->master_count++;
+				lpLock->counter = ((uint8_t)-1);
 				lpKey[0] = true;
 				ret = ZunoErrorOk;
 				break ;
@@ -166,27 +142,28 @@ ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f
 			break ;
 		}
 	}
-	_sectionLeave(lp);
+	zunoExitCritical();
 	return (ret);
 }
 
 void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
 	volatile uint8_t	*lp;
 
-	lp = &lpLock->bLock;
+	if (zunoIsIOThread() == true)
+		return ;
 	if (_lock(lpLock, value, SyncModeWrite, lpKey) != ZunoErrorOk)
 		return ;
-	_sectionEnter(lp);
+	zunoEnterCritical();
 	lpKey[0] = false;
 	if (--lpLock->master_count == 0) {
 		lpLock->master = SyncMasterOpenClose;
 		if (f != 0) {
-			_sectionLeave(lp);
+			zunoExitCritical();
 			f(param);
-			_sectionEnter(lp);
+			zunoEnterCritical();
 		}
 		lpLock->counter = 0;
 		lpLock->master = SyncMasterFree;
 	}
-	_sectionLeave(lp);
+	zunoExitCritical();
 }

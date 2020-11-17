@@ -7,24 +7,21 @@ typedef enum							SyncMaster_e
 	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
 	SyncMasterI2c,
-	SyncMasterDht,
-	SyncMasterOneWare
+	SyncMasterDht
 }										SyncMaster_t;
 
 typedef struct							ZunoSync_s
 {
-	volatile uint16_t					counter;
-	volatile uint8_t					bLock;
 	volatile SyncMaster_t				master;
-	volatile uint16_t					master_count;
+	volatile uint8_t					master_count;
+	volatile uint8_t					counter;
 }										ZunoSync_t;
 
 #define ZUNO_SYNC_INIT_DEFAULT			\
 {										\
-	.counter = 0,						\
-	.bLock = 0,							\
 	.master = SyncMasterFree,			\
-	.master_count = 0					\
+	.master_count = 0,					\
+	.counter = 0						\
 }
 
 ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);

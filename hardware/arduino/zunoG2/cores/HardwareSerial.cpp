@@ -23,7 +23,7 @@ typedef struct							ZunoHardwareSerialDeInit_s
 	size_t								uniqIdRead;
 }										ZunoHardwareSerialDeInit_t;
 
-const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[3] = {
+const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART0,
 		.lpLock = &gSyncUSART0,
@@ -57,15 +57,17 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[3] = {
 };
 
 /* Public Constructors */
-HardwareSerial::HardwareSerial(uint8_t numberConfig): _numberConfig(numberConfig), _bFree(false), _lpKey(false), _buffer(0), _buffer_len(0) {
-
+HardwareSerial::HardwareSerial(uint8_t numberConfig)
+#if (ZUNO_ZERO_BSS != true || false != 0)
+	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0)
+#endif
+{
+	if (numberConfig >= sizeof(HardwareSerial::_configTable))
+		numberConfig--;
+	this->_numberConfig = numberConfig;
 }
 
 /* Public Methods */
-ZunoError_t HardwareSerial::begin(void) {
-	return (this->begin(this->_configTable[this->_numberConfig].baudrate));
-}
-
 ZunoError_t HardwareSerial::begin(size_t baudrate) {
 	const ZunoHardwareSerialConfig_t			*config;
 
@@ -240,13 +242,16 @@ ZunoError_t HardwareSerial::_init(size_t param) {
 	ZunoHardwareSerialInit_t					*init;
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_InitAsync_TypeDef						usartInit;
+	USART_TypeDef								*usart;
 
 	init = (ZunoHardwareSerialInit_t *)param;
 	config = init->config;
 	CMU_ClockEnable(config->bus_clock, true);
 	usartInit = USART_INITASYNC_DEFAULT;
 	usartInit.baudrate = init->baudrate;
-	USART_InitAsync(config->usart, &usartInit);
+	usart = config->usart;
+	USART_InitAsync(usart, &usartInit);
+	usart->ROUTEPEN |= USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
 	return (ZunoErrorOk);
 }
 
@@ -257,7 +262,6 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	const uint8_t								*location;
 	size_t										routeLocation;
 	ZunoError_t									ret;
-	ZunoSync_t									*lpLock;
 
 	if (rx > ZUNO_PIN_LAST_INDEX || tx > ZUNO_PIN_LAST_INDEX)
 		return (ZunoErrorInvalidPin);
@@ -266,8 +270,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	config = &this->_configTable[this->_numberConfig];
 	init.config = config;
 	init.baudrate = baudrate;
-	lpLock = config->lpLock;
-	if ((ret = zunoSyncOpen(lpLock, SyncMasterHadwareSerial, this->_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk || (ret = zunoSyncLockWrite(lpLock, SyncMasterHadwareSerial, &this->_lpKey)) != ZunoErrorOk) {
+	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, this->_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk) {
 		if (bFree == true)
 			free(b);
 		return (ret);
@@ -295,8 +298,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 		routeLocation = ((getLocation(location, sizeof(g_loc_pa0_pf7_all), tx)) << _USART_ROUTELOC0_TXLOC_SHIFT) | (((getLocation(location, sizeof(g_loc_pa0_pf7_all), rx) - 1) % sizeof(g_loc_pa0_pf7_all)) << _USART_ROUTELOC0_RXLOC_SHIFT);
 	}
 	usart->ROUTELOC0 = routeLocation;
-	usart->ROUTEPEN |= USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
-	zunoSyncReleseWrite(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (ZunoErrorOk);
 }
 

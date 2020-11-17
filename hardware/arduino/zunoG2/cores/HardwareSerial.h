@@ -24,7 +24,7 @@ typedef struct							ZunoHardwareSerialConfig_s
 class HardwareSerial : public Stream {
 	public:
 		HardwareSerial(uint8_t numberConfig);
-		ZunoError_t								begin(void);
+		inline ZunoError_t						begin(void) {return (this->begin(this->_configTable[this->_numberConfig].baudrate));};
 		ZunoError_t								begin(size_t baudrate);
 		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx);
 		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len);
@@ -46,7 +46,7 @@ class HardwareSerial : public Stream {
 		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);
 		static ZunoError_t						_init(size_t param);
 		static void								_deInit(size_t param);
-		static const ZunoHardwareSerialConfig_t	_configTable[3];
+		static const ZunoHardwareSerialConfig_t	_configTable[];
 		uint8_t									*_buffer;
 		hardware_serial_buffer_len				_buffer_len;
 		hardware_serial_buffer_len				_buffer_count_read;

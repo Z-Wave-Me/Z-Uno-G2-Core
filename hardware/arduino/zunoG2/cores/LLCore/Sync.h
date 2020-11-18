@@ -7,6 +7,7 @@ typedef enum							SyncMaster_e
 	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
 	SyncMasterI2c,
+	SyncMasterSpi,
 	SyncMasterDht
 }										SyncMaster_t;
 

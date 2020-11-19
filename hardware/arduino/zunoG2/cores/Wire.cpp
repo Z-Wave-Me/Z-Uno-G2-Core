@@ -289,10 +289,10 @@ uint8_t TwoWire::_transferMasterToSlaveLock(uint16_t address, void *b, size_t le
 	const ZunoWireI2CTypeConfig_t		*i2c_config;
 
 	i2c_config = this->_i2c_config;
-	if (zunoSyncLockRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey) != ZunoErrorOk)
+	if (zunoSyncLockWrite(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey) != ZunoErrorOk)
 		return (WIRE_ERORR_TRANSMISSION_OTHER);
 	out = this->_transferMasterToSlave(address, b, len, bFlags | this->_flags, i2c_config);
-	zunoSyncReleseRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey);
+	zunoSyncReleseWrite(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey);
 	return (out);
 }
 

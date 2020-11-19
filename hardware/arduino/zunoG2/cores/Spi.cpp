@@ -180,7 +180,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	size_t								out;
 
 	config = this->_config;
-	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
+	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	usart = config->usart;
 	if (count <= SPI_MIN_WRITE_ZDMA)
@@ -204,7 +204,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 			ZDMA.stopTransfer(SPI_UNIQ_ZDMA_READ, true);
 		}
 	}
-	zunoSyncReleseRead(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ret);
 }
 

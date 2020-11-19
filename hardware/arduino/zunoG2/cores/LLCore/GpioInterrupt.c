@@ -39,10 +39,12 @@ static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void
 }
 
 void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
+	zunoEnterCritical();
 	_CallbackRegister(getRealPin(interruptPin), userFunc);
+	zunoExitCritical();
 }
 
-ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
 	ZunoError_t					ret;
 	uint8_t						risingEdge;
 	uint8_t						fallingEdge;
@@ -65,6 +67,7 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
 		g_bit_field.bExtInit = true;
 	}
+	zunoExitCritical();
 	switch (mode) {
 		case LOW:
 			risingEdge = false;
@@ -85,6 +88,7 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	}
 	port = getRealPort(interruptPin);
 	pin = getRealPin(interruptPin);
+	zunoEnterCritical();
 	if ((GPIO->IEN & (1 << pin)) != 0 && port != _getPort(pin)){//Check whether this interrupt is busy or not
 		return (ZunoErrorExtInt);
 	}
@@ -95,6 +99,15 @@ ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_
 	}
 	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
 	return (ZunoErrorOk);
+}
+
+ZunoError_t attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+	ZunoError_t					ret;
+
+	zunoEnterCritical();
+	ret = _attachInterrupt(interruptPin, userFunc, mode);
+	zunoExitCritical();
+	return (ret);
 }
 
 void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
@@ -110,6 +123,8 @@ void detachInterrupt(uint8_t interruptPin) {
 	if (interruptPin == INT_SLEEPING)
 		return ;
 	pin = getRealPin(interruptPin);
+	zunoEnterCritical();
 	GPIO_IntDisable(pin);
 	zunoDetachSysHandlerAllSubType(ZUNO_HANDLER_EXTINT, pin);
+	zunoExitCritical();
 }

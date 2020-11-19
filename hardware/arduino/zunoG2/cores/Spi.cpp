@@ -223,11 +223,12 @@ ZunoError_t SPIClass::_init(size_t param) {
 	return (ZunoErrorOk);
 }
 
-void SPIClass::_deInit(size_t param) {
+ZunoError_t SPIClass::_deInit(size_t param) {
 	SPIClass							*spi;
 	
 	spi = (SPIClass *)param;
 	USART_Reset(spi->_config->usart);
+	return (ZunoErrorOk);
 }
 
 

@@ -67,7 +67,7 @@ class SPIClass {
 		ZunoError_t											_transferStrlen(void *b, size_t bFlags);
 		ZunoError_t											_transfer(void *b, size_t count, size_t bFlags);
 		static ZunoError_t									_init(size_t param);
-		static void											_deInit(size_t param);
+		static ZunoError_t									_deInit(size_t param);
 		static const ZunoSpiUsartTypeConfig_t				_configTable0;
 		static const ZunoSpiUsartTypeConfig_t				_configTable1;
 		static const ZunoSpiUsartTypeConfig_t				_configTable2;

@@ -6,6 +6,7 @@ typedef enum							SyncMaster_e
 	SyncMasterFree,// do not use !!!
 	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
+	SyncMasterGPT,
 	SyncMasterI2c,
 	SyncMasterSpi,
 	SyncMasterNeoPixel,

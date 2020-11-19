@@ -145,7 +145,6 @@ typedef struct				ZunoBitField_s
 	bool					bLockUsart1: 1;
 	bool					bLockUsart2: 1;
 	bool					bExtInit: 1;
-	bool					bGPTInit: 1;
 	bool					bZDMAInit: 1;
 	bool					ADCInitialized: 1;
 }							ZunoBitField_t;
@@ -153,12 +152,14 @@ typedef struct				ZunoBitField_s
 typedef struct ZUNOOnDemandHW_s {
 	uint32_t			pwm_freq;
 	uint32_t			tone_freq_set;
+	uint16_t			tone_freq;
 	uint8_t				pwm_pins[MAX_ZUNO_PWMS];
 	uint8_t				pwm_pins_state;
 	uint8_t				tone_pin;
-	uint16_t			tone_freq;
-	// HANDLERS
-	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	volatile uint8_t	keyGPT;
+
+	
+	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 extern ZunoBitField_t g_bit_field;

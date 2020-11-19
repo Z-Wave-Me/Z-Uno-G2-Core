@@ -151,20 +151,20 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	const uint8_t								*e;
 
 	config = &this->_configTable[this->_numberConfig];
-	if (zunoSyncLockRead(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (0);
 	usart = config->usart;
-	if (count > HARDWARE_SERIAL_MIN_WRITE_ZDMA && ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
-		ZDMA.waitTransfer(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE);
-		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
-			__NOP();
-	}
-	else {
+	if (count <= HARDWARE_SERIAL_MIN_WRITE_ZDMA) {
 		e = b + count;
 		while (b < e)
 			USART_Tx(usart, b++[0]);
 	}
-	zunoSyncReleseRead(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+	else if (ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
+		ZDMA.waitTransfer(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE);
+		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
+			__NOP();
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (count);
 }
 

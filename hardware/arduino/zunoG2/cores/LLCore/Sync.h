@@ -8,6 +8,7 @@ typedef enum							SyncMaster_e
 	SyncMasterHadwareSerial,
 	SyncMasterI2c,
 	SyncMasterSpi,
+	SyncMasterNeoPixel,
 	SyncMasterDht
 }										SyncMaster_t;
 
@@ -23,6 +24,13 @@ typedef struct							ZunoSync_s
 	.master = SyncMasterFree,			\
 	.master_count = 0,					\
 	.counter = 0						\
+}
+
+#define ZUNO_SYNC_INIT_DEFAULT_OPEN(valMaster)	\
+{												\
+	.master = valMaster,						\
+	.master_count = 1,							\
+	.counter = 0								\
 }
 
 ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);

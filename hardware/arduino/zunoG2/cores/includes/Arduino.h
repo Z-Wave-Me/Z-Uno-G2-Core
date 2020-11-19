@@ -278,10 +278,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
-//disable interrupts macros
-#define noInterrupts() __asm volatile("cpsid i"::: "memory")
-//inable interrupts macros
-#define interrupts() __asm volatile("cpsie i"::: "memory")
+
 #define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 
 // prototypes
@@ -342,6 +339,7 @@ void free(void *ptr);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
+#include "Threading.h"
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 	#include "ReportHandler.h"

@@ -100,4 +100,13 @@ inline void zunoEnterCritical(){
 inline void zunoExitCritical(){
 	zunoSysCall(ZUNO_EXIT_CRITICAL, 0);
 }
+//disable interrupts
+inline void noInterrupts(){
+	zunoEnterCritical();
+};
+//inable interrupts
+inline void interrupts(){
+	zunoExitCritical();
+};
+
 #endif // ZUNO_THREADING

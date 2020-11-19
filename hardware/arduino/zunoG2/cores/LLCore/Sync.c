@@ -147,7 +147,7 @@ ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f
 	return (ret);
 }
 
-void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
+void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
 	volatile uint8_t	*lp;
 
 	if (zunoIsIOThread() == true)
@@ -158,13 +158,17 @@ void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, void (*f)(size_t), si
 	lpKey[0] = false;
 	if (--lpLock->master_count == 0) {
 		lpLock->master = SyncMasterOpenClose;
-		if (f != 0) {
-			zunoExitCritical();
-			f(param);
+		zunoExitCritical();
+		if (f != 0 && f(param) != ZunoErrorOk) {
 			zunoEnterCritical();
+			lpLock->master_count++;
+			lpLock->master = value;
 		}
-		lpLock->counter = 0;
-		lpLock->master = SyncMasterFree;
+		else {
+			zunoEnterCritical();
+			lpLock->counter = 0;
+			lpLock->master = SyncMasterFree;
+		}
 	}
 	zunoExitCritical();
 }

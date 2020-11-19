@@ -34,10 +34,11 @@ static void _timer_handler(void * p) {
 	zunoSysHandlerCall(ZUNO_HANDLER_GPT, ZUNO_GPT_BASIC);
 }
 
-static void _deInit(size_t param) {
+static ZunoError_t _deInit(size_t param) {
 	NVIC_DisableIRQ(GPT_TIMER_IRQ);
 	TIMER_Enable(GPT_TIMER, false);
 	zunoDetachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler);
+	return (ZunoErrorOk);
 }
 
 void zunoGPTDeInit(void) {

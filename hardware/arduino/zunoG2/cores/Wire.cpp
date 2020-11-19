@@ -210,7 +210,7 @@ void TwoWire::_beginTransmission(uint8_t address, uint8_t forced_start, const Zu
 	this->_flags = WIRE_FLAG_WRITE;
 }
 
-void TwoWire::_deInit(size_t param) {
+ZunoError_t TwoWire::_deInit(size_t param) {
 	TwoWire								*twoWire;
 	const ZunoWireI2CTypeConfig_t		*config;
 
@@ -222,6 +222,7 @@ void TwoWire::_deInit(size_t param) {
 		twoWire->_bFree = false;
 	}
 	zunoDetachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler);
+	return (ZunoErrorOk);
 }
 
 ZunoError_t TwoWire::_init(size_t param) {

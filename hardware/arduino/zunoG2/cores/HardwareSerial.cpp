@@ -223,7 +223,7 @@ inline int HardwareSerial::_read(uint8_t bOffset) {
 	return (this->_buffer[count_read]);
 }
 
-void HardwareSerial::_deInit(size_t param) {
+ZunoError_t HardwareSerial::_deInit(size_t param) {
 	HardwareSerial								*serial;
 	const ZunoHardwareSerialConfig_t			*config;
 
@@ -235,7 +235,7 @@ void HardwareSerial::_deInit(size_t param) {
 		serial->_bFree = false;
 		free(serial->_buffer);
 	}
-	
+	return (ZunoErrorOk);
 }
 
 ZunoError_t HardwareSerial::_init(size_t param) {

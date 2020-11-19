@@ -83,7 +83,7 @@ class TwoWire {
 		static void								_I2C_IRQHandler(const ZunoWireI2CTypeConfig_t *i2c_config, size_t flags);
 		static size_t							_getUniqZDma(const ZunoWireI2CTypeConfig_t *config) {return ((size_t)config->i2c); };
 		static ZunoError_t						_init(size_t param);
-		static void								_deInit(size_t param);
+		static ZunoError_t						_deInit(size_t param);
 		static const ZunoWireI2CTypeConfig_t	_configTable0;
 		static const ZunoWireI2CTypeConfig_t	_configTable1;
 		static wire_buffer_len					_i2c0_aviable;

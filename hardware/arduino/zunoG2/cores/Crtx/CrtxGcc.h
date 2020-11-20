@@ -11,6 +11,7 @@
   #define __ASM                                  __asm
 #endif
 
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 /* ###########################  Core Function Access  ########################### */
 /** \ingroup  CMSIS_Core_FunctionInterface
     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
@@ -1977,6 +1978,35 @@ __STATIC_FORCEINLINE int32_t __SMMLA (int32_t op1, int32_t op2, int32_t op3)
 
 #endif /* (__ARM_FEATURE_DSP == 1) */
 /*@} end of group CMSIS_SIMD_intrinsics */
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 
+	#define __CLZ             (uint8_t)__builtin_clz
+
+	__STATIC_FORCEINLINE uint32_t __RBIT(uint32_t value)
+	{
+	uint32_t result;
+
+	#if ((defined (__ARM_ARCH_7M__      ) && (__ARM_ARCH_7M__      == 1)) || \
+		(defined (__ARM_ARCH_7EM__     ) && (__ARM_ARCH_7EM__     == 1)) || \
+		(defined (__ARM_ARCH_8M_MAIN__ ) && (__ARM_ARCH_8M_MAIN__ == 1))    )
+	__ASM volatile ("rbit %0, %1" : "=r" (result) : "r" (value) );
+	#else
+	uint32_t s = (4U /*sizeof(v)*/ * 8U) - 1U; /* extra shift needed at end */
+
+	result = value;                      /* r will be reversed bits of v; first get LSB of v */
+	for (value >>= 1U; value != 0U; value >>= 1U)
+	{
+		result <<= 1U;
+		result |= value & 1U;
+		s--;
+	}
+	result <<= s;                        /* shift when v's highest bits are zero */
+	#endif
+	return result;
+	}
+
+	#define __NOP()                             __ASM volatile ("nop")
+
+#endif
 
 #endif // CRTX_GCC_H

@@ -32,8 +32,6 @@
 typedef struct						ZunoTonePwm_s
 {
 	uint16_t						tone_freq;
-	uint8_t							pwm_pins[PWM_TIMER_CC_COUNT];
-	uint8_t							pwm_pins_state;
 	uint8_t							tone_pin;
 	volatile uint8_t				keyTone;
 	volatile uint8_t				keyPwm;
@@ -45,14 +43,34 @@ static volatile uint8_t glpKey = true;
 
 static void _noTone(uint8_t pin);
 
-static uint8_t _aux_findPWMChannel(uint8_t pin) {
-	int							i;
-	ZunoTonePwm_t				*lp;
+static uint8_t _findPWMChannelBusy(uint8_t location) {
+	size_t			tempos;
+	uint8_t			channel;
 
-	lp = &gTonePwm;
-	for(i=0;i < PWM_TIMER_CC_COUNT; i++) {
-		if(lp->pwm_pins[i] == pin)
-			return (i);
+	location = (location + 32 - 0);
+	tempos = PWM_TIMER->ROUTELOC0;
+	channel = 0;
+	while (channel < PWM_TIMER_CC_COUNT) {
+		if ((tempos & _TIMER_ROUTELOC0_CC0LOC_MASK) == (location & _TIMER_ROUTELOC0_CC0LOC_MASK))
+			return (channel);
+		location--;
+		channel++;
+		tempos = tempos >> 8;
+	}
+	return (INVALID_PIN_INDEX);
+}
+
+static uint8_t _findPWMChannelSpace(void) {
+	size_t			tempos;
+	uint8_t			channel;
+
+	tempos = PWM_TIMER->ROUTELOC0;
+	channel = 0;
+	while (channel < PWM_TIMER_CC_COUNT) {
+		if ((tempos & _TIMER_ROUTELOC0_CC0LOC_MASK) == 0)
+			return (channel);
+		channel++;
+		tempos = tempos >> 8;
 	}
 	return (INVALID_PIN_INDEX);
 }
@@ -67,47 +85,38 @@ static uint8_t _getPrescale(size_t freq) {
 }
 
 static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
-	ZunoTonePwm_t				*lp;
 	TIMER_TypeDef				*timer;
 	size_t						freq;
 	uint8_t						channel;
+	size_t						tempos;
+	size_t						location;
 
+	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
+	channel = _findPWMChannelBusy(location);
 	timer = PWM_TIMER;
-	lp = &gTonePwm;
-	channel = _aux_findPWMChannel(pin);
 	switch (value) {
 		case PWM_DISABLED:// switch off the led if it was enabled already
+			_noTone(pin);
 			return (PWM_OUT_CLOSE);
 		case PWM_ENABLED:
-			if(channel == INVALID_PIN_INDEX) {
-				channel = _aux_findPWMChannel(INVALID_PIN_INDEX);
-				if(channel == INVALID_PIN_INDEX)
-					return (false);
-				lp->pwm_pins[channel] = pin;
-				_noTone(pin);
+			_noTone(pin);
+			if(channel == INVALID_PIN_INDEX)
 				pinMode(pin, OUTPUT);// enable the output
-			}
-			else if ((lp->pwm_pins_state & (1 << channel)) != 0) {
+			else {
+				timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
 				timer->ROUTEPEN &= ~(1UL << channel);//disable CC
-				lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
 			}
 			digitalWrite(pin, HIGH);
 			return (true);
 	}
 	if(channel == INVALID_PIN_INDEX) {
-		channel = _aux_findPWMChannel(INVALID_PIN_INDEX);
+		channel = _findPWMChannelSpace();
 		if(channel == INVALID_PIN_INDEX)
 			return (false);
 		_noTone(pin);
-		lp->pwm_pins[channel] = pin;// We occupied this channel with the needed pin
-		lp->pwm_pins_state = lp->pwm_pins_state | (1 << channel);
-		timer->ROUTELOC0 = (timer->ROUTELOC0 & ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3))) | getLocationTimer0AndTimer1Chanell(pin, channel);
+		timer->ROUTELOC0 |= (((location + 32 - channel) & _TIMER_ROUTELOC0_CC0LOC_MASK) << (channel << 3));
 		timer->ROUTEPEN |= (1UL << channel);//enabled CC
 		pinMode(pin, OUTPUT);// enable the output
-	}
-	else if ((lp->pwm_pins_state & (1 << channel)) == 0) {
-		timer->ROUTEPEN |= (1UL << channel);//enabled CC
-		lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
 	}
 	TIMER_CompareBufSet(timer, channel, TIMER_TopGet(timer) * value / PWM_ENABLED);
 	return (true);
@@ -120,12 +129,13 @@ static ZunoError_t _initPwm(size_t param) {
 	size_t						freq;
 	size_t						channel;
 
-	memset(&gTonePwm.pwm_pins[0], INVALID_PIN_INDEX, sizeof(gTonePwm.pwm_pins));
 	CMU_ClockEnable(PWM_TIMER_CLOCK, true);
 	timerInit = TIMER_INIT_DEFAULT;
 	timerInit.prescale = timerPrescale2;
 	freq = CMU_ClockFreqGet(PWM_TIMER_CLOCK) / (1 << timerInit.prescale) / PWM_HGZ;// PWM_HGZ - required frequency //0x25317C0
 	timer = PWM_TIMER;
+	timer->ROUTELOC0 = _TIMER_ROUTELOC0_RESETVALUE;
+	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);
 	TIMER_Init(timer, &timerInit);
 	timerCCInit = TIMER_INITCC_DEFAULT;
@@ -137,21 +147,22 @@ static ZunoError_t _initPwm(size_t param) {
 	return (ZunoErrorOk);
 }
 static uint8_t _analogWriteDisable(uint8_t pin) {
-	ZunoTonePwm_t			*lp;
 	size_t					channel;
+	TIMER_TypeDef			*timer;
 
-	channel = _aux_findPWMChannel(pin);
+	channel = _findPWMChannelBusy(getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin));
 	if(channel == INVALID_PIN_INDEX)
-		return (false); // We don't have this pin is occupied by the PWM - go out
-	lp = &gTonePwm;
-	lp->pwm_pins[channel] = INVALID_PIN_INDEX;
-	lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
-	PWM_TIMER->ROUTEPEN &= ~(1UL << channel);//disable CC
-	digitalWrite(pin, LOW);// Switch off this pin anyway
-	if (PWM_TIMER->ROUTEPEN == _TIMER_ROUTEPEN_RESETVALUE) {
-		TIMER_Reset(PWM_TIMER);
-		zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
+		pinMode(pin, OUTPUT);// enable the output
+	else {
+		timer = PWM_TIMER;
+		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
+		timer->ROUTEPEN &= ~(1UL << channel);//disable CC
+		if (timer->ROUTEPEN == _TIMER_ROUTEPEN_RESETVALUE) {
+			TIMER_Reset(timer);
+			zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
+		}
 	}
+	digitalWrite(pin, LOW);// Switch off this pin anyway
 	return (true);
 }
 

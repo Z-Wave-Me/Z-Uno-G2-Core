@@ -52,15 +52,5 @@ typedef struct	PinDef_s
 extern const PinDef_t ZUNO_PIN_DEFS[];
 
 uint8_t zunoIsMalloc(void *b);
-inline void zunoIntControl(int irq, bool enable){
-	zunoSysCall(ZUNO_INT_CONTROL, 2, irq, enable);
-}
-inline void zunoIntClearPending(int irq){
-	zunoSysCall(ZUNO_INT_CLEARPENDING, 1, irq);
-}
-inline void zunoIntSetPriority(int irq, int priority){
-	zunoSysCall(ZUNO_INT_CLEARPENDING, 2, irq, priority);
-}
-
 
 #endif

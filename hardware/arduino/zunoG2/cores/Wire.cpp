@@ -2,6 +2,7 @@
 #include "ZGecko.h"
 #include "ZDma.h"
 #include "Wire.h"
+#include "stdlib.h"
 
 /* Layout details, A = address bit, X = don't care bit (set to 0):
 	7 bit address - use format AAAA AAAX.

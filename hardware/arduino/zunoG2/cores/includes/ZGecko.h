@@ -1,6 +1,7 @@
 #if (!defined(ZGECKO))
 #define ZGECKO
 #include "CrtxGcc.h"
+#include "ZUNO_Definitions.h"
 
 /* following defines should be used for structure members */
 #define     __IM     volatile const      /*! Defines 'read only' structure member permissions */
@@ -4735,6 +4736,31 @@ __STATIC_INLINE uint32_t BUS_RegMaskedRead(volatile const uint32_t *addr,
   return *addr & mask;
 }
 
+/***************************************************************************//**
+ * @brief
+ *   Count trailing number of zeros. Use CLZ instruction if available.
+ *
+ * @param[in] value
+ *   Data value to check for number of trailing zero bits.
+ *
+ * @return
+ *   A number of trailing zeros in value.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t SL_CTZ(uint32_t value)
+{
+#if (__CORTEX_M >= 3)
+  return __CLZ(__RBIT(value));
+
+#else
+  uint32_t zeros;
+  for (zeros = 0; (zeros < 32) && ((value & 0x1) == 0); zeros++, value >>= 1) {
+    ;
+  }
+  return zeros;
+#endif
+}
+
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 /**
   \brief   Set Priority Grouping
   \details Sets the priority grouping field using the required unlock sequence.
@@ -5082,30 +5108,6 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
 
 /***************************************************************************//**
  * @brief
- *   Count trailing number of zeros. Use CLZ instruction if available.
- *
- * @param[in] value
- *   Data value to check for number of trailing zero bits.
- *
- * @return
- *   A number of trailing zeros in value.
- ******************************************************************************/
-__STATIC_INLINE uint32_t SL_CTZ(uint32_t value)
-{
-#if (__CORTEX_M >= 3)
-  return __CLZ(__RBIT(value));
-
-#else
-  uint32_t zeros;
-  for (zeros = 0; (zeros < 32) && ((value & 0x1) == 0); zeros++, value >>= 1) {
-    ;
-  }
-  return zeros;
-#endif
-}
-
-/***************************************************************************//**
- * @brief
  *   Get unique number for this device.
  *
  * @return
@@ -5123,5 +5125,24 @@ __STATIC_INLINE uint64_t SYSTEM_GetUnique(void)
 #error Location of device unique number is not defined.
 #endif
 }
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+	void *zunoSysCall(uint8_t ct, uint8_t n, ...);
+	__STATIC_INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
+	{
+		zunoSysCall(ZUNO_INT_CONTROL, 2, IRQn, false);
+	}
+	__STATIC_INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
+	{
+		zunoSysCall(ZUNO_INT_CONTROL, 2, IRQn, true);
+	}
+	__STATIC_INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
+	{
+		zunoSysCall(ZUNO_INT_CLEARPENDING, 1, IRQn);
+	}
+	__STATIC_INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
+	{
+		zunoSysCall(ZUNO_INT_CLEARPENDING, 2, IRQn, priority);
+	}
+#endif
 
 #endif // ZGECKO

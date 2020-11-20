@@ -2,12 +2,9 @@
 #ifndef ZUNO_ARDUINOH
 #define ZUNO_ARDUINOH
 
-#define ZUNO_UNO				1
-#define ZUNO_RASBERI			2
-#define ZUNO_ASSEMBLY_TYPE		1
-// #ifndef ZUNO_ASSEMBLY_TYPE
-// 	#define ZUNO_ASSEMBLY_TYPE			ZUNO_UNO//default
-// #endif
+#define ZUNO_UNO				1//Для тип чего собираеться - зуно
+#define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
+#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
 
 #define ZUNO_ZERO_BSS				true//Раз глобально обнуляем всю bss и оператор не используем то и c++ нечего в каждом статичном класе вручную обнулять память
 
@@ -331,16 +328,12 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
-//
-#include "stdlib.h"
-void *malloc(size_t size);
-void free(void *ptr);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
-#include "Threading.h"
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+	#include "Threading.h"
 	#include "ReportHandler.h"
 #endif
 

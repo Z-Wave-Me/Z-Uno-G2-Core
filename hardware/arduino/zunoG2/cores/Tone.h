@@ -2,9 +2,9 @@
 #define TONE_H
 
 ZunoError_t tone(uint8_t pin, uint16_t freq);
-void toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration);
+ZunoError_t toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration);
 void noTone(uint8_t pin);
 
-uint8_t _analogWrite(uint8_t pin, uint8_t value);
+bool analogWrite(uint8_t pin, word value);
 
 #endif //TONE_H

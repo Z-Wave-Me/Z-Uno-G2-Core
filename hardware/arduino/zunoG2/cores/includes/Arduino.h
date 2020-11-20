@@ -293,7 +293,6 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 int  digitalRead(uint8_t pin);
 int  analogRead(uint8_t pin);
-bool analogWrite(uint8_t pin, word value);
 void WDOG_Feed();
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
 void delayMicroseconds(word tdelay);

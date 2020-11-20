@@ -139,7 +139,6 @@ static ZunoError_t _initPwm(size_t param) {
 static uint8_t _analogWriteDisable(uint8_t pin) {
 	ZunoTonePwm_t			*lp;
 	size_t					channel;
-	size_t					i;
 
 	channel = _aux_findPWMChannel(pin);
 	if(channel == INVALID_PIN_INDEX)
@@ -149,12 +148,10 @@ static uint8_t _analogWriteDisable(uint8_t pin) {
 	lp->pwm_pins_state = lp->pwm_pins_state ^ (1 << channel);
 	PWM_TIMER->ROUTEPEN &= ~(1UL << channel);//disable CC
 	digitalWrite(pin, LOW);// Switch off this pin anyway
-	i = 0;
-	while (i < PWM_TIMER_CC_COUNT)
-		if(lp->pwm_pins[i++] != INVALID_PIN_INDEX)
-			return (true);
-	TIMER_Enable(PWM_TIMER, false);
-	zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
+	if (PWM_TIMER->ROUTEPEN == _TIMER_ROUTEPEN_RESETVALUE) {
+		TIMER_Reset(PWM_TIMER);
+		zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
+	}
 	return (true);
 }
 
@@ -186,8 +183,8 @@ static ZunoError_t _deInitTone(size_t param) {
 		return (ZunoErrorInvalidPin);
 	lp->tone_pin = INVALID_PIN_INDEX;
 	lp->tone_freq = 0;
-	TIMER_Enable(TONE_TIMER, false);
 	TONE_TIMER->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
+	TIMER_Reset(TONE_TIMER);
 	digitalWrite(pin, LOW);// Switch off this pin anyway
 	return (ZunoErrorOk);
 }

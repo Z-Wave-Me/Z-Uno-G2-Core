@@ -681,13 +681,6 @@ void delayMicroseconds(word tdelay){
    }
 }
 
-
-bool analogWrite(uint8_t pin, word value) {
-	bool			out;
-	
-	out = _analogWrite(pin, (value > 0xFF) ? 0xFF : value);
-	return (out);
-}
 void WDOG_Feed(){
   WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog
   /* The watchdog should not be fed while it is disabled */

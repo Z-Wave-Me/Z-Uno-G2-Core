@@ -132,10 +132,6 @@ typedef struct HandlerFunc_s{
 	uint16_t code_offset;
 }HandlerFunc_t;
 
-#if MAX_ZUNO_PWMS > 8
-	#error "Error pin pwm!"
-#endif
-
 typedef struct				ZunoBitField_s
 {
 	bool					bLockTimer0: 1;
@@ -150,14 +146,7 @@ typedef struct				ZunoBitField_s
 }							ZunoBitField_t;
 
 typedef struct ZUNOOnDemandHW_s {
-	uint32_t			pwm_freq;
-	uint32_t			tone_freq_set;
-	uint16_t			tone_freq;
-	uint8_t				pwm_pins[MAX_ZUNO_PWMS];
-	uint8_t				pwm_pins_state;
-	uint8_t				tone_pin;
 	volatile uint8_t	keyGPT;
-
 	
 	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;

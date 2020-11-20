@@ -11,6 +11,7 @@ typedef enum							SyncMaster_e
 	SyncMasterI2c,
 	SyncMasterSpi,
 	SyncMasterNeoPixel,
+	SyncMasterPwm,
 	SyncMasterDht
 }										SyncMaster_t;
 
@@ -36,7 +37,7 @@ typedef struct							ZunoSync_s
 }
 
 ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);
-void zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);
+ZunoError_t zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey);
 
 ZunoError_t zunoSyncLockRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
 void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);

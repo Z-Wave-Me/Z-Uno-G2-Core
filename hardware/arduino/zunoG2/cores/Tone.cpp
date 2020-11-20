@@ -153,6 +153,7 @@ static uint8_t _analogWriteDisable(uint8_t pin) {
 	while (i < PWM_TIMER_CC_COUNT)
 		if(lp->pwm_pins[i++] != INVALID_PIN_INDEX)
 			return (true);
+	TIMER_Enable(PWM_TIMER, false);
 	zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
 	return (true);
 }
@@ -185,6 +186,7 @@ static ZunoError_t _deInitTone(size_t param) {
 		return (ZunoErrorInvalidPin);
 	lp->tone_pin = INVALID_PIN_INDEX;
 	lp->tone_freq = 0;
+	TIMER_Enable(TONE_TIMER, false);
 	TONE_TIMER->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	digitalWrite(pin, LOW);// Switch off this pin anyway
 	return (ZunoErrorOk);

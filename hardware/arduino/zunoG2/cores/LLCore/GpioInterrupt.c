@@ -53,7 +53,7 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 
 	if (interruptPin == INT_SLEEPING)
 		return (ZunoErrorExtInt);
-	if (g_bit_field.bExtInit == false) {
+	if (g_zuno_odhw_cfg.bExtInit == false) {
 		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) != ZunoErrorOk) {
 			return (ret);
 		}
@@ -65,7 +65,7 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);
 		NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
 		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
-		g_bit_field.bExtInit = true;
+		g_zuno_odhw_cfg.bExtInit = true;
 	}
 	zunoExitCritical();
 	switch (mode) {

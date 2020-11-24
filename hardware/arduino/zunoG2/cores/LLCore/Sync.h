@@ -12,6 +12,7 @@ typedef enum							SyncMaster_e
 	SyncMasterSpi,
 	SyncMasterNeoPixel,
 	SyncMasterPwm,
+	SyncMasterBtn,
 	SyncMasterDht
 }										SyncMaster_t;
 
@@ -53,5 +54,6 @@ extern ZunoSync_t gSyncTIMER1;
 extern ZunoSync_t gSyncWTIMER0;
 extern ZunoSync_t gSyncIC0;
 extern ZunoSync_t gSyncIC1;
+extern ZunoSync_t gSyncCSEN;
 
 #endif // SYNC_H

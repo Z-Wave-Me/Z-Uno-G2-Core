@@ -132,25 +132,16 @@ typedef struct HandlerFunc_s{
 	uint16_t code_offset;
 }HandlerFunc_t;
 
-typedef struct				ZunoBitField_s
-{
-	bool					bLockTimer0: 1;
-	bool					bLockTimer1: 1;
-	bool					bLockWTimer0: 1;
-	bool					bLockUsart0: 1;
-	bool					bLockUsart1: 1;
-	bool					bLockUsart2: 1;
-	bool					bExtInit: 1;
-	bool					bZDMAInit: 1;
-	bool					ADCInitialized: 1;
-}							ZunoBitField_t;
-
 typedef struct ZUNOOnDemandHW_s {
 	volatile uint8_t	keyGPT;
-	
+	struct
+	{
+		bool					bExtInit: 1;
+		bool					bZDMAInit: 1;
+		bool					ADCInitialized: 1;
+	};
 	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
-extern ZunoBitField_t g_bit_field;
 
 #endif // __ZUNO_SYS_TYPES__

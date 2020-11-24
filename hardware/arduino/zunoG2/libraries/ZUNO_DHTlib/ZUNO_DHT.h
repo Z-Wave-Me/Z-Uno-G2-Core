@@ -57,7 +57,7 @@ class DHT {
 		};
 	private:
 		static ZunoError_t						_init(size_t param);
-		static void								_deInit(size_t param);
+		static ZunoError_t						_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
 		size_t									_lastreadtime;
@@ -65,6 +65,7 @@ class DHT {
 		uint8_t									_crc;
 		uint8_t									_pin;
 		DHT_TYPE_SENSORS_t						_type;
+		uint8_t									_lpKey;
 };
 
 #endif//ZUNO_DHT_H

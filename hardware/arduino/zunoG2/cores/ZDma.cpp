@@ -267,10 +267,10 @@ inline ZunoError_t ZDMAClass::_getZDma(ZunoZDmaList_t **list_out, size_t *outchZ
 	uint8_t					chZDma;
 	ZunoZDmaList_t			*list;
 	
-	if (g_bit_field.bZDMAInit == false) {
+	if (g_zuno_odhw_cfg.bZDMAInit == false) {
 		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_LDMA, (void *)this->_LDMA_IRQHandler)) != ZunoErrorOk)
 			return (ret);
-		g_bit_field.bZDMAInit = true;
+		g_zuno_odhw_cfg.bZDMAInit = true;
 		ldmaInit = LDMA_INIT_DEFAULT;
 		ldmaInit.ldmaInitCtrlNumFixed = ZDMA_CH_PRIORITY;
 		ldmaInit.ldmaInitIrqPriority = ZDMA_IRQ_PRIORITY;

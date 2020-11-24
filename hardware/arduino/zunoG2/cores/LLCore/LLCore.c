@@ -406,7 +406,7 @@ void * zunoJumpTable(int vec, void * data) {
         #endif
         case ZUNO_JUMPTBL_SYSTIMER:
             WDOG_Feed();
-            zuno_CCTimer(((uint32_t*)data)[0]);
+            zuno_CCTimer(((uint32_t)data));
             break;
         case ZUNO_JUMPTBL_IRQ:
             sub_handler_type = (uint8_t)(((uint32_t*)data)[0])&0x0FF;

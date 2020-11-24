@@ -71,7 +71,7 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_FUNC_EEPROM_ERASE
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
-void zunoSetZWChannel(byte ch, byte zw_channel);
+inline void zunoSetZWChannel(byte ch, byte zw_channel) {ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;};
 byte zunoAddChannel(byte type, byte subtype, byte options);
 void zunoSendReport(byte ch);
 void zunoSendBatteryReport();
@@ -93,7 +93,7 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 void WDOG_Feed();
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
 bool zunoStartDeviceConfiguration();
-void zunoSetS2Keys(byte keys);
+inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
 void zunoStartLearn(byte timeout, bool secured);
 void _zme_memcpy(byte *dst, byte *src, byte count);
 void zunoSetWUPTimer(uint32_t timeout);

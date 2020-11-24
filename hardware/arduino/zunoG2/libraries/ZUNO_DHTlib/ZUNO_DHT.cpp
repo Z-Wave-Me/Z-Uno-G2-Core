@@ -27,21 +27,25 @@ const ZunoDhtTypeConfig_t gconfigTable[3] = {
 		.bus_clock = cmuClock_WTIMER0
 	},
 	{
-		.timer = TIMER1,
-		.lpLock = &gSyncTIMER1,
-		.dmaSignal = zdmaPeripheralSignal_TIMER1_UFOF,
-		.bus_clock = cmuClock_TIMER1
-	},
-	{
 		.timer = TIMER0,
 		.lpLock = &gSyncTIMER0,
 		.dmaSignal = zdmaPeripheralSignal_TIMER0_UFOF,
 		.bus_clock = cmuClock_TIMER0
+	},
+	{
+		.timer = TIMER1,
+		.lpLock = &gSyncTIMER1,
+		.dmaSignal = zdmaPeripheralSignal_TIMER1_UFOF,
+		.bus_clock = cmuClock_TIMER1
 	}
 };
 
 /* Public Constructors */
-DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime(-1), _value({0}), _crc(0), _pin(pin), _type(type) {
+DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime(-1), _pin(pin), _type(type)
+#if (ZUNO_ZERO_BSS != true)
+	, _value({0}), _crc(0), _lpKey(0)
+#endif
+{
 }
 
 /* Public Methods */
@@ -53,7 +57,7 @@ ZunoError_t DHT::begin(void) {
 	gconfigTable_b = &gconfigTable[0];
 	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
 	while (gconfigTable_b < gconfigTable_e) {
-		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b);
+		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b, &this->_lpKey);
 		if (ret == ZunoErrorOk) {
 			g_config = gconfigTable_b;
 			break ;
@@ -63,6 +67,7 @@ ZunoError_t DHT::begin(void) {
 		gconfigTable_b++;
 	}
 	pinMode(this->_pin, INPUT_PULLUP);
+	zunoSyncReleseWrite(g_config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ZunoErrorOk);
 }
 
@@ -71,7 +76,7 @@ void DHT::end(void) {
 
 	if ((config = g_config) == 0)
 		return ;
-	zunoSyncClose(config->lpLock, SyncMasterDht, this->_deInit, (size_t)config);
+	zunoSyncClose(config->lpLock, SyncMasterDht, this->_deInit, (size_t)config, &this->_lpKey);
 }
 
 int16_t DHT::readTemperatureC10(uint8_t bForce) {
@@ -131,14 +136,14 @@ inline ZunoError_t DHT::_read(uint8_t bForce) {
 
 	if ((config = g_config) == 0)
 		return (ZunoErrorNotInit);
-	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterDht)) != ZunoErrorOk)
+	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterDht, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	ret = this->_readBody(config, bForce);
-	zunoSyncReleseRead(config->lpLock, SyncMasterDht);
+	zunoSyncReleseRead(config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ret);
 }
 
-void DHT::_deInit(size_t param) {
+ZunoError_t DHT::_deInit(size_t param) {
 	TIMER_Init_TypeDef					timerInit;
 	TIMER_TypeDef						*timer;
 	const ZunoDhtTypeConfig_t			*config;
@@ -146,6 +151,7 @@ void DHT::_deInit(size_t param) {
 	config = (const ZunoDhtTypeConfig_t *)param;
 	TIMER_Reset(config->timer);
 	g_config = 0;
+	return (ZunoErrorOk);
 }
 
 static const TIMER_Init_TypeDef gInitTimer =

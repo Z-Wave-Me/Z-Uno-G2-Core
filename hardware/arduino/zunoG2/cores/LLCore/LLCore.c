@@ -291,7 +291,6 @@ typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
-ZunoBitField_t g_bit_field;
 // prototypes 
 void loop();
 void setup();
@@ -653,10 +652,10 @@ int digitalRead(uint8_t pin) {
 
 int analogRead(uint8_t pin) {
     uint32_t sampleValue;
-    if(!g_bit_field.ADCInitialized){
+    if(!g_zuno_odhw_cfg.ADCInitialized){
         // Initialize ADC only the first time we need it
         zme_ADC_Enable();
-        g_bit_field.ADCInitialized = true;
+        g_zuno_odhw_cfg.ADCInitialized = true;
     }
     ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
     // Init for single conversion use, use 5V reference

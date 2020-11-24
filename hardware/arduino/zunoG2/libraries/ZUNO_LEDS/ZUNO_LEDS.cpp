@@ -1,48 +1,18 @@
 #include "Arduino.h"
 #include "stdlib.h"
-#include "ZUNO_LEDS_private.h"
+#include "ZUNO_LEDS.h"
+#include "Threading.h"
+
+/* Values */
+ZunoLedListGroups_t *ZunoLed::_list = 0;
+volatile uint8_t ZunoLed::bSysTimerInit = 0;
 
 /* Public Constructors */
-ZunoLed::ZunoLed(void): list(0), bSysTimerInit(0) {
+ZunoLed::ZunoLed(void) {
 
 }
 
 /* Public Methods */
-void ZunoLed::deleteLed(uint8_t led_pins) {
-	this->_deleteLed(led_pins);
-}
-
-void ZunoLed::deleteLed(const ZunoLedModeGroups_t *led_groups) {
-	this->_deleteLed((size_t)led_groups);
-}
-
-void ZunoLed::setMode(uint8_t led_pin, uint8_t mode) {
-	this->_setMode(led_pin, mode);
-}
-
-void ZunoLed::setMode(const ZunoLedModeGroups_t *led_groups, uint8_t mode) {
-	this->_setMode((size_t)led_groups, mode);
-}
-
-void ZunoLed::off(uint8_t led_pin) {
-	this->_setLed(led_pin, LED_MODE_ALWAYS_OFF);
-}
-
-void ZunoLed::off(const ZunoLedModeGroups_t *led_groups) {
-	this->_setLed((size_t)led_groups, LED_MODE_ALWAYS_OFF);
-}
-void ZunoLed::on(uint8_t led_pin) {
-	this->_setLed(led_pin, LED_MODE_ALWAYS_ON);
-}
-
-void ZunoLed::on(const ZunoLedModeGroups_t *led_groups) {
-	this->_setLed((size_t)led_groups, LED_MODE_ALWAYS_ON);
-}
-
-ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uint8_t num_modes) {
-	return (this->addLed(led_pin, led_modes, num_modes, false));
-}
-
 ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uint8_t num_modes, uint8_t bInverted) {
 	ZunoLedListGroups_t			*list;
 	ZunoError_t					ret;
@@ -95,7 +65,7 @@ void ZunoLed::_updateTimer(void) {
 	uint8_t						i;
 	uint8_t						divider;
 
-	list = Led.list;
+	list = ZunoLed::_list;
 	while (list != 0) {
 		if ((current_mode = list->current_mode) >= LED_MODE_OFFSET) {
 			b = &list->array[0];
@@ -123,11 +93,11 @@ void ZunoLed::_deleteLed(size_t name) {
 	ZunoLedListGroups_t		*list_prev;
 	ZunoLedListGroups_t		*list_tmp;
 
-	noInterrupts();
+	zunoEnterCritical();
 	if ((list = this->_findList(name)) != 0) {
-		list_prev = this->list;
+		list_prev = this->_list;
 		if (list == list_prev)
-			this->list = list->next;
+			this->_list = list->next;
 		else {
 			while ((list_tmp = list_prev->next) != list)
 				list_prev = list_tmp;
@@ -137,22 +107,27 @@ void ZunoLed::_deleteLed(size_t name) {
 			zunoDetachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer);
 		free(list);
 	}
-	interrupts();
+	zunoExitCritical();
 }
 
 ZunoLedListGroups_t *ZunoLed::_addLedPre(size_t name, uint8_t num_groups, ZunoError_t *ret) {
 	ZunoLedListGroups_t			*list;
 	 ZunoError_t				tmp;
 
+	zunoEnterCritical();
 	if (this->bSysTimerInit++ == 0) {
 		if ((tmp = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer)) != ZunoErrorOk) {
 			this->bSysTimerInit--;
 			*ret = tmp;
+			zunoExitCritical();
 			return (0);
 		}
 	}
-	if (this->_findList(name) != 0)
+	if (this->_findList(name) != 0) {
+		zunoExitCritical();
 		return (0);
+	}
+	zunoExitCritical();
 	if ((list = (ZunoLedListGroups_t *)malloc(sizeof(ZunoLedListGroups_t) + (sizeof(ZunoLedList_t) * num_groups))) == 0) {
 		*ret = ZunoErrorMemory;
 		return (0);
@@ -169,21 +144,21 @@ void ZunoLed::_addList(ZunoLedListGroups_t *list) {
 	ZunoLedListGroups_t			*list_next;
 	ZunoLedListGroups_t			*list_tmp;
 
-	noInterrupts();
-	if ((list_next = this->list) != 0) {
+	zunoEnterCritical();
+	if ((list_next = this->_list) != 0) {
 		while ((list_tmp = list_next->next) != 0)
 			list_next = list_tmp;
 		list_next->next = list;
 	}
 	else
-		this->list = list;
-	interrupts();
+		this->_list = list;
+	zunoExitCritical();
 }
 
 ZunoLedListGroups_t *ZunoLed::_findList(size_t name) {
 	ZunoLedListGroups_t			*list;
 
-	list = this->list;
+	list = this->_list;
 	while (list != 0) {
 		if (list->name == name)
 			break ;
@@ -197,24 +172,34 @@ void ZunoLed::_setLed(size_t name, uint8_t mode) {
 	ZunoLedList_t				*b;
 	ZunoLedList_t				*e;
 
-	if ((list = this->_findList(name)) == 0)
-		return ;
-	b = &list->array[0];
-	e = &b[list->num_groups];
-	while (b < e) {
-		list->current_mode = mode;
-		digitalWrite(b->led_pin, ((b->bInverted == true) ? !mode : mode));
-		b++;
+	zunoEnterCritical();
+	if ((list = this->_findList(name)) != 0) {
+		b = &list->array[0];
+		e = &b[list->num_groups];
+		while (b < e) {
+			list->current_mode = mode;
+			digitalWrite(b->led_pin, ((b->bInverted == true) ? !mode : mode));
+			b++;
+		}
 	}
+	zunoExitCritical();
 }
 
 void ZunoLed::_setMode(size_t name, uint8_t mode) {
-	if ((list = this->_findList(name)) == 0 || mode >= list->num_modes)
+	ZunoLedListGroups_t			*list;
+
+	zunoEnterCritical();
+	if ((list = this->_findList(name)) == 0 || mode >= list->num_modes){
+		zunoExitCritical();
 		return ;
-	if((mode + LED_MODE_OFFSET) == list->current_mode)
+	}
+	if((mode + LED_MODE_OFFSET) == list->current_mode) {
+		zunoExitCritical();
 		return;
+	}
 	list->current_mode = mode + LED_MODE_OFFSET;
 	list->patt_index = 0; // Always start from first stick in case of the new pattern
+	zunoExitCritical();
 }
 
 

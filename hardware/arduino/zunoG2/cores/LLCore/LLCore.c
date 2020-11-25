@@ -43,10 +43,11 @@ extern unsigned long  __StackTop;
 #if ZUNO_PIN_V == 1
 #define DBG_CONSOLE_PIN 0x00 // A0
 #elif ZUNO_PIN_V == 2
-#define DBG_CONSOLE_PIN 0x2B // C11
+#define DBG_CONSOLE_PIN 0x00 // A0
 #elif ZUNO_PIN_V == 3
-#define DBG_CONSOLE_PIN 0x3D // D13
+#define DBG_CONSOLE_PIN 0x2B // C11
 #elif ZUNO_PIN_V == 4
+#define DBG_CONSOLE_PIN 0x3D // D13
 #else
 #define DBG_CONSOLE_PIN 0xFF
 #endif

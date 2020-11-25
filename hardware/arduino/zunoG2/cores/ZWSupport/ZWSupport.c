@@ -744,21 +744,7 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 	ZUNO_CFG_CHANNEL_COUNT++;
 	return ch_i;
 }
-void zunoSetS2Keys(byte keys){
-	g_zuno_sys->zwave_cfg->security_keys = keys;
-}
-void zunoSetSleepingMode(byte mode){
-	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
-	g_zuno_sys->zwave_cfg->flags |= (mode & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
-}
 
-uint8_t zunoGetSleepingMode(void) {
-	return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
-}
-
-void zunoSetZWChannel(byte ch, byte zw_channel) {
-	ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
-}
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
 	g_zuno_channelhandlers_map[ch].descriptor = (((value_size >> 1)&HANDLER_DESCRIPTOR_LEN_MASK) << HANDLER_DESCRIPTOR_LEN_SHIFT) | (type & HANDLER_DESCRIPTOR_TYPE_MASK);
 	g_zuno_channelhandlers_map[ch].p_handler = handler;

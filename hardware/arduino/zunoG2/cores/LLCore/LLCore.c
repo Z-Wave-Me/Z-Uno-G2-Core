@@ -306,9 +306,6 @@ extern "C"{
     void _fini();
 };
 
-uint8_t pin2HWPin(uint8_t pin){
-    return (ZUNO_PIN_DEFS[pin].port << 4) | (ZUNO_PIN_DEFS[pin].pin&0x0F);
-}
 void LLInit() {
     // Constructors....
     size_t count, i;
@@ -431,6 +428,187 @@ void * zunoJumpTable(int vec, void * data) {
     }
     return (void*)0;
 }
+
+void zunoSetWUPTimer(uint32_t timeout){
+    zunoSysCall(ZUNO_FUNC_WUP_CONTROL, 1, timeout);
+}
+
+void zunoStartLearn(byte timeout, bool secured){
+    zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
+}
+/*
+void * __zunoJTBL(int vec, void * data) {
+    return zunoJumpTable(vec, data);
+}*/
+
+
+/* sleep */
+void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
+    zunoSysCall(ZUNO_FUNC_SLEEP_CONTROL, 2, index, timeout);
+}
+
+
+/* time */
+void delay(dword ms){
+    void * ret = zunoSysCall(ZUNO_FUNC_DELAY_MS, 1, ms);
+}
+
+dword millis(void){
+    return (dword) zunoSysCall(ZUNO_FUNC_MILLIS, 0);
+}
+
+void delayMicroseconds(word tdelay){
+    while(tdelay--){
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+   }
+}
+
+
+/* pin */
+void pinMode(uint8_t pin, int mode){
+	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
+}
+
+uint8_t pin2HWPin(uint8_t pin) {
+	return ((ZUNO_PIN_DEFS[pin].port << 4) | (ZUNO_PIN_DEFS[pin].pin));
+}
+
+void digitalWrite(uint8_t pin, uint8_t mode) {
+	uint8_t						real_port;
+	uint8_t						real_pin;
+
+	real_port = getRealPort(pin);
+	real_pin = getRealPin(pin);
+	if (mode == true)
+		GPIO_PinOutSet(real_port, real_pin);
+	else
+		GPIO_PinOutClear(real_port, real_pin);
+}
+
+uint8_t getPin(uint8_t port, uint8_t pin) {
+	const PinDef_t			*lp_b;
+	const PinDef_t			*lp_e;
+
+	lp_b = &ZUNO_PIN_DEFS[0];
+	lp_e = &ZUNO_PIN_DEFS[sizeof(ZUNO_PIN_DEFS) / sizeof(PinDef_t)];
+	while (lp_b < lp_e) {
+		if (lp_b->port == port && lp_b->pin == pin)
+			return (lp_b - &ZUNO_PIN_DEFS[0]);
+		lp_b++;
+	}
+	return (INVALID_PIN_INDEX);
+}
+
+uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
+	size_t				i;
+
+	i = 0;
+	pin = (getRealPort(pin) << 4) | getRealPin(pin);
+	while (i < count) {
+		if (location[i] == pin)
+			return (i);
+		i++;
+	}
+	return (0);
+}
+
+size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
+	size_t				loc;
+
+	loc = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
+	loc = (loc + 32 - ch) & 0x1F;
+	ch <<= 3;
+	return (loc << ch);
+}
+
+int analogRead(uint8_t pin) {
+    uint32_t sampleValue;
+    if(!g_zuno_odhw_cfg.ADCInitialized){
+        // Initialize ADC only the first time we need it
+        zme_ADC_Enable();
+        g_zuno_odhw_cfg.ADCInitialized = true;
+    }
+    ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
+    // Init for single conversion use, use 5V reference
+    singleInit.reference  = adcRef5V;
+    singleInit.posSel     = zme_ADC_PIN2Channel(pin);
+    singleInit.resolution = adcRes12Bit;
+    singleInit.acqTime    = adcAcqTime256;
+    ADC_InitSingle(ADC0, &singleInit);
+    ADC_Start(ADC0, adcStartSingle);
+    while (ADC0->STATUS & ADC_STATUS_SINGLEACT);
+    sampleValue = ADC_DataSingleGet(ADC0);
+    // zme_ADC_Disable(); // Move to "BEFORESLEEP" hadler
+    return sampleValue;
+}
+
+
+/* Handler */
+ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	uint16_t					code_offset;
+
+	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset)
+			return (ZunoErrorOk);
+		lp_b++;
+	}
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->code_offset == 0) {
+			lp_b->main_type = type;
+			lp_b->sub_type = sub_type;
+			lp_b->code_offset = code_offset;
+			return (ZunoErrorOk);
+		}
+		lp_b++;
+	}
+	return (ZunoErrorAttachSysHandler);
+}
+
+ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	uint16_t					code_offset;
+
+	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset) {
+			lp_b->code_offset = 0;
+			return (ZunoErrorOk);
+		}
+		lp_b++;
+	}
+	return (ZunoErrorAttachSysHandler);
+}
+
+ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
+	HandlerFunc_t				*lp_b;
+	HandlerFunc_t				*lp_e;
+	ZunoError_t					out;
+
+	out = ZunoErrorAttachSysHandler;
+	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
+	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
+	while (lp_b < lp_e) {
+		if (lp_b->main_type == type && lp_b->sub_type == sub_type) {
+			lp_b->code_offset = 0;
+			out = ZunoErrorOk;
+		}
+		lp_b++;
+	}
+	return (out);
+}
+
 void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     uint8_t i;
     void * result = NULL;
@@ -497,187 +675,6 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
         }
     }
     return result;
-}
-
-ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
-	HandlerFunc_t				*lp_b;
-	HandlerFunc_t				*lp_e;
-	uint16_t					code_offset;
-
-	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-	while (lp_b < lp_e) {
-		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset)
-			return (ZunoErrorOk);
-		lp_b++;
-	}
-	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-	while (lp_b < lp_e) {
-		if (lp_b->code_offset == 0) {
-			lp_b->main_type = type;
-			lp_b->sub_type = sub_type;
-			lp_b->code_offset = code_offset;
-			return (ZunoErrorOk);
-		}
-		lp_b++;
-	}
-	return (ZunoErrorAttachSysHandler);
-}
-
-ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
-	HandlerFunc_t				*lp_b;
-	HandlerFunc_t				*lp_e;
-	uint16_t					code_offset;
-
-	code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-	while (lp_b < lp_e) {
-		if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset) {
-			lp_b->code_offset = 0;
-			return (ZunoErrorOk);
-		}
-		lp_b++;
-	}
-	return (ZunoErrorAttachSysHandler);
-}
-
-ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
-	HandlerFunc_t				*lp_b;
-	HandlerFunc_t				*lp_e;
-	ZunoError_t					out;
-
-	out = ZunoErrorAttachSysHandler;
-	lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-	lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-	while (lp_b < lp_e) {
-		if (lp_b->main_type == type && lp_b->sub_type == sub_type) {
-			lp_b->code_offset = 0;
-			out = ZunoErrorOk;
-		}
-		lp_b++;
-	}
-	return (out);
-}
-
-void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
-    zunoSysCall(ZUNO_FUNC_SLEEP_CONTROL, 2, index, timeout);
-}
-void zunoSetWUPTimer(uint32_t timeout){
-    zunoSysCall(ZUNO_FUNC_WUP_CONTROL, 1, timeout);
-}
-
-void zunoStartLearn(byte timeout, bool secured){
-    zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
-}
-/*
-void * __zunoJTBL(int vec, void * data) {
-    return zunoJumpTable(vec, data);
-}*/
-
-void delay(dword ms){
-    void * ret = zunoSysCall(ZUNO_FUNC_DELAY_MS, 1, ms);
-}
-
-dword millis(){
-    return (dword) zunoSysCall(ZUNO_FUNC_MILLIS, 0);
-}
-
-void digitalWrite(uint8_t pin, uint8_t mode) {
-	uint8_t						real_port;
-	uint8_t						real_pin;
-
-	real_port = getRealPort(pin);
-	real_pin = getRealPin(pin);
-	if (mode == true)
-		GPIO_PinOutSet(real_port, real_pin);
-	else
-		GPIO_PinOutClear(real_port, real_pin);
-}
-void pinMode(uint8_t pin, int mode){
-	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
-}
-
-uint8_t getPin(uint8_t port, uint8_t pin) {
-	const PinDef_t			*lp_b;
-	const PinDef_t			*lp_e;
-
-	lp_b = &ZUNO_PIN_DEFS[0];
-	lp_e = &ZUNO_PIN_DEFS[sizeof(ZUNO_PIN_DEFS) / sizeof(PinDef_t)];
-	while (lp_b < lp_e) {
-		if (lp_b->port == port && lp_b->pin == pin)
-			return (lp_b - &ZUNO_PIN_DEFS[0]);
-		lp_b++;
-	}
-	return (INVALID_PIN_INDEX);
-}
-
-uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
-	uint8_t				i;
-
-	i = 0;
-	pin = (getRealPort(pin) << 4) | getRealPin(pin);
-	while (i < count) {
-		if (location[i] == pin)
-			return (i);
-		i++;
-	}
-	return (0);
-}
-
-size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
-	uint8_t				loc;
-
-	loc = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
-	loc = (loc + 32 - ch) & 0x1F;
-	ch <<= 3;
-	return (loc << ch);
-}
-
-int digitalRead(uint8_t pin) {
-    int real_port = ZUNO_PIN_DEFS[pin].port;
-    int real_pin = ZUNO_PIN_DEFS[pin].pin;
-    /*uint32_t aliasAddr = ((uint32_t)&GPIO->P[real_port].DIN); //PER_BITSET_MEM_BASE + ((uint32_t)(&GPIO->P[real_port].DOUT) - PER_MEM_BASE);  
-    //val = (val > 0);
-    //   BITBAND_PER_BASE + (((uint32_t)addr - PER_MEM_BASE) * (uint32_t) 32) + (bit * (uint32_t) 4);
-    aliasAddr -= PER_MEM_BASE;
-    aliasAddr <<= 5;
-    aliasAddr += BITBAND_PER_BASE;
-    aliasAddr +=  (real_pin << 2);
-
-    return (*(volatile uint32_t *)aliasAddr);*/
-    return (GPIO->P[real_port].DIN & (1<<real_pin)) != 0;
-}
-
-int analogRead(uint8_t pin) {
-    uint32_t sampleValue;
-    if(!g_zuno_odhw_cfg.ADCInitialized){
-        // Initialize ADC only the first time we need it
-        zme_ADC_Enable();
-        g_zuno_odhw_cfg.ADCInitialized = true;
-    }
-    ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
-    // Init for single conversion use, use 5V reference
-    singleInit.reference  = adcRef5V;
-    singleInit.posSel     = zme_ADC_PIN2Channel(pin);
-    singleInit.resolution = adcRes12Bit;
-    singleInit.acqTime    = adcAcqTime256;
-    ADC_InitSingle(ADC0, &singleInit);
-    ADC_Start(ADC0, adcStartSingle);
-    while (ADC0->STATUS & ADC_STATUS_SINGLEACT);
-    sampleValue = ADC_DataSingleGet(ADC0);
-    // zme_ADC_Disable(); // Move to "BEFORESLEEP" hadler
-    return sampleValue;
-}
-
-void delayMicroseconds(word tdelay){
-    while(tdelay--){
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-   }
 }
 
 void WDOG_Feed(){
@@ -782,15 +779,8 @@ bool 	 b_write = va_arg(lst, uint32_t) > 0;
 			uint8_t * p_data = va_arg(lst,uint8_t *);
 			zme_EEPROM_io(g_zuno_state.file_system, addr, p_data, size, b_write);
 */
-int zunoEEPROMWrite(word address, word size, byte * data) {
-    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_IO, 4, true, address, size, data);
-}
-int zunoEEPROMRead(word address, word size, byte * data) {
-    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_IO, 4, false, address, size, data);
-}
-int zunoEEPROMErase() {
-    return (int)zunoSysCall(ZUNO_FUNC_EEPROM_ERASE, 1, 0xCAFE0ACE);
-}
+
+
 void _zme_memcpy(byte * dst, byte * src, byte count)
 {
     // Serial0.println(*src);

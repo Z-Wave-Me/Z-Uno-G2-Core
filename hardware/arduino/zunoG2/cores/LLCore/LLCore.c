@@ -39,8 +39,29 @@ extern unsigned long  __StackTop;
 #define ZUNO_SKETCH_BUILD_TS 0
 #endif
 
+#ifndef DBG_CONSOLE_PIN
+#if ZUNO_PIN_V == 1
+#define DBG_CONSOLE_PIN 0x00 // A0
+#elif ZUNO_PIN_V == 2
+#define DBG_CONSOLE_PIN 0x2B // C11
+#elif ZUNO_PIN_V == 3
+#define DBG_CONSOLE_PIN 0x3D // D13
+#elif ZUNO_PIN_V == 4
+#else
+#define DBG_CONSOLE_PIN 0xFF
+#endif
+#endif
+
 void * zunoJumpTable(int vec, void * data);
-ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {{'Z','M','E','Z','U','N','O','C'}, ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 0x0000, 0x0000, SKETCH_FLAGS, SKETCH_FWID, (uint32_t)&zunoJumpTable, ZUNO_SKETCH_BUILD_TS};
+ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {
+                                                                                    {'Z','M','E','Z','U','N','O','C'}, 
+                                                                                    ZUNO_CORE_VERSION_MAJOR, ZUNO_CORE_VERSION_MINOR, 
+                                                                                    0x0000, 0x0000, 
+                                                                                    SKETCH_FLAGS, 
+                                                                                    SKETCH_FWID, 
+                                                                                    (uint32_t)&zunoJumpTable, 
+                                                                                    ZUNO_SKETCH_BUILD_TS,
+                                                                                    DBG_CONSOLE_PIN};
 
 uint8_t zunoIsMalloc(void *b) {
 	if (b >= (void *)&__bss_end__ && b < (void *)&__StackTop)

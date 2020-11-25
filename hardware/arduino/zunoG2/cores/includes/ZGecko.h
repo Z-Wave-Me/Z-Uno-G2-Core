@@ -5141,7 +5141,7 @@ __STATIC_INLINE uint64_t SYSTEM_GetUnique(void)
 	}
 	__STATIC_INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
 	{
-		zunoSysCall(ZUNO_INT_CLEARPENDING, 2, IRQn, priority);
+		zunoSysCall(ZUNO_INT_SETPRIORITY, 2, IRQn, priority);
 	}
 #endif
 

@@ -1498,6 +1498,46 @@ typedef enum {
 #endif
 } GPIO_Mode_TypeDef;
 
+
+typedef enum {
+  /** Input disabled. Pullup if DOUT is set. */
+  GPIOMODE_DISABLED                  = _GPIO_P_MODEL_MODE0_DISABLED,
+  /** Input enabled. Filter if DOUT is set */
+  GPIOMODE_INPUT                     = _GPIO_P_MODEL_MODE0_INPUT,
+  /** Input enabled. DOUT determines pull direction */
+  GPIOMODE_INPUTPULL                 = _GPIO_P_MODEL_MODE0_INPUTPULL,
+  /** Input enabled with filter. DOUT determines pull direction */
+  GPIOMODE_INPUTPULLFILTER           = _GPIO_P_MODEL_MODE0_INPUTPULLFILTER,
+  /** Push-pull output */
+  GPIOMODE_OUTPUT_PUSHPULL           = _GPIO_P_MODEL_MODE0_PUSHPULL,
+  /** Wired-or output */
+  GPIOMODE_OUTPUT_WIREDOR              = _GPIO_P_MODEL_MODE0_WIREDOR,
+  /** Wired-or output with pull-down */
+  GPIOMODE_OUTPUT_WIREDORPD             = _GPIO_P_MODEL_MODE0_WIREDORPULLDOWN,
+  /** Open-drain output */
+  GPIOMODE_OUTPUT_OPENDRAIN             = _GPIO_P_MODEL_MODE0_WIREDAND,
+  /** Open-drain output with filter */
+  GPIOMODE_OUTPUT_OPENDRAINFLT          = _GPIO_P_MODEL_MODE0_WIREDANDFILTER,
+  /** Open-drain output with pullup */
+  GPIOMODE_OUTPUT_OPENDRAINPUP           = _GPIO_P_MODEL_MODE0_WIREDANDPULLUP,
+  /** Open-drain output with filter and pullup */
+  GPIOMODE_OUTPUT_OPENDRAINPUPFLT        = _GPIO_P_MODEL_MODE0_WIREDANDPULLUPFILTER,
+} GPIO_Mode_t;
+
+enum{
+    DISABLED = GPIOMODE_DISABLED,
+    OUTPUT = GPIOMODE_OUTPUT_PUSHPULL,
+    INPUT = GPIOMODE_INPUT,
+    INPUT_PULLUP    = 0x100 | GPIOMODE_INPUTPULL,
+    INPUT_PULLDOWN  = GPIOMODE_INPUTPULL,
+	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER,
+	INPUT_PULLDOWN_FILTER = GPIOMODE_INPUTPULLFILTER,
+    OUTPUT_UP = 0x100 | GPIOMODE_OUTPUT_PUSHPULL,
+    OUTPUT_DOWN = GPIOMODE_OUTPUT_PUSHPULL,
+    INPUT_UP = 0x100 | GPIOMODE_INPUT,
+    INPUT_DOWN = GPIOMODE_INPUT
+};
+
 /*******************************************************************************
  *****************************   PROTOTYPES   **********************************
  ******************************************************************************/

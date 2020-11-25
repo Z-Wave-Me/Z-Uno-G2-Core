@@ -4,7 +4,7 @@
 #include "ZDma.h"
 #include "HardwareSerial.h"
 
-#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
+#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			200
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
 
 #define HARDWARE_SERIAL_UNIQ_ZDMA_WRITE			((size_t)&this->_buffer_len)
@@ -44,16 +44,29 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 		.rx = RX1,
 		.tx = TX1
 	},
-	{
-		.usart = USART2,
-		.lpLock = &gSyncUSART2,
-		.baudrate = 115200,
-		.dmaSignalRead = zdmaPeripheralSignal_USART2_RXDATAV,
-		.dmaSignalWrite = zdmaPeripheralSignal_USART2_TXBL,
-		.bus_clock = cmuClock_USART2,
-		.rx = RX2,
-		.tx = TX2
-	}
+		#if ZUNO_PIN_V <= 3
+			{
+				.usart = USART1,
+				.lpLock = &gSyncUSART2,
+				.baudrate = 115200,
+				.dmaSignalRead = zdmaPeripheralSignal_USART1_RXDATAV,
+				.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
+				.bus_clock = cmuClock_USART1,
+				.rx = RX2,
+				.tx = TX2
+			}
+		#else
+			{
+				.usart = USART2,
+				.lpLock = &gSyncUSART2,
+				.baudrate = 115200,
+				.dmaSignalRead = zdmaPeripheralSignal_USART2_RXDATAV,
+				.dmaSignalWrite = zdmaPeripheralSignal_USART2_TXBL,
+				.bus_clock = cmuClock_USART2,
+				.rx = RX2,
+				.tx = TX2
+			}
+		#endif
 };
 
 /* Public Constructors */
@@ -63,7 +76,7 @@ HardwareSerial::HardwareSerial(uint8_t numberConfig)
 #endif
 {
 	if (numberConfig >= sizeof(HardwareSerial::_configTable))
-		numberConfig--;
+		numberConfig = 0;
 	this->_numberConfig = numberConfig;
 }
 

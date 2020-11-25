@@ -4,7 +4,7 @@
 #include "ZDma.h"
 #include "HardwareSerial.h"
 
-#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			200
+#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
 
 #define HARDWARE_SERIAL_UNIQ_ZDMA_WRITE			((size_t)&this->_buffer_len)
@@ -75,7 +75,7 @@ HardwareSerial::HardwareSerial(uint8_t numberConfig)
 	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0)
 #endif
 {
-	if (numberConfig >= sizeof(HardwareSerial::_configTable))
+	if (numberConfig >= (sizeof(HardwareSerial::_configTable) / sizeof(ZunoHardwareSerialConfig_t)))
 		numberConfig = 0;
 	this->_numberConfig = numberConfig;
 }
@@ -326,7 +326,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 		HardwareSerial Serial1(1); // UART1
 		HardwareSerial Serial0(0); // UART0
 	#elif ZUNO_PIN_V == 3
-		HardwareSerial Serial(1);// USB
+		HardwareSerial Serial(2);// USB
 		HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
 		HardwareSerial Serial0(0); // UART0
 	#elif ZUNO_PIN_V == 4

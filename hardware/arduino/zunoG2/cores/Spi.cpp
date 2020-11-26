@@ -238,4 +238,4 @@ ZunoError_t SPIClass::_deInit(size_t param) {
 
 
 /* Preinstantiate Objects */
-SPIClass SPI = SPIClass(2);
+SPIClass SPI = SPIClass(1);

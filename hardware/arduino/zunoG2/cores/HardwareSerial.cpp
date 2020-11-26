@@ -276,7 +276,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	size_t										routeLocation;
 	ZunoError_t									ret;
 
-	if (rx > ZUNO_PIN_LAST_INDEX || tx > ZUNO_PIN_LAST_INDEX)
+	if (rx > (ZUNO_PIN_LAST_INDEX + 2) || tx > (ZUNO_PIN_LAST_INDEX + 2))
 		return (ZunoErrorInvalidPin);
 	if (len == 0)
 		return (ZunoErrorMemory);

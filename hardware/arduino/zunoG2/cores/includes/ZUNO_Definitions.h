@@ -773,10 +773,10 @@ enum {
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
-	#define SCK2				16//by default PA5  USART2 
-	#define MISO2				25//by default PF3 USART2 - RX
-	#define MOSI2				7//by default PF4 USART2 - TX
-	#define SS2					8//by default PF5
+	#define SCK2				3
+	#define MISO2				4
+	#define MOSI2				7
+	#define SS2					8
 
 	#define BATTERY             0xFF
 
@@ -813,10 +813,10 @@ enum {
 	#define MISO				1//by default USART1 - RX
 	#define MOSI				2//by default USART1 - TX
 	#define SS					8//by default
-	#define SCK2				16//by default PA5  USART2 
-	#define MISO2				25//by default PF3 USART2 - RX
-	#define MOSI2				7//by default PF4 USART2 - TX
-	#define SS2					8//by default PF5
+	#define SCK2				3
+	#define MISO2				4
+	#define MOSI2				7
+	#define SS2					8
 
 	#define BATTERY             0xFF
 

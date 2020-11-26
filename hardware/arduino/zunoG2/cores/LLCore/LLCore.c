@@ -534,7 +534,7 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
 			return (i);
 		i++;
 	}
-	return (0);
+	return 0xFF;
 }
 
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {

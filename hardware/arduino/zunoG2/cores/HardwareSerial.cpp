@@ -104,7 +104,7 @@ void HardwareSerial::end() {
 	const ZunoHardwareSerialConfig_t			*config;
 
 	config = &this->_configTable[this->_numberConfig];
-	zunoSyncClose(config->lpLock, SyncMasterHadwareSerial, this->_deInit, (size_t)this, &this->_lpKey);
+	zunoSyncClose(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_deInit, (size_t)this, &this->_lpKey);
 }
 
 size_t HardwareSerial::available(void) {
@@ -259,12 +259,14 @@ ZunoError_t HardwareSerial::_init(size_t param) {
 
 	init = (ZunoHardwareSerialInit_t *)param;
 	config = init->config;
-	CMU_ClockEnable(config->bus_clock, true);
+	
 	usartInit = USART_INITASYNC_DEFAULT;
 	usartInit.baudrate = init->baudrate;
+	usartInit.enable = usartDisable;
 	usart = config->usart;
+	CMU_ClockEnable(config->bus_clock, true);
 	USART_InitAsync(usart, &usartInit);
-	usart->ROUTEPEN |= USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_TXPEN;
+	//usart->ROUTELOC0 &= ~(_USART_ROUTELOC0_TXLOC_MASK | _USART_ROUTELOC0_RXLOC_MASK);
 	return (ZunoErrorOk);
 }
 
@@ -272,24 +274,62 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	ZunoHardwareSerialInit_t					init;
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
-	const uint8_t								*location;
+	const uint8_t							    *location_ptr = g_loc_pa0_pf7_all;
+	uint8_t										location_sz = sizeof(g_loc_pa0_pf7_all);
+	
 	size_t										routeLocation;
 	ZunoError_t									ret;
+	uint32_t 									rx_loc, tx_loc;
 
-	if (rx > ZUNO_PIN_LAST_INDEX || tx > ZUNO_PIN_LAST_INDEX)
-		return (ZunoErrorInvalidPin);
+	if (rx > ZUNO_PIN_LAST_INDEX || tx > ZUNO_PIN_LAST_INDEX || rx == tx){
+		if (bFree == true)
+			free(b); // FIXME: Do we need it? Seems we have forgot it previously  ;)
+		return (ZunoErrorInvalidPin); // wrong index or pin combination
+	}
 	if (len == 0)
 		return (ZunoErrorMemory);
-	config = &this->_configTable[this->_numberConfig];
+	config = &HardwareSerial::_configTable[this->_numberConfig];
 	init.config = config;
+	usart = config->usart;
+	// The right place to check pin location is here, 'cause we haven't allocate SyncMasterHadwareSerial
+	// So we can throw pin error without extra code  
+	if (usart == USART2) {
+		// USART2 has a cropped location set
+		location_ptr = g_loc_pa5_pf0_pf1_pf3_pf7;
+		location_sz  = sizeof(g_loc_pa5_pf0_pf1_pf3_pf7);  
+	}
+	// Extract base locations for pins 
+	rx_loc = getLocation(location_ptr, location_sz, rx);
+    tx_loc = getLocation(location_ptr, location_sz, tx);
+	if((rx_loc == INVALID_PIN_INDEX) || (tx_loc == INVALID_PIN_INDEX)){
+		return (ZunoErrorInvalidPin); // The pin is valid, but it doesn't support by this USART interface
+	}
+	// Now we have to shift rx location back, it always stands before tx location
+	rx_loc = rx_loc ? rx_loc-1 : MAX_VALID_PINLOCATION;
 	init.baudrate = baudrate;
-	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, this->_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk) {
+	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk) {
 		if (bFree == true)
 			free(b);
 		return (ret);
 	}
-	usart = config->usart;
+	pinMode(tx, OUTPUT_UP);
+	usart->ROUTELOC0 &= ~(_USART_ROUTELOC0_TXLOC_MASK);
+	usart->ROUTELOC0 |= tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT;
+	pinMode(rx, INPUT_DOWN);
+	usart->ROUTELOC0 &= ~(_USART_ROUTELOC0_RXLOC_MASK);
+	usart->ROUTELOC0 |= rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT;
+	CMU_ClockEnable(config->bus_clock, false);
+	CMU_ClockEnable(config->bus_clock, true);
 	USART_BaudrateAsyncSet(usart, 0, baudrate, usartOVS16);
+	//disable rx and tx
+	usart->ROUTEPEN &= ~_USART_ROUTEPEN_MASK;
+	//enable tx
+	usart->ROUTEPEN |= USART_ROUTEPEN_TXPEN;
+	USART_Enable(usart, usartEnableTx);
+	//enable rx
+	usart->ROUTEPEN |= USART_ROUTEPEN_RXPEN;
+	USART_Enable(usart, usartEnableRx);
+	USART_Enable(usart, usartEnable);
 	if (this->_bFree == true)
 		free(this->_buffer);
 	this->_buffer = (uint8_t *)b;
@@ -300,17 +340,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
 	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
 	ZDMA.toPeripheralMemory(HARDWARE_SERIAL_UNIQ_ZDMA_READ, config->dmaSignalRead, (void *)b, (void*)&(usart->RXDATA), len, zdmaData8, &lpExt);
-	pinMode(tx, OUTPUT_UP);
-	pinMode(rx, INPUT_DOWN);
-	if (usart == USART2) {
-		location = &g_loc_pf0_pf1_pf3_pf7[0];
-		routeLocation = (((((getRealPort(tx) << 4) | getRealPin(tx)) == 5) ? 0 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), tx) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT) | (((((getRealPort(rx) << 4) | getRealPin(rx)) == 5) ? 31 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), rx) + 13) << _USART_ROUTELOC0_RXLOC_SHIFT);
-	}
-	else {
-		location = &g_loc_pa0_pf7_all[0];
-		routeLocation = ((getLocation(location, sizeof(g_loc_pa0_pf7_all), tx)) << _USART_ROUTELOC0_TXLOC_SHIFT) | (((getLocation(location, sizeof(g_loc_pa0_pf7_all), rx) - 1) % sizeof(g_loc_pa0_pf7_all)) << _USART_ROUTELOC0_RXLOC_SHIFT);
-	}
-	usart->ROUTELOC0 = routeLocation;
+
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (ZunoErrorOk);
 }

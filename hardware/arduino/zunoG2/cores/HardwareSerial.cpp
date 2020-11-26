@@ -318,8 +318,6 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	pinMode(rx, INPUT_DOWN);
 	usart->ROUTELOC0 &= ~(_USART_ROUTELOC0_RXLOC_MASK);
 	usart->ROUTELOC0 |= rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT;
-	CMU_ClockEnable(config->bus_clock, false);
-	CMU_ClockEnable(config->bus_clock, true);
 	USART_BaudrateAsyncSet(usart, 0, baudrate, usartOVS16);
 	//disable rx and tx
 	usart->ROUTEPEN &= ~_USART_ROUTEPEN_MASK;

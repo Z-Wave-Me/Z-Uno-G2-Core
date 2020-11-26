@@ -785,7 +785,7 @@ enum {
 
 	#define LED_BUILTIN         15
 
-	#define ZUNO_PIN_LAST_INDEX	25
+	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 4
 	#define PWM1				13
 	#define PWM2                14
@@ -825,7 +825,7 @@ enum {
 
 	#define LED_BUILTIN         13
 
-	#define ZUNO_PIN_LAST_INDEX	25
+	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 1000
 	#define HIGH                1
 	#define LOW                 0

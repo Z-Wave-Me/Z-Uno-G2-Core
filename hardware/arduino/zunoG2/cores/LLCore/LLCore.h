@@ -37,13 +37,15 @@ const uint8_t g_loc_pa0_pf7_all[] = {
 	};
 const uint8_t g_loc_pa0_pf7_all_size = sizeof(g_loc_pa0_pf7_all);
 
-
-const uint8_t g_loc_pf0_pf1_pf3_pf7[] = {
-		0x50, 0x51, 0x53, 0x54, 0x55, 0x56, 0x57//PF0,PF1,PF3-PF7
-	};
-
+// Usable for USART2
+const uint8_t g_loc_pa5_pf0_pf1_pf3_pf7[] = {
+	    0x05,                                	   // LOC0
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // LOC1-13 is deprecated
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  
+		0x50, 0x51, 0x53, 0x54, 0x55, 0x56, 0x57	//PF0=LOC14,PF1=LOC15,PF3-PF7 (LOC16-LOC20)
+};
+#define MAX_VALID_PINLOCATION 31
 #define INVALID_PIN_INDEX 0xFF
-
 typedef struct	PinDef_s
 {
 	uint8_t		port;

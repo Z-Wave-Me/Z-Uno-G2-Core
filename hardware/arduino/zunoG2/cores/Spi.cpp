@@ -91,36 +91,41 @@ ZunoError_t SPIClass::begin(void) {
 ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
 	const ZunoSpiUsartTypeConfig_t		*config;
 	ZunoError_t							ret;
-	const uint8_t						*location;
 	USART_TypeDef						*usart;
-	size_t								routeLocation;
+	const uint8_t						*location_ptr;
+	size_t								location_sz;
+	size_t 								rx_loc;
+	size_t 								tx_loc;
+	size_t 								clk_loc;
 
-	if (sck > ZUNO_PIN_LAST_INDEX || miso > ZUNO_PIN_LAST_INDEX || mosi > ZUNO_PIN_LAST_INDEX || ss > ZUNO_PIN_LAST_INDEX )
-		return (ZunoErrorInvalidPin);
 	config = this->_config;
+	usart = config->usart;
+	// The right place to check pin location is here, 'cause we haven't allocate SyncMasterHadwareSerial
+	// So we can throw pin error without extra code
+	if (usart == USART2) {
+		location_ptr = g_loc_pa5_pf0_pf1_pf3_pf7;// USART2 has a cropped location set
+		location_sz = sizeof(g_loc_pa5_pf0_pf1_pf3_pf7);
+	}
+	else {
+		location_ptr = g_loc_pa0_pf7_all;
+		location_sz = sizeof(g_loc_pa0_pf7_all);
+	}
+	// Extract base locations for pins 
+	rx_loc = getLocation(location_ptr, location_sz, miso);
+	tx_loc = getLocation(location_ptr, location_sz, mosi);
+	clk_loc = getLocation(location_ptr, location_sz, sck);
+	if (sck == miso || sck == mosi || sck == ss || rx_loc == INVALID_PIN_INDEX || tx_loc == INVALID_PIN_INDEX || clk_loc == INVALID_PIN_INDEX)
+		return (ZunoErrorInvalidPin);
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterSpi, this->_init, (size_t)this, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	pinMode(sck, OUTPUT);//_GPIO_P_MODEL_MODE0_PUSHPULL
 	pinMode(miso, INPUT);//_GPIO_P_MODEL_MODE0_INPUT
 	pinMode(mosi, OUTPUT);
 	pinMode(ss, OUTPUT);
-	usart = config->usart;
 	this->_ss_pin = ss;
-	if (usart == USART2) {
-		location = &g_loc_pf0_pf1_pf3_pf7[0];
-		routeLocation = 
-		(((((getRealPort(mosi) << 4) | getRealPin(mosi)) == 5) ? 0 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), mosi) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT)
-		| (((((getRealPort(miso) << 4) | getRealPin(miso)) == 5) ? 31 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), miso) + 13) << _USART_ROUTELOC0_RXLOC_SHIFT)
-		| (((((getRealPort(sck) << 4) | getRealPin(sck)) == 5) ? 30 : getLocation(location, sizeof(g_loc_pf0_pf1_pf3_pf7), sck) + 12) << _USART_ROUTELOC0_CLKLOC_SHIFT);
-	}
-	else {
-		location = &g_loc_pa0_pf7_all[0];
-		routeLocation = 
-		((getLocation(location, sizeof(g_loc_pa0_pf7_all), mosi)) << _USART_ROUTELOC0_TXLOC_SHIFT)
-		| (((getLocation(location, sizeof(g_loc_pa0_pf7_all), miso) - 1) % sizeof(g_loc_pa0_pf7_all)) << _USART_ROUTELOC0_RXLOC_SHIFT)
-		| ((getLocation(location, sizeof(g_loc_pa0_pf7_all), sck) - 2) % sizeof(g_loc_pa0_pf7_all) << _USART_ROUTELOC0_CLKLOC_SHIFT);
-	}
-	usart->ROUTELOC0 = routeLocation;
+	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
+	clk_loc = (clk_loc > 1) ? clk_loc - 2 : (clk_loc ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 1);
+	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT | clk_loc << _USART_ROUTELOC0_CLKLOC_SHIFT;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ZunoErrorOk);
 }
@@ -233,4 +238,4 @@ ZunoError_t SPIClass::_deInit(size_t param) {
 
 
 /* Preinstantiate Objects */
-SPIClass SPI = SPIClass(1);
+SPIClass SPI = SPIClass(2);

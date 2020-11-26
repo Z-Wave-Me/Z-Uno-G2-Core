@@ -44,6 +44,7 @@ class HardwareSerial : public Stream {
 		inline int								_readLock(uint8_t bOffset);
 		inline int								_read(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);
+		inline ZunoError_t						_beginFaill(ZunoError_t ret, uint8_t bFree, void *b);
 		static ZunoError_t						_init(size_t param);
 		static ZunoError_t						_deInit(size_t param);
 		static const ZunoHardwareSerialConfig_t	_configTable[];

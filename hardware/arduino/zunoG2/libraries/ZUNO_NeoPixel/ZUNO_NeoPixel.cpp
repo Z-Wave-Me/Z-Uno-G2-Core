@@ -194,6 +194,8 @@ void NeoPixel::show(uint8_t neo_pin) {
 	ZunoNeoOption_t					flag;
 	ZunoNeoCountLed					len;
 	volatile uint8_t				lpKey;
+	const uint8_t					*location_ptr;
+	size_t							location_sz;
 
 	lpKey = true;
 	zunoSyncLockWrite(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
@@ -214,10 +216,15 @@ void NeoPixel::show(uint8_t neo_pin) {
 				TIMER_Enable(((TIMER_TypeDef *)base), true);
 				break;
 			case NEO_TYPE_USART:
-				if (((USART_TypeDef *)base) == USART2)
-					((USART_TypeDef *)base)->ROUTELOC0 = (((((getRealPort(neo_pin) << 4) | getRealPin(neo_pin)) == 5) ? 0 : getLocation(&g_loc_pf0_pf1_pf3_pf7[0], sizeof(g_loc_pf0_pf1_pf3_pf7), neo_pin) + 14) << _USART_ROUTELOC0_TXLOC_SHIFT);
-				else
-					((USART_TypeDef *)base)->ROUTELOC0 = ((getLocation( &g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), neo_pin)) << _USART_ROUTELOC0_TXLOC_SHIFT);
+				if ((USART_TypeDef *)base == USART2) {
+					location_ptr = g_loc_pa5_pf0_pf1_pf3_pf7;// USART2 has a cropped location set
+					location_sz = sizeof(g_loc_pa5_pf0_pf1_pf3_pf7);
+				}
+				else {
+					location_ptr = g_loc_pa0_pf7_all;
+					location_sz = sizeof(g_loc_pa0_pf7_all);
+				}
+				((USART_TypeDef *)base)->ROUTELOC0 = getLocation(location_ptr, location_sz, neo_pin) << _USART_ROUTELOC0_TXLOC_SHIFT;
 				USART_BaudrateSyncSet(((USART_TypeDef *)base), 0, (((flag.option & NEO_KHZ400) != 0)? NEO_USART_HZ400 : NEO_USART_HZ800));
 				USART_Enable(((USART_TypeDef *)base), usartEnableTx);
 				USART_SpiTransfer(((USART_TypeDef *)base), 0);//LOW pin

@@ -47,7 +47,7 @@ static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, vol
 static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey, SyncMode_t mode) {
 	size_t				out;
 	size_t				i;
-
+	
 	if (zunoIsIOThread() == true)
 		return (ZunoErrorTredIo);
 	while (0xFF) {

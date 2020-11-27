@@ -382,10 +382,14 @@ void LLDestroy() {
 void zuno_static_autosetup();
 #endif
 //unsigned long g_irq_couter = 0;
-
+#ifdef LOGGING_DBG
+bool g_logging_inited = false;
+#endif
+bool g_sketch_inited = false;
 void * zunoJumpTable(int vec, void * data) {
    
     byte sub_handler_type = 0x00;
+
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
@@ -393,14 +397,14 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
-            /*
-			#if defined(LOGGING_DBG) || defined(ASSERT_DBG)
-				LOGGING_UART.begin(115200);
-			#endif*/
-            setup();
-            ZWCCSetup();
+            g_sketch_inited = false;
             break;
         case ZUNO_JUMPTBL_LOOP:
+            if(!g_sketch_inited){
+                setup();
+                ZWCCSetup();
+                g_sketch_inited = true;
+            }
             loop();
             delay(20); // to avoid starvation
             break;
@@ -408,6 +412,12 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         #ifdef LOGGING_DBG
         case ZUNO_JUMPTBL_SYSEVENT:{
+                
+                if(!g_logging_inited){
+                    LOGGING_UART.begin(115200);
+                    g_logging_inited = true;
+                }
+                /*
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
                 LOGGING_UART.print("[");
                 LOGGING_UART.print(millis());
@@ -417,8 +427,8 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(" ARGS: ");
                 LOGGING_UART.print(evnt->params[0], HEX);
                 LOGGING_UART.print(" ");
-                LOGGING_UART.println(evnt->params[1], HEX);
-                //LOGGING_UART.println("SYSEV!");  
+                LOGGING_UART.println(evnt->params[1], HEX);*/
+                LOGGING_UART.println("SYSEV!");  
             }
             break;
         #endif
@@ -665,7 +675,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         break;
                     case ZUNO_HANDLER_IRQ:{
                             va_start (args, sub_type);
-                            uint32_t interrupt_param = va_arg(args,uint32_t*)[1];
+                            uint32_t * addr = va_arg(args,uint32_t*);
+                            uint32_t interrupt_param = addr[1];
                             ((zuno_irq_handler*)(base_addr))((void*)interrupt_param);
                             va_end (args);
                         }
@@ -679,11 +690,6 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     case ZUNO_HANDLER_SLEEP:
                     case ZUNO_HANDLER_WUP:
                         ((zuno_void_handler*)(base_addr))();
-                        break;
-                    case ZUNO_HANDLER_DEBUGPRINT:
-                        va_start (args, sub_type);
-  	                    ((zuno_dbgprint_handler*)(base_addr))(va_arg(args,ZUNOSysDbgMessage_t*));
-	                    va_end (args);
                         break;
                     case ZUNO_HANDLER_ZW_CFG:
                         va_start (args, sub_type);

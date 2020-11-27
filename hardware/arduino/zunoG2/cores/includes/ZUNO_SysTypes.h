@@ -93,7 +93,7 @@ typedef struct		zuno_handler_multi_thermostat_s {
 	uint8_t			offset;
 }					zuno_handler_multi_thermostat_t;
 typedef struct ZUNOSysEvent_s{
-	uint32_t event;
+	uint8_t event;
 	uint32_t params[2];
 }ZUNOSysEvent_t;
 typedef struct ZUNOSysDbgMessage_s{

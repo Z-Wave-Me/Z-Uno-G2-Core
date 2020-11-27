@@ -397,6 +397,9 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
+            #ifdef LOGGING_DBG
+            LOGGING_UART.begin(115200);
+            #endif
             g_sketch_inited = false;
             break;
         case ZUNO_JUMPTBL_LOOP:
@@ -412,12 +415,6 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         #ifdef LOGGING_DBG
         case ZUNO_JUMPTBL_SYSEVENT:{
-                
-                if(!g_logging_inited){
-                    LOGGING_UART.begin(115200);
-                    g_logging_inited = true;
-                }
-                /*
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
                 LOGGING_UART.print("[");
                 LOGGING_UART.print(millis());
@@ -427,8 +424,8 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(" ARGS: ");
                 LOGGING_UART.print(evnt->params[0], HEX);
                 LOGGING_UART.print(" ");
-                LOGGING_UART.println(evnt->params[1], HEX);*/
-                LOGGING_UART.println("SYSEV!");  
+                LOGGING_UART.println(evnt->params[1], HEX);
+                //LOGGING_UART.println("SYSEV!");  
             }
             break;
         #endif

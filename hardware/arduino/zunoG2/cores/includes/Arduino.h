@@ -50,7 +50,7 @@ inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
 inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
-inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};//{return (GPIO_PinOutGet(getRealPort(pin), getRealPin(pin)));};
+inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};
 int  analogRead(uint8_t pin);
 
 
@@ -100,6 +100,7 @@ void zunoSetWUPTimer(uint32_t timeout);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
+#include "Tone.h"
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 	#include "Threading.h"

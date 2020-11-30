@@ -3195,8 +3195,8 @@ typedef enum {
 #endif
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-  #define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
-  #define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_FUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
+  #define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
+  #define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
 #elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
   void CMU_ClockEnable(CMU_Clock_TypeDef clock, uint8_t enable);
   uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock);

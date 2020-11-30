@@ -889,9 +889,9 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 	byte last_ch = pkg->src_zw_channel;
     if(pkg->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
 		pkg->src_zw_channel = 0;
-		zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg);
+		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, pkg);
 		pkg->src_zw_channel = last_ch & ~(ZWAVE_CHANNEL_MAPPED_BIT);
 	}
-    zunoSysCall(ZUNO_FUNC_SENDPACKET, 1, pkg); // DBG
+    zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, pkg); // DBG
 	pkg->src_zw_channel = last_ch; // Bring it back!
 }	

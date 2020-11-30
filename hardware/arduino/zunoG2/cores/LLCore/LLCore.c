@@ -459,11 +459,11 @@ void * zunoJumpTable(int vec, void * data) {
 }
 
 void zunoSetWUPTimer(uint32_t timeout){
-    zunoSysCall(ZUNO_FUNC_WUP_CONTROL, 1, timeout);
+    zunoSysCall(ZUNO_SYSFUNC_WUP_CONTROL, 1, timeout);
 }
 
 void zunoStartLearn(byte timeout, bool secured){
-    zunoSysCall(ZUNO_FUNC_LEARN, 2, timeout, secured);
+    zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
 }
 /*
 void * __zunoJTBL(int vec, void * data) {
@@ -473,17 +473,17 @@ void * __zunoJTBL(int vec, void * data) {
 
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
-    zunoSysCall(ZUNO_FUNC_SLEEP_CONTROL, 2, index, timeout);
+    zunoSysCall(ZUNO_SYSFUNC_SLEEP_CONTROL, 2, index, timeout);
 }
 
 
 /* time */
 void delay(dword ms){
-    void * ret = zunoSysCall(ZUNO_FUNC_DELAY_MS, 1, ms);
+    void * ret = zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
 }
 
 dword millis(void){
-    return (dword) zunoSysCall(ZUNO_FUNC_MILLIS, 0);
+    return (dword) zunoSysCall(ZUNO_SYSFUNC_MILLIS, 0);
 }
 
 void delayMicroseconds(word tdelay){
@@ -794,7 +794,7 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
 }
 
 void zunoCommitCfg(){
-    zunoSysCall(ZUNO_FUNC_COMMIT_CONFIG, 0);
+    zunoSysCall(ZUNO_SYSFUNC_COMMIT_CONFIG, 0);
 }
 
 /*

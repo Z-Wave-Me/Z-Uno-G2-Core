@@ -1,7 +1,11 @@
 #ifndef ZDMA_DEFINE_H
 #define ZDMA_DEFINE_H
 
-#include "CrtxLDMA.h"
+#if defined(ZGM130S037HGN)
+	#include "em_ldma.h"
+#else
+	#include "CrtxLDMA.h"
+#endif
 
 
 /// Peripherals that can trigger LDMA transfers.

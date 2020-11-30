@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 // Mutex
 znMutex::znMutex() {
-    _handle = zunoSysCall(ZUNO_MSGQUEUE_ALLOC, 4, 1, 1, _xfer_dta, &_queue_data);
+    _handle = zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_ALLOC, 4, 1, 1, _xfer_dta, &_queue_data);
 }
 
 bool znMutex::lock(size_t maximum_timeout) {
@@ -13,7 +13,7 @@ bool znMutex::lock(size_t maximum_timeout) {
 	if((handle = this->_handle) == NULL)
 		return false;
 	dta = 1;
-	return zunoSysCall(ZUNO_MSGQUEUE_SEND, 3, handle, &dta, maximum_timeout) != (void*)0;
+	return zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_SEND, 3, handle, &dta, maximum_timeout) != (void*)0;
 }
 
 void znMutex::unlock() {
@@ -22,7 +22,7 @@ void znMutex::unlock() {
 
 	if((handle = this->_handle) == NULL)
 		return;
-	zunoSysCall(ZUNO_MSGQUEUE_RCV, 3, handle, &dta, 0);
+	zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_RCV, 3, handle, &dta, 0);
 }
 
 
@@ -33,7 +33,7 @@ znSemaphore::znSemaphore(uint8_t counter) {
     if(counter > MAX_SEMAPHORE_COUNT)
         counter = MAX_SEMAPHORE_COUNT;
      _basecounter = counter;
-     _handle = zunoSysCall(ZUNO_MSGQUEUE_ALLOC, 4, counter, 1, _xfer_dta, &_queue_data);
+     _handle = zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_ALLOC, 4, counter, 1, _xfer_dta, &_queue_data);
 }
 
 bool znSemaphore::acquire(uint8_t upd, uint32_t maximum_timeout) {
@@ -47,7 +47,7 @@ bool znSemaphore::acquire(uint8_t upd, uint32_t maximum_timeout) {
 	handle = this->_handle;
 	while(count < upd) {
 		uint32_t starttime = millis();
-		if(zunoSysCall(ZUNO_MSGQUEUE_SEND, 3, handle, &dta, timeout) != (void*)0)
+		if(zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_SEND, 3, handle, &dta, timeout) != (void*)0)
 			break;
 		count++;
 		if(millis() > (starttime + timeout)) {
@@ -57,7 +57,7 @@ bool znSemaphore::acquire(uint8_t upd, uint32_t maximum_timeout) {
 	}
 	if(count != upd) {
 		while(count--) {
-			zunoSysCall(ZUNO_MSGQUEUE_RCV, 3, handle, &dta, 0);
+			zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_RCV, 3, handle, &dta, 0);
 		}
 		return false;
 	}
@@ -70,7 +70,7 @@ void znSemaphore::release(uint8_t upd) {
     if(upd == 0)
         return;
     while(count<upd) {
-        zunoSysCall(ZUNO_MSGQUEUE_RCV, 3, _handle, &dta, 0);
+        zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_RCV, 3, _handle, &dta, 0);
         count++;
     }
 }
@@ -80,7 +80,7 @@ void znSemaphore::release(uint8_t upd) {
 // -----------------------------------------------------------------------
 //Message Queue
 znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queuedata) {
-     _handle = zunoSysCall(ZUNO_MSGQUEUE_ALLOC, 4, queuesize, queuesize, queuedata, _queue_data);
+     _handle = zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_ALLOC, 4, queuesize, queuesize, queuedata, _queue_data);
 }
 
 
@@ -88,7 +88,7 @@ znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queu
 // -----------------------------------------------------------------------
 //Thread
 znThread::znThread(threadcodefunc_t  func, uint32_t stack_size, uint32_t *stack, void *param ) {
-	_handle = zunoSysCall(ZUNO_THREAD_CREATE, 5, func, stack_size, stack, &_th_data, param);
+	_handle = zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, stack_size, stack, &_th_data, param);
 }
 
 znThread::znThread(uint32_t stack_size, uint32_t *stack) : _stack_size(stack_size), _stack(stack) {
@@ -97,5 +97,5 @@ znThread::znThread(uint32_t stack_size, uint32_t *stack) : _stack_size(stack_siz
 
 void znThread::start(threadcodefunc_t func, void *param ) {
 	if(_handle == NULL)
-		_handle = zunoSysCall(ZUNO_THREAD_CREATE, 5, func, _stack_size, _stack, &_th_data, param);
+		_handle = zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, _stack_size, _stack, &_th_data, param);
 }

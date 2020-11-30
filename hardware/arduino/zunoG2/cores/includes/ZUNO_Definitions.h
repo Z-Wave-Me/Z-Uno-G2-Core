@@ -1,5 +1,6 @@
 #ifndef ZUNO_DEFINITIONS
 #define ZUNO_DEFINITIONS
+#include "ZUNO_CoreDefs.h"
 
 #define ZUNO_UNO				1//Для тип чего собираеться - зуно
 #define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
@@ -18,10 +19,12 @@ typedef enum
 	ZunoErrorBtnInvalidType,//Failed to change type
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
 	ZunoErrorInvalidValue,
+
 	ZunoErrorDmaLimitChannel,//
 	ZunoErrorDmaInvalidUniqId,//
-	ZunoErrorDmaInvalidReconfig,//
 	ZunoErrorDmaUniqIdAlready,//
+	ZunoErrorDmaInvalidReconfig,//
+	
 	ZunoErrorSyncInvalidType,
 	ZunoErrorSyncInvalidInit,
 	ZunoErrorSyncDeInit,
@@ -50,36 +53,8 @@ typedef enum
 #define MAX_ZUNO_PWMS           						4
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
-#define MAX_SYS_PARAMS 									8
 
-enum {
-	ZUNO_FUNC_DELAY_MS,
-	ZUNO_FUNC_MILLIS,
-	ZUNO_FUNC_EEPROM_IO,
-	ZUNO_FUNC_EEPROM_ERASE,
-	ZUNO_FUNC_COMMIT_CONFIG,
-	ZUNO_FUNC_LEARN,
-	ZUNO_FUNC_SENDPACKET,
-	ZUNO_FUNC_GECKOEXT_CMUCLOCK,
-	ZUNO_FUNC_SLEEP_CONTROL,
-	ZUNO_FUNC_WUP_CONTROL,
-	ZUNO_MSGQUEUE_ALLOC,
-	ZUNO_MSGQUEUE_SEND,
-	ZUNO_MSGQUEUE_RCV,
-	ZUNO_THREAD_CREATE,
-	ZUNO_THREAD_SUSPEND,
-	ZUNO_THREAD_RESUME,
-	ZUNO_THREAD_GETCURRENTHANDLE,
-	ZUNO_THREAD_ISRUNNING,
-	ZUNO_THREAD_YIELD,
-	ZUNO_ENTER_CRITICAL,
-	ZUNO_EXIT_CRITICAL,
-	ZUNO_INT_CONTROL,
-	ZUNO_INT_CLEARPENDING,
-	ZUNO_INT_SETPRIORITY,
-	ZUNO_FUNC_MAX_NUMBER,
-	ZUNO_FUNC_TEST = 0xFE
-};
+
 enum {
 	ZUNO_EEPROM_OK,
 	ZUNO_EEPROM_NOTALIGNED,

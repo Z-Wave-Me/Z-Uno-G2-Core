@@ -84,7 +84,6 @@ size_t PinBtn::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
 						out = false;
 						break ;
 				}
-				out = false;
 				break ;
 			case BTN_COMMON_DOUBLE:
 				if ((event_map & BTN_EVENT_DOUBLE_CLICK) != 0) {
@@ -105,7 +104,6 @@ size_t PinBtn::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
 						out = false;
 						break ;
 				}
-				out = false;
 				break ;
 			case BTN_COMMON_TRIPLE:
 				if ((event_map & BTN_EVENT_TRIPLE_CLICK) != 0) {
@@ -134,7 +132,6 @@ size_t PinBtn::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
 						out = false;
 						break ;
 				}
-				out = false;
 				break ;
 			case BTN_COMMON_RELEASED:
 				if ((event_map & BTN_EVENT_RELEASE) != 0) {

@@ -381,11 +381,13 @@ void LLDestroy() {
 // this is managing using "preproc" util
 void zuno_static_autosetup();
 #endif
-//unsigned long g_irq_couter = 0;
+
+
 #ifdef LOGGING_DBG
 bool g_logging_inited = false;
 #endif
 bool g_sketch_inited = false;
+
 void * zunoJumpTable(int vec, void * data) {
    
     byte sub_handler_type = 0x00;
@@ -425,7 +427,6 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(evnt->params[0], HEX);
                 LOGGING_UART.print(" ");
                 LOGGING_UART.println(evnt->params[1], HEX);
-                //LOGGING_UART.println("SYSEV!");  
             }
             break;
         #endif
@@ -436,7 +437,6 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
-            //g_irq_couter++;
             }
             break;
         case ZUNO_JUMPTBL_SLEEP:
@@ -462,11 +462,6 @@ void zunoSetWUPTimer(uint32_t timeout){
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
 }
-/*
-void * __zunoJTBL(int vec, void * data) {
-    return zunoJumpTable(vec, data);
-}*/
-
 
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){

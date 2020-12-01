@@ -8,7 +8,7 @@
 #ifndef SRC_ZUNO_COREDEFS_H_
 #define SRC_ZUNO_COREDEFS_H_
 
-
+#include <stdint.h>
 #define MAX_SYS_PARAMS 8
 
 enum {
@@ -43,5 +43,10 @@ enum {
 	ZUNO_SYSFUNC_MAX_NUMBER,
 	ZUNO_SYSFUNC_TEST = 0xFE
 };
+
+typedef struct IOQueueMsg_s{
+	uint32_t 	type;
+	uint32_t    param;
+}  IOQueueMsg_t;
 
 #endif /* SRC_ZUNO_COREDEFS_H_ */

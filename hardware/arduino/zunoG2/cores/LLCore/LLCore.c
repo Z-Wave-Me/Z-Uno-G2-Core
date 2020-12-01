@@ -433,14 +433,11 @@ void * zunoJumpTable(int vec, void * data) {
             WDOG_Feed();
             zuno_CCTimer(((uint32_t)data));
             break;
-        case ZUNO_JUMPTBL_IRQ:
-            sub_handler_type = (uint8_t)(((uint32_t*)data)[0])&0x0FF;
+        case ZUNO_JUMPTBL_IRQ:{
+                IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
+                sub_handler_type = p_msg->type;
             //g_irq_couter++;
-            /*
-            LOGGING_UART.print("\n   IRQ TYPE:");
-            LOGGING_UART.print(sub_handler_type,HEX);
-            LOGGING_UART.print(" PARAM:");
-            LOGGING_UART.println(((uint32_t*)data)[1],HEX);*/
+            }
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #ifdef LOGGING_DBG
@@ -672,9 +669,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         break;
                     case ZUNO_HANDLER_IRQ:{
                             va_start (args, sub_type);
-                            uint32_t * addr = va_arg(args,uint32_t*);
-                            uint32_t interrupt_param = addr[1];
-                            ((zuno_irq_handler*)(base_addr))((void*)interrupt_param);
+                            IOQueueMsg_t * p_msg = va_arg(args,IOQueueMsg_t *);
+                            ((zuno_irq_handler*)(base_addr))((void*)p_msg->param);
                             va_end (args);
                         }
                         break;

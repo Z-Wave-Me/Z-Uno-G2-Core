@@ -7,8 +7,8 @@
 
 #ifndef SRC_ZUNO_COREDEFS_H_
 #define SRC_ZUNO_COREDEFS_H_
-
 #include <stdint.h>
+
 #define MAX_SYS_PARAMS 8
 
 enum {

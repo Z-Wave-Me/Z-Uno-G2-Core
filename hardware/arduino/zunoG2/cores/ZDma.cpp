@@ -31,13 +31,10 @@ static inline ZunoError_t _transferReceivedCount(size_t uniqId, size_t *count){
 	return res;
 }
 static void _waitTransfer(size_t uniqId) {
-	uint8_t					chZDma;
-	void					*handler;
-
-	if (zunoIsIOThread() == true)
+	if (zunoIsIOThread())
 		return;
 	delay(1);
-	while (_isProcessing(uniqId) == true)
+	while (_isProcessing(uniqId))
 		delay(1);
 }
 static inline ZunoError_t _transfer(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt){
@@ -53,29 +50,21 @@ static inline void _stopTransfer(size_t uniqId, uint8_t bForce){
 // ----------------------------------------------------------------------------------------------------------
 
 /* Public Constructors */
-ZDMAClass::ZDMAClass(void)
-{
+ZDMAClass::ZDMAClass(void){
 	// zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_LDMA, (void *)LDMA_IRQHandler);
 }
-
-
-
 uint8_t ZDMAClass::isProcessing(size_t uniqId) {
 	return(_isProcessing(uniqId));
 }
-
 ZunoError_t ZDMAClass::transferReceivedCount(size_t uniqId, size_t *count) {
 	return (_transferReceivedCount(uniqId, count));
 }
-
 void ZDMAClass::stopTransfer(size_t uniqId, uint8_t bForce) {
 	_stopTransfer(uniqId, bForce);
 }
-
 void ZDMAClass::waitTransfer(size_t uniqId) {
 	_waitTransfer(uniqId);
 }
-
 ZunoError_t ZDMAClass::toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size) {
 	ZunoZDmaExt_t					lpExt;
 
@@ -83,12 +72,10 @@ ZunoError_t ZDMAClass::toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t
 	lpExt.flags |= (ZDMA_EXT_FLAGS_REQ_BLOCK | ZDMA_EXT_FLAGS_DEST_NOT_INC);
 	return (_transfer(uniqId, peripheralSignal, dest, src, len, size, &lpExt));
 }
-
 ZunoError_t ZDMAClass::toMemoryPeripheral(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt) {
 	lpExt->flags |= (ZDMA_EXT_FLAGS_REQ_BLOCK | ZDMA_EXT_FLAGS_DEST_NOT_INC);
 	return (_transfer(uniqId, peripheralSignal, dest, src, len, size, lpExt));
 }
-
 ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size) {
 	ZunoZDmaExt_t					lpExt;
 
@@ -96,11 +83,10 @@ ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t
 	lpExt.flags |= (ZDMA_EXT_FLAGS_REQ_BLOCK | ZDMA_EXT_FLAGS_SRC_NOT_INC);
 	return (_transfer(uniqId, peripheralSignal, dest, src, len, size, &lpExt));
 }
-
 ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t peripheralSignal, void *dest, void *src, size_t len, ZDma_DataSize_t size, ZunoZDmaExt_t *lpExt) {
 	lpExt->flags |= (ZDMA_EXT_FLAGS_REQ_BLOCK | ZDMA_EXT_FLAGS_SRC_NOT_INC);
 	return (_transfer(uniqId, peripheralSignal, dest, src, len, size, lpExt));
 }
 
 /* Preinstantiate Objects */
-ZDMAClass ZDMA = ZDMAClass();
+ZDMAClass ZDMA;

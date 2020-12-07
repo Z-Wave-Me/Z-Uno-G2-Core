@@ -348,6 +348,9 @@ void LLInit() {
     count = __init_array_end - __init_array_start;
     for (i = 0; i < count; i++)
         __init_array_start[i]();
+	i = 0;
+	while (i <= ZUNO_PIN_LAST_INDEX)
+		pinMode(i++, INPUT);//set default state
 }
 
 void LLDestroy() {

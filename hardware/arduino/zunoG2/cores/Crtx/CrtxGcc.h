@@ -2007,6 +2007,24 @@ __STATIC_FORCEINLINE int32_t __SMMLA (int32_t op1, int32_t op2, int32_t op3)
 
 	#define __NOP()                             __ASM volatile ("nop")
 
+	/**
+	 \brief   Reverse byte order (32 bit)
+	\details Reverses the byte order in unsigned integer value. For example, 0x12345678 becomes 0x78563412.
+	\param [in]    value  Value to reverse
+	\return               Reversed value
+	*/
+	__STATIC_FORCEINLINE uint32_t __REV(uint32_t value)
+	{
+	#if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
+	return __builtin_bswap32(value);
+	#else
+	uint32_t result;
+
+	__ASM volatile ("rev %0, %1" : __CMSIS_GCC_OUT_REG (result) : __CMSIS_GCC_USE_REG (value) );
+	return result;
+	#endif
+}
+
 #endif
 
 #endif // CRTX_GCC_H

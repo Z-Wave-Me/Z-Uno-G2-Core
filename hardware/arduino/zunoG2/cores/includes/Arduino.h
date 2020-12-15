@@ -101,9 +101,9 @@ void zunoSetWUPTimer(uint32_t timeout);
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
 #include "Tone.h"
+#include "Threading.h"
 
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#include "Threading.h"
 	#include "ReportHandler.h"
 #endif
 

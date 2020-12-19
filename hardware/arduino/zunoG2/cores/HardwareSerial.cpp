@@ -8,8 +8,6 @@
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
 
 #define HARDWARE_SERIAL_UNIQ_ZDMA_WRITE			((size_t)&this->_buffer_len)
-#define HARDWARE_SERIAL_UNIQ_ZDMA_READ			((size_t)&this->_buffer)
-#define HARDWARE_SERIAL_UNIQ_ZDMA_READ2			((size_t)&serial->_buffer)
 
 typedef struct							ZunoHardwareSerialInit_s
 {
@@ -26,43 +24,51 @@ typedef struct							ZunoHardwareSerialDeInit_s
 const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART0,
+		.IRQHandler = (void *)&HardwareSerial::_USART0_IRQHandler,
 		.lpLock = &gSyncUSART0,
 		.baudrate = 115200,
-		.dmaSignalRead = zdmaPeripheralSignal_USART0_RXDATAV,
 		.dmaSignalWrite = zdmaPeripheralSignal_USART0_TXBL,
 		.bus_clock = cmuClock_USART0,
+		.irqType = USART0_RX_IRQn,
+		.subType = ZUNO_IRQVEC_USART0_RX,
 		.rx = RX0,
 		.tx = TX0
 	},
 	{
 		.usart = USART1,
+		.IRQHandler = (void *)&HardwareSerial::_USART1_IRQHandler,
 		.lpLock = &gSyncUSART1,
 		.baudrate = 115200,
-		.dmaSignalRead = zdmaPeripheralSignal_USART1_RXDATAV,
 		.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
 		.bus_clock = cmuClock_USART1,
+		.irqType = USART1_RX_IRQn,
+		.subType = ZUNO_IRQVEC_USART1_RX,
 		.rx = RX1,
 		.tx = TX1
 	},
 		#if ZUNO_PIN_V <= 3
 			{
 				.usart = USART1,
+				.IRQHandler = (void *)&HardwareSerial::_USART1_IRQHandler,
 				.lpLock = &gSyncUSART2,
 				.baudrate = 115200,
-				.dmaSignalRead = zdmaPeripheralSignal_USART1_RXDATAV,
 				.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
 				.bus_clock = cmuClock_USART1,
+				.irqType = USART1_RX_IRQn,
+				.subType = ZUNO_IRQVEC_USART1_RX,
 				.rx = RX2,
 				.tx = TX2
 			}
 		#else
 			{
 				.usart = USART2,
+				.IRQHandler = (void *)&HardwareSerial::_USART2_IRQHandler,
 				.lpLock = &gSyncUSART2,
 				.baudrate = 115200,
-				.dmaSignalRead = zdmaPeripheralSignal_USART2_RXDATAV,
 				.dmaSignalWrite = zdmaPeripheralSignal_USART2_TXBL,
 				.bus_clock = cmuClock_USART2,
+				.irqType = USART2_RX_IRQn,
+				.subType = ZUNO_IRQVEC_USART2_RX,
 				.rx = RX2,
 				.tx = TX2
 			}
@@ -72,7 +78,7 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 /* Public Constructors */
 HardwareSerial::HardwareSerial(uint8_t numberConfig)
 #if (ZUNO_ZERO_BSS != true || false != 0)
-	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0)
+	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0), _buffer_count(0)
 #endif
 {
 	if (numberConfig >= (sizeof(HardwareSerial::_configTable) / sizeof(ZunoHardwareSerialConfig_t)))
@@ -186,15 +192,8 @@ inline size_t HardwareSerial::_available(const ZunoHardwareSerialConfig_t *confi
 	size_t				count;
 	size_t				count_read;
 	size_t				count_len;
-	ZunoZDmaExt_t		lpExt;
 
-	if (ZDMA.transferReceivedCount(HARDWARE_SERIAL_UNIQ_ZDMA_READ, &count) != ZunoErrorOk) {
-		lpExt = ZDMA_EXT_INIT_DEFAULT;
-		lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
-		ZDMA.toPeripheralMemory(HARDWARE_SERIAL_UNIQ_ZDMA_READ, config->dmaSignalRead, this->_buffer, (void*)&(config->usart->RXDATA), this->_buffer_len, zdmaData8, &lpExt);
-		if (ZDMA.transferReceivedCount(HARDWARE_SERIAL_UNIQ_ZDMA_READ, &count) != ZunoErrorOk)
-			return (0);
-	}
+	count = this->_buffer_count;
 	if (count == (count_read = this->_buffer_count_read))
 		return (0);
 	if (count_read == (count_len = this->_buffer_len)) {
@@ -224,8 +223,7 @@ inline int HardwareSerial::_read(uint8_t bOffset) {
 	size_t								count;
 	size_t								count_read;
 
-	if (ZDMA.transferReceivedCount(HARDWARE_SERIAL_UNIQ_ZDMA_READ, &count) != ZunoErrorOk)
-		return (-1);
+	count = this->_buffer_count;
 	if (count == (count_read = this->_buffer_count_read))
 		return (-1);
 	if (count_read == this->_buffer_len) {
@@ -242,12 +240,13 @@ ZunoError_t HardwareSerial::_deInit(size_t param) {
 
 	serial = (HardwareSerial *)param;
 	config = &serial->_configTable[serial->_numberConfig];
-	ZDMA.stopTransfer(HARDWARE_SERIAL_UNIQ_ZDMA_READ2, true);
+	NVIC_DisableIRQ(config->irqType);
 	USART_Reset(config->usart);
 	if (serial->_bFree == true) {
 		serial->_bFree = false;
 		free(serial->_buffer);
 	}
+	zunoDetachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler);
 	return (ZunoErrorOk);
 }
 
@@ -256,16 +255,20 @@ ZunoError_t HardwareSerial::_init(size_t param) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_InitAsync_TypeDef						usartInit;
 	USART_TypeDef								*usart;
+	ZunoError_t									ret;
 
 	init = (ZunoHardwareSerialInit_t *)param;
 	config = init->config;
-	
+	if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler)) != ZunoErrorOk)
+		return (ret);
 	usartInit = USART_INITASYNC_DEFAULT;
 	usartInit.baudrate = init->baudrate;
 	usart = config->usart;
 	CMU_ClockEnable(config->bus_clock, true);
 	USART_InitAsync(usart, &usartInit);
 	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
+	usart->IEN = USART_IEN_RXDATAV;
+	NVIC_EnableIRQ(config->irqType);/* Enable interrupts in NVIC */
 	return (ZunoErrorOk);
 }
 
@@ -317,14 +320,32 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	this->_buffer_len = len;
 	this->_bFree = bFree;
 	this->_buffer_count_read = 0;
-	ZunoZDmaExt_t lpExt = ZDMA_EXT_INIT_DEFAULT;
-	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
-	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
-	ZDMA.toPeripheralMemory(HARDWARE_SERIAL_UNIQ_ZDMA_READ, config->dmaSignalRead, (void *)b, (void*)&(usart->RXDATA), len, zdmaData8, &lpExt);
+	this->_buffer_count = 0;
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (ZunoErrorOk);
+}
+
+inline void HardwareSerial::_USART_IRQHandler(size_t date) {
+	USART_TypeDef						*usart;
+
+	if (this->_buffer_count >= this->_buffer_len) {
+		this->_buffer_count = 0;
+	}
+	this->_buffer[this->_buffer_count++] = (uint8_t)date;
+}
+
+void HardwareSerial::_USART0_IRQHandler(size_t flags) {
+	Serial0._USART_IRQHandler(flags);
+}
+
+void HardwareSerial::_USART1_IRQHandler(size_t flags) {
+	Serial1._USART_IRQHandler(flags);
+}
+
+void HardwareSerial::_USART2_IRQHandler(size_t flags) {
+	Serial._USART_IRQHandler(flags);
 }
 
 /* Preinstantiate Objects */

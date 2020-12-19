@@ -12,11 +12,13 @@ typedef uint16_t hardware_serial_buffer_len;
 typedef struct							ZunoHardwareSerialConfig_s
 {
 	USART_TypeDef						*usart;
+	void								*IRQHandler;
 	ZunoSync_t							*lpLock;
 	size_t								baudrate;
-	ZDMA_PeripheralSignal_t				dmaSignalRead;
 	ZDMA_PeripheralSignal_t				dmaSignalWrite;
 	CMU_Clock_TypeDef					bus_clock;
+	IRQn_Type							irqType;
+	uint8_t								subType;
 	uint8_t								rx;
 	uint8_t								tx;
 }										ZunoHardwareSerialConfig_t;
@@ -47,11 +49,16 @@ class HardwareSerial : public Stream {
 		inline ZunoError_t						_beginFaill(ZunoError_t ret, uint8_t bFree, void *b);
 		static ZunoError_t						_init(size_t param);
 		static ZunoError_t						_deInit(size_t param);
+		static void								_USART0_IRQHandler(size_t date);
+		static void								_USART1_IRQHandler(size_t date);
+		static void								_USART2_IRQHandler(size_t date);
+		inline void								_USART_IRQHandler(size_t date);
 		static const ZunoHardwareSerialConfig_t	_configTable[];
 		uint8_t									*_buffer;
 		hardware_serial_buffer_len				_buffer_len;
 		hardware_serial_buffer_len				_buffer_count_read;
-		volatile uint8_t						_lpKey;
+		hardware_serial_buffer_len				_buffer_count;
+		uint8_t									_lpKey;
 		uint8_t									_numberConfig;
 		uint8_t									_bFree;
 };

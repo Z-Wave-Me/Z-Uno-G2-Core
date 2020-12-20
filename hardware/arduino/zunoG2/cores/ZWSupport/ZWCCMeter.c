@@ -9,36 +9,27 @@
 
 #define dbgprintln(a) DEBUGSERIAL.println(a, HEX)
 
-typedef union split_e 
-{
-    int32_t val;
-    byte buff[4];
+int zuno_CCMeterReport(byte channel) {
+	ZwMeterReportFrame_t				*report;
+	uint32_t							params;
+	uint32_t							channel_size;
+	int32_t								value;
+	uint8_t								*lp;
 
-} split_t;
-
-int zuno_CCMeterReport(byte channel)
-{
-    CMD_REPLY_CC = COMMAND_CLASS_METER;
-    CMD_REPLY_CMD = METER_REPORT;
-
-    CMD_REPLY_DATA(0) = METER_RATE_IMPORT;
-
-    CMD_REPLY_DATA(0) |= ZUNO_CFG_CHANNEL(channel).sub_type & 0x1F;
-
-
-    CMD_REPLY_DATA(1) = COMBINE_PARAMS(ZUNO_CFG_CHANNEL(channel).params[0]);
-
-    split_t values = {.val = zuno_universalGetter1P(channel)};
-    uint8_t channel_size = (ZUNO_CFG_CHANNEL(channel).params[0] >> 6) + 1;
-
-    _zme_memcpy(&CMD_REPLY_DATA(2), values.buff, channel_size);
-
-    CMD_REPLY_DATA(channel_size + 2) = 0;
-    CMD_REPLY_DATA(channel_size + 3) = 0;
-
-    CMD_REPLY_LEN = 6 + channel_size;
-
-    return ZUNO_COMMAND_ANSWERED;
+	report = (ZwMeterReportFrame_t *)&CMD_REPLY_CC;
+	report->v3.byte1.cmdClass = COMMAND_CLASS_METER;
+	report->v3.byte1.cmd = METER_REPORT;
+	params = ZUNO_CFG_CHANNEL(channel).params[0];
+	report->v3.byte1.properties1 = METER_RATE_IMPORT | (ZUNO_CFG_CHANNEL(channel).sub_type & 0x1F) | GET_SCALE2(params);
+	report->v3.byte1.properties2 = COMBINE_PARAMS(params);
+	channel_size = GET_SIZE(params);
+	value = zuno_universalGetter1P(channel);
+	lp = &report->v3.byte1.meterValue1;
+	memcpy(lp, &value, channel_size);
+	lp[channel_size] = 0;//deltaTime1
+	lp[channel_size + 1] = 0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
+	CMD_REPLY_LEN = 6 + channel_size;
+	return (ZUNO_COMMAND_ANSWERED);
 }
 
 int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd)

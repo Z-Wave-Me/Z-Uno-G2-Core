@@ -62,9 +62,13 @@ Mercury206Meter::Mercury206Meter(uint32_t serialnumber, uint8_t dir_pin): _dir_p
 
 
 /* Public Methods */
-void Mercury206Meter::begin() {
-	MERCURY_SERIAL.begin(MERCURY_BAUDRATE);
+ZunoError_t Mercury206Meter::begin() {
+	ZunoError_t						ret;
+
+	if ((ret = MERCURY_SERIAL.begin(MERCURY_BAUDRATE)) != ZunoErrorOk)
+		return (ret);
 	pinMode(this->_dir_pin, OUTPUT);
+	return (ZunoErrorOk);
 }
 
 bool Mercury206Meter::getVersion(MercuryFWVersion * p_fw_version) {

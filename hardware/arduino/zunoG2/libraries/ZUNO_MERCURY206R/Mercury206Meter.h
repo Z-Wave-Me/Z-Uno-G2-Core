@@ -51,7 +51,7 @@ struct MercuryTarifTimeTable {
 class Mercury206Meter{
 	public:
 		Mercury206Meter(uint32_t serialnumber = 0, uint8_t dir_pin = 0);
-		void begin();
+		ZunoError_t begin();
 		bool getVersion(MercuryFWVersion * p_fw_version);
 		bool getCurrentLoadPower(word * p_power);
 		bool getCurrentVAW(MercuryVAW * vaw);

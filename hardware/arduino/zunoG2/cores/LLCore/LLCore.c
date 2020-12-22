@@ -21,6 +21,12 @@
 	#pragma message "ASSERT_DBG: ON"
 #endif
 
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+	#pragma message "ZUNO_ASSEMBLY_TYPE == ZUNO_UNO"
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+	#pragma message "ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI"
+#endif
+
 #ifndef SKETCH_FWID
 #define SKETCH_FWID 0x0101
 #endif

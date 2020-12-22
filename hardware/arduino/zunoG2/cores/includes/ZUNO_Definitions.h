@@ -2,9 +2,16 @@
 #define ZUNO_DEFINITIONS
 #include "ZUNO_CoreDefs.h"
 
+#ifndef ZUNO_PREPROC_PHASE
+	#include "Custom_defs.h"
+#endif
+
 #define ZUNO_UNO				1//Для тип чего собираеться - зуно
 #define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
-#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
+
+#ifndef ZUNO_ASSEMBLY_TYPE
+	#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
+#endif
 
 #define ZUNO_ZERO_BSS				true//Раз глобально обнуляем всю bss и оператор не используем то и c++ нечего в каждом статичном класе вручную обнулять память
 
@@ -634,13 +641,6 @@ enum {
 #define ZUNO_AWAKETIMEOUT_FOREVER                       0xFFFFFFFF
 #define ZUNO_SLEEPLOCK_SYSTEM                           0
 #define ZUNO_SLEEPLOCK_CUSTOM                           1
-
-
-#ifndef ZUNO_PREPROC_PHASE
-
-#include "Custom_defs.h"
-#endif
-
 
 enum {
 	CTRL_GROUP_1 = 1,

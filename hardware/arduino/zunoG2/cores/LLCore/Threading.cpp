@@ -80,7 +80,8 @@ void znSemaphore::release(uint8_t upd) {
 // -----------------------------------------------------------------------
 //Message Queue
 znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queuedata) {
-     _handle = zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_ALLOC, 4, queuesize, queuesize, queuedata, _queue_data);
+    _handle = zunoSysCall(ZUNO_SYSFUNC_MSGQUEUE_ALLOC, 4, queuesize, queuesize, queuedata, _queue_data);
+	(void)msg_size;
 }
 
 

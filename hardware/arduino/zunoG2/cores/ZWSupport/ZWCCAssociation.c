@@ -230,6 +230,7 @@ void zunoAddAssociation(byte type, uint32_t params) {
 		return ;
 	ZUNO_CFG_ASSOCIATION_COUNT++;
 	ZUNO_CFG_ASSOCIATION(num).type = type;
+	(void)params;
 }
 
 void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name) {

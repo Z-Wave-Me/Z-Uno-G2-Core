@@ -94,7 +94,7 @@ float Stream::parseFloat(char skipChar){
     c = peekNextDigit();
   
     // ignore non numeric leading characters
-    if(c < 0)
+    if((int8_t)c < 0)
       return 0; // zero returned if timeout
 
     do{
@@ -125,7 +125,7 @@ size_t Stream::readBytes(char *buffer, size_t length){
 	size_t count = 0;
 	while (count < length) {
 		uint8_t c = timedRead();
-		if (c < 0) break;
+		if ((int8_t)c < 0) break;
 		*buffer++ = (char)c;
 		count++;
 	}
@@ -137,7 +137,7 @@ size_t Stream::readBytesUntil(char terminator, char *buffer, size_t length){
 	size_t index = 0;
 	while (index < length) {
 		uint8_t c = timedRead();
-		if (c < 0 || c == terminator) break;
+		if ((int8_t)c < 0 || c == terminator) break;
 		*buffer++ = (char)c;
 		index++;
 	}

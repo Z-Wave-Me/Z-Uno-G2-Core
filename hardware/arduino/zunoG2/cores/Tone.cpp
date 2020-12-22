@@ -33,12 +33,12 @@ typedef struct						ZunoTonePwm_s
 {
 	uint16_t						tone_freq;
 	uint8_t							tone_pin;
-	volatile uint8_t				keyTone;
-	volatile uint8_t				keyPwm;
+	uint8_t							keyTone;
+	uint8_t							keyPwm;
 }									ZunoTonePwm_t;
 
 static ZunoSync_t gSyncTonePwm = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterTone);
-static ZunoTonePwm_t gTonePwm = {0};
+static ZunoTonePwm_t gTonePwm = {0, 0, 0, 0};
 static volatile uint8_t glpKey = true;
 
 static void _noTone(uint8_t pin);
@@ -86,9 +86,7 @@ static uint8_t _getPrescale(size_t freq) {
 
 static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	TIMER_TypeDef				*timer;
-	size_t						freq;
 	uint8_t						channel;
-	size_t						tempos;
 	size_t						location;
 
 	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
@@ -145,6 +143,7 @@ static ZunoError_t _initPwm(size_t param) {
 	while (channel < PWM_TIMER_CC_COUNT)
 		TIMER_InitCC(timer, channel++, &timerCCInit);
 	return (ZunoErrorOk);
+	(void)param;
 }
 static uint8_t _analogWriteDisable(uint8_t pin) {
 	size_t					channel;
@@ -239,7 +238,6 @@ static ZunoError_t _tone(uint8_t pin, uint16_t freq) {
 }
 
 static ZunoError_t _initTone(size_t param) {
-	ZunoError_t					ret;
 	TIMER_Init_TypeDef			timerInit;
 	TIMER_InitCC_TypeDef		timerCCInit;
 	TIMER_TypeDef				*timer;
@@ -255,6 +253,7 @@ static ZunoError_t _initTone(size_t param) {
 	timerInit = TIMER_INIT_DEFAULT;
 	TIMER_Init(timer, &timerInit);
 	return (ZunoErrorOk);
+	(void)param;
 }
 
 ZunoError_t tone(uint8_t pin, uint16_t freq) {

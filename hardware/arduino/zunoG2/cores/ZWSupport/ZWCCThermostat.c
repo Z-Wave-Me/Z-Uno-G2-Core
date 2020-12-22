@@ -55,7 +55,6 @@ int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 static int _supported_report_setpoint(uint8_t channel) {//Processed to get the value of the thermostatmode components
 	ZwThermostatSetpointSupportedReportFrame_t		*lp;
 	uint8_t											sub_type;
-	uint16_t										mask;
 
 	lp = (ZwThermostatSetpointSupportedReportFrame_t *)&CMD_REPLY_CC;
 	sub_type = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of thermostat
@@ -158,4 +157,5 @@ int zuno_CCThermostatReport(byte channel) {
 	_report_setpoint(channel, NULL);
 	#endif
 	return (ZUNO_COMMAND_PROCESSED);
+	(void)channel;
 }

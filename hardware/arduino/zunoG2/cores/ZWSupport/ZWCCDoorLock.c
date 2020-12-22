@@ -13,6 +13,7 @@ static int _report_configuration(uint8_t channel) {
 	lp->v3.lockTimeoutSeconds = 0xFE;
 	CMD_REPLY_LEN = sizeof(lp->v3);
 	return (ZUNO_COMMAND_ANSWERED);
+	(void)channel;
 }
 
 static void _set_operation(uint8_t channel, ZUNOCommandPacket_t *cmd) {

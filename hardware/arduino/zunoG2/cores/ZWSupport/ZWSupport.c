@@ -346,6 +346,7 @@ int32_t zuno_callGetter(byte val_type, byte ch, void * handler){
 				return ((zuno_multigetter4ub_t*)handler)(ch);
 			return ((zuno_singlegetter4ub_t*)handler)();
 	}
+	return (0);
 }
 void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 	if(handler == 0)
@@ -401,7 +402,9 @@ int zuno_getMappedValue(byte val_type, byte ch, void * handler){
 				return ((uint32_t*)handler)[ch];
 			return *((uint32_t*)handler);
 	}
+	return (0);
 }
+
 void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 	switch(val_type){
 		case HADLER_ARGTYPE_1UB:
@@ -683,7 +686,7 @@ void dbgCCTypes() {
 	fist_run = false;	
 	delay(2000);
 	LOGGING_UART.println("STATIC TYPES:\n-------------------------");
-	for(int i=0;i<(sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t));i++){
+	for(size_t i=0;i<(sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t));i++){
 		dbgDumpCCType((ZUNOChannelCCS_t*)&ZUNO_CC_TYPES[i]);
 	}
 	LOGGING_UART.println("\n-------------------------");

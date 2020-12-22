@@ -90,6 +90,7 @@ void *sbrk(intptr_t delta) {
 int _close (int fd) __attribute__((section("._close")));
 int _close (int fd) {
 	return (0);
+	(void)fd;
 }
 
 // Установка позиции в файле. ( заглушка ).
@@ -97,6 +98,9 @@ off_t _lseek(int fd, off_t offset, int whence) __attribute__((section("._lseek")
 off_t _lseek(int fd, off_t offset, int whence) {
 	errno = EINVAL;
 	return ((off_t)-1);
+	(void)fd;
+	(void)offset;
+	(void)whence;
 }
 
 // Читает из файла ( заглушка ).
@@ -104,6 +108,9 @@ ssize_t _read(int fd, void *buf, size_t count) __attribute__((section("._read"))
 ssize_t _read(int fd, void *buf, size_t count) {
 	errno = EINVAL;
 	return (-1);
+	(void)fd;
+	(void)buf;
+	(void)count;
 }
 
 //**********************************************************************
@@ -346,8 +353,8 @@ void LLInit() {
         __preinit_array_start[i]();
     _init();
     count = __init_array_end - __init_array_start;
-    for (i = 0; i < count; i++)
-        __init_array_start[i]();
+	for (i = 0; i < count; i++)
+		__init_array_start[i]();
 	i = 0;
 	while (i <= ZUNO_PIN_LAST_INDEX)
 		pinMode(i++, INPUT);//set default state
@@ -474,7 +481,7 @@ void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
 
 /* time */
 void delay(dword ms){
-    void * ret = zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
+	zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
 }
 
 dword millis(void){

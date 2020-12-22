@@ -27,7 +27,7 @@ static inline uint8_t _isProcessing(size_t uniqId){
 }
 static inline ZunoError_t _transferReceivedCount(size_t uniqId, size_t *count){
 	*count = (size_t)zunoSysCall(ZUNO_SYSFUNC_DMA_COUNT, 1, uniqId);
-	ZunoError_t res = (*count == -1) ? ZunoErrorOk :  ZunoErrorDmaInvalidUniqId;
+	ZunoError_t res = ((ssize_t)*count == -1) ? ZunoErrorOk :  ZunoErrorDmaInvalidUniqId;
 	return res;
 }
 static void _waitTransfer(size_t uniqId) {

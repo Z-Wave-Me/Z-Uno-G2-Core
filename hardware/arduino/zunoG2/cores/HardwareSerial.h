@@ -42,7 +42,7 @@ class HardwareSerial : public Stream {
 		virtual int								peek(void);
 		virtual int								read(void);
 	private:
-		inline size_t							_available(const ZunoHardwareSerialConfig_t *config);
+		inline size_t							_available(void);
 		inline int								_readLock(uint8_t bOffset);
 		inline int								_read(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);

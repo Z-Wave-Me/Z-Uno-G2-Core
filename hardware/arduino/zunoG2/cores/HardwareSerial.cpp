@@ -122,7 +122,7 @@ size_t HardwareSerial::available(void) {
 	lpLock = config->lpLock;
 	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	out = this->_available(config);
+	out = this->_available();
 	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (out);
 }
@@ -188,7 +188,7 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 }
 
 /* Private Methods */
-inline size_t HardwareSerial::_available(const ZunoHardwareSerialConfig_t *config) {
+inline size_t HardwareSerial::_available(void) {
 	size_t				count;
 	size_t				count_read;
 	size_t				count_len;
@@ -230,7 +230,8 @@ inline int HardwareSerial::_read(uint8_t bOffset) {
 		this->_buffer_count_read = 0;
 		count_read = 0;
 	}
-	this->_buffer_count_read++;
+	if (bOffset == true)
+		this->_buffer_count_read++;
 	return (this->_buffer[count_read]);
 }
 
@@ -328,8 +329,6 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 }
 
 inline void HardwareSerial::_USART_IRQHandler(size_t date) {
-	USART_TypeDef						*usart;
-
 	if (this->_buffer_count >= this->_buffer_len) {
 		this->_buffer_count = 0;
 	}

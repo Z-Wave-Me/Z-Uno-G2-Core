@@ -1,6 +1,8 @@
 #ifndef CRTX_GCC_H
 #define CRTX_GCC_H
 
+#include "ZGecko.h"
+
 #define SL_WEAK __attribute__ ((weak))
 
 #define __STATIC_INLINE static inline
@@ -2024,7 +2026,52 @@ __STATIC_FORCEINLINE int32_t __SMMLA (int32_t op1, int32_t op2, int32_t op3)
 	return result;
 	#endif
 }
-
 #endif
+
+/***************************************************************************//**
+ * @brief
+ *   Reverse the bits. Use the RBIT instruction if available, else process.
+ *
+ * @param[in] value
+ *   Data value to reverse.
+ *
+ * @return
+ *   A reversed value.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t SL_RBIT(uint32_t value)
+{
+  uint32_t result;
+
+#if (__CORTEX_M >= 0x03U)
+  result = __RBIT(value);
+#else
+  int32_t s = 4 * 8 - 1;
+
+  result = value;
+  for (value >>= 1U; value; value >>= 1U) {
+    result <<= 1U;
+    result |= value & 1U;
+    s--;
+  }
+  result <<= s;
+#endif
+  return result;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Reverse the bits. Use the RBIT instruction if available, else process.
+ *
+ * @param[in] value
+ *   16-bit data value to reverse.
+ *
+ * @return
+ *   A 16-bit reversed value.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t SL_RBIT16(uint32_t value)
+{
+  return SL_RBIT(value) >> 16;
+}
+
 
 #endif // CRTX_GCC_H

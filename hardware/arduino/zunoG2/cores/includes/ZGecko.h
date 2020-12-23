@@ -89,6 +89,9 @@ typedef enum IRQn{
 #define __NVIC_PRIO_BITS          3U /**< NVIC interrupt priority bits */
 #define __Vendor_SysTickConfig    0U /**< Is 1 if different SysTick counter is used */
 
+
+#define __CORTEX_M                (4U)/*!< Cortex-M Core */
+
 /** Part family */
 #define _EFR32_ZEN_FAMILY                       1                                /**< ZEN Gecko RF SoC Family  */
 #define _EFR_DEVICE                                                              /**< Silicon Labs EFR-type RF SoC */

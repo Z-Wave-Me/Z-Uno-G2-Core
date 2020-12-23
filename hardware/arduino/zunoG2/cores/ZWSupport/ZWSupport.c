@@ -771,6 +771,8 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks)
 		(ZUNO_CFG_CHANNEL(ch).type == ZUNO_METER_CHANNEL_NUMBER))
 		return (ticks -  g_report_data.last_report_time[ch]) > 3000UL; // We can't send too frequent for these CCs
 	#endif
+	(void)ch;
+	(void)ticks;
 	return true;
 }
 

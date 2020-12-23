@@ -2199,7 +2199,12 @@ typedef  enum{
 	    cmuClock_CSEN_HF = CMU_CLOCK_TYPE_CSEN_HF,
       cmuClock_CSEN_LF = CMU_CLOCK_TYPE_CSEN_LF, 
       cmuClock_WTIMER0 = CMU_CLOCK_TYPE_WTIMER0,
-	  cmuClock_LDMA  = CMU_CLOCK_TYPE_LDMA
+	    cmuClock_LDMA  = CMU_CLOCK_TYPE_LDMA,
+      cmuClock_CRYPTO = CMU_CLOCK_TYPE_CRYPTO,
+      cmuClock_GPCRC = CMU_CLOCK_TYPE_CRC,
+      cmuClock_TRNG0 = CMU_CLOCK_TYPE_RND
+
+
   } CMU_Clock_TypeDef;
 #elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 /** Clock points in CMU. See CMU overview in the reference manual. */

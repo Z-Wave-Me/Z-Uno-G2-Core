@@ -281,4 +281,21 @@ typedef struct {
 #define _TRNG_FIFO_VALUE_DEFAULT             0x00000000UL                    /**< Mode DEFAULT for TRNG_FIFO */
 #define TRNG_FIFO_VALUE_DEFAULT              (_TRNG_FIFO_VALUE_DEFAULT << 0) /**< Shifted mode DEFAULT for TRNG_FIFO */
 
+inline void trngSoftReset(TRNG_TypeDef *trng) {
+	uint32_t ctrl = trng->CONTROL;
+
+	ctrl |= TRNG_CONTROL_SOFTRESET;
+	trng->CONTROL = ctrl;
+	ctrl &= ~TRNG_CONTROL_SOFTRESET;
+	trng->CONTROL = ctrl;
+};
+
+inline void trngInit(TRNG_TypeDef *trng) {
+	trng->CONTROL = TRNG_CONTROL_ENABLE | TRNG_CONTROL_REPCOUNTIEN | TRNG_CONTROL_APT64IEN | TRNG_CONTROL_APT4096IEN | TRNG_CONTROL_PREIEN | TRNG_CONTROL_ALMIEN;
+	trngSoftReset(trng);// Apply software reset 
+};
+
+
+size_t getRandomData(TRNG_TypeDef *trng, uint8_t *out, size_t len, ZunoError_t *status);
+
 #endif//CRTX_TRNG_H

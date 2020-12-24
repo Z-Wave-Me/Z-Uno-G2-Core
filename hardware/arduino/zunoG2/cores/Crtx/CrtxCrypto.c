@@ -2100,7 +2100,7 @@ static void CRYPTO_AES_OFBx(CRYPTO_TypeDef *  crypto,
  *   A buffer to place encrypted/decrypted data. Must be at least @p len long. It
  *   may be set equal to @p in, in which case the input buffer is overwritten.
  ******************************************************************************/
-__STATIC_INLINE void CRYPTO_AES_ProcessLoop(CRYPTO_TypeDef *        crypto,
+__STATIC_INLINE void CRYPTO_AES_ProcessLoopSimlib(CRYPTO_TypeDef *        crypto,
                                             unsigned int            len,
                                             CRYPTO_DataReg_TypeDef  inReg,
                                             const uint8_t  *        in,
@@ -2158,4 +2158,71 @@ __STATIC_INLINE void CRYPTO_AES_ProcessLoop(CRYPTO_TypeDef *        crypto,
       CRYPTO_DataRead(outReg, (uint32_t *)out);
     }
   }
+}
+
+static void aesProcessLoop(CRYPTO_TypeDef *crypto, unsigned int len, CRYPTO_DataReg_TypeDef inReg, const uint8_t *in, CRYPTO_DataReg_TypeDef outReg, uint8_t *out) {
+	if (((uintptr_t)in & 0x3) || ((uintptr_t)out & 0x3)) {
+		while (len > 0UL) {
+			len--;
+			/* Load data and trigger encryption. */
+			CRYPTO_DataWriteUnaligned(inReg, in);
+			CRYPTO_InstructionSequenceExecute(crypto);
+
+			/* Wait for the sequence to finish. */
+			CRYPTO_InstructionSequenceWait(crypto);
+			/* Save encrypted/decrypted data. */
+			CRYPTO_DataReadUnaligned(outReg, out);
+
+			out += 16;
+			in  += 16;
+		}
+	} else {
+		/* Optimized version, 15% faster for -O3. */
+		if (len > 0UL) {
+			/* Load first data and trigger encryption. */
+			CRYPTO_DataWrite(inReg, (uint32_t *)in);
+			CRYPTO_InstructionSequenceExecute(crypto);
+
+			/* Do loop administration while CRYPTO engine is working. */
+			in += 16;
+			len--;
+
+			while (len > 0UL) {
+				/* Wait for the sequence to finish. */
+				CRYPTO_InstructionSequenceWait(crypto);
+				/* Save encrypted/decrypted data. */
+				CRYPTO_DataRead(outReg, (uint32_t *)out);
+
+				/* Load next data and retrigger encryption asap. */
+				CRYPTO_DataWrite(inReg, (uint32_t *)in);
+				CRYPTO_InstructionSequenceExecute(crypto);
+
+				/* Do loop administration while CRYPTO engine is working. */
+				out += 16;
+				in += 16;
+				len--;
+			}
+
+			/* Wait for the sequence to finish. */
+			CRYPTO_InstructionSequenceWait(crypto);
+			/* Save last encrypted/decrypted data. */
+			CRYPTO_DataRead(outReg, (uint32_t *)out);
+		}
+	}
+}
+
+__STATIC_INLINE void CRYPTO_AES_ProcessLoop(CRYPTO_TypeDef *crypto, unsigned int len, CRYPTO_DataReg_TypeDef inReg, const uint8_t *in, CRYPTO_DataReg_TypeDef outReg, uint8_t *out) {
+	size_t				count;
+	uint8_t				tmp[CRYPTO_AES_BLOCKSIZE];
+
+	crypto->SEQCTRL = 16UL << _CRYPTO_SEQCTRL_LENGTHA_SHIFT;
+	aesProcessLoop(crypto, len / CRYPTO_AES_BLOCKSIZE, inReg, in, outReg, out);
+	count = len & (0 - CRYPTO_AES_BLOCKSIZE);
+	if (count == len)
+		return ;
+	len = len - count;
+	memcpy(&tmp[0], &in[count], len);
+	tmp[len++] = 0x80;
+	memset(&tmp[len], 0x0, CRYPTO_AES_BLOCKSIZE - len);
+	aesProcessLoop(crypto, CRYPTO_AES_BLOCKSIZE, inReg, &tmp[0], outReg, &out[count]);
 }

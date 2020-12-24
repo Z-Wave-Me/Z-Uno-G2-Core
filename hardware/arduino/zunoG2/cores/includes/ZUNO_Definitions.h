@@ -43,6 +43,8 @@ typedef enum
 	ZunoErrorDhtNoSync,
 	ZunoErrorDhtTimeout,
 	ZunoErrorDhtCrc,
+	ZunoErrorTrngNotDate,
+	ZunoErrorTrngFaill,
 	ZunoErrorMemory//Failed to allocate memory
 } ZunoError_t;
 

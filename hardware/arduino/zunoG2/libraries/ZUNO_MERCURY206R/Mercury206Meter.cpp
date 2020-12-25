@@ -67,6 +67,7 @@ ZunoError_t Mercury206Meter::begin() {
 
 	if ((ret = MERCURY_SERIAL.begin(MERCURY_BAUDRATE)) != ZunoErrorOk)
 		return (ret);
+	CMU_ClockEnable(cmuClock_GPCRC, true);
 	pinMode(this->_dir_pin, OUTPUT);
 	return (ZunoErrorOk);
 }

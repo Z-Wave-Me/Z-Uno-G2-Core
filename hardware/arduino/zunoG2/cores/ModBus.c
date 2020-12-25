@@ -1,33 +1,14 @@
 #include "Arduino.h"
+#include "CrtxGpcrc.h"
 #include "HardwareSerial.h"
 #include "ModBus.h"
-
-static uint16_t modbusCrc16(uint8_t *b, uint8_t *e) {
-	size_t				i;
-	uint16_t				crc16;
-
-	crc16 = 0xFFFF;
-	i = 0;
-	while (b < e) {
-		crc16 = crc16 ^ b++[0];
-		i = 8;
-		while (i--) {
-			if (crc16 & 0x01) {
-				crc16 >>= 1;
-				crc16 = crc16 ^ 0xA001;
-			} else
-				crc16 >>= 1;
-		}
-	}
-	return (crc16);
-}
 
 uint8_t modbusSend(HardwareSerial *hardwareSerial, uint8_t *b, size_t len) {
 	uint8_t					*e;
 	uint16_t				crc16;
 
 	e = &b[len];
-	crc16 = modbusCrc16(b, e);
+	crc16 = crc16_modbus(b, e - b);
 	e[0] = crc16 & 0xFF;
 	e[1] = crc16 >> 8;
 	len = len + 2;
@@ -51,7 +32,7 @@ size_t modbusReceive(HardwareSerial *hardwareSerial, uint8_t *b, size_t len) {
 		return (0);
 	i = i - 2;
 	e = &b[i];
-	crc16 = modbusCrc16(b, e);
+	crc16 = crc16_modbus(b, e - b);
 	if (e[0] != (crc16 & 0xFF) || e[1] != (crc16 >> 8))
 		return (0);
 	return (i);

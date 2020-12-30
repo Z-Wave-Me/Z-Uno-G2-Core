@@ -41,7 +41,7 @@ const ZunoDhtTypeConfig_t gconfigTable[3] = {
 };
 
 /* Public Constructors */
-DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime(-1), _pin(pin), _type(type)
+DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime((size_t)(0 - DHT_MIN_INTERVAL)), _pin(pin), _type(type)
 #if (ZUNO_ZERO_BSS != true)
 	, _value({0}), _crc(0), _lpKey(0)
 #endif
@@ -85,8 +85,10 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 	int16_t									out;
 
 	ret = this->_read(bForce);
+	value = this->_value;
+	if (value.value == 0xFFFFFFFF)
+		return (BAD_DHT_VALUE);
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
-		value = this->_value;
 		switch (this->_type) {
 		case DHT11:
 			return (value.byte2 * 10 + value.byte3);
@@ -99,6 +101,7 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 			break ;
 		}
 	}
+	this->_value.value = 0xFFFFFFFF;
 	return (BAD_DHT_VALUE);
 }
 
@@ -107,8 +110,10 @@ int16_t DHT::readHumidityH10(uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 
 	ret = this->_read(bForce);
+	value = this->_value;
+	if (value.value == 0xFFFFFFFF)
+		return (BAD_DHT_VALUE);
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
-		value = this->_value;
 		switch (this->_type) {
 		case DHT11:
 			return (value.byte0 * 10 + value.byte1);
@@ -118,15 +123,26 @@ int16_t DHT::readHumidityH10(uint8_t bForce) {
 			break ;
 		}
 	}
+	this->_value.value = 0xFFFFFFFF;
 	return (BAD_DHT_VALUE);
 }
 
 float DHT::readTemperature(uint8_t bForce) {
-	return (this->readTemperatureC10(bForce) / (float)10.0);
+	int16_t				value;
+
+	value = this->readTemperatureC10(bForce);
+	if ((uint16_t)value == BAD_DHT_VALUE)
+		return (0 / (float)0);
+	return (value / (float)10.0);
 }
 
 float DHT::readHumidity(uint8_t bForce) {
-	return (this->readHumidityH10(bForce) / (float)10.0);
+	int16_t				value;
+
+	value = this->readHumidityH10(bForce);
+	if ((uint16_t)value == BAD_DHT_VALUE)
+		return (0 / (float)0);
+	return (value / (float)10.0);
 }
 
 /* Private Methods */

@@ -1,5 +1,5 @@
 {
-    "core_version":{"major":3,"minor":1,"branch":"alpha"},
+    "core_version":{"major":3,"minor":2,"branch":"alpha"},
     "max_channel_ccs":2,
     "static_value_mapper":{
         "SleepingModeValue":{

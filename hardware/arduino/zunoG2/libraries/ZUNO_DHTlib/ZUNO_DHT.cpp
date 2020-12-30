@@ -144,8 +144,6 @@ inline ZunoError_t DHT::_read(uint8_t bForce) {
 }
 
 ZunoError_t DHT::_deInit(size_t param) {
-	TIMER_Init_TypeDef					timerInit;
-	TIMER_TypeDef						*timer;
 	const ZunoDhtTypeConfig_t			*config;
 
 	config = (const ZunoDhtTypeConfig_t *)param;

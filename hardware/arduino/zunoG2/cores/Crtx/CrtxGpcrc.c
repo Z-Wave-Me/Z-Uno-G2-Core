@@ -173,7 +173,7 @@ uint16_t crc16_ccitt(const void *data, size_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_bypass(const void *data, uint8_t len) {
+uint16_t crc16_bypass(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x8005;
@@ -183,7 +183,7 @@ uint16_t crc16_bypass(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_xmodem(const void *data, uint8_t len) {
+uint16_t crc16_xmodem(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x1021;
@@ -193,7 +193,7 @@ uint16_t crc16_xmodem(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_teledisk(const void *data, uint8_t len) {
+uint16_t crc16_teledisk(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0xA097;
@@ -203,7 +203,7 @@ uint16_t crc16_teledisk(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_augccitt(const void *data, uint8_t len) {
+uint16_t crc16_augccitt(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x1021;
@@ -213,7 +213,7 @@ uint16_t crc16_augccitt(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_cdma2000(const void *data, uint8_t len) {
+uint16_t crc16_cdma2000(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0xC867;
@@ -223,7 +223,7 @@ uint16_t crc16_cdma2000(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_dds110(const void *data, uint8_t len) {
+uint16_t crc16_dds110(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x8005;
@@ -233,7 +233,7 @@ uint16_t crc16_dds110(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_dect_x(const void *data, uint8_t len) {
+uint16_t crc16_dect_x(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x0589;
@@ -243,7 +243,7 @@ uint16_t crc16_dect_x(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_dect_r(const void *data, uint8_t len) {
+uint16_t crc16_dect_r(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x0589;
@@ -253,7 +253,7 @@ uint16_t crc16_dect_r(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC) ^ 0x1);
 }
 
-uint16_t crc16_en13757(const void *data, uint8_t len) {
+uint16_t crc16_en13757(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x3D65;
@@ -263,7 +263,7 @@ uint16_t crc16_en13757(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC) ^ 0xFFFF);
 }
 
-uint16_t crc16_t10dif(const void *data, uint8_t len) {
+uint16_t crc16_t10dif(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x8BB7;
@@ -273,7 +273,7 @@ uint16_t crc16_t10dif(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint16_t crc16_modbus(const void *data, uint8_t len) {
+uint16_t crc16_modbus(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x8005;
@@ -283,7 +283,7 @@ uint16_t crc16_modbus(const void *data, uint8_t len) {
 	return (GPCRC_DataRead(GPCRC));
 }
 
-uint32_t crc32_posix(const void *data, uint8_t len) {
+uint32_t crc32_posix(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x04C11DB7;
@@ -293,7 +293,7 @@ uint32_t crc32_posix(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC) ^ 0xFFFFFFFF);
 }
 
-uint32_t crc32_mpeg2(const void *data, uint8_t len) {
+uint32_t crc32_mpeg2(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x04C11DB7;
@@ -303,7 +303,7 @@ uint32_t crc32_mpeg2(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC));
 }
 
-uint32_t crc32_jamcrc(const void *data, uint8_t len) {
+uint32_t crc32_jamcrc(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x04C11DB7;
@@ -313,7 +313,7 @@ uint32_t crc32_jamcrc(const void *data, uint8_t len) {
 	return (GPCRC_DataRead(GPCRC));
 }
 
-uint32_t crc32_bzip2(const void *data, uint8_t len) {
+uint32_t crc32_bzip2(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x04C11DB7;
@@ -323,7 +323,7 @@ uint32_t crc32_bzip2(const void *data, uint8_t len) {
 	return (GPCRC_DataReadBitReversed(GPCRC) ^ 0xFFFFFFFF);
 }
 
-uint32_t crc32_zlib(const void *data, uint8_t len) {
+uint32_t crc32_zlib(const void *data,size_t len) {
 	GPCRC_Init_TypeDef					initGpcrc;
 
 	initGpcrc.crcPoly = 0x04C11DB7;

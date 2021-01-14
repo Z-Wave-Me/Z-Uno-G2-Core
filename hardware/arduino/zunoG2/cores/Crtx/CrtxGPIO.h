@@ -1,6 +1,9 @@
 #ifndef CORTEXGPIO_H
 #define CORTEXGPIO_H
+
 #include "ZGecko.h"
+#include "CrtxEmu.h"
+
 typedef struct {
   __IOM uint32_t CTRL;         /**< Port Control Register  */
   __IOM uint32_t MODEL;        /**< Port Pin Mode Low Register  */

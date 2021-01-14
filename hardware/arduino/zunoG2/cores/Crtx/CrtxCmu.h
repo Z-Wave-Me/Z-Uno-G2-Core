@@ -2206,7 +2206,7 @@ typedef  enum{
 
 
   } CMU_Clock_TypeDef;
-#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI || ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
 /** Clock points in CMU. See CMU overview in the reference manual. */
 typedef enum {
   /*******************/
@@ -3202,7 +3202,7 @@ typedef enum {
 #if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
   #define CMU_ClockFreqGet(C) ((uint32_t)zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, C))
   #define CMU_ClockEnable(C, E) zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, C, E)
-#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI || ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
   void CMU_ClockEnable(CMU_Clock_TypeDef clock, uint8_t enable);
   uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock);
 #else

@@ -368,7 +368,5 @@ void HardwareSerial::_USART2_IRQHandler(size_t flags) {
 	#else
 		#error ZUNO_PIN_V
 	#endif
-#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
 #else
-	#error Set ZUNO_ASSEMBLY_TYPE
 #endif

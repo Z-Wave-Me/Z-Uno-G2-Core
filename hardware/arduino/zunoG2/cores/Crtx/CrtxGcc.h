@@ -13,7 +13,7 @@
   #define __ASM                                  __asm
 #endif
 
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI || ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
 /* ###########################  Core Function Access  ########################### */
 /** \ingroup  CMSIS_Core_FunctionInterface
     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
@@ -1981,6 +1981,27 @@ __STATIC_FORCEINLINE int32_t __SMMLA (int32_t op1, int32_t op2, int32_t op3)
 #endif /* (__ARM_FEATURE_DSP == 1) */
 /*@} end of group CMSIS_SIMD_intrinsics */
 #elif ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
+
+/* Supervisor call */
+void *zunoSysCall(uint8_t ct, uint8_t n, ...);
+
+__STATIC_FORCEINLINE void __enable_irq(void)
+{
+  zunoSysCall(ZUNO_SYSFUNC_EXIT_CRITICAL, 0);
+}
+
+
+__STATIC_FORCEINLINE void __disable_irq(void)
+{
+  zunoSysCall(ZUNO_SYSFUNC_ENTER_CRITICAL, 0);
+}
+
+
+__STATIC_FORCEINLINE uint32_t __get_PRIMASK(void)
+{
+  return(true);
+}
+
 
 	#define __CLZ             (uint8_t)__builtin_clz
 

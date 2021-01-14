@@ -2,7 +2,7 @@
 #include "ZGecko.h"
 #include "CrtxCore.h"
 
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI || ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
 /***************************************************************************//**
  * @addtogroup emlib
  * @{

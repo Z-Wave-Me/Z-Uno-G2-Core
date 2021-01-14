@@ -1,7 +1,7 @@
 #ifndef CRTX_CORE_H
 #define CRTX_CORE_H
 
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
+#if ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI || ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
 /*******************************************************************************
  *******************************   DEFINES   ***********************************
  ******************************************************************************/

@@ -3373,6 +3373,36 @@ __STATIC_INLINE void NVIC_SystemReset(void)
   }
 }
 
+/***************************************************************************//**
+ * @brief
+ *   Initialize the system.
+ *
+ * @details
+ *   Do required generic HW system init.
+ *
+ * @note
+ *   This function is invoked during system init, before the main() routine
+ *   and any data has been initialized. For this reason, it cannot do any
+ *   initialization of variables etc.
+ ******************************************************************************/
+__STATIC_INLINE void SystemInit(void)
+{
+	extern uint32_t __Vectors;
+#if defined(__VTOR_PRESENT) && (__VTOR_PRESENT == 1U)
+  SCB->VTOR = (uint32_t)&__Vectors;
+#endif
+
+#if (__FPU_PRESENT == 1U) && (__FPU_USED == 1U)
+  /* Set floating point coprosessor access mode. */
+  SCB->CPACR |= ((3UL << 10 * 2)                    /* set CP10 Full Access */
+                 | (3UL << 11 * 2));                /* set CP11 Full Access */
+#endif
+
+#if defined(UNALIGNED_SUPPORT_DISABLE)
+  SCB->CCR |= SCB_CCR_UNALIGN_TRP_Msk;
+#endif
+}
+
 /* ##################################    SysTick function  ############################################ */
 /**
   \ingroup  CMSIS_Core_FunctionInterface

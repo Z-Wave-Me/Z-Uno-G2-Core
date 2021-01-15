@@ -1170,10 +1170,197 @@ __STATIC_INLINE void MSC_BusStrategy(mscBusStrategy_Typedef mode)
 /*******************************************************************************
  *************************   PROTOTYPES   **************************************
  ******************************************************************************/
+#if defined(_SILICON_LABS_32B_SERIES_2)
+/***************************************************************************//**
+ * @brief
+ *   Initialize MSC module. Puts MSC hw in a known state.
+ ******************************************************************************/
+__STATIC_INLINE void MSC_Init(void)
+{
+#if defined(_CMU_CLKEN1_MASK)
+  CMU->CLKEN1_SET = CMU_CLKEN1_MSC;
+#endif
+  // Unlock MSC
+  MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+  // Disable flash write
+  MSC->WRITECTRL_CLR = MSC_WRITECTRL_WREN;
+}
 
-void MSC_Init(void);
-void MSC_Deinit(void);
-void MSC_ExecConfigSet(MSC_ExecConfig_TypeDef *execConfig);
+/***************************************************************************//**
+ * @brief
+ *   Turn off MSC flash write enable and lock MSC registers.
+ ******************************************************************************/
+__STATIC_INLINE void MSC_Deinit(void)
+{
+  // Unlock MSC
+  MSC->LOCK = MSC_LOCK_LOCKKEY_UNLOCK;
+  // Disable flash write
+  MSC->WRITECTRL_CLR = MSC_WRITECTRL_WREN;
+  // Lock MSC
+  MSC->LOCK = MSC_LOCK_LOCKKEY_LOCK;
+#if defined(_CMU_CLKEN1_MASK)
+  CMU->CLKEN1_CLR = CMU_CLKEN1_MSC;
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set MSC code execution configuration
+ *
+ * @param[in] execConfig
+ *   Code execution configuration
+ ******************************************************************************/
+__STATIC_INLINE void MSC_ExecConfigSet(MSC_ExecConfig_TypeDef *execConfig)
+{
+  uint32_t mscReadCtrl;
+
+  mscReadCtrl = MSC->READCTRL & ~MSC_READCTRL_DOUTBUFEN;
+
+  if (execConfig->doutBufEn) {
+    mscReadCtrl |= MSC_READCTRL_DOUTBUFEN;
+  }
+
+  MSC->READCTRL = mscReadCtrl;
+};
+
+#else // defined(_SILICON_LABS_32B_SERIES_2)
+/***************************************************************************//**
+ * @brief
+ *   Enables the flash controller for writing.
+ * @note
+ *   This function must be called before flash operations when
+ *   AUXHFRCO clock has been changed from a default band.
+ ******************************************************************************/
+__STATIC_INLINE void MSC_Init(void)
+{
+#if defined(_MSC_TIMEBASE_MASK)
+  uint32_t freq, cycles;
+#endif
+
+#if defined(_EMU_STATUS_VSCALE_MASK)
+  /* VSCALE must be done. Flash erase and write requires VSCALE2. */
+//   EFM_ASSERT(!(EMU->STATUS & _EMU_STATUS_VSCALEBUSY_MASK));
+//   EFM_ASSERT((EMU->STATUS & _EMU_STATUS_VSCALE_MASK) == EMU_STATUS_VSCALE_VSCALE2);
+#endif
+
+  /* Unlock the MSC module. */
+  MSC->LOCK = MSC_UNLOCK_CODE;
+  /* Disable writing to the Flash. */
+  MSC->WRITECTRL &= ~MSC_WRITECTRL_WREN;
+
+#if defined(_MSC_TIMEBASE_MASK)
+  /* Configure MSC->TIMEBASE according to a selected frequency. */
+  freq = CMU_ClockFreqGet(cmuClock_AUX);
+
+  /* Timebase 5us is used for the 1/1.2 MHz band only. Note that the 1 MHz band
+     is tuned to 1.2 MHz on newer revisions.  */
+  if (freq > 1200000) {
+    /* Calculate a number of clock cycles for 1 us as a base period. */
+    freq   = (freq * 11) / 10;
+    cycles = (freq / 1000000) + 1;
+
+    /* Configure clock cycles for flash timing. */
+    MSC->TIMEBASE = (MSC->TIMEBASE & ~(_MSC_TIMEBASE_BASE_MASK
+                                       | _MSC_TIMEBASE_PERIOD_MASK))
+                    | MSC_TIMEBASE_PERIOD_1US
+                    | (cycles << _MSC_TIMEBASE_BASE_SHIFT);
+  } else {
+    /* Calculate a number of clock cycles for 5 us as a base period. */
+    freq   = (freq * 5 * 11) / 10;
+    cycles = (freq / 1000000) + 1;
+
+    /* Configure clock cycles for flash timing */
+    MSC->TIMEBASE = (MSC->TIMEBASE & ~(_MSC_TIMEBASE_BASE_MASK
+                                       | _MSC_TIMEBASE_PERIOD_MASK))
+                    | MSC_TIMEBASE_PERIOD_5US
+                    | (cycles << _MSC_TIMEBASE_BASE_SHIFT);
+  }
+#endif
+};
+
+/***************************************************************************//**
+ * @brief
+ *   Disables the flash controller for writing.
+ ******************************************************************************/
+__STATIC_INLINE void MSC_Deinit(void)
+{
+  /* Disable writing to the Flash. */
+  MSC->WRITECTRL &= ~MSC_WRITECTRL_WREN;
+  /* Lock the MSC module.*/
+  MSC->LOCK = 0;
+};
+
+/***************************************************************************//**
+ * @brief
+ *   Set the MSC code execution configuration.
+ *
+ * @param[in] execConfig
+ *   The code execution configuration.
+ ******************************************************************************/
+__STATIC_INLINE void MSC_ExecConfigSet(MSC_ExecConfig_TypeDef *execConfig)
+{
+  uint32_t mscReadCtrl;
+
+#if defined(MSC_READCTRL_MODE_WS0SCBTP)
+  mscReadCtrl = MSC->READCTRL & _MSC_READCTRL_MODE_MASK;
+  if ((mscReadCtrl == MSC_READCTRL_MODE_WS0) && (execConfig->scbtEn)) {
+    mscReadCtrl |= MSC_READCTRL_MODE_WS0SCBTP;
+  } else if ((mscReadCtrl == MSC_READCTRL_MODE_WS1) && (execConfig->scbtEn)) {
+    mscReadCtrl |= MSC_READCTRL_MODE_WS1SCBTP;
+  } else if ((mscReadCtrl == MSC_READCTRL_MODE_WS0SCBTP) && (!execConfig->scbtEn)) {
+    mscReadCtrl |= MSC_READCTRL_MODE_WS0;
+  } else if ((mscReadCtrl == MSC_READCTRL_MODE_WS1SCBTP) && (!execConfig->scbtEn)) {
+    mscReadCtrl |= MSC_READCTRL_MODE_WS1;
+  } else {
+    /* No change needed. */
+  }
+#endif
+
+  mscReadCtrl = MSC->READCTRL & ~(0
+#if defined(MSC_READCTRL_SCBTP)
+                                  | MSC_READCTRL_SCBTP
+#endif
+#if defined(MSC_READCTRL_USEHPROT)
+                                  | MSC_READCTRL_USEHPROT
+#endif
+#if defined(MSC_READCTRL_PREFETCH)
+                                  | MSC_READCTRL_PREFETCH
+#endif
+#if defined(MSC_READCTRL_ICCDIS)
+                                  | MSC_READCTRL_ICCDIS
+#endif
+#if defined(MSC_READCTRL_AIDIS)
+                                  | MSC_READCTRL_AIDIS
+#endif
+#if defined(MSC_READCTRL_IFCDIS)
+                                  | MSC_READCTRL_IFCDIS
+#endif
+                                  );
+  mscReadCtrl |= (0
+#if defined(MSC_READCTRL_SCBTP)
+                  | (execConfig->scbtEn ? MSC_READCTRL_SCBTP : 0)
+#endif
+#if defined(MSC_READCTRL_USEHPROT)
+                  | (execConfig->useHprot ? MSC_READCTRL_USEHPROT : 0)
+#endif
+#if defined(MSC_READCTRL_PREFETCH)
+                  | (execConfig->prefetchEn ? MSC_READCTRL_PREFETCH : 0)
+#endif
+#if defined(MSC_READCTRL_ICCDIS)
+                  | (execConfig->iccDis ? MSC_READCTRL_ICCDIS : 0)
+#endif
+#if defined(MSC_READCTRL_AIDIS)
+                  | (execConfig->aiDis ? MSC_READCTRL_AIDIS : 0)
+#endif
+#if defined(MSC_READCTRL_IFCDIS)
+                  | (execConfig->ifcDis ? MSC_READCTRL_IFCDIS : 0)
+#endif
+                  );
+
+  MSC->READCTRL = mscReadCtrl;
+};
+#endif
+
 #if defined(_MSC_ECCCTRL_MASK) || defined(_SYSCFG_DMEM0ECCCTRL_MASK)
 void MSC_EccConfigSet(MSC_EccConfig_TypeDef *eccConfig);
 #endif

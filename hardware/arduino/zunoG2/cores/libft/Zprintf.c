@@ -292,12 +292,10 @@ ssize_t dprintf(ssize_t fd, const char *format, ...) {
 ssize_t sprintf(char *str, const char *format, ...) {
 	FtPrintf_t			array;
 	ssize_t				out;
-	size_t				len;
 	va_list				ap;
 
-	len = strlen(str);
 	array.buffer = (uint8_t *)str;
-	array.buffer_len = len;
+	array.buffer_len = (size_t)(-1);
 	array.b_in_str = true;
 	va_start (ap, format);
 	out = _Zprint(&array, format, (uint8_t *)str, (uint8_t *)&str[len], ap);

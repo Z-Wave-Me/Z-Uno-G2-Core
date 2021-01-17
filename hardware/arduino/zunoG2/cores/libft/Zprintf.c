@@ -298,7 +298,7 @@ ssize_t sprintf(char *str, const char *format, ...) {
 	array.buffer_len = (size_t)(-1);
 	array.b_in_str = true;
 	va_start (ap, format);
-	out = _Zprint(&array, format, (uint8_t *)str, (uint8_t *)&str[len], ap);
+	out = _Zprint(&array, format, (uint8_t *)str, (uint8_t *)&str[(size_t)(-1)], ap);
 	va_end (ap);
 	return (out);
 }

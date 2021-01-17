@@ -3,6 +3,7 @@
 #include "stdarg.h"
 #include "ZDma.h"
 #include "HardwareSerial.h"
+#include "Libft.h"
 
 #define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
@@ -368,5 +369,22 @@ void HardwareSerial::_USART2_IRQHandler(size_t flags) {
 	#else
 		#error ZUNO_PIN_V
 	#endif
+	//For printf
+	ssize_t write(int fd, const void *buf, size_t count) {
+		switch (fd) {
+			case 0:
+				return (Serial0.write((const uint8_t *)buf, count));
+				break ;
+			case 1:
+				return (Serial1.write((const uint8_t *)buf, count));
+				break ;
+			case 2:
+				return (Serial.write((const uint8_t *)buf, count));
+				break ;
+			default:
+				break ;
+		}
+		return (-1);
+	}
 #else
 #endif

@@ -94,57 +94,6 @@ void *sbrk(intptr_t delta) {
 	return (prev_heap_end);
 }
 
-// Закрываем файл ( заглушка ).
-int _close (int fd) __attribute__((section("._close")));
-int _close (int fd) {
-	return (0);
-	(void)fd;
-}
-
-// Установка позиции в файле. ( заглушка ).
-off_t _lseek(int fd, off_t offset, int whence) __attribute__((section("._lseek")));
-off_t _lseek(int fd, off_t offset, int whence) {
-	errno = EINVAL;
-	return ((off_t)-1);
-	(void)fd;
-	(void)offset;
-	(void)whence;
-}
-
-// Читает из файла ( заглушка ).
-ssize_t _read(int fd, void *buf, size_t count) __attribute__((section("._read")));
-ssize_t _read(int fd, void *buf, size_t count) {
-	errno = EINVAL;
-	return (-1);
-	(void)fd;
-	(void)buf;
-	(void)count;
-}
-
-//**********************************************************************
-// Если имеется системный терминал, выводить в него данные.
-//**********************************************************************
-ssize_t _write(int fd, const void *buf, size_t count) __attribute__((section("._write")));
-ssize_t _write(int fd, const void *buf, size_t count) {
-
-	switch (fd) {
-		case 0:
-			return (Serial0.write((const uint8_t *)buf, count));
-			break ;
-		case 1:
-			return (Serial1.write((const uint8_t *)buf, count));
-			break ;
-		case 2:
-			return (Serial.write((const uint8_t *)buf, count));
-			break ;
-		default:
-			break ;
-	}
-	errno = EINVAL;
-	return (-1);
-}
-
-
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
 void zuno_CCTimer(uint32_t);

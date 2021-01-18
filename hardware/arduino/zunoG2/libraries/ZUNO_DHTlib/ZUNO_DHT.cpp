@@ -58,14 +58,11 @@ ZunoError_t DHT::begin(void) {
 	const ZunoDhtTypeConfig_t			*gconfigTable_b;
 	const ZunoDhtTypeConfig_t			*gconfigTable_e;
 	ZunoError_t							ret;
-	ZunoDhtTypeInit_t					initDht;
 
 	gconfigTable_b = &gconfigTable[0];
 	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
-	initDht.dht = this;
 	while (gconfigTable_b < gconfigTable_e) {
-		initDht.config = gconfigTable_b;
-		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)&initDht, &this->_lpKey);
+		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b, &this->_lpKey);
 		if (ret == ZunoErrorOk)
 			break ;
 		else if (ret != ZunoErrorResourceAlready)
@@ -91,7 +88,6 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 	int16_t									out;
 
 	ret = this->_read(bForce);
-	this->_result = ret;
 	value = this->_value;
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
@@ -114,7 +110,6 @@ int16_t DHT::readHumidityH10(uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 
 	ret = this->_read(bForce);
-	this->_result = ret;
 	value = this->_value;
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
@@ -157,6 +152,7 @@ inline ZunoError_t DHT::_read(uint8_t bForce) {
 	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterDht, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	ret = this->_readBody(config, bForce);
+	this->_result = ret;
 	zunoSyncReleseRead(config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ret);
 }
@@ -175,11 +171,8 @@ ZunoError_t DHT::_init(size_t param) {
 	const ZunoDhtTypeConfig_t			*config;
 	TIMER_Init_TypeDef					init;
 	TIMER_InitCC_TypeDef				initCC;
-	ZunoDhtTypeInit_t					*initDht;
-	size_t								freq;
 
-	initDht = (ZunoDhtTypeInit_t *)param;
-	config = initDht->config;
+	config = (const ZunoDhtTypeConfig_t *)param;
 	g_config = config;
 	CMU_ClockEnable(config->bus_clock, true);
 	timer = config->timer;
@@ -194,9 +187,7 @@ ZunoError_t DHT::_init(size_t param) {
 	initCC.mode = timerCCModeCapture;
 	initCC.filter = true;
 	TIMER_InitCC(timer, DHT_CHANNEL, &initCC);
-	freq = CMU_ClockFreqGet(config->bus_clock) / 1000000;
-	initDht->dht->_freq = freq;
-	TIMER_TopSet(timer, freq * DHT_TOP_FREQ);
+	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * DHT_TOP_FREQ);
 	timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(8, DHT_CHANNEL);
 	return (ZunoErrorOk);
 }
@@ -208,17 +199,17 @@ inline uint16_t *DHT::_preTest(uint16_t *b, size_t freq) {
 	i = 6;
 	while (i-- != 0) {
 		tempos = b[0] / freq;
-		if (tempos < 19 || tempos > 40) {
+		if (tempos < 12 || tempos > 40) {
 			b++;
 			continue ;
 		}
 		tempos = b[1] / freq;
-		if (tempos < 70 || tempos > 85) {
+		if (tempos < 70 || tempos > 95) {
 			b++;
 			continue ;
 		}
 		tempos = b[2] / freq;
-		if (tempos < 70 || tempos > 85) {
+		if (tempos < 70 || tempos > 95) {
 			b++;
 			continue ;
 		}
@@ -237,16 +228,11 @@ inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_
 	out = 0;
 	while (b < e) {
 		tempos = b[0] / freq;
-		if (tempos < 50 || tempos > 70)
+		if (tempos < 45 || tempos > 70)
 			return (0);
-		tempos = b[1] / freq;
 		out = out << 1;
-		if (tempos > 20 && tempos < 30)
-			;
-		else if (tempos > 70 && tempos < 80)
+		if ((b[1] / freq) < tempos)
 			out = out | 1;
-		else
-			return (0);
 		b = b + 2;
 	}
 	value[0] = out;

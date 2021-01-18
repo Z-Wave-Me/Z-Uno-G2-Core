@@ -46,7 +46,7 @@ class DHT {
 		inline float							readTemperature(void) {return (this->readTemperature(false));};
 		inline float							readHumidity(void) {return (this->readHumidity(false));};
 		inline void								getRawData(uint8_t *ptr) {
-			DHT_TYPE_VALUE_t						value;
+			DHT_TYPE_VALUE_t					value;
 
 			value = this->_value;
 			ptr[0] = value.byte0;
@@ -60,12 +60,15 @@ class DHT {
 		static ZunoError_t						_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
+		inline uint16_t							*_preTest(uint16_t *b);
+		inline uint16_t							*_whileBit(uint16_t *b, uint16_t *e, uint32_t *value);
 		size_t									_lastreadtime;
 		DHT_TYPE_VALUE_t						_value;
 		uint8_t									_crc;
 		uint8_t									_pin;
 		DHT_TYPE_SENSORS_t						_type;
 		uint8_t									_lpKey;
+		uint8_t									_freq;
 };
 
 #endif//ZUNO_DHT_H

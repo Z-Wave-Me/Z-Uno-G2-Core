@@ -231,7 +231,7 @@ inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_
 		if (tempos < 45 || tempos > 70)
 			return (0);
 		out = out << 1;
-		if ((b[1] / freq) < tempos)
+		if ((b[1] / freq) >= tempos)
 			out = out | 1;
 		b = b + 2;
 	}

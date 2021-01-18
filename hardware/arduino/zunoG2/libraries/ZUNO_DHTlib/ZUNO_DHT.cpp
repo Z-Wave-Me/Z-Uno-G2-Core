@@ -12,6 +12,7 @@
 #define DHT_MIN_INTERVAL						2000
 #define DHT_UINIQID_DMA_WRITE					((size_t)&this->_lastreadtime)
 #define DHT_BUFFER_DMA_WRITE_LEN				(50 * 2)
+#define DHT_TOP_FREQ							(200)
 
 typedef struct							ZunoDhtTypeConfig_s
 {
@@ -20,6 +21,12 @@ typedef struct							ZunoDhtTypeConfig_s
 	ZDMA_PeripheralSignal_t				dmaSignal;
 	CMU_Clock_TypeDef					bus_clock;
 }										ZunoDhtTypeConfig_t;
+
+typedef struct							ZunoDhtTypeInit_s
+{
+	const ZunoDhtTypeConfig_t			*config;
+	DHT									*dht;
+}										ZunoDhtTypeInit_t;
 
 static const ZunoDhtTypeConfig_t		*g_config = 0;
 
@@ -51,21 +58,21 @@ ZunoError_t DHT::begin(void) {
 	const ZunoDhtTypeConfig_t			*gconfigTable_b;
 	const ZunoDhtTypeConfig_t			*gconfigTable_e;
 	ZunoError_t							ret;
+	ZunoDhtTypeInit_t					initDht;
 
 	gconfigTable_b = &gconfigTable[0];
 	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
+	initDht.dht = this;
 	while (gconfigTable_b < gconfigTable_e) {
-		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b, &this->_lpKey);
-		if (ret == ZunoErrorOk) {
-			g_config = gconfigTable_b;
+		initDht.config = gconfigTable_b;
+		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)&initDht, &this->_lpKey);
+		if (ret == ZunoErrorOk)
 			break ;
-		}
 		else if (ret != ZunoErrorResourceAlready)
 			return (ret);
 		gconfigTable_b++;
 	}
-	pinMode(this->_pin, INPUT_PULLUP);
-	this->_freq = 39;
+	this->_freq = TIMER_TopGet(g_config->timer) / DHT_TOP_FREQ;
 	zunoSyncReleseWrite(g_config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ZunoErrorOk);
 }
@@ -84,9 +91,8 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 	int16_t									out;
 
 	ret = this->_read(bForce);
+	this->_result = ret;
 	value = this->_value;
-	if (value.value == 0xFFFFFFFF)
-		return (BAD_DHT_VALUE);
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
 		case DHT11:
@@ -100,7 +106,6 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 			break ;
 		}
 	}
-	this->_value.value = 0xFFFFFFFF;
 	return (BAD_DHT_VALUE);
 }
 
@@ -109,9 +114,8 @@ int16_t DHT::readHumidityH10(uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 
 	ret = this->_read(bForce);
+	this->_result = ret;
 	value = this->_value;
-	if (value.value == 0xFFFFFFFF)
-		return (BAD_DHT_VALUE);
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
 		case DHT11:
@@ -122,7 +126,6 @@ int16_t DHT::readHumidityH10(uint8_t bForce) {
 			break ;
 		}
 	}
-	this->_value.value = 0xFFFFFFFF;
 	return (BAD_DHT_VALUE);
 }
 
@@ -172,8 +175,12 @@ ZunoError_t DHT::_init(size_t param) {
 	const ZunoDhtTypeConfig_t			*config;
 	TIMER_Init_TypeDef					init;
 	TIMER_InitCC_TypeDef				initCC;
+	ZunoDhtTypeInit_t					*initDht;
+	size_t								freq;
 
-	config = (const ZunoDhtTypeConfig_t *)param;
+	initDht = (ZunoDhtTypeInit_t *)param;
+	config = initDht->config;
+	g_config = config;
 	CMU_ClockEnable(config->bus_clock, true);
 	timer = config->timer;
 	init = TIMER_INIT_DEFAULT;
@@ -187,7 +194,9 @@ ZunoError_t DHT::_init(size_t param) {
 	initCC.mode = timerCCModeCapture;
 	initCC.filter = true;
 	TIMER_InitCC(timer, DHT_CHANNEL, &initCC);
-	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * 200);
+	freq = CMU_ClockFreqGet(config->bus_clock) / 1000000;
+	initDht->dht->_freq = freq;
+	TIMER_TopSet(timer, freq * DHT_TOP_FREQ);
 	timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(8, DHT_CHANNEL);
 	return (ZunoErrorOk);
 }
@@ -238,7 +247,6 @@ inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value) {
 inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	const ZunoDhtTypeConfig_t				*config;
 	size_t									currenttime;
-	size_t									pin;
 	DHT_TYPE_SENSORS_t						type;
 	ZunoError_t								ret;
 	uint16_t								buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN];
@@ -249,15 +257,16 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
 	currenttime = millis();
-	if (bForce == false && ((currenttime - this->_lastreadtime) < DHT_MIN_INTERVAL))// Чтобы не опрашивать сенсор слишком часто
-		return (ZunoErrorDhtResultPrevisous);
+	if (bForce == false && ((currenttime - this->_lastreadtime) < DHT_MIN_INTERVAL)) {// Чтобы не опрашивать сенсор слишком часто
+		if ((ret = this->_result) == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous)
+			return (ZunoErrorDhtResultPrevisous);
+		return (ret);
+	}
 	timer = config->timer;
 	if ((ret = ZDMA.toPeripheralMemory(DHT_UINIQID_DMA_WRITE, config->dmaSignal, &buffWriteDma[0], (void *)&timer->CC[DHT_CHANNEL].CCV, DHT_BUFFER_DMA_WRITE_LEN, zdmaData16)) != ZunoErrorOk)
 		return (ret);
 	this->_lastreadtime = currenttime;
-	pin = this->_pin;
-	pinMode(pin, OUTPUT);
-	digitalWrite(pin, LOW); // Send start signal
+	pinMode(this->_pin, OUTPUT_DOWN);// Send start signal
 	type = this->_type;
 	switch (type) {
 		case DHT11:// Датчик долго думает
@@ -268,11 +277,10 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 			break ;
 	}
 	delay(currenttime);
-	TIMER_CompareBufSet(timer, DHT_CHANNEL, _TIMER_CC_CCVB_RESETVALUE);
 	noInterrupts();
 	timer->ROUTEPEN = (1UL << DHT_CHANNEL);//enabled CC
 	TIMER_Enable(timer, true);
-	pinMode(pin, INPUT_PULLUP);
+	pinMode(this->_pin, INPUT_PULLUP);
 	interrupts();
 	delay(6);
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disabled CC

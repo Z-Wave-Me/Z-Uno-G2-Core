@@ -8,7 +8,7 @@
 #define DHT_RESULT_ERROR_TIMEOUT	ZunoErrorDhtTimeout
 #define DHT_RESULT_ERROR_CRC		ZunoErrorDhtCrc
 
-#define BAD_DHT_VALUE				0xFFFF
+#define BAD_DHT_VALUE				0x7FFF
 
 typedef enum			DHT_TYPE_SENSORS_e
 {
@@ -69,6 +69,7 @@ class DHT {
 		DHT_TYPE_SENSORS_t						_type;
 		uint8_t									_lpKey;
 		uint8_t									_freq;
+		ZunoError_t								_result;//last resultat
 };
 
 #endif//ZUNO_DHT_H

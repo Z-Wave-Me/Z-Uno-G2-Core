@@ -11,7 +11,7 @@
 
 #define DHT_MIN_INTERVAL						2000
 #define DHT_UINIQID_DMA_WRITE					((size_t)&this->_lastreadtime)
-#define DHT_BUFFER_DMA_WRITE_LEN				(50 * 2)
+#define DHT_BUFFER_DMA_WRITE_LEN				(56 * 2)
 #define DHT_TOP_FREQ							(200)
 
 typedef struct							ZunoDhtTypeConfig_s
@@ -201,30 +201,39 @@ ZunoError_t DHT::_init(size_t param) {
 	return (ZunoErrorOk);
 }
 
-inline uint16_t *DHT::_preTest(uint16_t *b) {
+inline uint16_t *DHT::_preTest(uint16_t *b, size_t freq) {
 	size_t						tempos;
-	size_t						freq;
+	size_t						i;
 
-	freq = this->_freq;
-	tempos = b[0] / freq;
-	if (tempos < 19 || tempos > 40)
-		return (0);
-	tempos = b[1] / freq;
-	if (tempos < 70 || tempos > 85)
-		return (0);
-	tempos = b[2] / freq;
-	if (tempos < 70 || tempos > 85)
+	i = 6;
+	while (i-- != 0) {
+		tempos = b[0] / freq;
+		if (tempos < 19 || tempos > 40) {
+			b++;
+			continue ;
+		}
+		tempos = b[1] / freq;
+		if (tempos < 70 || tempos > 85) {
+			b++;
+			continue ;
+		}
+		tempos = b[2] / freq;
+		if (tempos < 70 || tempos > 85) {
+			b++;
+			continue ;
+		}
+		break ;
+	}
+	if (i == 0)
 		return (0);
 	b = b + 3;
 	return (b);
 }
 
-inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value) {
+inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_t freq) {
 	uint32_t					out;
 	uint32_t					tempos;
-	size_t						freq;
-
-	freq = this->_freq;
+	
 	out = 0;
 	while (b < e) {
 		tempos = b[0] / freq;
@@ -254,6 +263,7 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 	uint32_t								crc;
 	TIMER_TypeDef							*timer;
+	size_t									freq;
 
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
 	currenttime = millis();
@@ -286,12 +296,13 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disabled CC
 	TIMER_Enable(timer, false);
 	ZDMA.stopTransfer(DHT_UINIQID_DMA_WRITE, true);
-	b = &buffWriteDma[2];//Let's pass the noise
-	if ((b = this->_preTest(b)) == 0)
+	b = &buffWriteDma[0];//Let's pass the noise
+	freq = this->_freq;
+	if ((b = this->_preTest(b, freq)) == 0)
 		return (ZunoErrorDhtNoSync);
-	if ((b = this->_whileBit(b, &b[32 * 2], &value.value)) == 0)
+	if ((b = this->_whileBit(b, &b[32 * 2], &value.value, freq)) == 0)
 		return (ZunoErrorDhtNoSync);
-	if ((b = this->_whileBit(b, &b[8 * 2], &crc)) == 0)
+	if ((b = this->_whileBit(b, &b[8 * 2], &crc, freq)) == 0)
 		return (ZunoErrorDhtNoSync);
 	if ((uint8_t)(value.byte0 + value.byte1 + value.byte2 + value.byte3) != (uint8_t)crc)
 		return (ZunoErrorDhtCrc);

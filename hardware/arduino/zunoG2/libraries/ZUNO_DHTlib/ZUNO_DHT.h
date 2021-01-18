@@ -60,8 +60,8 @@ class DHT {
 		static ZunoError_t						_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
-		inline uint16_t							*_preTest(uint16_t *b);
-		inline uint16_t							*_whileBit(uint16_t *b, uint16_t *e, uint32_t *value);
+		inline uint16_t							*_preTest(uint16_t *b, size_t freq);
+		inline uint16_t							*_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_t freq);
 		size_t									_lastreadtime;
 		DHT_TYPE_VALUE_t						_value;
 		uint8_t									_crc;

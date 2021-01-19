@@ -256,7 +256,6 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 	uint32_t								crc;
 	TIMER_TypeDef							*timer;
-	size_t									freq;
 
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
 	currenttime = millis();

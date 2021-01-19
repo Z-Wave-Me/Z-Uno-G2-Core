@@ -42,6 +42,7 @@ typedef enum
 	ZunoErrorResourceAlready,//resource is already taken
 	ZunoErrorDhtResultPrevisous,
 	ZunoErrorDhtNoSync,
+	ZunoErrorDhtWrongData,
 	ZunoErrorDhtTimeout,
 	ZunoErrorDhtCrc,
 	ZunoErrorTrngNotDate,

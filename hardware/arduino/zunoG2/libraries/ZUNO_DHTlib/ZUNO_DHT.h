@@ -35,33 +35,26 @@ class DHT {
 		DHT(uint8_t pin, DHT_TYPE_SENSORS_t type = DHT22);
 		ZunoError_t								begin(void);
 		void									end(void);
-		inline ZunoError_t						read(void) {return (this->_read(false));};
-		inline ZunoError_t						read(uint8_t bForce) {return (this->_read(bForce));};
-		int16_t									readTemperatureC10(uint8_t bForce);// returns temperature in 10 th of Celsius
-		int16_t									readHumidityH10(uint8_t bForce);// returns humidity in 10 th of percent
-		float									readTemperature(uint8_t bForce);// Returns temperature as float in Celsius
-		float									readHumidity(uint8_t bForce);// Returns humidity as float in pecents
-		inline int16_t							readTemperatureC10(void) {return (this->readTemperatureC10(false));};
-		inline int16_t							readHumidityH10(void) {return (this->readHumidityH10(false));};
-		inline float							readTemperature(void) {return (this->readTemperature(false));};
-		inline float							readHumidity(void) {return (this->readHumidity(false));};
+		inline ZunoError_t						read(uint8_t bForce=false) {return (this->_read(bForce));};
+		int16_t									readTemperatureC10(uint8_t bForce=false);// returns temperature in 10 th of Celsius
+		int16_t									readHumidityH10(uint8_t bForce=false);// returns humidity in 10 th of percent
+		float									readTemperature(uint8_t bForce=false);// Returns temperature as float in Celsius
+		float									readHumidity(uint8_t bForce=false);// Returns humidity as float in pecents
 		inline void								getRawData(uint8_t *ptr) {
-			DHT_TYPE_VALUE_t					value;
-
-			value = this->_value;
-			ptr[0] = value.byte0;
-			ptr[1] = value.byte1;
-			ptr[2] = value.byte2;
-			ptr[3] = value.byte3;
-			ptr[4] = this->_crc;
+			ptr[0] = _value.byte0;
+			ptr[1] = _value.byte1;
+			ptr[2] = _value.byte2;
+			ptr[3] = _value.byte3;
+			ptr[4] = _crc;
 		};
 	private:
 		static ZunoError_t						_init(size_t param);
 		static ZunoError_t						_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
-		inline uint16_t							*_preTest(uint16_t *b, size_t freq);
-		inline uint16_t							*_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_t freq);
+		bool                             		_find_startmarker(uint16_t * &b, uint8_t max_size);
+		bool                             		_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits=32);
+		
 		size_t									_lastreadtime;
 		DHT_TYPE_VALUE_t						_value;
 		uint8_t									_crc;

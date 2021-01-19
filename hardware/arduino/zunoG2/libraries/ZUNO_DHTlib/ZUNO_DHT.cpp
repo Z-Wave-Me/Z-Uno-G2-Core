@@ -14,6 +14,17 @@
 #define DHT_BUFFER_DMA_WRITE_LEN				(56 * 2)
 #define DHT_TOP_FREQ							(200)
 
+#define DHT_START_IMPULSE_MAX                  95
+#define DHT_START_IMPULSE_MIN                  75
+
+#define DHT_MARK_IMPULSE_MAX               	   65
+#define DHT_MARK_IMPULSE_MIN               	   45
+#define DHT_LOGIC_IMPULSE_POS_MAX              75
+#define DHT_LOGIC_IMPULSE_POS_MIN              60
+#define DHT_LOGIC_IMPULSE_NEG_MAX              32
+#define DHT_LOGIC_IMPULSE_NEG_MIN              22
+#define DHT_TIMER_MINIMUM_PACKAGE_LEN          ((1+32+8) << 1)
+
 typedef struct							ZunoDhtTypeConfig_s
 {
 	TIMER_TypeDef						*timer;
@@ -152,6 +163,10 @@ inline ZunoError_t DHT::_read(uint8_t bForce) {
 	if ((ret = zunoSyncLockRead(config->lpLock, SyncMasterDht, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	ret = this->_readBody(config, bForce);
+	#ifdef DHT_LIB_DEBUG
+	Serial.print("DHT STATUS:");
+	Serial.println(ret);
+	#endif
 	this->_result = ret;
 	zunoSyncReleseRead(config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ret);
@@ -192,57 +207,48 @@ ZunoError_t DHT::_init(size_t param) {
 	return (ZunoErrorOk);
 }
 
-inline uint16_t *DHT::_preTest(uint16_t *b, size_t freq) {
-	size_t						tempos;
-	size_t						i;
 
-	i = 6;
-	while (i-- != 0) {
-		tempos = b[0] / freq;
-		if (tempos < 12 || tempos > 40) {
-			b++;
-			continue ;
-		}
-		tempos = b[1] / freq;
-		if (tempos < 70 || tempos > 95) {
-			b++;
-			continue ;
-		}
-		tempos = b[2] / freq;
-		if (tempos < 70 || tempos > 95) {
-			b++;
-			continue ;
-		}
-		break ;
+ bool     DHT::_find_startmarker(uint16_t * &b, uint8_t max_size){
+	while(max_size) {
+		uint16_t t1 = *b/_freq;
+		uint16_t t2 = *(b+1)/_freq;
+		if((DHT_START_IMPULSE_MIN <= t1)  && ( t1 <= DHT_START_IMPULSE_MAX) &&
+		   (DHT_START_IMPULSE_MIN <= t2)  && ( t2 <= DHT_START_IMPULSE_MAX)){
+			   if(max_size >= DHT_TIMER_MINIMUM_PACKAGE_LEN){
+				   b += 2;
+				   return true;
+			   }
+			   return false; // The package is too short
+		   }
+		b++;
+		max_size--;
 	}
-	if (i == 0)
-		return (0);
-	b = b + 3;
-	return (b);
-}
 
-inline uint16_t *DHT::_whileBit(uint16_t *b, uint16_t *e, uint32_t *value, size_t freq) {
-	uint32_t					out;
-	uint32_t					tempos;
-	
-	out = 0;
-	while (b < e) {
-		tempos = b[0] / freq;
-		if (tempos < 45 || tempos > 70)
-			return (0);
-		out = out << 1;
-		if ((b[1] / freq) >= tempos)
-			out = out | 1;
-		b = b + 2;
-	}
-	value[0] = out;
-	return (b);
+	return false;
 }
+bool  DHT::_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits){
+	value = 0;
+	while(bits--){
+		uint16_t m = *b/_freq;
+		b++;
+		uint16_t l = *b/_freq;
+		b++;
+		if((DHT_MARK_IMPULSE_MIN > m) || ( m > DHT_MARK_IMPULSE_MAX))
+			return false;
+		value <<= 1;
+		if((l >= DHT_LOGIC_IMPULSE_POS_MIN) &&  (l <= DHT_LOGIC_IMPULSE_POS_MAX)){
+			value |= 1;
+		}
+		else if((l < DHT_LOGIC_IMPULSE_NEG_MIN) &&  (l > DHT_LOGIC_IMPULSE_NEG_MAX)){
+			return false;
+		}
+	}
+}
+		
 
 inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	const ZunoDhtTypeConfig_t				*config;
 	size_t									currenttime;
-	DHT_TYPE_SENSORS_t						type;
 	ZunoError_t								ret;
 	uint16_t								buffWriteDma[DHT_BUFFER_DMA_WRITE_LEN];
 	uint16_t								*b;
@@ -261,10 +267,9 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	timer = config->timer;
 	if ((ret = ZDMA.toPeripheralMemory(DHT_UINIQID_DMA_WRITE, config->dmaSignal, &buffWriteDma[0], (void *)&timer->CC[DHT_CHANNEL].CCV, DHT_BUFFER_DMA_WRITE_LEN, zdmaData16)) != ZunoErrorOk)
 		return (ret);
-	this->_lastreadtime = currenttime;
+	_lastreadtime = currenttime;
 	pinMode(this->_pin, OUTPUT_DOWN);// Send start signal
-	type = this->_type;
-	switch (type) {
+	switch (_type) {
 		case DHT11:// Датчик долго думает
 			currenttime = 20;
 			break ;
@@ -275,21 +280,45 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	delay(currenttime);
 	noInterrupts();
 	timer->ROUTEPEN = (1UL << DHT_CHANNEL);//enabled CC
-	TIMER_Enable(timer, true);
 	pinMode(this->_pin, INPUT_PULLUP);
+	TIMER_Enable(timer, true);
 	interrupts();
 	delay(6);
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disabled CC
 	TIMER_Enable(timer, false);
 	ZDMA.stopTransfer(DHT_UINIQID_DMA_WRITE, true);
 	b = &buffWriteDma[0];//Let's pass the noise
-	freq = this->_freq;
-	if ((b = this->_preTest(b, freq)) == 0)
+	#ifdef DHT_LIB_DEBUG
+	int i;
+	Serial.print("DHT TIMER BUFF:{ ");
+	for(i=0;i<DHT_BUFFER_DMA_WRITE_LEN;i++){
+		Serial.print(buffWriteDma[i]/_freq);
+		Serial.print(" ");
+	}
+	Serial.println("}");
+	#endif
+	if(!_find_startmarker(b, DHT_BUFFER_DMA_WRITE_LEN)){
+		#ifdef DHT_LIB_DEBUG
+		Serial.println("NOSYNC1");
+		#endif
 		return (ZunoErrorDhtNoSync);
-	if ((b = this->_whileBit(b, &b[32 * 2], &value.value, freq)) == 0)
-		return (ZunoErrorDhtNoSync);
-	if ((b = this->_whileBit(b, &b[8 * 2], &crc, freq)) == 0)
-		return (ZunoErrorDhtNoSync);
+	}
+	#ifdef DHT_LIB_DEBUG
+	Serial.print("Start value:");
+	Serial.println(*b/_freq);
+	#endif
+	if(!_extract_value(b, value.value, 32)){
+		#ifdef DHT_LIB_DEBUG
+		Serial.println("WRONG VALUE DATA");
+		#endif
+		return (ZunoErrorDhtWrongData);
+	}
+	if(!_extract_value(b, crc, 8)){
+		#ifdef DHT_LIB_DEBUG
+		Serial.println("WRONG CRC DATA");
+		#endif
+		return (ZunoErrorDhtWrongData);
+	}
 	if ((uint8_t)(value.byte0 + value.byte1 + value.byte2 + value.byte3) != (uint8_t)crc)
 		return (ZunoErrorDhtCrc);
 	this->_value = value;

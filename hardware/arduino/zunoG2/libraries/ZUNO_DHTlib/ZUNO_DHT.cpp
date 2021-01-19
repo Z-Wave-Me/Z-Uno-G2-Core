@@ -243,6 +243,7 @@ bool  DHT::_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits){
 			return false;
 		}
 	}
+	return true;
 }
 		
 

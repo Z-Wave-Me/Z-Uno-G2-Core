@@ -17,9 +17,9 @@
 #define DHT_START_IMPULSE_MAX                  95
 #define DHT_START_IMPULSE_MIN                  75
 
-#define DHT_MARK_IMPULSE_MAX               	   65
+#define DHT_MARK_IMPULSE_MAX               	   70
 #define DHT_MARK_IMPULSE_MIN               	   45
-#define DHT_LOGIC_IMPULSE_POS_MAX              75
+#define DHT_LOGIC_IMPULSE_POS_MAX              78
 #define DHT_LOGIC_IMPULSE_POS_MIN              60
 #define DHT_LOGIC_IMPULSE_NEG_MAX              32
 #define DHT_LOGIC_IMPULSE_NEG_MIN              22

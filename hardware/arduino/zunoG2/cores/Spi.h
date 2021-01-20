@@ -60,7 +60,6 @@ class SPIClass {
 		inline ZunoError_t									transfer(void *b) {return(this->transfer((char *)b));};
 		inline ZunoError_t									transfer(char *b) {return(this->_transferStrlen((void *)b, 0));};
 		inline uint8_t										transfer(uint8_t data) {return ((uint8_t)this->_transferDate(data, 0));};
-		inline uint8_t										transfer(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 		inline uint8_t										transfer8(uint8_t data) {return ((uint8_t)this->_transferDate(data, 0));};
 		inline uint8_t										transfer8(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 		inline uint16_t										transfer16(uint16_t data) {return ((uint16_t)this->_transferDate(data, SPI_FLAGS_16BIT));};

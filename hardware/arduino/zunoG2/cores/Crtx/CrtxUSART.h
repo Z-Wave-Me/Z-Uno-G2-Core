@@ -2910,6 +2910,7 @@ __STATIC_INLINE uint16_t USART_RxDataXGet(USART_TypeDef *usart)
 }
 
 uint8_t USART_SpiTransfer(USART_TypeDef *usart, uint8_t data);
+uint16_t USART_SpiTransfer16(USART_TypeDef *usart, uint16_t data);
 void USART_Tx(USART_TypeDef *usart, uint8_t data);
 void USART_TxDouble(USART_TypeDef *usart, uint16_t data);
 void USART_TxDoubleExt(USART_TypeDef *usart, uint32_t data);

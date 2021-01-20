@@ -1082,6 +1082,22 @@ uint8_t USART_SpiTransfer(USART_TypeDef *usart, uint8_t data)
   return (uint8_t)usart->RXDATA;
 }
 
+/*
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
+	USART_SpiTransfer16
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits8;
+*/
+uint16_t USART_SpiTransfer16(USART_TypeDef *usart, uint16_t data)
+{
+	while (!(usart->STATUS & USART_STATUS_TXBL))
+		;
+	usart->TXDOUBLE = (uint32_t)data;
+	while (!(usart->STATUS & USART_STATUS_TXC))
+		;
+	return (uint16_t)usart->RXDOUBLE;
+}
+
+
 /***************************************************************************//**
  * @brief
  *   Transmit one 4-9 bit frame.

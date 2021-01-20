@@ -166,12 +166,13 @@ size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	if (zunoSyncLockRead(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (0);
 	usart = config->usart;
-	out = USART_SpiTransfer(usart, (uint8_t)data);
 	if ((bFlags & SPI_FLAGS_16BIT) != 0) {
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
 		out = USART_SpiTransfer16(usart, (uint16_t)data);
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits8;
 	}
+	else
+		out = USART_SpiTransfer(usart, (uint8_t)data);
 	zunoSyncReleseRead(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (out);
 }

@@ -332,3 +332,7 @@ uint32_t crc32_zlib(const void *data,size_t len) {
 	_crcCommon(data, len, &initGpcrc);
 	return (GPCRC_DataRead(GPCRC) ^ 0xFFFFFFFF);
 }
+
+void crc_common(const void *data, size_t len, GPCRC_Init_TypeDef *initGpcrc) {
+	_crcCommon(data, len, initGpcrc);
+}

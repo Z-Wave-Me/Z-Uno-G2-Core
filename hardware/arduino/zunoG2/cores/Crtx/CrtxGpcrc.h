@@ -497,5 +497,6 @@ uint32_t crc32_mpeg2(const void *data, size_t len);
 uint32_t crc32_jamcrc(const void *data, size_t len);
 uint32_t crc32_bzip2(const void *data, size_t len);
 uint32_t crc32_zlib(const void *data, size_t len);
+void crc_common(const void *data, size_t len, GPCRC_Init_TypeDef *initGpcrc);
 
 #endif//CRTX_GPCRC_H

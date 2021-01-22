@@ -33,6 +33,8 @@
 
 #include "ZGecko.h"
 
+#define CRYPTO_AES_BLOCKSIZE                     (16UL)
+
 /***************************************************************************//**
  * @defgroup ZGM13_CRYPTO CRYPTO
  * @{

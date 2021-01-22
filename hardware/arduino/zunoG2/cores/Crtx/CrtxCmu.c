@@ -2449,7 +2449,7 @@ void CMU_ClockDivSet(CMU_Clock_TypeDef clock, CMU_ClkDiv_TypeDef div)
  *   @li true - enable specified clock.
  *   @li false - disable specified clock.
  ******************************************************************************/
-void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
+void CMU_ClockEnable(CMU_Clock_TypeDef clock, uint8_t enable)
 {
   volatile uint32_t *reg;
   uint32_t          bit;

@@ -3743,7 +3743,7 @@ void                  CMU_CalibrateConfig(uint32_t downCycles, CMU_Osc_TypeDef d
 #endif
 
 uint32_t              CMU_CalibrateCountGet(void);
-void                  CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable);
+void                  CMU_ClockEnable(CMU_Clock_TypeDef clock, uint8_t enable);
 CMU_ClkDiv_TypeDef    CMU_ClockDivGet(CMU_Clock_TypeDef clock);
 void                  CMU_ClockDivSet(CMU_Clock_TypeDef clock, CMU_ClkDiv_TypeDef div);
 uint32_t              CMU_ClockFreqGet(CMU_Clock_TypeDef clock);

@@ -193,7 +193,7 @@ static ZunoError_t _deInitTone(size_t param) {
 	lp->tone_freq = 0;
 	TONE_TIMER->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_Reset(TONE_TIMER);
-	digitalWrite(pin, LOW);// Switch off this pin anyway
+	pinMode(pin, OUTPUT_DOWN);// Switch off this pin anyway
 	return (ZunoErrorOk);
 }
 

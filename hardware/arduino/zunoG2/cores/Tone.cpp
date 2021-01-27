@@ -84,6 +84,8 @@ static uint8_t _getPrescale(size_t freq) {
 	return (prescale);
 }
 
+#include "Libft.h"
+
 static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	TIMER_TypeDef				*timer;
 	uint8_t						channel;
@@ -98,13 +100,11 @@ static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 			return (PWM_OUT_CLOSE);
 		case PWM_ENABLED:
 			_noTone(pin);
-			if(channel == INVALID_PIN_INDEX)
-				pinMode(pin, OUTPUT);// enable the output
-			else {
+			if(channel != INVALID_PIN_INDEX) {
 				timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
 				timer->ROUTEPEN &= ~(1UL << channel);//disable CC
 			}
-			digitalWrite(pin, HIGH);
+			pinMode(pin, OUTPUT_UP);
 			return (true);
 	}
 	if(channel == INVALID_PIN_INDEX) {
@@ -150,9 +150,7 @@ static uint8_t _analogWriteDisable(uint8_t pin) {
 	TIMER_TypeDef			*timer;
 
 	channel = _findPWMChannelBusy(getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin));
-	if(channel == INVALID_PIN_INDEX)
-		pinMode(pin, OUTPUT);// enable the output
-	else {
+	if(channel != INVALID_PIN_INDEX) {
 		timer = PWM_TIMER;
 		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
 		timer->ROUTEPEN &= ~(1UL << channel);//disable CC
@@ -161,7 +159,7 @@ static uint8_t _analogWriteDisable(uint8_t pin) {
 			zunoSyncClose(&PWM_TIMER_LOCK, SyncMasterPwm, 0, 0, &PWM_TIMER_LOCK_KEY);
 		}
 	}
-	digitalWrite(pin, LOW);// Switch off this pin anyway
+	pinMode(pin, OUTPUT_DOWN);// Switch off this pin anyway
 	return (true);
 }
 

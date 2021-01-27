@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "ZDma.h"
-#include "Spi.h"
+#include "SPI.h"
 
 /* Public Constructors */
 SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {

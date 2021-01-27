@@ -44,33 +44,33 @@ static volatile uint8_t glpKey = true;
 static void _noTone(uint8_t pin);
 
 static uint8_t _findPWMChannelBusy(uint8_t location) {
-	size_t			tempos;
-	uint8_t			channel;
+	size_t			routeopen;
+	size_t			routeloco;
+	size_t			channel;
 
-	location = (location + 32 - 0);
-	tempos = PWM_TIMER->ROUTELOC0;
+	routeloco = PWM_TIMER->ROUTELOC0;
+	routeopen = PWM_TIMER->ROUTEPEN;
 	channel = 0;
 	while (channel < PWM_TIMER_CC_COUNT) {
-		if ((tempos & _TIMER_ROUTELOC0_CC0LOC_MASK) == (location & _TIMER_ROUTELOC0_CC0LOC_MASK))
-			return (channel);
-		location--;
+		if ((routeopen & (0x1 << channel)) != 0)
+			if ((routeloco & _TIMER_ROUTELOC0_CC0LOC_MASK) == ((location - channel) & _TIMER_ROUTELOC0_CC0LOC_MASK))
+				return (channel);
 		channel++;
-		tempos = tempos >> 8;
+		routeloco = routeloco >> 8;
 	}
 	return (INVALID_PIN_INDEX);
 }
 
 static uint8_t _findPWMChannelSpace(void) {
-	size_t			tempos;
-	uint8_t			channel;
+	size_t			routeopen;
+	size_t			channel;
 
-	tempos = PWM_TIMER->ROUTELOC0;
+	routeopen = PWM_TIMER->ROUTEPEN;
 	channel = 0;
 	while (channel < PWM_TIMER_CC_COUNT) {
-		if ((tempos & _TIMER_ROUTELOC0_CC0LOC_MASK) == 0)
+		if ((routeopen & (0x1 << channel)) == 0)
 			return (channel);
 		channel++;
-		tempos = tempos >> 8;
 	}
 	return (INVALID_PIN_INDEX);
 }
@@ -84,14 +84,12 @@ static uint8_t _getPrescale(size_t freq) {
 	return (prescale);
 }
 
-#include "Libft.h"
-
 static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 	TIMER_TypeDef				*timer;
 	uint8_t						channel;
 	size_t						location;
 
-	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin);
+	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin) + 32;
 	channel = _findPWMChannelBusy(location);
 	timer = PWM_TIMER;
 	switch (value) {
@@ -100,10 +98,8 @@ static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 			return (PWM_OUT_CLOSE);
 		case PWM_ENABLED:
 			_noTone(pin);
-			if(channel != INVALID_PIN_INDEX) {
-				timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
+			if(channel != INVALID_PIN_INDEX)
 				timer->ROUTEPEN &= ~(1UL << channel);//disable CC
-			}
 			pinMode(pin, OUTPUT_UP);
 			return (true);
 	}
@@ -112,7 +108,7 @@ static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 		if(channel == INVALID_PIN_INDEX)
 			return (false);
 		_noTone(pin);
-		timer->ROUTELOC0 |= (((location + 32 - channel) & _TIMER_ROUTELOC0_CC0LOC_MASK) << (channel << 3));
+		timer->ROUTELOC0 = (timer->ROUTELOC0 & ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3))) | (((location - channel) & _TIMER_ROUTELOC0_CC0LOC_MASK) << (channel << 3));
 		timer->ROUTEPEN |= (1UL << channel);//enabled CC
 		pinMode(pin, OUTPUT);// enable the output
 	}
@@ -132,7 +128,6 @@ static ZunoError_t _initPwm(size_t param) {
 	timerInit.prescale = timerPrescale2;
 	freq = CMU_ClockFreqGet(PWM_TIMER_CLOCK) / (1 << timerInit.prescale) / PWM_HGZ;// PWM_HGZ - required frequency //0x25317C0
 	timer = PWM_TIMER;
-	timer->ROUTELOC0 = _TIMER_ROUTELOC0_RESETVALUE;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);
 	TIMER_Init(timer, &timerInit);
@@ -152,7 +147,6 @@ static uint8_t _analogWriteDisable(uint8_t pin) {
 	channel = _findPWMChannelBusy(getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin));
 	if(channel != INVALID_PIN_INDEX) {
 		timer = PWM_TIMER;
-		timer->ROUTELOC0 &= ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3));
 		timer->ROUTEPEN &= ~(1UL << channel);//disable CC
 		if (timer->ROUTEPEN == _TIMER_ROUTEPEN_RESETVALUE) {
 			TIMER_Reset(timer);

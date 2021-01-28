@@ -103,7 +103,7 @@
         },
         {   
             "type_name":"ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER", "type_val":4,
-            "cc_flags":["WITH_CC_SENSORMULTILEVEL"],
+            "cc_flags":["WITH_CC_SENSOR_MULTILEVEL"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"7"}
             ],

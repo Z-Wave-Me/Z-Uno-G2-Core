@@ -296,7 +296,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 					result = zuno_CCDoorLockHandler(zuno_ch, cmd);
 					break;
 				#endif
-				#ifdef WITH_CC_SENSORMULTILEVEL
+				#ifdef WITH_CC_SENSOR_MULTILEVEL
 				case COMMAND_CLASS_SENSOR_MULTILEVEL:
 					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
 				#endif
@@ -787,7 +787,9 @@ void zunoSendReportHandler(uint32_t ticks) {
 			continue;
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
-		LOGGING_UART.println(ch);
+		LOGGING_UART.print(ch);
+		LOGGING_UART.print(" TYPE:");
+		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
 		fillOutgoingReportPacket(ch);
 		rs = ZUNO_UNKNOWN_CMD;	
@@ -874,7 +876,7 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 	if(zunoNID() == 0) { // We are out of network - don't send anything
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
-		LOGGING_UART.print(" Package was dropped! NodeID==0");
+		LOGGING_UART.println(" Package was dropped! NodeID==0");
 		#endif
 		return;
 		

@@ -25,7 +25,7 @@ int zuno_CCMeterReport(byte channel) {
 	channel_size = GET_SIZE(params);
 	value = zuno_universalGetter1P(channel);
 	lp = &report->v3.byte1.meterValue1;
-	memcpy(lp, &value, channel_size);
+	_zme_memcpy(lp, (uint8_t *)&value, channel_size);
 	lp[channel_size] = 0;//deltaTime1
 	lp[channel_size + 1] = 0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
 	CMD_REPLY_LEN = 6 + channel_size;

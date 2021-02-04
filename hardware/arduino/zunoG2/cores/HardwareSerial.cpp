@@ -188,6 +188,21 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	return (count);
 }
 
+void HardwareSerial::changeParity(USART_Parity_TypeDef parity) {
+	const ZunoHardwareSerialConfig_t			*config;
+	ZunoSync_t									*lpLock;
+	USART_TypeDef								*usart;
+
+	config = &this->_configTable[this->_numberConfig];
+	lpLock = config->lpLock;
+	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	usart = config->usart;
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_PARITY_MASK)) | parity;
+	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+}
+
+
 /* Private Methods */
 inline size_t HardwareSerial::_available(void) {
 	size_t				count;

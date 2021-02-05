@@ -1,7 +1,7 @@
 #include "ZWCCAssociation.h"
 #include "./includes/ZWCCAssociation_private.h"
 
-static char *g_zuno_associations_group_name[ZUNO_MAX_ASSOC_NUMBER_LIMITATION];
+static char *g_zuno_associations_group_name[ZUNO_MAX_ASSOC_NUMBER];
 
 static int _group_id(uint8_t groupIndex) {
 	if (--groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
@@ -226,7 +226,7 @@ int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd) {
 void zunoAddAssociation(byte type, uint32_t params) {
 	uint8_t						num;
 
-	if (type == 0 || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER_LIMITATION)
+	if (type == 0 || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
 		return ;
 	ZUNO_CFG_ASSOCIATION_COUNT++;
 	ZUNO_CFG_ASSOCIATION(num).type = type;

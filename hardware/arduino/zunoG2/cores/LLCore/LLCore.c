@@ -36,12 +36,13 @@
 #define SKETCH_FLAGS 0x00
 #endif
 
-extern unsigned long  __etext;
-extern unsigned long  __data_start__;
-extern unsigned long  __data_end__;
-extern unsigned long  __bss_start__;
-extern unsigned long  __bss_end__;
-extern unsigned long  __StackTop;
+extern unsigned long __etext;
+extern unsigned long __data_start__;
+extern unsigned long __data_end__;
+extern unsigned long __bss_start__;
+extern unsigned long __bss_end__;
+extern unsigned long __HeapBase;
+extern unsigned long __HeapLimit;
 
 #ifndef ZUNO_SKETCH_BUILD_TS
 #define ZUNO_SKETCH_BUILD_TS 0
@@ -73,7 +74,7 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     DBG_CONSOLE_PIN};
 
 uint8_t zunoIsMalloc(void *b) {
-	if (b >= (void *)&__bss_end__ && b < (void *)&__StackTop)
+	if (b >= (void *)&__HeapBase && b < (void *)&__HeapLimit)
 		return (true);
 	return (false);
 }
@@ -83,10 +84,10 @@ extern "C" void *_sbrk(intptr_t delta) {
 	uint8_t				*prev_heap_end;
 
 	if (heap_end == 0)
-		heap_end = (uint8_t *)&__bss_end__;
+		heap_end = (uint8_t *)&__HeapBase;
 	prev_heap_end = heap_end;
 	delta = ((delta + (sizeof(size_t) - 1)) & (0 - sizeof(size_t)));
-	if (heap_end + delta > (uint8_t *)&__StackTop) {
+	if (heap_end + delta > (uint8_t *)&__HeapLimit) {
 		errno = ENOMEM;
 		return (void *) -1;
 	}
@@ -287,63 +288,42 @@ extern void (*__init_array_start []) (void) __attribute__((weak));
 extern void (*__init_array_end []) (void) __attribute__((weak));
 extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
-extern "C"{
-    void _init();
-    void _fini();
-};
 
 void LLInit() {
-    // Constructors....
-    size_t count, i;
-    // Global values initialization
-    uint32_t * cd = &__etext;
-    for(uint32_t * p=&__data_start__; p<&__data_end__; p++, cd++){
-        *p = *cd;
-        WDOG_Feed();
-    }
-    for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
-        *p = 0;
-        WDOG_Feed();
-    }
-    count = __preinit_array_end - __preinit_array_start;
-    for (i = 0; i < count; i++)
-        __preinit_array_start[i]();
-    _init();
-    count = __init_array_end - __init_array_start;
-	for (i = 0; i < count; i++)
-		__init_array_start[i]();
+	size_t				i;
+	uint32_t			*b;
+	uint32_t			*e;
+
 	i = 0;
 	while (i <= ZUNO_PIN_LAST_INDEX)
 		pinMode(i++, INPUT);//set default state
+	// Constructors....
+	// Global values initialization
+	uint32_t * cd = &__etext;
+	for(uint32_t * p=&__data_start__; p<&__data_end__; p++, cd++){
+		*p = *cd;
+	}
+	for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
+		*p = 0;
+	}
+	b = (uint32_t *)&__preinit_array_start;
+	e = (uint32_t *)&__preinit_array_end;
+	while (b < e) {
+		((void (*)())b[0])();
+		b++;
+	}
+	b = (uint32_t *)&__init_array_start;
+	e = (uint32_t *)&__init_array_end;
+	while (b < e) {
+		((void (*)())b[0])();
+		b++;
+	}
+	WDOG_Feed();
 }
 
 void LLDestroy() {
-   
-    // Destructors....
-    int count;
-    int i;
-    /*for (i = 0; i < atexit_count; i++) {
-            atexit_funcs[i]();
-    }*/
-    count = __fini_array_end - __fini_array_start;
-    #ifdef LOGGING_DBG
-    LOGGING_UART.print("DESTROY Count:");
-    LOGGING_UART.print(count);
-    LOGGING_UART.println(" Items: ");
-    for (i = count-1; i >= 0; i--){
-        LOGGING_UART.print("ADDR:");
-        LOGGING_UART.println((unsigned long)__fini_array_start[i], HEX);
-    }
-    #endif
-    
-    for (i = count-1; i >= 0; i--)
-        __fini_array_start[i]();
-    _fini();
-    #ifdef LOGGING_DBG
-    LOGGING_UART.println("DESTOY STOP!!!");
-    #endif
-    
 }
+
 #ifdef WITH_AUTOSETUP
 // this is managing using "preproc" util
 void zuno_static_autosetup();

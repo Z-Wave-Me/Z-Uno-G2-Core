@@ -48,6 +48,7 @@ class SPIClass {
 		SPIClass(uint8_t numberConfig);
 		ZunoError_t											begin(void);
 		ZunoError_t											begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+		void												beginTransaction(SPISettings spi_setings) {this->beginTransaction(spi_setings.clock, spi_setings.bitOrder, spi_setings.dataMode);};
 		inline void											beginTransaction(SPISettings *spi_setings) {this->beginTransaction(spi_setings->clock, spi_setings->bitOrder, spi_setings->dataMode);};
 		inline void											beginTransaction(void) {this->beginTransaction(1000000, MSBFIRST, SPI_MODE0);};
 		void												beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode);

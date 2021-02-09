@@ -57,10 +57,7 @@ const ZunoDhtTypeConfig_t gconfigTable[] = {
 };
 
 /* Public Constructors */
-DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime((size_t)(0 - DHT_MIN_INTERVAL)), _pin(pin), _type(type)
-#if (ZUNO_ZERO_BSS != true)
-	, _value({0}), _crc(0), _lpKey(0)
-#endif
+DHT::DHT(uint8_t pin, DHT_TYPE_SENSORS_t type): _lastreadtime((size_t)(0 - DHT_MIN_INTERVAL)), _pin(pin), _type(type), _lpKey(false), _result(ZunoErrorDhtCrc)
 {
 }
 

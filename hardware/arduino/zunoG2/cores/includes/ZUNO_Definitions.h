@@ -14,8 +14,6 @@
 	#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
 #endif
 
-#define ZUNO_ZERO_BSS				true//Раз глобально обнуляем всю bss и оператор не используем то и c++ нечего в каждом статичном класе вручную обнулять память
-
 typedef enum
 {
 	ZunoErrorOk,//Good!!!

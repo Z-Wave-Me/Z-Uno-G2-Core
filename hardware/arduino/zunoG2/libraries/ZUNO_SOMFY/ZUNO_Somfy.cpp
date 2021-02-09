@@ -104,7 +104,7 @@ typedef struct								SomfyCmdPostMotorPosition_s
 ZunoSync_t SomfyClass::_syncSomfy = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterSomfy);
 
 /* Public Constructors */
-SomfyClass::SomfyClass(HardwareSerial *hardwareSerial): _hardwareSerial(hardwareSerial), _key(true) {
+SomfyClass::SomfyClass(HardwareSerial *hardwareSerial): _hardwareSerial(hardwareSerial), _list(0), _key(true) {
 }
 
 /* Public Methods */

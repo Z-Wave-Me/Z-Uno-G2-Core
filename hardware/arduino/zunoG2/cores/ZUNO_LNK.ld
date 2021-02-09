@@ -91,9 +91,6 @@ SECTIONS
     *(.rodata.*)
     *(.text*)
 
-	_sbrk = .;
-	KEEP(*(._sbrk))
-
     KEEP(*(.init))
     KEEP(*(.fini))
     /* .ctors */

@@ -2,6 +2,7 @@
 #ifndef ZUNO_ARDUINOH
 #define ZUNO_ARDUINOH
 
+#include "new.h"
 #include "ZUNO_Definitions.h"
 #include "ArduinoTypes.h"
 #include "LLCore.h"

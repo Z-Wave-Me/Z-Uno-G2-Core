@@ -78,14 +78,14 @@ uint8_t zunoIsMalloc(void *b) {
 	return (false);
 }
 
-void *sbrk(intptr_t delta) __attribute__((section("._sbrk")));
-void *sbrk(intptr_t delta) {
-	static uint8_t		*heap_end;
+extern "C" void *_sbrk(intptr_t delta) {
+	static uint8_t		*heap_end = 0;
 	uint8_t				*prev_heap_end;
 
 	if (heap_end == 0)
 		heap_end = (uint8_t *)&__bss_end__;
 	prev_heap_end = heap_end;
+	delta = ((delta + (sizeof(size_t) - 1)) & (0 - sizeof(size_t)));
 	if (heap_end + delta > (uint8_t *)&__StackTop) {
 		errno = ENOMEM;
 		return (void *) -1;

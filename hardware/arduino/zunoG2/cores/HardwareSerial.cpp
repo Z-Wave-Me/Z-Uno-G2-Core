@@ -77,11 +77,7 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 };
 
 /* Public Constructors */
-HardwareSerial::HardwareSerial(uint8_t numberConfig)
-#if (ZUNO_ZERO_BSS != true || false != 0)
-	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0), _buffer_count(0)
-#endif
-{
+HardwareSerial::HardwareSerial(uint8_t numberConfig): _lpKey(false), _bFree(false) {
 	if (numberConfig >= (sizeof(HardwareSerial::_configTable) / sizeof(ZunoHardwareSerialConfig_t)))
 		numberConfig = 0;
 	this->_numberConfig = numberConfig;

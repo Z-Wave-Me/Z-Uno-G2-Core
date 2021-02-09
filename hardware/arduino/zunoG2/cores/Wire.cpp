@@ -52,11 +52,7 @@ const ZunoWireI2CTypeConfig_t	TwoWire::_configTable1 =
 };
 
 /* Public Constructors */
-TwoWire::TwoWire(uint8_t numberConfig)
-#if (ZUNO_ZERO_BSS != true || false != 0)
-	: _freqScl(0), _buffer(0), _buffer_count(0), _buffer_max(0), _address(0), _flags(0), _bFree(false), _lpKey(0)
-#endif
-{
+TwoWire::TwoWire(uint8_t numberConfig): _freqScl(0), _flags(0), _bFree(false), _lpKey(false) {
 	const ZunoWireI2CTypeConfig_t				*config;
 
 	switch (numberConfig) {
@@ -73,7 +69,6 @@ TwoWire::TwoWire(uint8_t numberConfig)
 /* Public Methods */
 ZunoError_t TwoWire::begin(uint8_t address, uint8_t scl, uint8_t sda) {
 	void				*b;
-	size_t				len;
 
 	if ((b = malloc(WIRE_BUFFER_LENGTH)) == 0)
 		return (ZunoErrorMemory);
@@ -117,7 +112,7 @@ wire_buffer_len TwoWire::available(void) {
 	i2c_config = this->_i2c_config;
 	if (zunoSyncLockRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	out = this->_available(i2c_config);
+	out = this->_available();
 	zunoSyncReleseRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey);
 	return (out);
 }
@@ -129,7 +124,7 @@ uint8_t TwoWire::read(void) {
 	i2c_config = this->_i2c_config;
 	if (zunoSyncLockRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	out = this->_read(i2c_config);
+	out = this->_read();
 	zunoSyncReleseRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey);
 	return (out);
 }
@@ -151,7 +146,7 @@ void TwoWire::setClock(uint32_t clock) {
 }
 
 /* Private Methods */
-inline wire_buffer_len TwoWire::_available(const ZunoWireI2CTypeConfig_t *i2c_config) {
+inline wire_buffer_len TwoWire::_available(void) {
 	wire_buffer_len						aviable_count;
 	wire_buffer_len						buffer_count;
 
@@ -163,7 +158,7 @@ inline wire_buffer_len TwoWire::_available(const ZunoWireI2CTypeConfig_t *i2c_co
 	return (aviable_count - buffer_count);
 }
 
-inline uint8_t TwoWire::_read(const ZunoWireI2CTypeConfig_t *i2c_config) {
+inline uint8_t TwoWire::_read(void) {
 	wire_buffer_len						buffer_count;
 
 	if ((this->_flags & WIRE_FLAG_READ) == 0)
@@ -335,6 +330,7 @@ wire_buffer_len TwoWire::_requestFromLock(uint8_t address, wire_buffer_len quant
 		return (0);
 	out = this->_requestFrom(address, quantity, this->_flags | bFlags, i2c_config);
 	zunoSyncReleseRead(i2c_config->lpLock, SyncMasterI2c, &this->_lpKey);
+	return (out);
 }
 wire_buffer_len TwoWire::_requestFrom(uint8_t address, wire_buffer_len quantity, size_t bFlags, const ZunoWireI2CTypeConfig_t *i2c_config) {
 	
@@ -378,7 +374,7 @@ inline void TwoWire::_setBusFreq(I2C_TypeDef *i2c, uint32_t freqScl) {
 	I2C_BusFreqSet(i2c, 0, freqScl, clhr);
 }
 
-void TwoWire::_I2C_IRQHandler(const ZunoWireI2CTypeConfig_t *i2c_config, size_t flags) {
+void TwoWire::_I2C_IRQHandler(const ZunoWireI2CTypeConfig_t *i2c_config) {
 	I2C_TypeDef						*i2c;
 	size_t							uniqId;
 	size_t							count;
@@ -395,11 +391,13 @@ void TwoWire::_I2C_IRQHandler(const ZunoWireI2CTypeConfig_t *i2c_config, size_t 
 }
 
 void TwoWire::_I2C1_IRQHandler(size_t flags) {
-	TwoWire::_I2C_IRQHandler(&TwoWire::_configTable1, flags);
+	TwoWire::_I2C_IRQHandler(&TwoWire::_configTable1);
+	(void)flags;
 }
 
 void TwoWire::_I2C0_IRQHandler(size_t flags) {
-	TwoWire::_I2C_IRQHandler(&TwoWire::_configTable0, flags);
+	TwoWire::_I2C_IRQHandler(&TwoWire::_configTable0);
+	(void)flags;
 }
 
 /* Preinstantiate Objects */

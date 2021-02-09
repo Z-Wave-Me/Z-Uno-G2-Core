@@ -345,6 +345,7 @@ void I2C_BusFreqSet(I2C_TypeDef *i2c,
     div = 1;
   }
   i2c->CLKDIV = (uint32_t)div;
+  (void)minFreq;
 }
 
 /***************************************************************************//**

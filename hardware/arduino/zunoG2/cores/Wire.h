@@ -42,7 +42,6 @@ typedef struct							ZunoWireI2CTypeConfig_s
 class TwoWire {
 	public:
 		TwoWire(uint8_t numberConfig);
-		// ~TwoWire(void) {this->end();};
 		inline ZunoError_t						begin(void) {return (this->begin(0));};//0 - master
 		inline ZunoError_t						begin(uint8_t scl, uint8_t sda) {return (this->begin(0, scl, sda));};//0 - master
 		inline ZunoError_t						begin(uint8_t address) {return (this->begin(address, this->_i2c_config->scl, this->_i2c_config->sda));};

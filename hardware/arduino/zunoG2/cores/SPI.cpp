@@ -60,10 +60,7 @@ const USART_InitSync_TypeDef SPIClass::_initSpi = SPI_INIT_DEFAULT;//USART_INITS
 
 
 /* Public Constructors */
-SPIClass::SPIClass(uint8_t numberConfig){
-#if (ZUNO_ZERO_BSS != true)
-	:_baudrate(0), _lpKey(0)
-#endif
+SPIClass::SPIClass(uint8_t numberConfig): _baudrate(0), _lpKey(false) {
 	const ZunoSpiUsartTypeConfig_t				*config;
 
 	switch (numberConfig) {

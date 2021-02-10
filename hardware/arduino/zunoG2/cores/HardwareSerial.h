@@ -31,6 +31,7 @@ class HardwareSerial : public Stream {
 		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx);
 		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len);
 		void									end();
+		void									changeParity(USART_Parity_TypeDef parity);
 		ssize_t									printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
 		uint8_t									write(unsigned long value);
 		uint8_t									write(long value);

@@ -77,11 +77,7 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 };
 
 /* Public Constructors */
-HardwareSerial::HardwareSerial(uint8_t numberConfig)
-#if (ZUNO_ZERO_BSS != true || false != 0)
-	:_bFree(false), _lpKey(false), _buffer(0), _buffer_len(0), _buffer_count(0)
-#endif
-{
+HardwareSerial::HardwareSerial(uint8_t numberConfig): _lpKey(false), _bFree(false) {
 	if (numberConfig >= (sizeof(HardwareSerial::_configTable) / sizeof(ZunoHardwareSerialConfig_t)))
 		numberConfig = 0;
 	this->_numberConfig = numberConfig;
@@ -187,6 +183,21 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (count);
 }
+
+void HardwareSerial::changeParity(USART_Parity_TypeDef parity) {
+	const ZunoHardwareSerialConfig_t			*config;
+	ZunoSync_t									*lpLock;
+	USART_TypeDef								*usart;
+
+	config = &this->_configTable[this->_numberConfig];
+	lpLock = config->lpLock;
+	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	usart = config->usart;
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_PARITY_MASK)) | parity;
+	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+}
+
 
 /* Private Methods */
 inline size_t HardwareSerial::_available(void) {

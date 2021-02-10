@@ -14,8 +14,6 @@
 	#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
 #endif
 
-#define ZUNO_ZERO_BSS				true//Раз глобально обнуляем всю bss и оператор не используем то и c++ нечего в каждом статичном класе вручную обнулять память
-
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
@@ -47,6 +45,11 @@ typedef enum
 	ZunoErrorDhtCrc,
 	ZunoErrorTrngNotDate,
 	ZunoErrorTrngFaill,
+	ZunoErrorSomfyNotDevice,
+	ZunoErrorSomfyNack,
+	ZunoErrorNotData,
+	ZunoErrorOverflow,
+	ZunoErrorNotMatchCrc,
 	ZunoErrorMemory//Failed to allocate memory
 } ZunoError_t;
 
@@ -55,7 +58,6 @@ typedef enum
 #define MAX_CHANNEL_PARAMS                              4
 #define ZUNO_MAX_MULTI_CHANNEL_NUMBER 					32
 #define ZUNO_MAX_ASSOC_NUMBER 							32
-#define ZUNO_MAX_ASSOC_NUMBER_LIMITATION				16
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
 #define ZUNO_CODE_START                                 0x33000L
@@ -623,7 +625,34 @@ enum {
 	CTRL_GROUP_2,
 	CTRL_GROUP_3,
 	CTRL_GROUP_4,
-	CTRL_GROUP_5
+	CTRL_GROUP_5,
+	CTRL_GROUP_6,
+	CTRL_GROUP_7,
+	CTRL_GROUP_8,
+	CTRL_GROUP_9,
+	CTRL_GROUP_10,
+	CTRL_GROUP_11,
+	CTRL_GROUP_12,
+	CTRL_GROUP_13,
+	CTRL_GROUP_14,
+	CTRL_GROUP_15,
+	CTRL_GROUP_16,
+	CTRL_GROUP_17,
+	CTRL_GROUP_18,
+	CTRL_GROUP_19,
+	CTRL_GROUP_20,
+	CTRL_GROUP_21,
+	CTRL_GROUP_22,
+	CTRL_GROUP_23,
+	CTRL_GROUP_24,
+	CTRL_GROUP_25,
+	CTRL_GROUP_26,
+	CTRL_GROUP_27,
+	CTRL_GROUP_28,
+	CTRL_GROUP_29,
+	CTRL_GROUP_30,
+	CTRL_GROUP_31,
+	CTRL_GROUP_32
 };
 
 #ifndef DEFAULT_CONFIG_FLAGS

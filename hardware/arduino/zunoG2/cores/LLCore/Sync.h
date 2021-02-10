@@ -11,6 +11,7 @@ typedef enum							SyncMaster_e
 	SyncMasterI2c,
 	SyncMasterSpi,
 	SyncMasterNeoPixel,
+	SyncMasterSomfy,
 	SyncMasterPwm,
 	SyncMasterBtn,
 	SyncMasterDht

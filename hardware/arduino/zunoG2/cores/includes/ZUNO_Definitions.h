@@ -58,15 +58,15 @@ typedef enum
 #define ZUNO_MAX_ASSOC_NUMBER_LIMITATION				16
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
-#define ZUNO_CODE_START                                 0x30000L
+#define ZUNO_CODE_START                                 0x33000L
 #define USER_SPACE_FLASH_ADDR                           0x10000
-#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0xA000-0x100)
+#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0xA000-0x3100)
 #define MAX_ZUNO_PWMS           						4
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
 
 
-enum {
+enum { 
 	ZUNO_EEPROM_OK,
 	ZUNO_EEPROM_NOTALIGNED,
 	ZUNO_EEPROM_OUT_OF_MEM,

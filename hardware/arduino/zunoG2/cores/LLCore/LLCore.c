@@ -356,9 +356,19 @@ bool g_logging_inited = false;
 bool g_sketch_inited = false;
 
 void * zunoJumpTable(int vec, void * data) {
-   
+  
     byte sub_handler_type = 0x00;
-
+    /*
+    // DBG CODE
+    static uint32_t pl = 0;
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(1000);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(1000);
+    pl++;
+    return (void*)pl; // 
+    */
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
@@ -369,6 +379,7 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef LOGGING_DBG
             LOGGING_UART.begin(115200);
             #endif
+            
             g_sketch_inited = false;
             break;
         case ZUNO_JUMPTBL_LOOP:
@@ -401,7 +412,8 @@ void * zunoJumpTable(int vec, void * data) {
             WDOG_Feed();
             zuno_CCTimer(((uint32_t)data));
             break;
-        case ZUNO_JUMPTBL_IRQ:{
+        case ZUNO_JUMPTBL_IRQ:
+            {
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
             }
@@ -410,7 +422,7 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef LOGGING_DBG
             LOGGING_UART.println("!SLEEP");
             #endif
-            LLDestroy();
+            //LLDestroy();
             break;
         default:
             break; // UNKNOWN VECTOR

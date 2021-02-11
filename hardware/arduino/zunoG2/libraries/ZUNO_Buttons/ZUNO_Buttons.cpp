@@ -14,7 +14,7 @@ const btn_touch_value PinBtn::_baseLineTouch[1] = {0};//ZDMA_EXT_FLAGS_SRC_NOT_I
 
 
 /* Values */
- ZunoBtnValues_t PinBtn::_values = {0};
+ ZunoBtnValues_t PinBtn::_values = {0, 0, 0, 0, 0, 0, 0};
 
 /* Public Constructors */
 PinBtn::PinBtn() {
@@ -163,7 +163,6 @@ ZunoError_t PinBtn::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
 	ZunoBtnHeader_t			*list;
 	size_t					len;
 	ZunoError_t				ret;
-	ZunoButtonMode_t		mode;
 
 	if (zunoIsIOThread() == true)
 		return (ZunoErrorTredIo);
@@ -204,7 +203,6 @@ ZunoError_t PinBtn::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
 }
 
 inline ZunoError_t PinBtn::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init) {
-	ZunoError_t				ret;
 	ZunoButtonMode_t		mode;
 
 	if (list->type != type)
@@ -248,10 +246,10 @@ inline void PinBtn::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *i
 	list->event_map = 0;
 	list->state = BTN_STATE_IDLE;
 	delay = &((ZunoBtnButtonInit_t *)init)->delay;
-	list->delayDebounce = delay->delayDebounce;
-	list->delaySingleClick = delay->delaySingleClick;
-	list->delayLongClick = delay->delayLongClick;
-	list->delayFree = delay->delayFree;
+	list->delayDebounce = delay->delayDebounce / BTN_DELAY_DIVIDED;
+	list->delaySingleClick = delay->delaySingleClick / BTN_DELAY_DIVIDED;
+	list->delayLongClick = delay->delayLongClick / BTN_DELAY_DIVIDED;
+	list->delayFree = delay->delayFree / BTN_DELAY_DIVIDED;
 }
 
 void PinBtn::_closeTimer(void) {
@@ -284,7 +282,7 @@ inline void PinBtn::_deactive(ZunoBtnHeader_t *list) {
 	switch (list->type) {
 		case BtnTypeButton:
 			list_button = (ZunoBtnButton_t *)list;
-			switch (list_button->mode) {
+			switch ((size_t)list_button->mode) {
 				case BtnButtonModeTimer:
 					this->_closeTimer();
 					break ;
@@ -316,10 +314,11 @@ inline ZunoError_t PinBtn::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeade
 	ZunoBtnButton_t			*list_button;
 
 	pinMode(pin, INPUT_PULLUP_FILTER);
+	ret = ZunoErrorOk;//-Wall -Wextra -Werror
 	switch (type) {
 		case BtnTypeButton:
 			list_button = (ZunoBtnButton_t *)list;
-			switch (list_button->mode) {
+			switch ((size_t)list_button->mode) {
 				case BtnButtonModeTimer:
 					ret = this->_openTimer();
 					break ;
@@ -424,7 +423,7 @@ ZunoError_t PinBtn::_initCsen(size_t param) {
 		__NOP();
 	PinBtn::_values.touchFullClick = CSEN_DataGet(CSEN) / BTN_TOUCH_MAX_CLICK_POWER;
 	pinMode(initBtn->pin, INPUT_PULLUP_FILTER);
-	CSEN->CTRL = CSEN->CTRL ^ (csenTrigSelStart << _CSEN_CTRL_STM_SHIFT) | (csenTrigSelTimer << _CSEN_CTRL_STM_SHIFT);
+	CSEN->CTRL = (CSEN->CTRL ^ (csenTrigSelStart << _CSEN_CTRL_STM_SHIFT)) | (csenTrigSelTimer << _CSEN_CTRL_STM_SHIFT);
 	return (ZunoErrorOk);
 }
 
@@ -572,7 +571,7 @@ void PinBtn::_updateTimerCommon(size_t time_now, ZunoBtnHeader_t *list, size_t p
 	if (state_next == BTN_STATE_IDLE && pressed == 0)
 		return ;
 	time_diff = time_now - list->lastTransition;
-	switch (state_next) {
+	switch ((size_t)state_next) {
 		case BTN_STATE_IDLE:
 			state_next = BTN_STATE_DEBOUNCE;
 			list->event_map = 0;
@@ -676,7 +675,7 @@ void PinBtn::_updateExtIntButton(uint8_t pinExtInt) {
 	time_now = millis() / BTN_DELAY_DIVIDED;
 	time_diff = time_now - list->header.lastTransition;
 	delayDebounce = list->header.delayDebounce;
-	switch (state_next) {
+	switch ((size_t)state_next) {
 		case BTN_STATE_IDLE:
 			state_next = BTN_STATE_PRESSED;
 			list->header.event_map = 0;
@@ -738,6 +737,7 @@ void PinBtn::_updateExtIntButton(uint8_t pinExtInt) {
 				state_next = BTN_STATE_IDLE;
 				list->header.event_map = (BTN_EVENT_TRIPLE_CLICK | BTN_EVENT_RELEASE);
 			}
+			break ;
 		case BTN_STATE_RELEASE:
 			state_next = BTN_STATE_IDLE;
 			list->header.event_map |= BTN_EVENT_RELEASE;

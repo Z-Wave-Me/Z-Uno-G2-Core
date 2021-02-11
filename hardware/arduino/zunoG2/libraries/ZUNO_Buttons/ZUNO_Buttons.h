@@ -3,6 +3,8 @@
 
 #include "ZUNO_Buttons_define.h"
 
+#define BTN_DELAY_DIVIDED					ZUNO_SYSTIMER_PERIOD_MC
+
 #define BTN_TOUCH_UNIQ_DMA_DATA				((size_t)(&PinBtn::_values.toushAutoScanBufferLp))
 #define BTN_TOUCH_UNIQ_DMA_BASELINE			((size_t)(&PinBtn::_values.toushAutoScanBufferBlockMax))
 

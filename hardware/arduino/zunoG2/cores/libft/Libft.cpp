@@ -152,6 +152,8 @@ char *ultoa(unsigned long value, char *str, int base) {
 	return (str);
 }
 
+
+/* Float */
 typedef struct					LibftFloatValue_s
 {
 	union
@@ -161,24 +163,7 @@ typedef struct					LibftFloatValue_s
 	};
 }								LibftFloatValue_t;
 
-static inline uint32_t MantissaMul(uint32_t mantissa, uint32_t multiplier)
-{
-    mantissa <<= 8;
-//    uint32_t t = 0;
-//    do
-//    {
-// 	 	mantissa >>= 1;
-//        if(multiplier & 0x80000000)
-//        {
-//            t += mantissa;
-//        }
-//        multiplier <<= 1;
-//    }while(multiplier);
-//    return t;
-	return ((uint64_t)mantissa * multiplier) >> 32;
-}
-
-#define LIBFT_FLOAT_ENGINE_PRESC				7
+#define LIBFT_FLOAT_ENGINE_PRESC				(FLT_DIG + 1)//7
 
 typedef enum			LibftFloatType_s
 {

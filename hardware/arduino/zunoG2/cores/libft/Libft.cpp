@@ -200,16 +200,16 @@ size_t _floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b) {
 			b[0] = '+';
 		switch ((size_t)type) {
 			case LibftFloatTypeNull:
-				b[1] = '0';
-				b = b + 2;
+				b[1] = 'O';
+				b[2] = 'v';
 				break ;
 			case LibftFloatTypeInf:
 				b[1] = 'I';
 				b[2] = 'n';
-				b[3] = 'F';
-				b = b + 4;
 				break ;
 		}
+		b[3] = 'F';
+		b = b + 4;
 	}
 	b[0] = 0;
 	return (b - save);

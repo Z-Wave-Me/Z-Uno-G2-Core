@@ -23,7 +23,7 @@ public:
     size_t print(unsigned int, int = DEC);
     size_t print(long, int = DEC);
     size_t print(unsigned long, int = DEC);
-    size_t print(double, int = 2);
+    size_t print(float, int = 2);
 
     size_t println(const char[]);
     size_t println(char);
@@ -32,11 +32,11 @@ public:
     size_t println(unsigned int, int = DEC);
     size_t println(long, int = DEC);
     size_t println(unsigned long, int = DEC);
-    size_t println(double, int = 2);
+    size_t println(float, int = 2);
     size_t println(void);
 
     size_t printNumber(unsigned long, uint8_t base);
-    size_t printFloat(double, uint8_t digits); 
+    size_t printFloat(float, uint8_t digits); 
 
     uint8_t fixPrint(long, uint8_t  = 2);
     word    dumpPrint(uint8_t *, uint8_t);

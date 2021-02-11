@@ -147,7 +147,7 @@ size_t Print::printNumber(unsigned long n, uint8_t base)
 }
 
 size_t Print::printFloat(float number, uint8_t digits) {
-	char				buff[FLT_MAX_10_EXP + FLT_MAX_10_EXP + 1 + 1];//1+1 - zero; +1 '.'
+	char				buff[FLT_MAX_10_EXP + FLT_MAX_10_EXP + 1 + 1 + 1];//++1 - zero; +1 '.'; +1 - neg
 	size_t				n;
 
 	if (digits > FLT_MAX_10_EXP)

@@ -7,6 +7,7 @@
 #include "stdbool.h"
 #include "Zprintf_privat.h"
 #include "Zprintf_display.h"
+#include "Libft.h"
 #include "Zauxiliary.h"
 #include "Zprintf.h"
 

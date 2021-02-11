@@ -15,6 +15,7 @@
 #include "ZWSupport.h"
 #include "CrtxCmu.h"
 #include "HardwareSerial.h"
+#include "Libft.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
 

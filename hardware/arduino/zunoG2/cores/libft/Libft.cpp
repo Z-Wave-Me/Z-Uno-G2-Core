@@ -8,7 +8,7 @@
 #include "errno.h"
 #include "limits.h"
 #include "Libft.h"
-#include "Arduino.h"
+#include "float.h"
 
 /* Convert a string to a long integer. */
 long strtol(const char *__restrict s, char **__restrict nptr, int base)

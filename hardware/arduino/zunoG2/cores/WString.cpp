@@ -107,7 +107,7 @@ String::String(float value, unsigned char decimalPlaces)
 	init();
 	if (decimalPlaces > FLT_MAX_10_EXP)
 		decimalPlaces = FLT_MAX_10_EXP;
-	*this = dtostrf(value, 0, decimalPlaces, &buff[0]);
+	*this = dtostrff(value, 0, decimalPlaces, &buff[0]);
 }
 
 String::~String()
@@ -291,7 +291,7 @@ unsigned char String::concat(unsigned long num)
 unsigned char String::concat(float num) {
 	char				buff[FLT_MAX_10_EXP + FLT_MAX_10_EXP + 1 + 1 + 1];//++1 - zero; +1 '.'; +1 - neg
 
-	char* string = dtostrf(num, 4, 2, &buff[0]);
+	char* string = dtostrff(num, 4, 2, &buff[0]);
 	return concat(string, strlen(string));
 }
 
@@ -675,6 +675,6 @@ long String::toInt(void) const
 
 float String::toFloat(void) const
 {
-	if (buffer) return atof(buffer);
+	if (buffer) return strtof(buffer, NULL);
 	return 0;
 }

@@ -31,10 +31,12 @@ inline char *utoa(unsigned int value, char *str, int base) {return(ultoa((unsign
 char *ltoa(long value, char *str, int base);
 inline char *itoa(int value, char *str, int base) {return (ltoa((long)value, str, base));};
 
-long strtol (const char *__restrict s, char **__restrict ptr, int base);
+long strtol(const char *s, char **nptr, int base);
 inline int atoi(const char *s) {return ((int)strtol(s, NULL, 10));};
 inline long atol(const char *s) {return ((long)strtol(s, NULL, 10));};
 
-char *dtostrf(float value, unsigned long width, unsigned long prec, char *s);
+char *dtostrff(float value, unsigned long width, unsigned long prec, char *s);
+
+float strtof(const char *nptr, char **endptr);
 
 #endif//LIBFT_H

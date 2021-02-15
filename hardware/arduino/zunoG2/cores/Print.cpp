@@ -144,7 +144,7 @@ uint8_t Print::formatPrint(int n, uint8_t format) {
 	count = format > n ? format - n : 0;
 	i = count;
 	while(i-- != 0)
-		this->write('0');
+		this->write(' ');
 	this->write(&buf[0], n);
 	return (count + n);
 }

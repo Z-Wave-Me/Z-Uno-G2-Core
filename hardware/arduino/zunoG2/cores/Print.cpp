@@ -91,19 +91,31 @@ size_t Print::printFloat(float number, uint8_t digits) {
 }
 
 uint8_t Print::fixPrint(long n, uint8_t precision) {
+	char				buf[4 * sizeof(long) + 1 + 1];//+1 zero byte +1 sign
+	char				*f;
+	char				*b;
 	size_t				count;
 
-	count = 0;
-	if (n < 0){ // Checking sign of number
+	f = &buf[sizeof(buf)];
+	b = &buf[0];
+	if (n < 0) {
 		n = -n;
-		this->write('-');
-		count++;
+		b++[0] = '-';
 	}
-	this->_printLNumber(n, 10, precision);
-	this->_addLeadingZeros(precision);
-	this->_writeChars();
-	count += _len;
-	return (count);
+	while (n != 0 && precision != 0) {
+		f--;
+		f[0] = this->_digit2hexchar(n % 10);
+		n = n / 10;
+		precision--;
+	}
+	ultoa((unsigned long)n, b, 10);
+	b = b + strlen(b);
+	if (f != &buf[sizeof(buf) - 1])
+		b++[0] = '.';
+	count = this->write(&buf[0], b - &buf[0]) + precision;
+	while(precision-- != 0)
+		this->write('0');
+	return (count + this->write(f, &buf[sizeof(buf)] - f));
 }
 
 size_t Print::dumpPrint(uint8_t *b, size_t count, size_t line_size) {
@@ -123,59 +135,16 @@ size_t Print::dumpPrint(uint8_t *b, size_t count, size_t line_size) {
 }
 
 uint8_t Print::formatPrint(int n, uint8_t format) {
+	char				buf[4 * sizeof(long) + 1 + 1];//+1 zero byte +1 sign
 	size_t				count;
+	size_t				i;
 
-	count = 0;
-	if ((format % 0x1F == 10) and (n < 0)){
-		n = -n;
-		this->write('-');
-		count++;
-	}
-	this->_printLNumber(n, format & 0x1F, 0xFF);
-	format >>= 5;
-	format++;
-	while(count < format){
+	ltoa(n, &buf[0], 10);
+	n = strlen(&buf[0]);
+	count = format > n ? format - n : 0;
+	i = count;
+	while(i-- != 0)
 		this->write('0');
-		count++;
-	}
-	this->_writeChars();
-	return (count);
+	this->write(&buf[0], n);
+	return (count + n);
 }
-
-/* Private Methods */
-void Print::_printLNumber(long number, uint8_t base, uint8_t precision){
-    uint8_t ch;
-    _len = 0;
-    if (base < 2) 
-        base = 10;
-    do{
-        if (_len == precision)
-            _buffer[_len++] = '.';
-        ch = number % base;
-        ch = _digit2hexchar(ch);
-        number /= base;
-        _buffer[_len++] = ch;
-
-    }while(number);
-}
-
-void Print::_addLeadingZeros(uint8_t precision){
-    if ((precision == 0xFF) or (precision < _len))
-        return;
-    precision -= _len;
-    while(precision--)
-        _buffer[_len++] = '0';
-    _buffer[_len++] = '.';
-    _buffer[_len++] = '0';
-
-}
-
-void Print::_writeChars(){
-    while(_len--)
-        write(_buffer[_len]);
-}
-
-
-
-
-

@@ -45,13 +45,7 @@ class Print{
 		inline size_t write(const char *buffer, size_t size) {return (this->write((const uint8_t *)buffer, size));}
 
 	private:
-		uint8_t _buffer[32];
-		uint8_t _len;
-
 		inline size_t _digit2hexchar(size_t d) {return ((d > 9) ? d - 10 + 'A' : d + '0');};
-		inline void _printLNumber(long number, uint8_t base, uint8_t precision);
-		inline void _addLeadingZeros(uint8_t precision);
-		inline void _writeChars();
 };
 
 #endif // _ZUNO_PRINT_H

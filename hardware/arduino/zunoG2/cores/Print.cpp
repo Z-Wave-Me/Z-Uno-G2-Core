@@ -5,64 +5,24 @@
 #include "float.h"
 #include "Libft.h"
 
-inline char digit2hexchar(byte d){
-    return (d > 9) ? d - 10 + 'A' : d + '0';
-}
+/* Public Methods */
 size_t  Print::write(const char *str) {
       if (str == NULL) return 0;
       return write((const uint8_t *)str, strlen(str));
 }
 
-size_t Print::print(const char str[])
-{
-  return write(str);
+size_t Print::print(long n, int base) {
+	char								buf[8 * sizeof(long) + 1 + 1]; // Assumes 8-bit chars plus zero byte. + sign
+
+	ltoa(n, &buf[0], base);
+	return (this->write(&buf[0]));
 }
 
-size_t Print::print(char c)
-{
-  return write(c);
-}
+size_t Print::print(unsigned long n, int base) {
+	char								buf[8 * sizeof(long) + 1]; // Assumes 8-bit chars plus zero byte.
 
-size_t Print::print(unsigned char b, int base)
-{
-  return print((unsigned long) b, base);
-}
-
-size_t Print::print(int n, int base)
-{
-  return print((long) n, base);
-}
-
-size_t Print::print(unsigned int n, int base)
-{
-  return print((unsigned long) n, base);
-}
-
-size_t Print::print(long n, int base)
-{
-  if (base == 0) {
-    return write(n);
-  } else if (base == 10) {
-    if (n < 0) {
-      int t = print('-');
-      n = -n;
-      return printNumber(n, 10) + t;
-    }
-    return printNumber(n, 10);
-  } else {
-    return printNumber(n, base);
-  }
-}
-
-size_t Print::print(unsigned long n, int base)
-{
-  if (base == 0) return write(n);
-  else return printNumber(n, base);
-}
-
-size_t Print::print(float n, int digits)
-{
-  return printFloat(n, digits);
+	ultoa(n, &buf[0], base);
+	return (this->write(&buf[0]));
 }
 
 size_t Print::println(const char c[])
@@ -121,99 +81,69 @@ size_t Print::println(float num, int digits)
   return n;
 }
 
-size_t Print::println(void)
-{
-  return write("\r\n");
-}
-
-size_t Print::printNumber(unsigned long n, uint8_t base)
-{
-  char buf[8 * sizeof(long) + 1]; // Assumes 8-bit chars plus zero byte.
-  char *str = &buf[sizeof(buf) - 1];
-
-  *str = '\0';
-
-  // prevent crash if called with base == 1
-  if (base < 2) base = 10;
-
-  do {
-    char c = n % base;
-    n /= base;
-
-    *--str = c < 10 ? c + '0' : c + 'A' - 10;
-  } while(n);
-
-  return write(str);
-}
-
 size_t Print::printFloat(float number, uint8_t digits) {
 	char				buff[FLT_MAX_10_EXP + FLT_MAX_10_EXP + 1 + 1 + 1];//++1 - zero; +1 '.'; +1 - neg
-	size_t				n;
 
 	if (digits > FLT_MAX_10_EXP)
 		digits = FLT_MAX_10_EXP;
-	dtostrf(number, 0, digits, &buff[0]);
-	n = strlen(&buff[0]);
-	this->write(&buff[0], n);
-	return (n);
+	dtostrff(number, 0, digits, &buff[0]);
+	return (this->write(&buff[0]));
 }
 
 uint8_t Print::fixPrint(long n, uint8_t precision) {
-    _n = 0;
-    
-    if (n < 0){ // Checking sign of number
-        n = -n;
-        write('-');
-        _n++;
-    }
-    printLNumber(n, 10, precision);
-    addLeadingZeros(precision);
-    writeChars();
-    _n += _len;
-    return _n;           
+	size_t				count;
+
+	count = 0;
+	if (n < 0){ // Checking sign of number
+		n = -n;
+		this->write('-');
+		count++;
+	}
+	this->_printLNumber(n, 10, precision);
+	this->_addLeadingZeros(precision);
+	this->_writeChars();
+	count += _len;
+	return (count);
 }
 
-word Print::dumpPrint(uint8_t * b, uint8_t count) {
-    byte ch;
-    _n = 0;
-    while(count--) {
-        ch = *b;
-        ch >>= 4;
-        ch = digit2hexchar(ch);
-        write(ch);
-        ch = *b;
-        ch &= 0x0F;
-        ch = digit2hexchar(ch);
-        write(ch);
-        _n++;
-        if((_n % dump_line_size) == 0)
-          write('\n');
-        else
-          write(' ');
-        b++;
-    }
-    return _n * 3;
-} 
+size_t Print::dumpPrint(uint8_t *b, size_t count, size_t line_size) {
+	size_t					ch;
+	size_t					n;
+
+	n = 0;
+	while(count--) {
+		ch = b++[0];
+		n++;
+		this->write(this->_digit2hexchar(ch >> 4));
+		this->write(this->_digit2hexchar(ch & 0x0F));
+		ch = ((n % line_size) == 0) ? '\n' : ' ';
+		this->write(ch);
+	}
+	return (n * 3);
+}
 
 uint8_t Print::formatPrint(int n, uint8_t format) {
-    _n = 0;
-    if ((format % 0x1F == 10) and (n < 0)){
-        n = -n;
-        write('-');
-        _n++;
-    }
-    printLNumber(n, format & 0x1F, 0xFF);
-    format >>= 5;
-    format++;
-    while(_n < format){
-      write('0');
-      _n++;
-    }
-    writeChars();
-    return _n;           
+	size_t				count;
+
+	count = 0;
+	if ((format % 0x1F == 10) and (n < 0)){
+		n = -n;
+		this->write('-');
+		count++;
+	}
+	this->_printLNumber(n, format & 0x1F, 0xFF);
+	format >>= 5;
+	format++;
+	while(count < format){
+		this->write('0');
+		count++;
+	}
+	this->_writeChars();
+	return (count);
 }
 
-void Print::printLNumber(long number, uint8_t base, uint8_t precision){
+/* Private Methods */
+void Print::_printLNumber(long number, uint8_t base, uint8_t precision){
     uint8_t ch;
     _len = 0;
     if (base < 2) 
@@ -222,14 +152,14 @@ void Print::printLNumber(long number, uint8_t base, uint8_t precision){
         if (_len == precision)
             _buffer[_len++] = '.';
         ch = number % base;
-        ch = digit2hexchar(ch);
+        ch = _digit2hexchar(ch);
         number /= base;
         _buffer[_len++] = ch;
 
     }while(number);
 }
 
-void Print::addLeadingZeros(uint8_t precision){
+void Print::_addLeadingZeros(uint8_t precision){
     if ((precision == 0xFF) or (precision < _len))
         return;
     precision -= _len;
@@ -240,7 +170,7 @@ void Print::addLeadingZeros(uint8_t precision){
 
 }
 
-void Print::writeChars(){
+void Print::_writeChars(){
     while(_len--)
         write(_buffer[_len]);
 }

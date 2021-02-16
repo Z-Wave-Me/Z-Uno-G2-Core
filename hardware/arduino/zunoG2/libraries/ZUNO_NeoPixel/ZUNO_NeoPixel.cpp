@@ -11,6 +11,7 @@
 #define NEO_ONE_HIGH_PERIOD_HZ800		64
 #define NEO_ZERO_HIGH_PERIOD_HZ400		20
 #define NEO_ONE_HIGH_PERIOD_HZ400		50
+#define NEO_MAX_TIMER_COUNT_LED			85
 
 #define NEO_TIMER_HZ800					800000
 #define NEO_TIMER_HZ400					400000
@@ -294,7 +295,7 @@ ZunoNeoColor_t NeoPixel::HSV(uint16_t hue, uint8_t sat, uint8_t val) {
 	c = v * ((float)sat / 100);
 	x = c * (1 - fabsf(fmodf(((float)hue / 60), 2) - 1));
 	m = v - c;
-	if (hue >= 0 && hue < 60) {
+	if (hue < 60) {
 		r = c;
 		g = x;
 		b = 0;
@@ -337,7 +338,6 @@ inline ZunoNeoList_t *NeoPixel::_fillPre(uint8_t neo_pin, volatile uint8_t *lpKe
 }
 
 inline void NeoPixel::_fill(ZunoNeoList_t *list, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness) {
-	ZunoNeoCountLed			count_led;
 
 	count = count + first_id_led;
 	if (count > list->count_led)

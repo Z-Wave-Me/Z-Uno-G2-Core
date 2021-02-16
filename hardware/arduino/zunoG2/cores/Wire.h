@@ -50,6 +50,7 @@ class TwoWire {
 		inline void								beginTransmission(uint8_t address) {this->beginTransmission(address, false);};
 		void									beginTransmission(uint8_t address, uint8_t forced_start);
 		inline size_t							write(uint8_t data) {return (this->write(&data, 1));};
+		inline size_t							write(int data) {return (this->write((const uint8_t *)&data, 1));};
 		size_t									write(const char *data);
 		size_t									write(const uint8_t *data, wire_buffer_len quantity);
 		inline uint8_t							transfer(uint8_t address, void *b, wire_buffer_len count) {return (this->_transferMasterToSlaveLock(address, b, count, WIRE_FLAG_STOP | WIRE_FLAG_WRITE));};

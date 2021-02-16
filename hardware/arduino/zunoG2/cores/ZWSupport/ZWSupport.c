@@ -123,6 +123,10 @@ bool compare_zw_channel(byte ch, byte targ) {
 }
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	byte i;
+	#ifdef LOGGING_UART
+	LOGGING_UART.print("N_CH=");
+	LOGGING_UART.println(ZUNO_CFG_CHANNEL_COUNT);
+	#endif
 	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel,cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
 			if(zuno_compare_channeltypeCC(&(ZUNO_CFG_CHANNEL(i)), cmd->cmd))

@@ -39,4 +39,6 @@ char *dtostrff(float value, unsigned long width, unsigned long prec, char *s);
 
 float strtof(const char *nptr, char **endptr);
 
+int rand(void);
+
 #endif//LIBFT_H

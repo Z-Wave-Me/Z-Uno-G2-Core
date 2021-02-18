@@ -3,7 +3,7 @@
 
 #define MY_SERIAL Serial0
 
-#define BUTTON		9
+#define BUTTON		23
 
 uint8_t dimmerValue = 100;
 

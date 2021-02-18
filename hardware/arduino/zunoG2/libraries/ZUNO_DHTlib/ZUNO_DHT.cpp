@@ -66,18 +66,20 @@ ZunoError_t DHT::begin(void) {
 	const ZunoDhtTypeConfig_t			*gconfigTable_b;
 	const ZunoDhtTypeConfig_t			*gconfigTable_e;
 	ZunoError_t							ret;
+	ZunoDhtTypeInit_t					init;
 
+	init.dht = this;
 	gconfigTable_b = &gconfigTable[0];
 	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
 	while (gconfigTable_b < gconfigTable_e) {
-		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)gconfigTable_b, &this->_lpKey);
+		init.config = gconfigTable_b;
+		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)&init, &this->_lpKey);
 		if (ret == ZunoErrorOk)
 			break ;
 		else if (ret != ZunoErrorResourceAlready)
 			return (ret);
 		gconfigTable_b++;
 	}
-	this->_freq = TIMER_TopGet(g_config->timer) / DHT_TOP_FREQ;
 	zunoSyncReleseWrite(g_config->lpLock, SyncMasterDht, &this->_lpKey);
 	return (ZunoErrorOk);
 }
@@ -182,9 +184,13 @@ ZunoError_t DHT::_init(size_t param) {
 	TIMER_TypeDef						*timer;
 	const ZunoDhtTypeConfig_t			*config;
 	TIMER_Init_TypeDef					init;
+	ZunoDhtTypeInit_t					*initDht;
 	TIMER_InitCC_TypeDef				initCC;
+	DHT									*dht;
+	size_t								freq;
 
-	config = (const ZunoDhtTypeConfig_t *)param;
+	initDht = (ZunoDhtTypeInit_t *)param;
+	config = initDht->config;
 	g_config = config;
 	CMU_ClockEnable(config->bus_clock, true);
 	timer = config->timer;
@@ -199,8 +205,11 @@ ZunoError_t DHT::_init(size_t param) {
 	initCC.mode = timerCCModeCapture;
 	initCC.filter = true;
 	TIMER_InitCC(timer, DHT_CHANNEL, &initCC);
-	TIMER_TopSet(timer, CMU_ClockFreqGet(config->bus_clock) / 1000000 * DHT_TOP_FREQ);
-	timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(8, DHT_CHANNEL);
+	freq = CMU_ClockFreqGet(config->bus_clock) / 1000000;
+	TIMER_TopSet(timer, freq * DHT_TOP_FREQ);
+	dht = initDht->dht;
+	dht->_freq = freq;
+	timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(dht->_pin, DHT_CHANNEL);
 	return (ZunoErrorOk);
 }
 

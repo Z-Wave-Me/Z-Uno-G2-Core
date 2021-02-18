@@ -729,3 +729,13 @@ float strtof(const char *nptr, char **endptr) {
 	}
 	return (_finishFloat(_packFloat(neg, single, lenSingleNull, fraction, lenFraction, lenFractionNull), s, endptr));
 }
+
+int rand(void) {
+	static uint64_t			number = 1;
+	uint64_t				tempos;
+
+	/* This multiplier was obtained from Knuth, D.E., "The Art of Computer Programming," Vol 2, Seminumerical Algorithms, Third Edition, Addison-Wesley, 1998, p. 106 (line 26) & p. 108 */
+	tempos = number * 6364136223846793005 + 1;
+	number = tempos;
+	return (int)((tempos >> 32) & RAND_MAX);
+}

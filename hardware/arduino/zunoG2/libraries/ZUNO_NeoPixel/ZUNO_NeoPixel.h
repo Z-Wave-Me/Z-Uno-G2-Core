@@ -68,7 +68,7 @@ class NeoPixel {
 		void							clear(uint8_t neo_pin);
 		void							setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color);
 		void							setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color, uint8_t brightness);
-		inline ZunoNeoColor_t			HSV(uint16_t hue) {this->HSV(hue, 100, 100);};
+		inline ZunoNeoColor_t			HSV(uint16_t hue) {return (this->HSV(hue, 100, 100));};
 		ZunoNeoColor_t					HSV(uint16_t hue, uint8_t sat, uint8_t val);
 		inline uint8_t					gamma(uint8_t x) {return (gNeoGammaTable[x]);};
 		inline ZunoNeoColor_t			RGB(uint8_t red, uint8_t green, uint8_t blue) {

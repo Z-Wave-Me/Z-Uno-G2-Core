@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#define MOD_BUS_WORD_COUNT					8
+
 typedef enum								ModBusRtuStatus_e
 {
 	ModBusRtuStatusSuccess = 0,
@@ -22,7 +24,7 @@ class ModBusRtuClass {
 		static inline size_t				getBetween(size_t baudrate) {
 			size_t			out;
 
-			out = ((80 * 1000) / baudrate) + 1;//3.5 * 11 = 40
+			out = (((MOD_BUS_WORD_COUNT * 11) * 1000) / baudrate);//3.5 * 11 = 40
 			if (out < 2)
 				return (2);
 			return (out);

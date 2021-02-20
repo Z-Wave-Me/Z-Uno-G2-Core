@@ -159,7 +159,7 @@ inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *des
 	if (dest == 0)
 		return (ZunoErrorOk);
 	digitalWrite(this->_dir_pin, LOW);
-	delay(MOD_BUS_RTU_TIMEOUT);
+	delay(this->_time_between + (this->_time_between * (dest_len / MOD_BUS_WORD_COUNT + 1)));
 	digitalWrite(this->_dir_pin, HIGH);
 	if ((ret = ModBusRtuClass::_receive(this->_hardwareSerial, dest, dest_len, &count)) != ZunoErrorOk)
 		return (ret);

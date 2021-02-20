@@ -30,10 +30,9 @@ class ModBusRtuClass {
 			return (out);
 		};
 		static size_t						send(HardwareSerial *hardwareSerial, void *src, size_t len);
-		static size_t						receive(HardwareSerial *hardwareSerial, void *dest, size_t len);
+		static ZunoError_t					receive(HardwareSerial *hardwareSerial, void *dest, size_t len, size_t *count, void *stat_bit, size_t len_start_bit);
 
 	private:
-		static inline ZunoError_t			_receive(HardwareSerial *hardwareSerial, void *dest, size_t len, size_t *count);
 		inline ZunoError_t					_sendRtu(void *src, size_t src_len, void *dest, size_t dest_len);
 		HardwareSerial						*_hardwareSerial;
 		uint8_t								_time_between;

@@ -299,6 +299,8 @@ bool Mercury206Meter::setTarifTable(byte ii2, MercuryTarifTimeTable * tt) {
 
 /* Private Methods */
 inline size_t Mercury206Meter::_fillCmd(byte cmd, size_t len, uint8_t *b) {
+	size_t							count;
+
 	memcpy(b, &this->_sn[0], sizeof(this->_sn));
 	b[sizeof(this->_sn)] = cmd;
 	if (ModBusRtuClass::send(&MERCURY_SERIAL, b, (len + 2)) == false)
@@ -307,7 +309,9 @@ inline size_t Mercury206Meter::_fillCmd(byte cmd, size_t len, uint8_t *b) {
 	digitalWrite(this->_dir_pin, MODBUS_RECEIVE);
 	delay(4+MAX_MODBUS_BUFF+5+1);
 	digitalWrite(this->_dir_pin, MODBUS_TRANSMIT);
-	return (ModBusRtuClass::receive(&MERCURY_SERIAL, b, MAX_MODBUS_BUFF));
+	if (ModBusRtuClass::receive(&MERCURY_SERIAL, b, MAX_MODBUS_BUFF, &count, &this->_sn[0], sizeof(this->_sn)) != ZunoErrorOk)
+		return (0);
+	return (count);
 }
 
 inline uint8_t Mercury206Meter::_bcd2dec(uint8_t c) {

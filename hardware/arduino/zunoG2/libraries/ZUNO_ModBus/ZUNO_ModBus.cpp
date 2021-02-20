@@ -111,17 +111,7 @@ size_t ModBusRtuClass::send(HardwareSerial *hardwareSerial, void *src, size_t le
 	return (true);
 }
 
-size_t ModBusRtuClass::receive(HardwareSerial *hardwareSerial, void *dest, size_t len) {
-	size_t					count;
-
-	if (ModBusRtuClass::_receive(hardwareSerial, dest, len, &count) != ZunoErrorOk)
-		return (0);
-	return (count);
-}
-
-
-/* Private Methods */
-inline ZunoError_t ModBusRtuClass::_receive(HardwareSerial *hardwareSerial, void *dest, size_t len, size_t *count) {
+ZunoError_t ModBusRtuClass::receive(HardwareSerial *hardwareSerial, void *dest, size_t len, size_t *count, void *start_bit, size_t len_start_bit) {
 	size_t					i;
 	uint8_t					*b;
 	uint8_t					*e;
@@ -133,6 +123,8 @@ inline ZunoError_t ModBusRtuClass::_receive(HardwareSerial *hardwareSerial, void
 		if (i > len)
 			return (ZunoErrorOverflow);//overflow
 		b[i++] = hardwareSerial->read();
+		if (len_start_bit == i && memcmp(b, start_bit, i) != 0)
+			i = 0;
 	}
 	if (i < 2)//crc - 2
 		return (ZunoErrorNotData);
@@ -144,6 +136,9 @@ inline ZunoError_t ModBusRtuClass::_receive(HardwareSerial *hardwareSerial, void
 	count[0] = i;
 	return (ZunoErrorOk);
 }
+
+/* Private Methods */
+
 
 inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *dest, size_t dest_len) {
 	ModBusRtuFnError_t					*status;
@@ -161,9 +156,9 @@ inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *des
 	digitalWrite(this->_dir_pin, LOW);
 	delay(this->_time_between + (this->_time_between * (dest_len / MOD_BUS_WORD_COUNT + 1)));
 	digitalWrite(this->_dir_pin, HIGH);
-	if ((ret = ModBusRtuClass::_receive(this->_hardwareSerial, dest, dest_len, &count)) != ZunoErrorOk)
-		return (ret);
 	start = (ModBusRtuStart_t *)src;
+	if ((ret = ModBusRtuClass::receive(this->_hardwareSerial, dest, dest_len, &count, &start->adress, 1)) != ZunoErrorOk)
+		return (ret);
 	status = (ModBusRtuFnError_t *)dest;
 	fn_send = start->fn;
 	fn_receive = status->start.fn;

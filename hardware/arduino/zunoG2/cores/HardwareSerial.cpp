@@ -325,7 +325,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk)
 		return (this->_beginFaill(ret, bFree, b));
 	pinMode(tx, OUTPUT_UP);
-	pinMode(rx, INPUT_DOWN);
+	pinMode(rx, INPUT_PULLUP);
 	USART_BaudrateAsyncSet(usart, 0, baudrate, usartOVS16);
 	if (this->_bFree == true)
 		free(this->_buffer);

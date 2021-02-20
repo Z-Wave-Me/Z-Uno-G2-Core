@@ -12,6 +12,7 @@ void setup() {
 	MY_SERIAL.println("\n **** Sketch is starting... ****\n");
 }
 
+/* the loop function runs over and over again forever */
 void loop() {
 	byte		result;
 	byte		i;

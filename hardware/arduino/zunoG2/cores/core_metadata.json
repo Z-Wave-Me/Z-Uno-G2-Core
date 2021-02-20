@@ -65,7 +65,7 @@
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
-            "specific_type":"SPECIFIC_TYPE_POWER_SWITCH_BINARY",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
@@ -80,7 +80,7 @@
                 {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
-            "specific_type":"SPECIFIC_TYPE_POWER_SWITCH_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
@@ -122,7 +122,7 @@
                 {"name":"COMMAND_CLASS_METER","version":"3"}
             ],
             "generic_type":"GENERIC_TYPE_METER",
-            "specific_type":"SPECIFIC_TYPE_SIMPLE_METER",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],

@@ -50,6 +50,12 @@ typedef enum
 	ZunoErrorNotData,
 	ZunoErrorOverflow,
 	ZunoErrorNotMatchCrc,
+	ZunoErrorModBusRtuNotSupportFunction,
+	ZunoErrorModBusRtuNotSupportRegister,
+	ZunoErrorModBusRtuNotSupportCountRegister,
+	ZunoErrorModBusRtuUnknown,
+	ZunoErrorModBusRtuOther,
+	ZunoErrorModBusRtuNoises,
 	ZunoErrorMemory//Failed to allocate memory
 } ZunoError_t;
 

@@ -5,18 +5,9 @@
 
 #define MOD_BUS_WORD_COUNT					8
 
-typedef enum								ModBusRtuStatus_e
-{
-	ModBusRtuStatusSuccess = 0,
-	ModBusRtuStatusNotSupportFunction,
-	ModBusRtuStatusNotSupportRegister,
-	ModBusRtuStatusNotSupportCountRegister,
-	ModBusRtuStatusUnknown
-}											ModBusRtuStatus_t;
-
 class ModBusRtuClass {
 	public:
-		ModBusRtuClass(HardwareSerial *hardwareSerial);
+		ModBusRtuClass(HardwareSerial *hardwareSerial, uint16_t timeout);
 		ZunoError_t							begin(size_t baudrate, size_t rx, size_t tx, size_t dir_pin);
 		ZunoError_t							readHR(uint8_t adress, uint16_t reg, uint8_t count, void *dest);
 		ZunoError_t							writeSR(uint8_t adress, uint16_t reg, uint16_t value);
@@ -35,8 +26,9 @@ class ModBusRtuClass {
 	private:
 		inline ZunoError_t					_sendRtu(void *src, size_t src_len, void *dest, size_t dest_len);
 		HardwareSerial						*_hardwareSerial;
-		uint8_t								_time_between;
+		uint16_t							_timeout;
 		uint8_t								_dir_pin;
+		uint8_t								_time_between;
 };
 
 #endif//ZUNO_MOD_BUS_H

@@ -310,7 +310,7 @@ typedef enum								NeptunConfigMeterSlot_e
 
 class NeptunClass: private ModBusRtuClass {
 	public:
-		NeptunClass(HardwareSerial *hardwareSerial = &Serial1, uint16_t timeout = 3000);
+		NeptunClass(HardwareSerial *hardwareSerial = &Serial1, uint16_t timeout = 1000);
 		ZunoError_t							begin(NeptunBaudrate_t baudrate, uint8_t rx, uint8_t tx, uint8_t dir_pin);
 		inline ZunoError_t					begin(void) { return (this->begin(NeptunBaudrate9600, RX1, TX1, 2)); };
 		void								end(void);

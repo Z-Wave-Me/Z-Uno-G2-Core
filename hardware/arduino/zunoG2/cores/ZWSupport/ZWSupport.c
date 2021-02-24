@@ -14,6 +14,7 @@
 #include "ZWCCAssociation.h"
 #include "ZWCCBattery.h"
 #include "ZWCCWakeup.h"
+#include "ZWCCZWavePlusInfo.h"
 #include "./includes/ZWSupportTimer.h"
 #include "Debug.h"
 
@@ -62,10 +63,9 @@ void ZWCCSetup(){
 	#endif
 }
 bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
-	uint8_t	cmd_class;
+	size_t				cmd_class;
 
 	cmd_class = cmd_bytes[0];
-
 	switch(channel->type) {
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_BINARY)
@@ -106,7 +106,7 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		case ZUNO_METER_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_METER)
+			if(cmd_class == COMMAND_CLASS_METER)
 				return true;
 			break;
 	}
@@ -199,6 +199,9 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 				break ;
 			case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
 				result = zuno_CCMultiAssociationHandler(cmd);
+				break ;
+			case COMMAND_CLASS_ZWAVEPLUS_INFO:
+				result = zuno_CCZWavePlusInfoHandler(cmd);
 				break ;
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);

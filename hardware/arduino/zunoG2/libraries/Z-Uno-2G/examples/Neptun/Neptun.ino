@@ -141,7 +141,7 @@ void	_change(void) {
 		water3 = value;
 		zunoSendReport(INDEX_ZUNO_METER_TYPE_WATER3);
 	}
-	if (gNeptun.devGetMeter(NeptunConfigMeterIdOne, NeptunConfigMeterSlotTwo, &value) == ZunoErrorOk && value != water4) {
+	if (gNeptun.devGetMeter(NeptunConfigMeterIdTwo, NeptunConfigMeterSlotTwo, &value) == ZunoErrorOk && value != water4) {
 		water4 = value;
 		zunoSendReport(INDEX_ZUNO_METER_TYPE_WATER4);
 	}

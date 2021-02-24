@@ -30,8 +30,8 @@ typedef struct								NeptunStatusDev_s
 				struct
 				{
 					uint16_t				bFloorCleaning: 1;/* Флаг состояния режима мойка пола.  false = выключено; true = включено */
-					uint16_t				bAlarmsGroup1: 1;/* Флаг наличия тревоги по первой группе. false = нет; true = есть - const */
-					uint16_t				bAlarmsGroup2: 1;/* Флаг наличия тревоги по второй группе. false = нет; true = есть - const */
+					uint16_t				bAlarmsGroup1: 1;/* Флаг наличия тревоги по первой группе. false = нет; true = есть; false - снимает сигнал тревоги */
+					uint16_t				bAlarmsGroup2: 1;/* Флаг наличия тревоги по второй группе. false = нет; true = есть; false - снимает сигнал тревоги */
 					uint16_t				bSensorsWirelessBatteriesDischarge: 1;/* Флаг разряда батарей в беспроводных датчиках. false = нет; true = есть - const */
 					uint16_t				bSensorsWirelessLoss: 1;/* Флаг потери беспроводных датчиков. false = нет; true = есть - const */
 					uint16_t				bTapsClosingLossSensorsGroup1: 1;/* Флаг закрытия кранов первой группе по потере датчиков. false = нет; true = есть - const */

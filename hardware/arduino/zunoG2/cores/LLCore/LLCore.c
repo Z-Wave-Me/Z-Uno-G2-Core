@@ -311,14 +311,15 @@ void LLInit() {
 	while (b < e) {
 		((void (*)())b[0])();
 		b++;
+		WDOG_Feed();
 	}
 	b = (uint32_t *)&__init_array_start;
 	e = (uint32_t *)&__init_array_end;
 	while (b < e) {
 		((void (*)())b[0])();
 		b++;
+		WDOG_Feed();
 	}
-	WDOG_Feed();
 }
 
 void LLDestroy() {
@@ -393,7 +394,6 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         #endif
         case ZUNO_JUMPTBL_SYSTIMER:
-            WDOG_Feed();
             zuno_CCTimer(((uint32_t)data));
             break;
         case ZUNO_JUMPTBL_IRQ:

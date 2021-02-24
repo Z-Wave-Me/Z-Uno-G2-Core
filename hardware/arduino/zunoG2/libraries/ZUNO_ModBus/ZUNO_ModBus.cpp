@@ -7,7 +7,36 @@
 #define MOD_BUS_RTU_FN_READ_HR				0x3
 #define MOD_BUS_RTU_FN_WRITE_SR				0x6
 
-#define MOD_BUS_RTU_TIMEOUT					50
+#define MOD_BUS_RTU_TIMEOUT_STEP			10
+
+typedef enum								ModBusRtuStatus_e
+{
+	ModBusRtuIllegalFunction = 1,
+	ModBusRtuIllegalDataAdress,
+	ModBusRtuIllegalDataValue,
+	ModBusRtuSlaveDeviceFalture,
+	ModBusRtuAcknowledge,
+	ModBusRtuSlaveDeviceBusy,
+	ModBusRtuMemoryParityError = 0x8,
+	ModBusRtuGatewayPathUnavailable = 0xA,
+	ModBusRtuGatewayTargetDeviceFailedRespond
+}											ModBusRtuStatus_t;
+
+typedef struct								ModBusRtuStatusTable_s
+{
+	ZunoError_t								Default;
+	ZunoError_t								IllegalFunction;
+	ZunoError_t								IllegalDataAdress;
+	ZunoError_t								IllegalDataValue;
+	ZunoError_t								SlaveDeviceFalture;
+	ZunoError_t								Acknowledge;
+	ZunoError_t								SlaveDeviceBusy;
+	ZunoError_t								Reserved1;
+	ZunoError_t								MemoryParityError;
+	ZunoError_t								Reserved2;
+	ZunoError_t								GatewayPathUnavailable;
+	ZunoError_t								GatewayTargetDeviceFailedRespond;
+}											ModBusRtuStatusTable_t;
 
 typedef struct								ModBusRtuStart_s
 {
@@ -53,7 +82,7 @@ typedef struct								receiveModBusRtuFnWriteSR_s
 }											receiveModBusRtuFnWriteSR_t;
 
 /* Public Constructors */
-ModBusRtuClass::ModBusRtuClass(HardwareSerial *hardwareSerial): _hardwareSerial(hardwareSerial), _time_between(0), _dir_pin(0xFF) {
+ModBusRtuClass::ModBusRtuClass(HardwareSerial *hardwareSerial, uint16_t timeout): _hardwareSerial(hardwareSerial), _timeout(timeout), _dir_pin(0xFF), _time_between(0) {
 }
 
 /* Public Methods */
@@ -138,15 +167,31 @@ ZunoError_t ModBusRtuClass::receive(HardwareSerial *hardwareSerial, void *dest, 
 }
 
 /* Private Methods */
-
-
 inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *dest, size_t dest_len) {
+	static const ModBusRtuStatusTable_t		error =
+	{
+		.Default = ZunoErrorModBusRtuOther,
+		.IllegalFunction = ZunoErrorModBusRtuIllegalFunction,
+		.IllegalDataAdress = ZunoErrorModBusRtuIllegalDataAdress,
+		.IllegalDataValue = ZunoErrorModBusRtuIllegalDataValue,
+		.SlaveDeviceFalture = ZunoErrorModBusRtuSlaveDeviceFalture,
+		.Acknowledge = ZunoErrorModBusRtuAcknowledge,
+		.SlaveDeviceBusy = ZunoErrorModBusRtuSlaveDeviceBusy,
+		.Reserved1 = ZunoErrorModBusRtuOther,
+		.MemoryParityError = ZunoErrorModBusRtuMemoryParityError,
+		.Reserved2 = ZunoErrorModBusRtuOther,
+		.GatewayPathUnavailable = ZunoErrorModBusRtuGatewayPathUnavailable,
+		.GatewayTargetDeviceFailedRespond = ZunoErrorModBusRtuGatewayTargetDeviceFailedRespond
+	};
 	ModBusRtuFnError_t					*status;
 	ModBusRtuStart_t					*start;
 	size_t								fn_receive;
 	size_t								fn_send;
 	size_t								count;
 	ZunoError_t							ret;
+	size_t								timeout;
+	size_t								i;
+	const ZunoError_t					*b;
 
 	if (ModBusRtuClass::send(this->_hardwareSerial, src, src_len) == false)
 		return (ZunoErrorModBusRtuOther);
@@ -154,8 +199,16 @@ inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *des
 	if (dest == 0)
 		return (ZunoErrorOk);
 	digitalWrite(this->_dir_pin, LOW);
-	delay(this->_time_between + (this->_time_between * (dest_len / MOD_BUS_WORD_COUNT + 1)));
+	timeout = this->_timeout;
+	i = 0;
+	while (this->_hardwareSerial->available() == 0 && i < timeout) {
+		i = i + MOD_BUS_RTU_TIMEOUT_STEP;
+		delay(MOD_BUS_RTU_TIMEOUT_STEP);
+	}
+	delay(this->_time_between * (dest_len / MOD_BUS_WORD_COUNT + 1));
 	digitalWrite(this->_dir_pin, HIGH);
+	if (i >= timeout)
+		return (ZunoErrorTimeout);
 	start = (ModBusRtuStart_t *)src;
 	if ((ret = ModBusRtuClass::receive(this->_hardwareSerial, dest, dest_len, &count, &start->adress, 1)) != ZunoErrorOk)
 		return (ret);
@@ -163,20 +216,11 @@ inline ZunoError_t ModBusRtuClass::_sendRtu(void *src, size_t src_len, void *des
 	fn_send = start->fn;
 	fn_receive = status->start.fn;
 	if (fn_receive == (fn_send | MOD_BUS_RTU_FN_ERROR)) {
-		switch (status->status) {
-			case 0x1:
-				return (ZunoErrorModBusRtuNotSupportFunction);
-				break ;
-			case 0x2:
-				return (ZunoErrorModBusRtuNotSupportRegister);
-				break ;
-			case 0x3:
-				return (ZunoErrorModBusRtuNotSupportCountRegister);
-				break ;
-			default:
-				return (ZunoErrorModBusRtuUnknown);
-				break;
-		}
+		i = status->status;
+		if (i > (sizeof(error) - 1))
+			i = 0;
+		b = (ZunoError_t *)&error;
+		return (b[i]);
 	}
 	if (fn_receive != fn_send)
 		return (ZunoErrorModBusRtuNoises);

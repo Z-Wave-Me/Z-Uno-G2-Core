@@ -39,5 +39,28 @@
 #define MULTI_INSTANCE_REPORT_PROPERTIES1_INSTANCES_MASK                               0x7F
 #define MULTI_INSTANCE_REPORT_PROPERTIES1_RES_BIT_MASK                                 0x80
 
+/************************************************************/
+/* Multi Channel Capability Get command class structs */ 
+/************************************************************/
+typedef struct						ZwMultiChannelCapabilityGetFrame_s
+{
+	uint8_t							cmdClass;/* The command class */
+	uint8_t							cmd;/* The command */
+	uint8_t							properties1;/* masked byte */
+}									ZwMultiChannelCapabilityGetFrame_t;
+
+/************************************************************/
+/* Multi Channel Capability Report command class structs */
+/************************************************************/
+typedef struct						ZwMultiChannelCapabilityReportFrame_s
+{
+	uint8_t							cmdClass;/* The command class */
+	uint8_t							cmd;/* The command */
+	uint8_t							properties1;/* masked byte */
+	uint8_t							genericDeviceClass;/**/
+	uint8_t							specificDeviceClass;/**/
+	uint8_t							commandClass[];/* MSB  LSB */
+}									ZwMultiChannelCapabilityReportFrame_t;
+
 int zuno_CCMultichannel(ZUNOCommandPacket_t * cmd);
 #endif // MULTICHANNEL_CC_H

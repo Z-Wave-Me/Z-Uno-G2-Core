@@ -240,7 +240,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	// If we have multichannel support enabled.
 	// Pass the data through it first
 	#ifdef WITH_CC_MULTICHANNEL
-	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTICHANNEL){
+	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTI_CHANNEL){
 		result = zuno_CCMultichannel(cmd);
 		if(result == ZUNO_COMMAND_BLOCKED){
 			return result;

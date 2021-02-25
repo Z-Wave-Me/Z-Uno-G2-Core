@@ -2,7 +2,7 @@
 #include "ZWSupport.h"
 #include "ZWCCZWavePlusInfo.h"
 
-static int _report(void) {
+static int _report(ZUNOCommandPacket_t *cmd) {
 	ZwZwavePlusInfoReportFrame_t		*report;
 	size_t								installerIconType;
 	size_t								userIconType;
@@ -13,8 +13,8 @@ static int _report(void) {
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
 	report->v2.roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_ALWAYS_ON;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
-	installerIconType = ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH;
-	userIconType = ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH;
+	installerIconType = ZUNO_DEV_TYPES[cmd->dst_zw_channel].icon;
+	userIconType = ZUNO_DEV_TYPES[cmd->dst_zw_channel].app_icon;
 	report->v2.installerIconType1 = installerIconType >> 8;
 	report->v2.installerIconType2 = installerIconType & 0xFF;
 	report->v2.userIconType1 = userIconType >> 8;
@@ -28,7 +28,7 @@ int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd) {
 
 	switch (ZW_CMD) {
 		case ZWAVEPLUS_INFO_GET:
-			rs = _report();
+			rs = _report(cmd);
 			break ;
 		default:
 			rs = ZUNO_UNKNOWN_CMD;

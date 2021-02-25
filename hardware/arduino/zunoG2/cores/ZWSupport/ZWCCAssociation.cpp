@@ -1,5 +1,15 @@
+#include "Arduino.h"
+#include "ZWCCBasic.h"
+#include "ZWCCSwitchMultilevel.h"
+#include "ZWCCDoorLock.h"
 #include "ZWCCAssociation.h"
-#include "./includes/ZWCCAssociation_private.h"
+
+#define ASSOCIATION_GROUP_ID				cmd->cmd[2]
+#define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
+
+#define ASSOCIATION_GROUP_NAME_LIFE_LINE	"Lifeline"
+#define ASSOCIATION_GROUP_NAME_DEFAULT		"User group 00"
+#define ASSOCIATION_GROUP_NAME_MAX			42
 
 static char *g_zuno_associations_group_name[ZUNO_MAX_ASSOC_NUMBER];
 
@@ -9,15 +19,17 @@ static int _group_id(uint8_t groupIndex) {
 	return (ZUNO_COMMAND_BLOCKED);//drop the package
 }
 
-static int _assotiation_groupings_report(uint8_t cmdClass, uint8_t cmd) {
+static int _assotiation_groupings_report(ZUNOCommandPacket_t *packet, uint8_t cmdClass, uint8_t cmd) {
 	ZwAssociationGroupingsReportFrame_t		*lp;
+	size_t									supportedGroupings;
 
 	lp = (ZwAssociationGroupingsReportFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = cmdClass;
 	lp->cmd = cmd;
-	//Serial0.print("(!) Groups:");
-	//Serial0.println(ZUNO_CFG_ASSOCIATION_COUNT);
-	lp->supportedGroupings = ZUNO_CFG_ASSOCIATION_COUNT + 1;//+1 for Lifeline group
+	supportedGroupings = 1;//+1 for Lifeline group
+	if (packet->dst_zw_channel == 0)
+		supportedGroupings = supportedGroupings + ZUNO_CFG_ASSOCIATION_COUNT;
+	lp->supportedGroupings = supportedGroupings;
 	CMD_REPLY_LEN = sizeof(ZwAssociationGroupingsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -33,25 +45,43 @@ static int _assotiation_specific_group_report() {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+static int _assotiation_get(ZUNOCommandPacket_t *packet, size_t cmdClass, size_t cmd) {
+	ZwAssociationReportFrameFake_t				*report;
+
+	if (packet->dst_zw_channel != 0) {
+		report = (ZwAssociationReportFrameFake_t *)&CMD_REPLY_CC;
+		report->cmdClass = cmdClass;
+		report->cmd =  cmd;
+		report->groupingIdentifier = 1;
+		report->maxNodesSupported = 0;
+		report->reportsToFollow = 0;
+		CMD_REPLY_LEN = sizeof(ZwAssociationReportFrameFake_t);
+		return (ZUNO_COMMAND_ANSWERED);
+	}
+	if (_group_id(ASSOCIATION_GROUP_ID_EX(packet)) != ZUNO_UNKNOWN_CMD)
+		ASSOCIATION_GROUP_ID_EX(packet) = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+	return (ZUNO_UNKNOWN_CMD);
+}
 
 int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
-	rs = ZUNO_UNKNOWN_CMD;
 	switch(ZW_CMD) {
 		case ASSOCIATION_SET:
 		case ASSOCIATION_REMOVE:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
 			break ;
 		case ASSOCIATION_GET:
-			if (_group_id(ASSOCIATION_GROUP_ID) != ZUNO_UNKNOWN_CMD)
-				ASSOCIATION_GROUP_ID = 1;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+			rs = _assotiation_get(cmd, COMMAND_CLASS_ASSOCIATION, ASSOCIATION_REPORT);
 			break ;
 		case ASSOCIATION_GROUPINGS_GET:
-			rs = _assotiation_groupings_report(COMMAND_CLASS_ASSOCIATION, ASSOCIATION_GROUPINGS_REPORT);
+			rs = _assotiation_groupings_report(cmd, COMMAND_CLASS_ASSOCIATION, ASSOCIATION_GROUPINGS_REPORT);
 			break ;
 		case ASSOCIATION_SPECIFIC_GROUP_GET:
 			rs = _assotiation_specific_group_report();
+			break ;
+		default:
+			rs = ZUNO_UNKNOWN_CMD;
 			break ;
 	}
 	return (rs);
@@ -60,18 +90,19 @@ int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
 int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
-	rs = ZUNO_UNKNOWN_CMD;
 	switch(ZW_CMD) {
 		case MULTI_CHANNEL_ASSOCIATION_SET:
 		case MULTI_CHANNEL_ASSOCIATION_REMOVE:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
 			break ;
 		case MULTI_CHANNEL_ASSOCIATION_GET:
-			if (_group_id(ASSOCIATION_GROUP_ID) != ZUNO_UNKNOWN_CMD)
-				ASSOCIATION_GROUP_ID = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
+			rs = _assotiation_get(cmd, COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION, MULTI_CHANNEL_ASSOCIATION_REPORT);
 			break ;
 		case MULTI_CHANNEL_ASSOCIATION_GROUPINGS_GET:
-			rs = _assotiation_groupings_report(COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION, MULTI_CHANNEL_ASSOCIATION_GROUPINGS_REPORT);
+			rs = _assotiation_groupings_report(cmd, COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION, MULTI_CHANNEL_ASSOCIATION_GROUPINGS_REPORT);
+			break ;
+		default:
+			rs = ZUNO_UNKNOWN_CMD;
 			break ;
 	}
 	return (rs);
@@ -109,7 +140,7 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _association_gpr_info_profile_report(ZwAssociationGroupInfoGetFrame_t *in) {
+static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwAssociationGroupInfoGetFrame_t *in) {
 	uint8_t									groupIndex;
 	uint8_t									groupIndex_end;
 	ZwAssociationGroupInfoReportFrame_t		*lp;
@@ -126,7 +157,9 @@ static int _association_gpr_info_profile_report(ZwAssociationGroupInfoGetFrame_t
 	if ((in->properties1 & (1 << 6)) != 0) {
 		lp->properties1 |= (1 << 7);//If List Mode is 1, a sending node is advertising the properties of all association groups. The sending node MAY return several Reports.
 		groupIndex = ZUNO_LIFELINE_GRP;
-		groupIndex_end = ZUNO_CFG_ASSOCIATION_COUNT + 1;//+1 for "Lifeline"
+		groupIndex_end = ZUNO_LIFELINE_GRP;//+1 for "Lifeline"
+		if (packet->dst_zw_channel == 0)
+			groupIndex_end = groupIndex_end + ZUNO_CFG_ASSOCIATION_COUNT;
 	}
 	else {
 		groupIndex = in->groupingIdentifier;
@@ -214,7 +247,7 @@ int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _association_gpr_info_name_report(cmd);
 			break ;
 		case ASSOCIATION_GROUP_INFO_GET:
-			rs = _association_gpr_info_profile_report((ZwAssociationGroupInfoGetFrame_t *)cmd->cmd);
+			rs = _association_gpr_info_profile_report(cmd, (ZwAssociationGroupInfoGetFrame_t *)cmd->cmd);
 			break ;
 		case ASSOCIATION_GROUP_COMMAND_LIST_GET:
 			rs = _association_gpr_info_command_report((ZwAssociationGroupCommandListGetFrame_t *)cmd->cmd);

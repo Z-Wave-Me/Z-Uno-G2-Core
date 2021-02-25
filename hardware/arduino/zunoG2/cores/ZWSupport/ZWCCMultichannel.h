@@ -62,5 +62,30 @@ typedef struct						ZwMultiChannelCapabilityReportFrame_s
 	uint8_t							commandClass[];/* MSB  LSB */
 }									ZwMultiChannelCapabilityReportFrame_t;
 
+/************************************************************/
+/* Multi Channel End Point Report command class structs */
+/************************************************************/
+typedef struct						ZwMultiChannelEndPointReportV2Frame_s
+{
+	uint8_t							cmdClass;/* The command class */
+	uint8_t							cmd;/* The command */
+	uint8_t							properties1;/* masked byte */
+	uint8_t							properties2;/* masked byte */
+}									ZwMultiChannelEndPointReportV2Frame_t;
+
+typedef struct						ZwMultiChannelEndPointReportV4Frame_s
+{
+	uint8_t							cmdClass;/* The command class */
+	uint8_t							cmd;/* The command */
+	uint8_t							properties1;/* masked byte */
+	uint8_t							properties2;/* masked byte */
+	uint8_t							properties3;/* masked byte */
+}									ZwMultiChannelEndPointReportV4Frame_t;
+
+typedef union								ZwMultiChannelEndPointReportFrame_u {//For more convenient support, several versions of commands
+	ZwMultiChannelEndPointReportV2Frame_t	v2;
+	ZwMultiChannelEndPointReportV4Frame_t	v4;
+}											ZwMultiChannelEndPointReportFrame_t;
+
 int zuno_CCMultichannel(ZUNOCommandPacket_t * cmd);
 #endif // MULTICHANNEL_CC_H

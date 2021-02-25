@@ -49,10 +49,25 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	commandClass++[0] = COMMAND_CLASS_ASSOCIATION;
 	commandClass++[0] = COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION;
 	commandClass++[0] = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
+	commandClass++[0] = COMMAND_CLASS_SUPERVISION;
 	commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
 	if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
 		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
 	CMD_REPLY_LEN = sizeof(ZwMultiChannelCapabilityReportFrame_t) + (commandClass - &report->commandClass[0]);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+static int _point_get(void) {
+	ZwMultiChannelEndPointReportFrame_t			*report;
+
+	// Request of endpoint's count
+	report = (ZwMultiChannelEndPointReportFrame_t *)&CMD_REPLY_CC;
+	report->v4.cmdClass = COMMAND_CLASS_MULTI_CHANNEL;
+	report->v4.cmd = MULTI_CHANNEL_END_POINT_REPORT;
+	report->v4.properties1 = 0; // No dynamic/identical endpoints
+	report->v4.properties2 = g_mch_aux_data.num_channels;// Number of endpoints ZUno has
+	report->v4.properties3 = 0;// No aggregated end points
+	CMD_REPLY_LEN = sizeof(report->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -78,12 +93,7 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd) {
 			rs = ZUNO_COMMAND_UNPACKED;
 			break;
 		case MULTI_CHANNEL_END_POINT_GET:
-			// Request of endpoint's count
-			CMD_REPLY_DATA(0) = 0; // No dynamic/identical endpoints
-			CMD_REPLY_DATA(1) = g_mch_aux_data.num_channels;  // Number of endpoints ZUno has
-			CMD_REPLY_DATA(2) = 0; // No aggregated end points
-			CMD_REPLY_LEN = 2 + 3; // 2 = CMD_CLASS + CMD, 3= DATA^^^
-			rs = ZUNO_COMMAND_ANSWERED;
+			rs = _point_get();
 			break;
 		case MULTI_CHANNEL_END_POINT_FIND:
 			// we don't support it yet

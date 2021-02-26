@@ -105,6 +105,7 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 	private:
 		uint8_t		addr;
 		TwoWire		*i2c;
+		bool		_invert;
 		// SPIClass	*spi;
 		void		sendCmd(uint8_t cmd);
 		void		sendCmd(uint8_t *cmd, size_t size);
@@ -117,6 +118,10 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 		// uint8_t write(uint8_t){};
 		void begin();
 		void display();
+		void on() { sendCmd(SSD1306_DISPLAYON); };
+		void off() { sendCmd(SSD1306_DISPLAYOFF); };
+		void invert() {_invert != _invert;
+			sendCmd((_invert) ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY);};
 };
 
 

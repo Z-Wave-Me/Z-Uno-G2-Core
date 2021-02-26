@@ -364,9 +364,9 @@ void ZUNO_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 }
 
 ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire, 
-	uint8_t i2caddr) : ZUNO_GFX::ZUNO_GFX(width, height),addr(i2caddr), i2c(wire)
+						uint8_t i2caddr) : ZUNO_GFX::ZUNO_GFX(width, height),
+						addr(i2caddr), i2c(wire), _invert(false)
 {
-
 }
 
 void ZUNO_SSD1306::sendCmd(uint8_t cmd)

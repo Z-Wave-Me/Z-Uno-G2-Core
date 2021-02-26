@@ -19,7 +19,9 @@ enum
 	INDEX_ZUNO_METER_TYPE_WATER1,
 	INDEX_ZUNO_METER_TYPE_WATER2,
 	INDEX_ZUNO_METER_TYPE_WATER3,
-	INDEX_ZUNO_METER_TYPE_WATER4
+	INDEX_ZUNO_METER_TYPE_WATER4,
+	INDEX_SIREN1,
+	INDEX_SIREN2,
 };
 
 ZUNO_SETUP_CHANNELS(
@@ -32,7 +34,9 @@ ZUNO_SETUP_CHANNELS(
 	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_DISABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_ZERO_DECIMALS, ft_get_water1, ft_empty),
 	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_DISABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_ZERO_DECIMALS, ft_get_water2, ft_empty),
 	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_DISABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_ZERO_DECIMALS, ft_get_water3, ft_empty),
-	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_DISABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_ZERO_DECIMALS, ft_get_water4, ft_empty)
+	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_DISABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_ZERO_DECIMALS, ft_get_water4, ft_empty),
+	ZUNO_SWITCH_BINARY(getterSiren1, setterSiren1),
+	ZUNO_SWITCH_BINARY(getterSiren2, setterSiren2)
 );
 
 NeptunClass gNeptun;
@@ -46,6 +50,11 @@ uint32_t water1 = 0;
 uint32_t water2 = 0;
 uint32_t water3 = 0;
 uint32_t water4 = 0;
+
+uint8_t bSiren1 = false;
+uint8_t bSiren2 = false;
+uint8_t bSiren1Action = false;
+uint8_t bSiren2Action = false;
 
 // the setup function runs once, when you press reset or power the board
 void setup() {
@@ -82,6 +91,7 @@ void	_change(void) {
 	NeptunStatusDev_t					status_cmp;
 	NeptunConfigLine_t					status_line;
 	uint32_t							value;
+	ZunoError_t							ret;
 
 	status = gNeptun.devGetStatus();
 	if (status.status == ZunoErrorOk) {
@@ -102,9 +112,32 @@ void	_change(void) {
 			bTapsStatusGroup2 = status.bTapsStatusGroup2;
 			zunoSendReport(INDEX_SWITCH_BINARY2);
 		}
-		if (status_cmp.raw != status.raw)
-			gNeptun.devSetStatus(status);
-		
+		if (bSiren1Action == true) {
+			if (status.bAlarmsGroup1 == false)
+				bSiren1Action = false;
+			else
+				status.bAlarmsGroup1 = false;
+		}
+		if (bSiren2Action == true) {
+			if (status.bAlarmsGroup2 == false)
+				bSiren2Action = false;
+			else
+				status.bAlarmsGroup2 = false;
+		}
+		if (bSiren1 != status.bAlarmsGroup1) {
+			bSiren1 = status.bAlarmsGroup1;
+			zunoSendReport(INDEX_SIREN1);
+		}
+		if (bSiren2 != status.bAlarmsGroup2) {
+			bSiren2 = status.bAlarmsGroup2;
+			zunoSendReport(INDEX_SIREN2);
+		}
+		if (status_cmp.raw != status.raw) {
+			if ((ret = gNeptun.devSetStatus(status)) == ZunoErrorOk) {
+				bSiren1Action = false;
+				bSiren2Action = false;
+			}
+		}
 	}
 	status_line = gNeptun.devGetStatusLine();
 	if (status_line.status == ZunoErrorOk) {
@@ -173,6 +206,28 @@ byte	getterTaps2(void)
 void	setterTaps2(byte value)
 {
 	bTapsStatusGroup2 = value;
+}
+
+byte	getterSiren1(void)
+{
+	return (bSiren1);
+}
+
+byte	getterSiren2(void)
+{
+	return (bSiren2);
+}
+
+void	setterSiren1(byte value)
+{
+	if (value == false && bSiren1 == true)
+		bSiren1Action = true;
+}
+
+void	setterSiren2(byte value)
+{
+	if (value == false && bSiren2 == true)
+		bSiren2Action = true;
 }
 
 void	ft_empty(byte value)

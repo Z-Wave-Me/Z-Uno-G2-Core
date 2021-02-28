@@ -15,7 +15,7 @@
 #include "ZWCCBattery.h"
 #include "ZWCCWakeup.h"
 #include "ZWCCZWavePlusInfo.h"
-#include "./includes/ZWSupportTimer.h"
+#include "ZWCCTimer.h"
 #include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -768,9 +768,6 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 	return NULL;
 }
 
-// Main timer for CC purposes
-volatile ZunoTimer_t g_zuno_timer;
-	
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks)
 {	
 	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
@@ -853,17 +850,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			break; // Only one report per 1 pass
 		}
 	}
-}
-void zuno_CCTimer(uint32_t ticks) {
-	g_zuno_timer.ticks = ticks;
-	#ifdef WITH_CC_SWITCH_MULTILEVEL
-	zuno_CCSwitchMultilevelTimer(ticks);
-	#endif
-	#ifdef WITH_CC_SWITCH_COLOR
-	zuno_CCSwitchColorTimer(ticks);
-	#endif
-	if((ticks & 0x1F) == 0) // Once in ~320ms 
-		zunoSendReportHandler(ticks);
 }
 
 void zunoSendReport(byte ch){

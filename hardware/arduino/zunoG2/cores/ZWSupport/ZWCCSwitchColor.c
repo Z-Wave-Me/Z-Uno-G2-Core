@@ -1,5 +1,5 @@
 #include "ZWCCSwitchColor.h"
-#include "./includes/ZWSupportTimer.h"
+#include "ZWCCTimer.h"
 #include "./includes/ZWCCSwitchColor_private.h"
 
 static int _supported_report(uint8_t channel) {//Processed to get the value of the color components

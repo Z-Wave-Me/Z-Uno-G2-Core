@@ -1,7 +1,6 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWSupport.h"
-#include "./includes/ZWSupportTimer.h"
-#include "./includes/ZWCCSwitchMultilevel_private.h"
+#include "ZWCCTimer.h"
 
 static uint32_t _duration(uint32_t duration) {// Get the step for dimming in milliseconds
 	if (duration == 0)
@@ -30,7 +29,7 @@ static volatile ZunoTimerSwitchChannel_t	*_find(uint8_t channel) {// Trying to f
 	lp_b = &g_zuno_timer.s_switch[0];
 	while (lp_b < lp_e)// Then look for an unoccupied structure
 	{
-		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ON) == 0)
+		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_DIMMING) == 0)
 			return (lp_b);
 		lp_b++;
 	}
@@ -73,7 +72,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 			zunoSendReport(channel + 1);
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
 		}
-		b_mode = ZUNO_TIMER_SWITCH_INC | ZUNO_TIMER_SWITCH_ON;
+		b_mode = ZUNO_TIMER_SWITCH_INC | ZUNO_TIMER_SWITCH_DIMMING;
 	} else {// Dimming to down
 		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
 			return ;
@@ -81,7 +80,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd) {// Prepare 
 			zunoSendReport(channel + 1);
 			return (zuno_universalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
 		}
-		b_mode = ZUNO_TIMER_SWITCH_DEC | ZUNO_TIMER_SWITCH_ON;
+		b_mode = ZUNO_TIMER_SWITCH_DEC | ZUNO_TIMER_SWITCH_DIMMING;
 	}
 	noInterrupts();
 	if ((lp =_find(channel)) != 0) {// Trying to find a free structure
@@ -165,7 +164,7 @@ void zuno_CCSwitchMultilevelTimer(uint32_t ticks) {// We dim in the timer if the
 	lp_e = &g_zuno_timer.s_switch[ZUNO_TIMER_SWITCH_MAX_SUPPORT_CHANNAL];
 	noInterrupts();
 	while (lp_b < lp_e) {
-		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_ON) != 0) {
+		if ((lp_b->b_mode & ZUNO_TIMER_SWITCH_DIMMING) != 0) {
 			if (ticks >= lp_b->ticks + lp_b->step || lp_b->ticks >= lp_b->step + ticks) {// Check if overflow has occurred lp_b->ticks >= lp_b->step + ticks
 				lp_b->ticks = ticks;
 				current_level = (lp_b->current_level += (lp_b->b_mode & ZUNO_TIMER_SWITCH_INC) != 0 ? 1 : -1);// Depending on the flag, increase or decrease

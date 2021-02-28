@@ -46,7 +46,7 @@ float zunoReportFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
 
 #define REPORT_BASIC_VALUE(report_data)						(((ZwBasicReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v1.value)
 
-#define REPORT_SWITCH_BINARY_VALUE(report_data)				(((ZwBasicBinaryReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v1.value)
+#define REPORT_SWITCH_BINARY_VALUE(report_data)				(((ZwBasicBinaryReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v2.currentValue)
 
 #define REPORT_SWITCH_MULTILEVEL_VALUE(report_data)			(((SwitchMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v1.value)
 

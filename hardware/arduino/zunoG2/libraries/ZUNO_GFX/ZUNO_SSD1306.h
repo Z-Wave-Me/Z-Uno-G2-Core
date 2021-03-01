@@ -6,6 +6,10 @@
 #include "Wire.h"
 #include "ZUNO_GFX.h"
 
+#define SSD1306_WHITE			2
+#define SSD1306_INVERSE			1
+#define SSD1306_BLACK			0
+
 #define I2C_SCREEN_ADDRESS		0x3C	///default addres
 #define SSD1306_COMMAND			0x00
 #define SSD1306_DATA			0xC0
@@ -59,8 +63,8 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 		uint8_t		*s_buf;
 		TwoWire		*i2c;
 		bool		_invert;
-		// SPIClass	*spi;
 		void		sendCmd(uint8_t cmd);
+		// SPIClass	*spi;
 		void		sendCmd(uint8_t *cmd, size_t size);
 
 	public:

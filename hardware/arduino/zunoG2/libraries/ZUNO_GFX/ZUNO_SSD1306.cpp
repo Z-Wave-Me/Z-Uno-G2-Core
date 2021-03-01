@@ -15,8 +15,9 @@ void ZUNO_SSD1306::drawPixel(int16_t x, int16_t y, uint8_t color)
 {
 	if (x >= s_width || y >= s_height)
 		return;
-	uint8_t cur_byte = x + y / 8 * s_width;
-	uint8_t cur_bit = 0x80 >> (y % 8);
+	uint16_t cur_byte = x + ((y >> 3) * s_width);
+	// Serial.printf("Byte%d\t x'%d'/y'%d' \t width %d\n", cur_byte, x, y, s_width);
+	uint8_t cur_bit = 1 << (y % 8);
 	switch (color)
 	{
 	case 0:
@@ -64,7 +65,7 @@ void ZUNO_SSD1306::begin()
 					SSD1306_SEGREMAP | 0x1,
 					SSD1306_COMSCANDEC,				// COM conf
 					SSD1306_SETCOMPINS,
-					0x02,
+					0x2,
 					SSD1306_SETCONTRAST,
 					0x01,							//contrast 127 of 255
 					SSD1306_SETPRECHARGE,			// 0xd9 phathe dc-dc conv
@@ -87,7 +88,7 @@ void ZUNO_SSD1306::setArea(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
 	sendCmd(x1);
 	sendCmd(SSD1306_PAGEADDR);
 	sendCmd(y0 >> 3);
-	sendCmd((y1 - 1) >> 3);
+	sendCmd((y1 >> 3) + 1);
 }
 
 void ZUNO_SSD1306::display()

@@ -4,6 +4,33 @@ ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire,
 						uint8_t i2caddr) : ZUNO_GFX::ZUNO_GFX(width, height),
 						addr(i2caddr), i2c(wire), _invert(false)
 {
+	buff_size = (width * height) >> 3;
+	s_buf = (uint8_t*)malloc(buff_size + 1);
+	memset(s_buf, 0x00, buff_size + 1);
+	buffer = s_buf + 1;
+	*s_buf = SSD1306_DATA_CONTINUE;
+}
+
+void ZUNO_SSD1306::drawPixel(int16_t x, int16_t y, uint8_t color)
+{
+	if (x >= s_width || y >= s_height)
+		return;
+	uint8_t cur_byte = x + y / 8 * s_width;
+	uint8_t cur_bit = 1 << (y % 8);
+	switch (color)
+	{
+	case 0:
+		buffer[cur_byte] &= (0xff ^ cur_bit);
+		break;
+	case 1:
+		buffer[cur_byte] ^= cur_bit;
+		break;
+	default:
+		buffer[cur_byte] |= cur_bit;
+		break;
+	}
+	Serial.printf("byte %#x '%#x'\t",cur_byte ,buffer[cur_byte]);
+
 }
 
 void ZUNO_SSD1306::sendCmd(uint8_t cmd)
@@ -55,49 +82,51 @@ void ZUNO_SSD1306::begin()
 	sendCmd(cmd, sizeof(cmd));
 }
 
-void ZUNO_SSD1306::display()
+void ZUNO_SSD1306::setArea(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
 {
-	uint16_t x = 0;
-	uint16_t y = 0;
-	uint8_t col = 0;
-	uint8_t count_wire = 2;
 	sendCmd(SSD1306_COLUMNADDR);
-	sendCmd(0);
-	sendCmd(s_width - 1);
+	sendCmd(x0);
+	sendCmd(x1);
 	sendCmd(SSD1306_PAGEADDR);
-	sendCmd(0);
-	sendCmd(s_height - 1);
-	i2c->beginTransmission(addr);
-	i2c->write(SSD1306_DATA_CONTINUE);
-	for (y = 0;y < (s_height >> 3);y++)
-	{
-		for (x = 0;x < s_width; x++)
-		{
-			col = 0;
-			for (uint8_t bit = 0; bit < 8; bit++)
-			{
-				uint8_t s_x = x / 8;
-				uint8_t cur_b = (s_width >> 3) * 8 * y + (s_x + (s_width >> 3) * bit);
-				uint8_t ret = (buffer[cur_b] >> (7 - (x % 8)));
-				col |= (ret & 0x01) << bit;
-				WDOG_Feed();
-				// col |= 1 << bit;
-			}
-	// // 		// пуляем данные
-			if (count_wire >= WIRE_BUFFER_LENGTH)
-			{
-				i2c->endTransmission();
-				i2c->beginTransmission(addr);
-				i2c->write(SSD1306_DATA_CONTINUE);
-				count_wire = 2;
-			}
-			i2c->write(col);
-			count_wire++;
-		}
-	}
-	i2c->endTransmission();
+	sendCmd(y0 >> 3);
+	sendCmd((y1 - 1) >> 3);
 }
 
+void ZUNO_SSD1306::display()
+{
+	setArea(0, 0, s_width - 1, s_height - 1);
+	i2c->transfer(addr, (uint8_t*)s_buf, buff_size + 1);
+}
+
+	// i2c->beginTransmission(addr);
+	// i2c->write(SSD1306_DATA_CONTINUE);
+	// for (y = 0;y < (s_height >> 3);y++)
+	// {
+	// 	for (x = 0;x < s_width; x++)
+	// 	{
+	// 		col = 0;
+	// 		for (uint8_t bit = 0; bit < 8; bit++)
+	// 		{
+	// 			uint8_t s_x = x / 8;
+	// 			uint8_t cur_b = (s_width >> 3) * 8 * y + (s_x + (s_width >> 3) * bit);
+	// 			uint8_t ret = (buffer[cur_b] >> (7 - (x % 8)));
+	// 			col |= (ret & 0x01) << bit;
+	// 			WDOG_Feed();
+	// 			// col |= 1 << bit;
+	// 		}
+	// // // 		// пуляем данные
+	// 		if (count_wire >= WIRE_BUFFER_LENGTH)
+	// 		{
+	// 			i2c->endTransmission();
+	// 			i2c->beginTransmission(addr);
+	// 			i2c->write(SSD1306_DATA_CONTINUE);
+	// 			count_wire = 2;
+	// 		}
+	// 		i2c->write(col);
+	// 		count_wire++;
+	// 	}
+	// }
+	// i2c->endTransmission();
 
 // void test(uint8_t s_width, uint8_t s_height, uint8_t *buffer)
 // {

@@ -16,22 +16,21 @@
 ZUNO_GFX::ZUNO_GFX(uint16_t width, uint16_t height)
 {
 	font = NULL;
-	buff_size = (width * height) >> 3;
+	// buff_size = (width * height) >> 3;
 	s_height = height;
 	s_width = width;
-	buffer = (uint8_t*)malloc(buff_size);
-	memset(buffer, 0x00, buff_size);
 	cur_x = 0;
 	cur_y = 0;
 }
 
 ZUNO_GFX::~ZUNO_GFX()
 {
-	free(buffer);
+	// free(buffer);
 }
 
 void ZUNO_GFX::drawPixel(int16_t x, int16_t y, uint8_t color)
 {
+	Serial.println("!!!!!!");
 	if (x >= s_width || y >= s_height)
 		return;
 	uint8_t cur_byte = (y * s_width + x) >> 3;
@@ -74,6 +73,7 @@ void ZUNO_GFX::drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 
 void ZUNO_GFX::printChar(uint8_t ch)
 {
+	Serial.println("hop");
 	ch -= font->start_sim;
 	uint8_t *buf = font->font_buf + ((font->width + 1) * ch);
 	uint8_t w_sim = *buf;
@@ -90,12 +90,25 @@ void ZUNO_GFX::printChar(uint8_t ch)
 	}
 }
 
+void	ZUNO_GFX::setFont(uint8_t *font_name)
+{
+	font->width = *font_name;
+	font->height = *(font_name + 1);
+	font->start_sim = *(font_name + 2);
+	font->font_buf = font_name + 3;
+};
+
 uint8_t ZUNO_GFX::write(uint8_t c)
 {
 	uint8_t *buf = font->font_buf + (font->width + 1 * c);
+	Serial.write('|');
 	uint8_t w_sim = *buf;
 	if (!font)
+	{
+		Serial.write('X');
 		return (0);
+	}
+	Serial.write('^');
 	if ((cur_x + w_sim) > s_width || c == '\n')
 	{
 		if ((cur_y + font->height) < s_height)
@@ -111,22 +124,34 @@ uint8_t ZUNO_GFX::write(uint8_t c)
 		printChar(c);
 		cur_x += w_sim;
 	}
+	Serial.write('\\');
 	return (1);
 }
 
 size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 {
 	size_t col_sim = 0;
-	for(size_t i = 0; i < size; i++)
+	Serial.println("poh");
+	for(size_t i = 0; i < 1; i++)
 	{
-		if (buf[i] & 0xd0)
-			write(buf[++i] - 16);
-		else if (buf[i] & 0xd1)
-			write(buf[++i] + 48);
-		else if (buf[i] < 128)
+		Serial.printf("char %d\t",*(buf + i));
+		if (buf[i] < 128)
+		{
+			println(" ASCII");
 			write(buf[i]);
-		else
-			break;
+		}
+		else if (buf[i] & 0xd0)
+		{
+			write(buf[++i] - 16);
+			println(" D0");
+		}
+		else if (buf[i] & 0xd1)
+		{
+			write(buf[++i] + 48);
+			println(" D0");
+		}
+		// else
+		// 	break;
 		col_sim++;
 	}
 	return(col_sim);
@@ -144,6 +169,7 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 /**************************************************************************/
 void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 							 uint8_t color) {
+	Serial.printf("writeLine pt0(%d, %d) pt1(%d, %d)\n",x0,y0,x1,y1);
 	int16_t steep = abs(y1 - y0) > abs(x1 - x0);
 	if (steep) {
 	_swap_int16_t(x0, y0);
@@ -154,6 +180,7 @@ void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	_swap_int16_t(x0, x1);
 	_swap_int16_t(y0, y1);
 	}
+	Serial.printf("writeLine pt0(%d, %d) pt1(%d, %d)\n",x0,y0,x1,y1);
 
 	int16_t dx, dy;
 	dx = x1 - x0;

@@ -1,12 +1,14 @@
 #ifndef __SENSOR_MULTILEVEL_H__
 #define __SENSOR_MULTILEVEL_H__
-#include "Arduino.h"
 
-#define SENSOR_MULTILEVEL_SUPPORTED_GET             0x01
-#define SENSOR_MULTILEVEL_SUPPORTED_GET_SCALE       0x03
-#define SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT    0x06
-#define SENSOR_MULTILEVEL_GET                       0x04
-#define SENSOR_MULTILEVEL_REPORT                    0x05
+/* Sensor Multilevel command class commands */
+#define SENSOR_MULTILEVEL_VERSION                                                    0x0B
+#define SENSOR_MULTILEVEL_GET                                                        0x04
+#define SENSOR_MULTILEVEL_REPORT                                                     0x05
+#define SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR                                       0x01
+#define SENSOR_MULTILEVEL_SUPPORTED_SENSOR_REPORT                                    0x02
+#define SENSOR_MULTILEVEL_SUPPORTED_GET_SCALE                                        0x03
+#define SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT                                     0x06
 
 #define SENSOR_MULTILEVEL_PROPERTIES_PRECISION_SHIFT    0x05
 #define SENSOR_MULTILEVEL_PROPERTIES_SCALE_MASK         0x18
@@ -14,7 +16,6 @@
 #define SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK          0x07
 
 #define SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK 6
-#define SENSOR_MULTILEVEL_SUPPORTED_LEN (SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK+2)
 
 /************************************************************/
 /* Sensor Multilevel Report 1byte command class structs */  
@@ -67,6 +68,37 @@ typedef union								ZwSensorMultilevelReportFrame_u {//For more convenient supp
 	ZwSensorMultilevelReportByte3Frame_t	byte3;
 	ZwSensorMultilevelReportByte4Frame_t	byte4;
 }											ZwSensorMultilevelReportFrame_t;
+
+/************************************************************/
+/* Sensor Multilevel Supported Get Scale command class structs */
+/************************************************************/
+typedef struct									ZwSensorMultilevelSupportedGetScaleFrame_s
+{
+	uint8_t										cmdClass;/* The command class */
+	uint8_t										cmd;/* The command */
+	uint8_t										sensorType;/**/
+}												ZwSensorMultilevelSupportedGetScaleFrame_t;
+
+/************************************************************/
+/* Sensor Multilevel Supported Scale Report command class structs */
+/************************************************************/
+typedef struct									ZwSensorMultilevelSupportedScaleReportFrame_s
+{
+	uint8_t										cmdClass;/* The command class */
+	uint8_t										cmd;/* The command */
+	uint8_t										sensorType;/**/
+	uint8_t										properties1;/* masked byte */
+}												ZwSensorMultilevelSupportedScaleReportFrame_t;
+
+/************************************************************/
+/* Sensor Multilevel Supported Sensor Report command class structs */
+/************************************************************/
+typedef struct												ZwSensorMultilevelSupportedSensorReportFrame_s
+{
+	uint8_t													cmdClass;/* The command class */
+	uint8_t													cmd;/* The command */
+	uint8_t													bitMask[];/* MSB  LSB */
+}															ZwSensorMultilevelSupportedSensorReportFrame_t;
 
 int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
 int zuno_CCSensorMultilevelReport(byte channel);

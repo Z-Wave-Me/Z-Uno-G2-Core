@@ -15,7 +15,7 @@
 
 ZUNO_GFX::ZUNO_GFX(uint16_t width, uint16_t height)
 {
-	font = NULL;
+	font.font_buf = NULL;
 	// buff_size = (width * height) >> 3;
 	s_height = height;
 	s_width = width;
@@ -73,16 +73,15 @@ void ZUNO_GFX::drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 
 void ZUNO_GFX::printChar(uint8_t ch)
 {
-	Serial.println("hop");
-	ch -= font->start_sim;
-	uint8_t *buf = font->font_buf + ((font->width + 1) * ch);
+	ch -= font.start_sim;
+	uint8_t *buf = font.font_buf + ((font.width + 1) * ch);
 	uint8_t w_sim = *buf;
 	uint8_t *sim = buf + 1;
 	for (uint8_t col = 0; col < w_sim; col++)
 	{
-		for (uint8_t row = 0; row < font->height; row++)
+		for (uint8_t row = 0; row < font.height; row++)
 		{
-			uint8_t cur_b = col * ((font->height >> 3) + (row >> 8));
+			uint8_t cur_b = col * ((font.height >> 3) + (row >> 8));
 			uint8_t cur_bit = 0x80 >> (row % 8);
 			if (sim[cur_b] & cur_bit)
 				drawPixel(cur_x + col, cur_y + row, 2);
@@ -92,69 +91,66 @@ void ZUNO_GFX::printChar(uint8_t ch)
 
 void	ZUNO_GFX::setFont(uint8_t *font_name)
 {
-	font->width = *font_name;
-	font->height = *(font_name + 1);
-	font->start_sim = *(font_name + 2);
-	font->font_buf = font_name + 3;
+	font.width = *font_name;
+	font.height = *(font_name + 1);
+	font.start_sim = *(font_name + 2);
+	font.font_buf = font_name + 3;
 };
 
 uint8_t ZUNO_GFX::write(uint8_t c)
 {
-	uint8_t *buf = font->font_buf + (font->width + 1 * c);
-	Serial.write('|');
+	uint8_t *buf = font.font_buf + (font.width + 1 * c);
 	uint8_t w_sim = *buf;
-	if (!font)
-	{
-		Serial.write('X');
+	if (!font.font_buf)
 		return (0);
-	}
-	Serial.write('^');
 	if ((cur_x + w_sim) > s_width || c == '\n')
 	{
-		if ((cur_y + font->height) < s_height)
+		if ((cur_y + font.height) < s_height)
 		{
-			cur_y += font->height;
+			cur_y += font.height;
 			cur_x = 0;
 		}
 		else
 			return(0);
 	}
-	if (c >= font->start_sim)
+	if (c >= font.start_sim)
 	{
 		printChar(c);
 		cur_x += w_sim;
 	}
-	Serial.write('\\');
 	return (1);
 }
 
 size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 {
-	size_t col_sim = 0;
-	Serial.println("poh");
-	for(size_t i = 0; i < 1; i++)
-	{
-		Serial.printf("char %d\t",*(buf + i));
-		if (buf[i] < 128)
-		{
-			println(" ASCII");
+	// size_t col_sim = 0;
+	// Serial.printf("'%s|%d'\n", buf, size);
+	// // for(size_t i = 0; i < 1; i++)
+	// {
+		int i = 0;
+	// 	Serial.printf("%d.\t",i);
+	// 	if (buf[i] < 128)
+	// 	{
+	// 		println(" ASCII");
 			write(buf[i]);
-		}
-		else if (buf[i] & 0xd0)
-		{
-			write(buf[++i] - 16);
-			println(" D0");
-		}
-		else if (buf[i] & 0xd1)
-		{
-			write(buf[++i] + 48);
-			println(" D0");
-		}
-		// else
-		// 	break;
-		col_sim++;
-	}
-	return(col_sim);
+			write(buf[i+1]);
+
+	// 	}
+	// 	else if (buf[i] & 0xd0)
+	// 	{
+	// 		// write(buf[++i] - 16);
+	// 		println(" D0");
+	// 	}
+	// 	else if (buf[i] & 0xd1)
+	// 	{
+	// 		// write(buf[++i] + 48);
+	// 		println(" D0");
+	// 	}
+	// 	// else
+	// 	// 	break;
+	// 	col_sim++;
+	// }
+	return(1);
 }
 
 /**************************************************************************/

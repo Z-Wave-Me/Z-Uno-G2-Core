@@ -18,7 +18,7 @@ class ZUNO_GFX : public Print
 		uint16_t	cur_y;
 		uint16_t	s_width;
 		uint16_t	s_height;	
-		GLCDfonts	*font;
+		GLCDfonts	font;
 		void printChar(uint8_t ch);
 		
 	private:

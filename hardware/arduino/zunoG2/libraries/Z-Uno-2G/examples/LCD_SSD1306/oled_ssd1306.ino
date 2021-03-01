@@ -4,6 +4,12 @@
 // #include "ZUNO_GFX.h"
 #include "Wire.h"
 
+typedef struct subbuf_s
+{
+	uint8_t	cmd;
+	uint8_t *buf;
+}				subbuf_t;
+
 ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0); 
 ZUNO_SSD1306 lcd(128, 32);
 
@@ -17,7 +23,8 @@ void setup()
 	// lcd.setArea(0,0,127,32);
 	// int count_byte = 2;
 	// lcd.drawFastHLine(0, 3, 60, 2);
-	lcd.write(119);
+	// lcd.write('h');
+	lcd.write((const uint8_t*)"Hello\0", (size_t)1);
 	lcd.display();
 	// for (int i = 0; i < lcd.buff_size; i++)
 	// {

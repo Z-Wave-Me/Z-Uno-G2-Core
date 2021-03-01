@@ -1,9 +1,8 @@
 #ifndef SWITCHBINARY_CC_H
 #define SWITCHBINARY_CC_H
-#include "Arduino.h"
 
 /* Switch Binary command class commands */
-#define SWITCH_BINARY_VERSION                                                            0x01
+#define SWITCH_BINARY_VERSION                                                            0x02
 #define SWITCH_BINARY_GET                                                                0x02
 #define SWITCH_BINARY_REPORT                                                             0x03
 #define SWITCH_BINARY_SET                                                                0x01
@@ -57,5 +56,5 @@ typedef union								ZwBasicBinaryReportFrame_u {//For more convenient support, 
 
 int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t * cmd);
 int zuno_CCSwitchBinaryReport(byte channel);
-
+void zuno_CCSwitchBinaryTimer(size_t ticks);
 #endif // SWITCHBINARY_CC_H

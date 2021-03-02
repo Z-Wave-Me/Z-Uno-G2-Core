@@ -51,7 +51,6 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	commandClass++[0] = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
 	commandClass++[0] = COMMAND_CLASS_SUPERVISION;
 	commandClass++[0] =  COMMAND_CLASS_SECURITY;
-	commandClass++[0] =  COMMAND_CLASS_SECURITY_2;
 	commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
 	if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
 		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
@@ -89,7 +88,7 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd) {
 	report->reportsToFollow = 0;
 	report->genericDeviceClass = genericDeviceClass;
 	report->specificDeviceClass = specificDeviceClass;
-	i = 0;
+	i = 1;
 	max = getMaxChannelTypes();
 	end_point = &report->variantgroup[0];
 	if (genericDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {

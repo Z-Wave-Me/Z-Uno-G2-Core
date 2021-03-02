@@ -14,7 +14,8 @@
 #include "ZWCCAssociation.h"
 #include "ZWCCBattery.h"
 #include "ZWCCWakeup.h"
-#include "./includes/ZWSupportTimer.h"
+#include "ZWCCZWavePlusInfo.h"
+#include "ZWCCTimer.h"
 #include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -62,10 +63,9 @@ void ZWCCSetup(){
 	#endif
 }
 bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
-	uint8_t	cmd_class;
+	size_t				cmd_class;
 
 	cmd_class = cmd_bytes[0];
-
 	switch(channel->type) {
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_BINARY)
@@ -82,7 +82,7 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
 			if(cmd_class != COMMAND_CLASS_SENSOR_MULTILEVEL)
 				return false;
-			if(cmd_bytes[1] == SENSOR_MULTILEVEL_SUPPORTED_GET)
+			if(cmd_bytes[1] == SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR)
 				return true;
 			if(cmd_bytes[2] == channel->sub_type)
 				return true;
@@ -106,7 +106,7 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		case ZUNO_METER_CHANNEL_NUMBER:
-			if(cmd_bytes[0] == COMMAND_CLASS_METER)
+			if(cmd_class == COMMAND_CLASS_METER)
 				return true;
 			break;
 	}
@@ -200,6 +200,9 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
 				result = zuno_CCMultiAssociationHandler(cmd);
 				break ;
+			case COMMAND_CLASS_ZWAVEPLUS_INFO:
+				result = zuno_CCZWavePlusInfoHandler(cmd);
+				break ;
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);
 				break ;
@@ -237,7 +240,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	// If we have multichannel support enabled.
 	// Pass the data through it first
 	#ifdef WITH_CC_MULTICHANNEL
-	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTICHANNEL){
+	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTI_CHANNEL){
 		result = zuno_CCMultichannel(cmd);
 		if(result == ZUNO_COMMAND_BLOCKED){
 			return result;
@@ -765,9 +768,6 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 	return NULL;
 }
 
-// Main timer for CC purposes
-volatile ZunoTimer_t g_zuno_timer;
-	
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks)
 {	
 	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
@@ -850,17 +850,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			break; // Only one report per 1 pass
 		}
 	}
-}
-void zuno_CCTimer(uint32_t ticks) {
-	g_zuno_timer.ticks = ticks;
-	#ifdef WITH_CC_SWITCH_MULTILEVEL
-	zuno_CCSwitchMultilevelTimer(ticks);
-	#endif
-	#ifdef WITH_CC_SWITCH_COLOR
-	zuno_CCSwitchColorTimer(ticks);
-	#endif
-	if((ticks & 0x1F) == 0) // Once in ~320ms 
-		zunoSendReportHandler(ticks);
 }
 
 void zunoSendReport(byte ch){

@@ -1,9 +1,8 @@
 #ifndef SWITCHMULTILEVEL_CC_H
 #define SWITCHMULTILEVEL_CC_H
-#include "Arduino.h"
 
 /* Switch Multilevel command class commands */
-#define SWITCH_MULTILEVEL_VERSION                                                        0x02
+#define SWITCH_MULTILEVEL_VERSION                                                        0x04
 #define SWITCH_MULTILEVEL_GET                                                            0x02
 #define SWITCH_MULTILEVEL_REPORT                                                         0x03
 #define SWITCH_MULTILEVEL_SET                                                            0x01
@@ -125,8 +124,21 @@ typedef union					SwitchMultilevelReportFrame_u {//For more convenient support, 
 	SwitchMultilevelReportV4Frame_t	v4;
 }								SwitchMultilevelReportFrame_t;
 
+/************************************************************/
+/* Switch Multilevel Supported Report command class structs */
+/************************************************************/
+typedef struct									ZwSwitchMultilevelSupportedReportFrame_s
+{
+	uint8_t										cmdClass;/* The command class */
+	uint8_t										cmd;/* The command */
+	uint8_t										properties1;/* masked byte */
+	uint8_t										properties2;/* masked byte */
+}												ZwSwitchMultilevelSupportedReportFrame_t;
+
+
+
 int zuno_CCSwitchMultilevelReport(byte channel);
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
-void zuno_CCSwitchMultilevelTimer(uint32_t ticks);
+void zuno_CCSwitchMultilevelTimer(size_t ticks);
 
 #endif // SWITCHMULTILEVEL_CC_H

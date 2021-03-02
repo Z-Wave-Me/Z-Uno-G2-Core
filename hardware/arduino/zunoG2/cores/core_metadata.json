@@ -91,7 +91,7 @@
             "type_name":"ZUNO_SENSOR_BINARY_CHANNEL_NUMBER", "type_val":3,
             "cc_flags":["WITH_CC_NOTIFICATION"],
             "ccs":[
-                {"name":"COMMAND_CLASS_NOTIFICATION","version":"7"}
+                {"name":"COMMAND_CLASS_NOTIFICATION","version":"NOTIFICATION_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_NOTIFICATION",
             "specific_type":"SPECIFIC_TYPE_NOTIFICATION_SENSOR",
@@ -105,7 +105,7 @@
             "type_name":"ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER", "type_val":4,
             "cc_flags":["WITH_CC_SENSOR_MULTILEVEL"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"7"}
+                {"name":"COMMAND_CLASS_SENSOR_MULTILEVEL","version":"SENSOR_MULTILEVEL_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL",

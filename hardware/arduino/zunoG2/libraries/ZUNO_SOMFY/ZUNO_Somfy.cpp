@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include "ModBus.h"
 #include "Sync.h"
 #include "ZUNO_Somfy.h"
 

@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include "Mercury206Meter.h"
-#include "ModBus.h"
+#include "ZUNO_ModBus.h"
 
 
 #define MERCURY_BAUDRATE					(9600)
@@ -68,7 +68,7 @@ ZunoError_t Mercury206Meter::begin() {
 	if ((ret = MERCURY_SERIAL.begin(MERCURY_BAUDRATE)) != ZunoErrorOk)
 		return (ret);
 	CMU_ClockEnable(cmuClock_GPCRC, true);
-	pinMode(this->_dir_pin, OUTPUT);
+	pinMode(this->_dir_pin, OUTPUT_UP);
 	return (ZunoErrorOk);
 }
 
@@ -299,16 +299,19 @@ bool Mercury206Meter::setTarifTable(byte ii2, MercuryTarifTimeTable * tt) {
 
 /* Private Methods */
 inline size_t Mercury206Meter::_fillCmd(byte cmd, size_t len, uint8_t *b) {
+	size_t							count;
+
 	memcpy(b, &this->_sn[0], sizeof(this->_sn));
 	b[sizeof(this->_sn)] = cmd;
-	digitalWrite(this->_dir_pin, MODBUS_TRANSMIT);
-	delay(modbusDelay(MERCURY_BAUDRATE));
-	if (modbusSend(&MERCURY_SERIAL, b, len) == false)
+	if (ModBusRtuClass::send(&MERCURY_SERIAL, b, (len + 2)) == false)
 		return (0);
-	delay(modbusDelay(MERCURY_BAUDRATE));
+	delay(ModBusRtuClass::getBetween(MERCURY_BAUDRATE));
 	digitalWrite(this->_dir_pin, MODBUS_RECEIVE);
-	delay(4+MAX_MODBUS_BUFF+5);
-	return (modbusReceive(&MERCURY_SERIAL, b, MAX_MODBUS_BUFF));
+	delay(4+MAX_MODBUS_BUFF+5+1);
+	digitalWrite(this->_dir_pin, MODBUS_TRANSMIT);
+	if (ModBusRtuClass::receive(&MERCURY_SERIAL, b, MAX_MODBUS_BUFF, &count, &this->_sn[0], sizeof(this->_sn)) != ZunoErrorOk)
+		return (0);
+	return (count);
 }
 
 inline uint8_t Mercury206Meter::_bcd2dec(uint8_t c) {

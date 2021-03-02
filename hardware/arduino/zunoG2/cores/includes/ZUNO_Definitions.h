@@ -26,11 +26,13 @@ typedef enum
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
 	ZunoErrorInvalidValue,
 
+	/* do not change */
 	ZunoErrorDmaLimitChannel,//
 	ZunoErrorDmaInvalidUniqId,//
 	ZunoErrorDmaUniqIdAlready,//
 	ZunoErrorDmaInvalidReconfig,//
-	
+	/*                                         */
+
 	ZunoErrorSyncInvalidType,
 	ZunoErrorSyncInvalidInit,
 	ZunoErrorSyncDeInit,
@@ -49,7 +51,19 @@ typedef enum
 	ZunoErrorSomfyNack,
 	ZunoErrorNotData,
 	ZunoErrorOverflow,
+	ZunoErrorTimeout,
 	ZunoErrorNotMatchCrc,
+	ZunoErrorModBusRtuIllegalFunction,
+	ZunoErrorModBusRtuIllegalDataAdress,
+	ZunoErrorModBusRtuIllegalDataValue,
+	ZunoErrorModBusRtuSlaveDeviceFalture,
+	ZunoErrorModBusRtuAcknowledge,
+	ZunoErrorModBusRtuSlaveDeviceBusy,
+	ZunoErrorModBusRtuOther,
+	ZunoErrorModBusRtuMemoryParityError,
+	ZunoErrorModBusRtuNoises,
+	ZunoErrorModBusRtuGatewayPathUnavailable,
+	ZunoErrorModBusRtuGatewayTargetDeviceFailedRespond,
 	ZunoErrorMemory//Failed to allocate memory
 } ZunoError_t;
 

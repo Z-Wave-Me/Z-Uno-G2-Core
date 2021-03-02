@@ -831,9 +831,17 @@ enum {
 
 	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 1000
+	#define RX0					11
+	#define TX0					7
+	#define RX1					13
+	#define TX1					12
+	#define RX2					20
+	#define TX2					10
+
 	#define HIGH                1
 	#define LOW                 0
 	#define BATTERY             0xFF
+	#define ZUNO_PIN_LAST_INDEX	5
 #else
 	#error ZUNO_PIN_V
 #endif

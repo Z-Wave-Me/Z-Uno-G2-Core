@@ -73,6 +73,47 @@ static int _point_get(void) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+static int _find(ZwMultiChannelEndPointFindFrame_t *cmd) {
+	ZwMultiChannelEndPointFindReportFrame_t		*report;
+	size_t										genericDeviceClass;
+	size_t										specificDeviceClass;
+	uint8_t										*end_point;
+	size_t										i;
+	size_t										max;
+
+	genericDeviceClass = cmd->genericDeviceClass;
+	specificDeviceClass = cmd->specificDeviceClass;
+	report = (ZwMultiChannelEndPointFindReportFrame_t *)&CMD_REPLY_CC;
+	report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL;
+	report->cmd = MULTI_CHANNEL_END_POINT_FIND_REPORT;
+	report->reportsToFollow = 0;
+	report->genericDeviceClass = genericDeviceClass;
+	report->specificDeviceClass = specificDeviceClass;
+	i = 0;
+	max = getMaxChannelTypes();
+	end_point = &report->variantgroup[0];
+	if (genericDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {
+		while (i < max)
+			end_point++[0] = i++;
+	}
+	else if (specificDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {
+		while (i < max) {
+			if (ZUNO_DEV_TYPES[i].gen_type == genericDeviceClass)
+				end_point++[0] = i;
+			i++;
+		}
+	}
+	else {
+		while (i < max) {
+			if (ZUNO_DEV_TYPES[i].gen_type == genericDeviceClass && ZUNO_DEV_TYPES[i].spec_type == specificDeviceClass)
+				end_point++[0] = i;
+			i++;
+		}
+	}
+	CMD_REPLY_LEN = sizeof(ZwMultiChannelEndPointFindReportFrame_t) + (end_point - &report->variantgroup[0]);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
 int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd) {
 	int									rs;
 
@@ -98,8 +139,7 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd) {
 			rs = _point_get();
 			break;
 		case MULTI_CHANNEL_END_POINT_FIND:
-			// we don't support it yet
-			rs = ZUNO_COMMAND_BLOCKED;
+			rs = _find((ZwMultiChannelEndPointFindFrame_t*)cmd->cmd);
 			break;
 		case MULTI_INSTANCE_GET:
 			// we don't support it yet

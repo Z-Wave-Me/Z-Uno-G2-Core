@@ -123,7 +123,7 @@ bool compare_zw_channel(byte ch, byte targ) {
 }
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	byte i;
-	#ifdef LOGGING_UART
+	#ifdef LOGGING_DBG
 	LOGGING_UART.print("N_CH=");
 	LOGGING_UART.println(ZUNO_CFG_CHANNEL_COUNT);
 	#endif

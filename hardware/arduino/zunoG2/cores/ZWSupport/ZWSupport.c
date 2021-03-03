@@ -223,8 +223,106 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 	return (false);
 }
 
+static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
+	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
+		return (false);
+	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) == 0)//test multicast
+		return (true);
+	switch (cmdClass) {
+		#ifdef WITH_CC_BASIC
+		case COMMAND_CLASS_BASIC:
+			if (cmd == BASIC_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_BINARY
+		case COMMAND_CLASS_SWITCH_BINARY:
+			if (cmd == SWITCH_BINARY_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_MULTILEVEL
+		case COMMAND_CLASS_SWITCH_MULTILEVEL:
+			if (cmd == SWITCH_MULTILEVEL_SUPPORTED_GET)
+				return (false);
+			if (cmd == SWITCH_MULTILEVEL_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		case COMMAND_CLASS_SCENE_ACTIVATION:
+			return (true);
+			break ;
+		#ifdef WITH_CC_METER
+		case COMMAND_CLASS_METER:
+			if (cmd == METER_SUPPORTED_GET)
+				return (false);
+			if (cmd == METER_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_COLOR
+		case COMMAND_CLASS_SWITCH_COLOR:
+			if (cmd == SWITCH_COLOR_GET)
+				return (false);
+			if (cmd == SWITCH_COLOR_SUPPORTED_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_MODE
+		case COMMAND_CLASS_THERMOSTAT_MODE:
+			if (cmd == THERMOSTAT_MODE_SUPPORTED_GET)
+				return (false);
+			if (cmd == THERMOSTAT_MODE_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_SETPOINT
+		case COMMAND_CLASS_THERMOSTAT_SETPOINT:
+			if (cmd == THERMOSTAT_SETPOINT_SET)
+				return (true);
+			return (false);
+			break ;
+		#endif
+		#ifdef WITH_CC_DOORLOCK
+		case COMMAND_CLASS_DOOR_LOCK:
+			if (cmd == DOOR_LOCK_CONFIGURATION_SET)
+				return (true);
+			if (cmd == DOOR_LOCK_CONFIGURATION_SET)
+				return (true);
+			return (false);
+			break ;
+		#endif
+		case COMMAND_CLASS_CONFIGURATION:
+			if (cmd == CONFIGURATION_BULK_SET)
+				return (true);
+			if (cmd == CONFIGURATION_SET)
+				return (true);
+			if (cmd == CONFIGURATION_DEFAULT_RESET)
+				return (true);
+			return (false);
+			break ;
+		#ifdef WITH_CC_NOTIFICATION
+		case COMMAND_CLASS_NOTIFICATION:
+			if (cmd == NOTIFICATION_SET)
+				return (true);
+			return (false);
+			break ;
+		#endif
+		default:
+			return (false);
+			break ;
+	}
+	return (false);
+}
+
 // Main command handler for incoming z-wave commands
-int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
+int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	int result = ZUNO_UNKNOWN_CMD;
 	
 	#ifdef LOGGING_DBG
@@ -235,6 +333,8 @@ int zuno_CommandHandler(ZUNOCommandPacket_t * cmd) {
 	#ifdef WITH_CC_WAKEUP
  	zuno_CCWakeup_OnAnyRx();
 	#endif
+	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
+		return (ZUNO_COMMAND_BLOCKED);
 	// prepare packet for report
 	fillOutgoingPacket(cmd);
 	// If we have multichannel support enabled.

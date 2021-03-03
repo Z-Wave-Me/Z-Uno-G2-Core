@@ -739,3 +739,65 @@ int rand(void) {
 	number = tempos;
 	return (int)((tempos >> 32) & RAND_MAX);
 }
+
+uint8_t gMalloc[0x1000];
+
+typedef struct					ZMallocTop_s
+{
+	uint16_t					alloc_prev;//Если ноль то нечего перед этим листом не выделенно
+	uint16_t					alloc_size;
+}								ZMallocTop_t;
+
+typedef struct					ZMallocFreeList_s
+{
+	ZMallocTop_t				top;
+	uint16_t					next;
+	uint16_t					prev;
+}								ZMallocFreeList_t;
+
+static ZMallocFreeList_t *_malloc_free_list = 0;
+
+extern unsigned long __bss_start__;
+
+void * zmalloc(size_t size) {
+	ZMallocFreeList_t					*freeList;
+	ZMallocFreeList_t					*list;
+	ZMallocFreeList_t					*list_new;
+	size_t								min;
+	size_t								tempos;
+
+	if (_malloc_free_list == 0) {
+		_malloc_free_list = (ZMallocFreeList_t *)&gMalloc[0];
+		_malloc_free_list->top.alloc_prev = 0;
+		_malloc_free_list->top.alloc_size = sizeof(gMalloc) - sizeof(ZMallocTop_t);
+		_malloc_free_list->next = 0;
+		_malloc_free_list->prev = 0;
+	}
+	if (size < (sizeof(ZMallocFreeList_t)))
+		size = sizeof(ZMallocFreeList_t);
+	freeList = _malloc_free_list;
+	list = freeList;
+	min = (size_t)(-1);
+	while (freeList != (ZMallocFreeList_t *)&__bss_start__) {
+		if ((tempos = freeList->top.alloc_size) > size && tempos <= min) {
+			min = tempos;
+			list = freeList;
+			if (min == size)
+				break ;
+		}
+		freeList = (ZMallocFreeList_t *)(&__bss_start__ + freeList->next);
+	}
+	if (list == (ZMallocFreeList_t *)&__bss_start__)
+		return (0);
+	if ((tempos = list->top.alloc_size) >= (size + sizeof(ZMallocFreeList_t))) {
+		tempos = tempos - size;
+		list->top.alloc_size = tempos;
+		list_new = (ZMallocFreeList_t *)((size_t)list + tempos);
+		list_new->top.alloc_prev = 0;
+		list_new->next = list->next;
+		list->next = (size_t)list_new - (size_t)&__bss_start__;
+		list_new->prev = (size_t)list - (size_t)&__bss_start__;
+		list = list_new;
+	}
+	return (list);
+}

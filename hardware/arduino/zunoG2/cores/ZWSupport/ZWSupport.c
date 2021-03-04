@@ -16,6 +16,7 @@
 #include "ZWCCWakeup.h"
 #include "ZWCCZWavePlusInfo.h"
 #include "ZWCCTimer.h"
+#include "ZWCCSecurity.h"
 #include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -184,11 +185,23 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 }
 #endif
 
+uint8_t *zuno_AddCommonClass(uint8_t *b) {
+	b++[0] = COMMAND_CLASS_ZWAVEPLUS_INFO;
+	b++[0] = COMMAND_CLASS_ASSOCIATION;
+	b++[0] = COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION;
+	b++[0] = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
+	b++[0] = COMMAND_CLASS_SUPERVISION;
+	return (b);
+}
+
 // Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
 static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 	int result = ZUNO_UNKNOWN_CMD;
 
 	switch(ZW_CMD_CLASS) {
+			case COMMAND_CLASS_SECURITY_2:
+				result = zuno_CCSecurity(cmd);
+				break ;
 			case COMMAND_CLASS_CONFIGURATION:
 				#ifdef WITH_CC_CONFIGURATION
 				result = zuno_CCConfigurationHandler(cmd);
@@ -314,6 +327,17 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (false);
 			break ;
 		#endif
+		case COMMAND_CLASS_SECURITY_2:
+			if (cmd == SECURITY_2_COMMANDS_SUPPORTED_GET)
+				return (false);
+			if (cmd == SECURITY_2_NETWORK_KEY_GET)
+				return (false);
+			if (cmd == KEX_GET)
+				return (false);
+			if (cmd == SECURITY_2_NONCE_GET)
+				return (false);
+			return (true);
+			break ;
 		default:
 			return (false);
 			break ;

@@ -1,7 +1,12 @@
+#include "Arduino.h"
 #include "ZWCCConfiguration.h"
-#include "./includes/ZWCCConfiguration_private.h"
 
-#ifdef WITH_CC_CONFIGURATION
+typedef uint32_t CONFIGPARAM_MAX_SIZE;
+
+#define CONFIGPARAM_MIN_PARAM			0x40
+#define CONFIGPARAM_MAX_PARAM			0x60
+#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(CONFIGPARAM_MAX_SIZE)) + 0x204)
+
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
@@ -90,4 +95,3 @@ void zunoSaveCFGParam(uint8_t param, CONFIGPARAM_MAX_SIZE value)
 		return ;
 	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&value);
 }
-#endif

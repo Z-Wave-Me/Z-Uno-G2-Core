@@ -11,6 +11,8 @@
 #define DOOR_LOCK_OPERATION_GET                                                          0x02
 #define DOOR_LOCK_OPERATION_REPORT                                                       0x03
 #define DOOR_LOCK_OPERATION_SET                                                          0x01
+#define DOOR_LOCK_CAPABILITIES_GET                                                       0x07
+#define DOOR_LOCK_CAPABILITIES_REPORT                                                    0x08
 
 /************************************************************/
 /* Door Lock Operation Set command class structs */      

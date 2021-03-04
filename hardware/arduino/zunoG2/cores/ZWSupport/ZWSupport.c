@@ -203,9 +203,7 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 				result = zuno_CCSecurity(cmd);
 				break ;
 			case COMMAND_CLASS_CONFIGURATION:
-				#ifdef WITH_CC_CONFIGURATION
 				result = zuno_CCConfigurationHandler(cmd);
-				#endif
 				break ;
 			case COMMAND_CLASS_ASSOCIATION:
 				result = zuno_CCAssociationHandler(cmd);

@@ -11,8 +11,6 @@
 #define ASSOCIATION_GROUP_NAME_DEFAULT		"User group 00"
 #define ASSOCIATION_GROUP_NAME_MAX			42
 
-static char *g_zuno_associations_group_name[ZUNO_MAX_ASSOC_NUMBER];
-
 static int _group_id(uint8_t groupIndex) {
 	if (--groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
 		return (ZUNO_UNKNOWN_CMD);//We throw off the parsing of the package
@@ -108,6 +106,12 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 	return (rs);
 }
 
+const char *zunoAssociationGroupName(uint8_t groupIndex) __attribute__ ((weak));
+const char *zunoAssociationGroupName(uint8_t groupIndex) {
+	(void)groupIndex;
+	return (NULL);
+}
+
 static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 	static char								group_name_default[] = ASSOCIATION_GROUP_NAME_DEFAULT;
 	ZwAssociationGroupNameReportFrame_t		*lp;
@@ -122,7 +126,7 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 		group_name = (char *)ASSOCIATION_GROUP_NAME_LIFE_LINE;
 		len = (sizeof(ASSOCIATION_GROUP_NAME_LIFE_LINE) - 1);
 	}
-	else if ((group_name = g_zuno_associations_group_name[groupIndex - 2]) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
+	else if ((group_name = (char *)zunoAssociationGroupName(groupIndex)) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
 		;
 	else {
 		group_name = &group_name_default[0];
@@ -148,7 +152,7 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 	lp = (ZwAssociationGroupInfoReportFrame_t *)&CMD_REPLY_CC;
 	lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
 	lp->cmd = ASSOCIATION_GROUP_INFO_REPORT;
-	lp->properties1 = 1;// FIXME Уточнтить что будет ли динамически меняться - скорей сего нет
+	lp->properties1 = 1;
 	lp->variantgroup.mode = 0;
 	lp->variantgroup.reserved = 0;
 	lp->variantgroup.eventCode1 = 0;
@@ -264,12 +268,6 @@ void zunoAddAssociation(byte type, uint32_t params) {
 	ZUNO_CFG_ASSOCIATION_COUNT++;
 	ZUNO_CFG_ASSOCIATION(num).type = type;
 	(void)params;
-}
-
-void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name) {
-	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
-		return ;
-	g_zuno_associations_group_name[groupIndex - 1] = group_name;
 }
 
 static void _send_group(uint8_t groupIndex)

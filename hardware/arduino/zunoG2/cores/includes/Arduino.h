@@ -83,7 +83,7 @@ void zunoSendBatteryReport();
 
 /* Associations */
 void zunoAddAssociation(byte type, uint32_t params);
-void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name);
+const char *zunoAssociationGroupName(uint8_t groupIndex);
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);

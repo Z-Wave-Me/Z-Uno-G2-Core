@@ -81,18 +81,24 @@ SECTIONS
 		__data_end__ = .;
 	} > SKETCH_RAM
 
-	.bss :
+	.bss (NOLOAD):
 	{
 		. = ALIGN(4);
 		__bss_start__ = .;
 		*(.bss*)
 		*(COMMON)
+
+		. = ALIGN(4);
+		__heap_start__ = .;
+		*(.heap)
 		. = ALIGN(4);
 		__bss_end__ = .;
 	} > SKETCH_RAM
 
 	__data_size__ = __data_end__ - __data_start__;
 	__bss_size__ = __bss_end__ - __bss_start__;
+	__heap_end__ = ORIGIN(SKETCH_RAM) + LENGTH(SKETCH_RAM);
+	__heap_size__ = __heap_end__ - __heap_start__;
 	__HeapBase = __bss_end__;
 	__HeapLimit = ORIGIN(SKETCH_RAM) + LENGTH(SKETCH_RAM);
 	__HeapSize = __HeapLimit - __HeapBase;

@@ -54,6 +54,4 @@ typedef struct	PinDef_s
 
 extern const PinDef_t ZUNO_PIN_DEFS[];
 
-uint8_t zunoIsMalloc(void *b);
-
 #endif

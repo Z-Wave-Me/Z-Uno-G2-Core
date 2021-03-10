@@ -746,8 +746,6 @@ int rand(void) {
 	return (int)((tempos >> 32) & RAND_MAX);
 }
 
-uint8_t gMalloc[0x1000];
-
 typedef struct					ZMallocTop_s
 {
 	uint16_t					alloc_prev;//Если ноль то нечего перед этим листом не выделенно
@@ -761,15 +759,20 @@ typedef struct					ZMallocFreeList_s
 	uint16_t					prev;
 }								ZMallocFreeList_t;
 
-static ZMallocFreeList_t *_malloc_free_list = 0;
+
+#define MALLOC_HEAP_START				((void *)&_heap)
+#define MALLOC_HEAP_END					((void *)&__heap_end__)
+#define MALLOC_HEAP_SIZE				((size_t)&__heap_size__)
+#define MALLOC_STATUS_BUSY				0x8000
+#define MALLOC_OFFSET					((size_t)&__bss_start__)
 
 extern unsigned long __bss_start__;
+extern unsigned long __heap_start__;
+extern unsigned long __heap_end__;
+extern unsigned long __heap_size__;
 
-#define MALLOC_HEAP_START				((void *)&gMalloc[0])
-#define MALLOC_HEAP_END					((void *)&gMalloc[sizeof(gMalloc)])
-#define MALLOC_HEAP_SIZE				sizeof(gMalloc)
-#define MALLOC_STATUS_BUSY				0x8000
-#define MALLOC_OFFSET					((size_t)0x2000E000)
+static uint8_t _heap[sizeof(ZMallocFreeList_t)] __attribute__ ((section(".heap")));
+static ZMallocFreeList_t *_malloc_free_list = 0;
 
 static size_t _mallocFullSize(size_t size) {
 	size = (size + ((sizeof(size_t) - 1) + sizeof(ZMallocTop_t))) & (0 - sizeof(size_t));
@@ -778,7 +781,7 @@ static size_t _mallocFullSize(size_t size) {
 	return (size);
 }
 
-void *zmalloc(size_t size) {
+static void *_malloc(size_t size) {
 	ZMallocFreeList_t					*freeList;
 	ZMallocFreeList_t					*list;
 	ZMallocFreeList_t					*list_new;
@@ -787,16 +790,14 @@ void *zmalloc(size_t size) {
 	ZMallocFreeList_t					*list_next;
 	size_t								min;
 	size_t								tempos;
+	size_t								size_free;
 
-	if (_malloc_free_list == 0) {
-		_malloc_free_list = (ZMallocFreeList_t *)MALLOC_HEAP_START;
-		_malloc_free_list->top.alloc_prev = 0;
-		_malloc_free_list->top.alloc_size = MALLOC_HEAP_SIZE;
-		_malloc_free_list->next = 0;
-		_malloc_free_list->prev = 0;
+	if ((freeList = _malloc_free_list) == 0) {
+		freeList = (ZMallocFreeList_t *)MALLOC_HEAP_START;
+		_malloc_free_list = freeList;
+		freeList->top.alloc_size = MALLOC_HEAP_SIZE;
 	}
 	size = _mallocFullSize(size);
-	freeList = _malloc_free_list;
 	list = (ZMallocFreeList_t *)MALLOC_OFFSET;
 	min = (size_t)(-1);
 	while (freeList != (ZMallocFreeList_t *)MALLOC_OFFSET) {
@@ -810,17 +811,16 @@ void *zmalloc(size_t size) {
 	}
 	if (list == (ZMallocFreeList_t *)MALLOC_OFFSET)
 		return (0);
-	if ((tempos = min) >= (size + sizeof(ZMallocFreeList_t))) {
+	if (min >= (size + sizeof(ZMallocFreeList_t))) {
+		size_free = min - size;
+		list_new = list;
+		list_new->top.alloc_size = size_free;
+		list = (ZMallocFreeList_t *)((size_t)list + size_free);
+		list->top.alloc_prev = size_free;
 		list->top.alloc_size = size;
-		list_new = (ZMallocFreeList_t *)((size_t)list + size);
-		tempos = tempos - size;
-		list_new->top.alloc_prev = size;
-		list_new->top.alloc_size = tempos;
-		list_new->prev = list->prev;
-		list_new->next = list->next;
-		list_tmp = (ZMallocFreeList_t *)((size_t)list_new + tempos);
+		list_tmp = (ZMallocFreeList_t *)((size_t)list + size);
 		if (list_tmp <= (ZMallocFreeList_t *)((size_t)MALLOC_HEAP_END - sizeof(ZMallocFreeList_t)))
-			list_tmp->top.alloc_prev = tempos;
+			list_tmp->top.alloc_prev = size;
 	}
 	else {
 		list_next = (ZMallocFreeList_t *)(list->next + (size_t)MALLOC_OFFSET);
@@ -834,10 +834,17 @@ void *zmalloc(size_t size) {
 			list_prev->next = list->next;
 			list_new = list_prev;
 		}
+		_malloc_free_list = list_new;
 	}
-	_malloc_free_list = list_new;
 	list->top.alloc_size = list->top.alloc_size | MALLOC_STATUS_BUSY;
 	return ((uint8_t *)list + sizeof(ZMallocTop_t));
+}
+
+void *malloc(size_t size) {
+	void			*tmp;
+
+	tmp = _malloc(size);
+	return (tmp);
 }
 
 static void _mallocListMerge(ZMallocFreeList_t *main, ZMallocFreeList_t *extra) {
@@ -853,7 +860,7 @@ static void _mallocListMerge(ZMallocFreeList_t *main, ZMallocFreeList_t *extra) 
 		list_prev->next = extra->next;
 }
 
-void zfree(void *ptr) {
+static void _free(void *ptr) {
 	ZMallocFreeList_t					*freeList;
 	ZMallocFreeList_t					*list;
 	ZMallocFreeList_t					*list_tmp;
@@ -886,16 +893,20 @@ void zfree(void *ptr) {
 	_malloc_free_list = list;
 }
 
-void *zrealloc(void *ptr, size_t size) {
+void free(void *ptr) {
+	_free(ptr);
+}
+
+void *realloc(void *ptr, size_t size) {
 	ZMallocFreeList_t					*list;
 	size_t								sizeOld;
 	size_t								sizeNew;
 	void								*ptrNew;
 
 	if (ptr == 0)
-		return (zmalloc(size));
+		return (malloc(size));
 	if (size == 0) {
-		zfree(ptr);
+		free(ptr);
 		return (0);
 	}
 	sizeNew = _mallocFullSize(size);
@@ -903,28 +914,28 @@ void *zrealloc(void *ptr, size_t size) {
 	sizeOld = list->top.alloc_size ^ MALLOC_STATUS_BUSY;
 	if (sizeOld >= sizeNew)
 		return (ptr);
-	if ((ptrNew = zmalloc(sizeNew)) == 0)
+	if ((ptrNew = malloc(sizeNew)) == 0)
 		return (0);
 	memcpy(ptrNew, ptr, size);
-	zfree(ptr);
+	free(ptr);
 	return (ptrNew);
 }
 
-void *zreallocarray (void *ptr, size_t nmemb, size_t size) {
+void *reallocarray (void *ptr, size_t nmemb, size_t size) {
 	size_t						tempos;
 
 	if (__builtin_mul_overflow (nmemb, size, &tempos)) {
 		errno = ENOMEM;
 		return (0);
 	}
-	return (zrealloc(ptr, tempos));
+	return (realloc(ptr, tempos));
 }
 
 void zcfree(void *ptr) {
-	zfree(ptr);
+	free(ptr);
 }
 
-void *zcalloc(size_t nmemb, size_t size) {
+void *calloc(size_t nmemb, size_t size) {
 	size_t						tempos;
 	void						*tmp;
 
@@ -932,7 +943,7 @@ void *zcalloc(size_t nmemb, size_t size) {
 		errno = ENOMEM;
 		return (0);
 	}
-	if ((tmp = zmalloc(tempos)) == 0)
+	if ((tmp = malloc(tempos)) == 0)
 		return (0);
 	memset(tmp, 0, tempos);
 	return (tmp);

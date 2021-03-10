@@ -79,9 +79,7 @@ void zunoSendReport(byte ch);
 void zunoSendBatteryReport();
 
 /* CFG */
-uint32_t zunoLoadCFGParam(uint8_t param);
-void zunoSaveCFGParam(uint8_t param, uint32_t value);
-
+#include "ZWCCConfiguration_define.h"
 
 /* Associations */
 void zunoAddAssociation(byte type, uint32_t params);

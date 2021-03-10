@@ -41,9 +41,10 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint16_t            crc16;
 }ZUNODeviceConfiguation_t;
 // Z-Wave packet
-#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX						30
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN						300
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						40//scientific poke method ))
 typedef struct ZUNOCommandPacket_s{
-	uint8_t * cmd;   // 4B - ZUNO_COMMAND_PACKET_CMD_LEN_MAX
+	uint8_t * cmd;   // 4B
 	uint8_t   flags; // 5B
 	uint8_t   len;   // 6B
 	uint8_t   src_zw_channel;// 7

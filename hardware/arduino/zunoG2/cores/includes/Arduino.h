@@ -79,13 +79,11 @@ void zunoSendReport(byte ch);
 void zunoSendBatteryReport();
 
 /* CFG */
-uint32_t zunoLoadCFGParam(uint8_t param);
-void zunoSaveCFGParam(uint8_t param, uint32_t value);
-
+#include "ZWCCConfiguration_define.h"
 
 /* Associations */
 void zunoAddAssociation(byte type, uint32_t params);
-void zunoSetAssociationGroupName(uint8_t groupIndex, char *group_name);
+const char *zunoAssociationGroupName(uint8_t groupIndex);
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);

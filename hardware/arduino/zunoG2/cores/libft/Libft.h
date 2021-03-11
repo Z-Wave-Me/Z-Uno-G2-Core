@@ -41,4 +41,6 @@ float strtof(const char *nptr, char **endptr);
 
 int rand(void);
 
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
+
 #endif//LIBFT_H

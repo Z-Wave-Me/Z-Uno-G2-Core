@@ -61,8 +61,7 @@
         {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
             "cc_flags":["WITH_CC_SWITCH_BINARY","WITH_CC_BASIC"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
@@ -76,8 +75,7 @@
             "type_name":"ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER", "type_val":2,
             "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
@@ -153,8 +151,7 @@
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
             ],
             "cluster_rule":"${type}"
         },
@@ -168,8 +165,7 @@
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
             ],
             "cluster_rule":"${type}"
         },
@@ -177,8 +173,7 @@
             "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
             "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_BINARY_VERSION"},
-                {"name":"COMMAND_CLASS_BASIC","version":"BASIC_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_BINARY_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",

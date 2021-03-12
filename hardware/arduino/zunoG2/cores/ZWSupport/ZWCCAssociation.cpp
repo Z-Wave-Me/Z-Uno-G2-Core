@@ -3,6 +3,12 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCDoorLock.h"
 #include "ZWCCAssociation.h"
+#include "ZWCCNotification.h"
+#include "ZWCCMeter.h"
+#include "ZWCCSensorMultilevel.h"
+#include "ZWCCSwitchColor.h"
+#include "ZWCCThermostat.h"
+#include "ZWCCBattery.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -180,12 +186,12 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 				lp->variantgroup.groupingIdentifier = ZUNO_LIFELINE_GRP;
 				lp->variantgroup.profile1 = 0;
 				lp->variantgroup.profile2 = 1;
-				break;
+				break ;
 			default:
 				lp->variantgroup.groupingIdentifier = groupIndex;
 				lp->variantgroup.profile1 = 0x20;
 				lp->variantgroup.profile2 = ZUNO_CFG_ASSOCIATION(groupIndex - 2).type;
-				break;
+				break ;
 		}
 		zunoSendZWPackage(&g_outgoing_packet);
 		groupIndex++;
@@ -193,10 +199,91 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in) {
+static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
+	size_t				cmd;
+
+	switch (cmdClass) {
+		#ifdef WITH_CC_BATTERY
+		case COMMAND_CLASS_BATTERY:
+			cmd = BATTERY_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_BASIC
+		case COMMAND_CLASS_BASIC:
+			cmd = BASIC_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_BINARY
+		case COMMAND_CLASS_SWITCH_BINARY:
+			cmd = SWITCH_BINARY_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_NOTIFICATION
+		case COMMAND_CLASS_NOTIFICATION:
+			cmd = NOTIFICATION_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_MULTILEVEL
+		case COMMAND_CLASS_SWITCH_MULTILEVEL:
+			cmd = SWITCH_MULTILEVEL_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_METER
+		case COMMAND_CLASS_METER:
+			cmd = METER_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_SENSOR_MULTILEVEL
+		case COMMAND_CLASS_SENSOR_MULTILEVEL:
+			cmd = SENSOR_MULTILEVEL_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_SWITCH_COLOR
+		case COMMAND_CLASS_SWITCH_COLOR:
+			cmd = SWITCH_COLOR_REPORT
+			break ;
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_MODE
+		case COMMAND_CLASS_THERMOSTAT_MODE:
+			cmd = THERMOSTAT_MODE_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_SETPOINT
+		case COMMAND_CLASS_THERMOSTAT_SETPOINT:
+			cmd = THERMOSTAT_SETPOINT_REPORT;
+			break ;
+		#endif
+		default:
+			return (command);
+			break ;
+	}
+	command[0] = cmdClass;
+	command[1] = cmd;
+	return (command + 2);
+}
+
+static size_t _testCmdClassReplay(uint8_t *b, uint8_t *e, size_t cc) {
+	while (b < e) {
+		if (b[0] == cc)
+			return (true);
+		b = b + 2;
+	}
+	return (false);
+}
+
+static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in, ZUNOCommandPacket_t *packet) {
 	uint8_t											groupIndex;
 	uint8_t											listLength;
 	ZwAssociationGroupCommandListReportFrame_t		*lp;
+	uint8_t											*command;
+	uint8_t											*command_save;
+	size_t											i;
+	size_t											max;
+	size_t											i_all;
+	size_t											max_all;
+	size_t											cc;
+	size_t											dst_zw_channel;
+	const ZUNOChannelCCS_t							*ccs;
 
 	groupIndex = in->groupingIdentifier;
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
@@ -205,38 +292,65 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
 	// lp->cmd = ASSOCIATION_GROUP_COMMAND_LIST_REPORT; set in - fillOutgoingPacket
 	lp->groupingIdentifier = groupIndex;
-	listLength = 2;
-	if (groupIndex == ZUNO_LIFELINE_GRP)
-	{
-		lp->command[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
-		lp->command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
+	command = &lp->command[0];
+	if (groupIndex == ZUNO_LIFELINE_GRP) {//0x2503380371053105
+		if ((dst_zw_channel = packet->dst_zw_channel) == 0) {
+			command[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
+			command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
+			command = command + 2;
+			command_save = command;
+			i_all = 1;
+			max_all = ZUNO_CFG_CHANNEL_COUNT;
+			while (i_all <= max_all) {
+				ccs = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(i_all - 1).type - 1];
+				i_all++;
+				i = 0;
+				max = ccs->num_ccs;
+				while (i < max) {
+					cc = ccs->ccs[i++].cc;
+					if (_testCmdClassReplay(command_save, command, cc) == false)
+						command = _find_report(cc, command);
+				}
+			}
+		}
+		else {
+			ccs = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(dst_zw_channel - 1).type - 1];
+			i = 0;
+			max = ccs->num_ccs;
+			while (i < max)
+				command = _find_report(ccs->ccs[i++].cc, command);
+		}
 	}
 	else
 	{
 		switch (ZUNO_CFG_ASSOCIATION(groupIndex - 2).type) {
 			case ZUNO_ASSOC_BASIC_SET_NUMBER:
-				lp->command[0] = COMMAND_CLASS_BASIC;
-				lp->command[1] = BASIC_SET;
-				break;
+				command[0] = COMMAND_CLASS_BASIC;
+				command[1] = BASIC_SET;
+				command = command + 2;
+				break ;
 			case ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER:
-				listLength = 6;
-				lp->command[0] = COMMAND_CLASS_BASIC;
-				lp->command[1] = BASIC_SET;
-				lp->command[2] = COMMAND_CLASS_SWITCH_MULTILEVEL;
-				lp->command[3] = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
-				lp->command[4] = COMMAND_CLASS_SWITCH_MULTILEVEL;
-				lp->command[5] = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
-				break;
+				command[0] = COMMAND_CLASS_BASIC;
+				command[1] = BASIC_SET;
+				command[2] = COMMAND_CLASS_SWITCH_MULTILEVEL;
+				command[3] = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
+				command[4] = COMMAND_CLASS_SWITCH_MULTILEVEL;
+				command[5] = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
+				command = command + 6;
+				break ;
 			case ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER:
-				lp->command[0] = COMMAND_CLASS_SCENE_ACTIVATION;
-				lp->command[1] = SCENE_ACTIVATION_SET;
-				break;
+				command[0] = COMMAND_CLASS_SCENE_ACTIVATION;
+				command[1] = SCENE_ACTIVATION_SET;
+				command = command + 2;
+				break ;
 			case ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER:
-				lp->command[0] = COMMAND_CLASS_DOOR_LOCK;
-				lp->command[1] = DOOR_LOCK_OPERATION_SET;
-				break;
+				command[0] = COMMAND_CLASS_DOOR_LOCK;
+				command[1] = DOOR_LOCK_OPERATION_SET;
+				command = command + 2;
+				break ;
 		}
 	}
+	listLength = command - &lp->command[0];
 	lp->listLength = listLength;
 	CMD_REPLY_LEN = sizeof(ZwAssociationGroupCommandListReportFrame_t) + listLength;
 	return (ZUNO_COMMAND_ANSWERED);
@@ -254,7 +368,7 @@ int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _association_gpr_info_profile_report(cmd, (ZwAssociationGroupInfoGetFrame_t *)cmd->cmd);
 			break ;
 		case ASSOCIATION_GROUP_COMMAND_LIST_GET:
-			rs = _association_gpr_info_command_report((ZwAssociationGroupCommandListGetFrame_t *)cmd->cmd);
+			rs = _association_gpr_info_command_report((ZwAssociationGroupCommandListGetFrame_t *)cmd->cmd, cmd);
 			break ;
 	}
 	return (rs);

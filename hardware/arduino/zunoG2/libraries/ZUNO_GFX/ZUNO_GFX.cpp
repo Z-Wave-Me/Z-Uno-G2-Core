@@ -113,7 +113,7 @@ uint32_t ZUNO_GFX::utf8toUnicode(char *ch)
 	int charLen = -1;
 	unsigned char sub = *ch;
 	uint32_t ret = 0;
-	Serial.printf("\t%#x %#x\n", *(ch - 1), ch[0]);
+
 	if (!(*ch & 0x80))
 		return(*ch);
 	while (sub & 0x80)
@@ -156,7 +156,7 @@ uint8_t ZUNO_GFX::retchunk(uint32_t unicode)
 
 void	ZUNO_GFX::setFont(const uint8_t *font_name)
 {
-	Serial.printf("setfont %i!\n", sizeof(font_name));
+
 	if (font.font_buf != NULL)
 	{
 		free(font.chunks);
@@ -206,55 +206,18 @@ uint8_t ZUNO_GFX::write(uint32_t unicode)
 		printChar(sim_buf, w_sim);
 		cur_x += w_sim + 1;
 	}
-
-
-	// Serial.println("uinc");
-	// uint8_t *buf = font.font_buf + (font.width + 1 * unicode);
-	// uint8_t w_sim = *buf;
-	// if (!font.font_buf)
-	// 	return (0);
-	// if ((cur_x + w_sim) > s_width || unicode == '\n')
-	// {
-	// 	if ((cur_y + font.height) < s_height)
-	// 	{
-	// 		cur_y += font.height;
-	// 		cur_x = 0;
-	// 	}
-	// 	else
-	// 		return(0);
-	// }
-	// if (unicode >= font.start_sim)
-	// {
-	// 	printChar(unicode);
-	// }
-	// return (1);
 }
 
 size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 {
-	// uint32_t	unic;
-	// size_t		ret = 0;
-	// char *sub_str = (char*)str;
-	// while (*sub_str && len >= 0)
-	// {
-	// 	unic = utf8toUnicode(sub_str);
-	// 	// printChar(unic);
-	// 	write(unic);
-	// 	sub_str += charLen(sub_str);
-	// 	ret++;
-	// }
-	// return (ret);
 	uint32_t	unic;
 	size_t		ret = 0;
 	char *sub_str = (char*)buf;
-	Serial.printf("$$$$$$\n");
+
 
 	while (*sub_str && size >= 0)
 	{
 		unic = utf8toUnicode(sub_str);
-		// Serial.println(sub_str);
-		// printChar(unic);
-		Serial.printf("unic %i chLen %i '%s'\n",unic,charLen(sub_str),sub_str);
 		write(unic);
 		sub_str += charLen(sub_str);
 		size -= charLen(sub_str);
@@ -275,7 +238,7 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 /**************************************************************************/
 void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 							 uint8_t color) {
-	// Serial.printf("writeLine pt0(%d, %d) pt1(%d, %d)\n",x0,y0,x1,y1);
+
 	int16_t steep = abs(y1 - y0) > abs(x1 - x0);
 	if (steep) {
 	_swap_int16_t(x0, y0);
@@ -286,7 +249,7 @@ void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	_swap_int16_t(x0, x1);
 	_swap_int16_t(y0, y1);
 	}
-	// Serial.printf("writeLine pt0(%d, %d) pt1(%d, %d)\n",x0,y0,x1,y1);
+
 
 	int16_t dx, dy;
 	dx = x1 - x0;

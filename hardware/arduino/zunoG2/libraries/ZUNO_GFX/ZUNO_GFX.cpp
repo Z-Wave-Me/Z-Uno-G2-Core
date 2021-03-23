@@ -72,43 +72,126 @@ void ZUNO_GFX::drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 	}
 }
 
-void ZUNO_GFX::printChar(uint8_t ch)
+void ZUNO_GFX::printChar(const uint8_t *sim_buf, uint8_t w_sim)
 {
-	// Serial.printf("\tchar '%c' / cur_x %d",ch, cur_x);
-	ch -= font.start_sim;
-	uint8_t *buf = font.font_buf + ((font.width + 1) * ch);
-	uint8_t w_sim = *buf;
-	uint8_t *sim = buf + 1;
-	// Serial.printf(" / w_sim %d\n", w_sim);
+	int			i = 0;
+	if (font.font_buf == NULL)
+		return;
 	for (uint8_t col = 0; col < w_sim; col++)
 	{
 		for (uint8_t row = 0; row < font.height; row++)
 		{
-			uint8_t cur_b = col * ((font.height >> 3) + (row >> 8));
+			uint8_t cur_b = (col * ((font.height >> 3) + 1)) + (row >> 3);
 			uint8_t cur_bit = 1 << (row % 8);
-			if (sim[cur_b] & cur_bit)
+			
+			if (sim_buf[cur_b] & cur_bit)
 				drawPixel(cur_x + col, cur_y + row, 2);
 		}
 	}
-	// Serial.printf("last cur %d | Ch %X-'%c' %d\n",cur_x, ch + font.start_sim, ch + font.start_sim, w_sim);
-	cur_x += w_sim;
+	Serial.println();
 }
 
-void	ZUNO_GFX::setFont(uint8_t *font_name)
+uint8_t ZUNO_GFX::charLen(char *ch)
 {
-	font.width = *font_name;
-	font.height = *(font_name + 1);
-	font.start_sim = *(font_name + 2);
-	font.font_buf = font_name + 3;
+	unsigned char	sub = *ch;
+	char			len = 0;
+	if (!(*ch & 0x80))
+		return(1);
+	while (sub & 0x80)
+	{
+		len++;
+		sub <<=1;
+	}
+	if ((*(ch + 1) >> 6) == 2)
+		return(len);
+	else
+		return(1);	
+}
+
+uint32_t ZUNO_GFX::utf8toUnicode(char *ch)
+{
+	int charLen = -1;
+	unsigned char sub = *ch;
+	uint32_t ret = 0;
+	Serial.printf("\t%#x %#x\n", *(ch - 1), ch[0]);
+	if (!(*ch & 0x80))
+		return(*ch);
+	while (sub & 0x80)
+	{
+		charLen++;
+		sub <<=1;
+	}
+	ret = (*ch & (0xff >> (charLen + 1))) << (6 * (charLen));
+	for (uint8_t i = 1; i <= charLen; i++)
+	{
+		if (((unsigned char)ch[i] >> 6) == 2)
+			ret |= (ch[i] & 0x3f) << (6 * (charLen - i));
+		else
+			return (*ch);
+	}
+	return (ret);
+}
+
+uint8_t ZUNO_GFX::unicodeLen(int in)
+{
+	uint8_t len = 1;
+	while ((in >>= 6))
+	{
+		if (in == 1 && len == 1)
+			return(len);
+		len++;
+	}
+	return(len);
+}
+
+uint8_t ZUNO_GFX::retchunk(uint32_t unicode)
+{
+	for (uint8_t i = 0; i < font.ranges; i++)
+	{
+		if (unicode >= font.chunks[i].st_sim && unicode <= font.chunks[i].end_sim)
+			return(i);
+	}
+	return(-1);
+}
+
+void	ZUNO_GFX::setFont(const uint8_t *font_name)
+{
+	Serial.printf("setfont %i!\n", sizeof(font_name));
+	if (font.font_buf != NULL)
+	{
+		free(font.chunks);
+		font.chunks = NULL;
+		font.font_buf = NULL;
+	}
+
+		memcpy(&font, font_name, 5);
+		font.chunks = (font_chunk*)malloc(font.ranges * sizeof(font_chunk));
+		memcpy(font.chunks, font_name + 5, font.ranges * sizeof(font_chunk));
+		font.font_buf = font_name;
 };
 
-uint8_t ZUNO_GFX::write(uint8_t c)
+uint8_t ZUNO_GFX::write(uint32_t unicode)
 {
-	uint8_t *buf = font.font_buf + (font.width + 1 * c);
-	uint8_t w_sim = *buf;
-	if (!font.font_buf)
-		return (0);
-	if ((cur_x + w_sim) > s_width || c == '\n')
+	//получаем буфер для символа
+	const uint8_t	*sim_buf = NULL;
+	int				i = 0;
+	uint8_t			w_sim = 0;
+	if (font.font_buf == NULL)
+		return(0);
+//получаем область где находится символ
+	for (i = 0; i <= font.ranges; i++)
+	{
+		if (unicode >= font.chunks[i].st_sim && unicode <= font.chunks[i].end_sim)
+			break;
+	}
+	if (i <= font.ranges)
+	{
+		sim_buf = (const uint8_t*)(font.font_buf + font.chunks[i].byte_st +
+						font.bytes_simbol * (unicode - font.chunks[i].st_sim));
+		w_sim = *(sim_buf++);
+	}
+//проверяем перенести ли курсор
+	if ((cur_x + w_sim) >= s_width || unicode == '\n')
 	{
 		if ((cur_y + font.height) < s_height)
 		{
@@ -118,31 +201,66 @@ uint8_t ZUNO_GFX::write(uint8_t c)
 		else
 			return(0);
 	}
-	if (c >= font.start_sim)
+	if (sim_buf)
 	{
-		printChar(c);
-		// cur_x += w_sim;
+		printChar(sim_buf, w_sim);
+		cur_x += w_sim + 1;
 	}
-	return (1);
+
+
+	// Serial.println("uinc");
+	// uint8_t *buf = font.font_buf + (font.width + 1 * unicode);
+	// uint8_t w_sim = *buf;
+	// if (!font.font_buf)
+	// 	return (0);
+	// if ((cur_x + w_sim) > s_width || unicode == '\n')
+	// {
+	// 	if ((cur_y + font.height) < s_height)
+	// 	{
+	// 		cur_y += font.height;
+	// 		cur_x = 0;
+	// 	}
+	// 	else
+	// 		return(0);
+	// }
+	// if (unicode >= font.start_sim)
+	// {
+	// 	printChar(unicode);
+	// }
+	// return (1);
 }
 
 size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 {
-	size_t col_sim = 0;
-	for(size_t i = 0; i < size; i++)
-	{
-		if (buf[i] < 128)
-			write(buf[i]);
-		else if (buf[i] & 0xd0)
-			write(buf[++i] - 16);
-		else if (buf[i] & 0xd1)
-			write(buf[++i] + 48);
-		else
-			break;
-		col_sim++;
+	// uint32_t	unic;
+	// size_t		ret = 0;
+	// char *sub_str = (char*)str;
+	// while (*sub_str && len >= 0)
+	// {
+	// 	unic = utf8toUnicode(sub_str);
+	// 	// printChar(unic);
+	// 	write(unic);
+	// 	sub_str += charLen(sub_str);
+	// 	ret++;
+	// }
+	// return (ret);
+	uint32_t	unic;
+	size_t		ret = 0;
+	char *sub_str = (char*)buf;
+	Serial.printf("$$$$$$\n");
 
+	while (*sub_str && size >= 0)
+	{
+		unic = utf8toUnicode(sub_str);
+		// Serial.println(sub_str);
+		// printChar(unic);
+		Serial.printf("unic %i chLen %i '%s'\n",unic,charLen(sub_str),sub_str);
+		write(unic);
+		sub_str += charLen(sub_str);
+		size -= charLen(sub_str);
+		ret++;
 	}
-	return(1);
+	return (ret);
 }
 
 /**************************************************************************/

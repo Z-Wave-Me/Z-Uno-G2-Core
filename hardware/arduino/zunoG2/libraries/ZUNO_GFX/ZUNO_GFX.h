@@ -15,25 +15,50 @@ typedef struct GLCDfonts_s
 
 class ZUNO_GFX : public Print
 {
+	typedef struct	font_chunk_s
+	{
+		uint32_t	st_sim;
+		uint32_t	end_sim;
+		uint32_t	byte_st;
+	}				font_chunk;
+
+	typedef struct	ZUNO_font_S
+	{
+		uint8_t			width;
+		uint8_t			height;
+		uint8_t			col_sim;
+		uint8_t			bytes_simbol;
+		uint8_t			ranges;
+		font_chunk		*chunks;
+		const uint8_t	*font_buf;
+		
+	}				ZUNO_fonts;
 	protected:
 		uint16_t	cur_x;
 		uint16_t	cur_y;
 		uint16_t	s_width;
 		uint16_t	s_height;	
-		GLCDfonts	font;
-		void printChar(uint8_t ch);
+		ZUNO_fonts	font;
+		void printChar(const uint8_t *sim_buf, uint8_t w_sim);
 		uint8_t		*buffer;
 		size_t		buff_size;
 		
 	private:
+		uint8_t charLen(char *ch);
+		uint32_t utf8toUnicode(char *ch);
+		uint8_t unicodeLen(int in);
+		uint8_t retchunk(uint32_t unicode);
+
 	public:
 		ZUNO_GFX(uint16_t width, uint16_t height);
 		~ZUNO_GFX();
 		using	Print::write;
 		virtual size_t write(const uint8_t *buffer, size_t size);
-		virtual uint8_t write(uint8_t);
+		uint8_t write(uint32_t unicode);
+		uint8_t write(uint8_t chr)	 {return(write((uint32_t)chr));};
+		uint8_t write(char chr)	 {return(write((uint32_t)chr));};
 		virtual void drawPixel(int16_t x, int16_t y, uint8_t color);
-		void writePixel(int16_t x, int16_t y, uint8_t color);
+		virtual void writePixel(int16_t x, int16_t y, uint8_t color);
 		void drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 												 uint8_t *pic, uint8_t color);
 		void writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t color);
@@ -58,7 +83,7 @@ class ZUNO_GFX : public Print
 		void fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 								uint8_t corners, int16_t delta, uint8_t color);
 		void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-		void setFont(uint8_t *font_name);
+		void setFont(const uint8_t *font_name);
 		void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 									int16_t x2, int16_t y2, uint16_t color);
 		void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,

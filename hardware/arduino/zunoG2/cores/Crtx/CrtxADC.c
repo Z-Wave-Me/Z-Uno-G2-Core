@@ -534,6 +534,8 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
           return adcPosSelAPORT4XCH1;
       case A3:
           return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 1000
+
 #else
 	#error ZUNO_PIN_V
 #endif

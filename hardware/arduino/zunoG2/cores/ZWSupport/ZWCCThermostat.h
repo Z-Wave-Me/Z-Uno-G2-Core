@@ -59,6 +59,8 @@
 #define THERMOSTAT_SETPOINT_SET                                                          0x01
 #define THERMOSTAT_SETPOINT_SUPPORTED_GET                                                0x04
 #define THERMOSTAT_SETPOINT_SUPPORTED_REPORT                                             0x05
+#define THERMOSTAT_SETPOINT_CAPABILITIES_GET                                             0x09
+#define THERMOSTAT_SETPOINT_CAPABILITIES_REPORT                                          0x0A
 
 int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
 int zuno_CCThermostatReport(byte channel);

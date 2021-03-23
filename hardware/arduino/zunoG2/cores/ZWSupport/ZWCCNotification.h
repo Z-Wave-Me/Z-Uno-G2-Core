@@ -6,22 +6,25 @@
 #define NOTIFICATION_PROPERTIES_PARAMLENGTH_MASK	0x1F
 
 #define NOTIFICATION_REPORT_LEN                     11
-#define NOTIFICATION_REPORT_DATA_LEN                (NOTIFICATION_REPORT_LEN-2)
-#define NOTIFICATION_SUPPORTED_DATA_LEN             2
-#define NOTIFICATION_SUPPORTED_LEN                  5
-#define NOTIFICATION_SUPPORTED_EV_DATA_LEN          3
-#define NOTIFICATION_SUPPORTED_EV_LEN               7
+
 // EEPROM ADDR                                      
 #define NOTIFICATION_CC_EEPROM                      0x200
-#define NOTIFICATION_VERSION                        7
-// COMMANDS
-#define NOTIFICATION_GET                            0x04
-#define NOTIFICATION_REPORT                         0x05
-#define NOTIFICATION_SET                            0x06
-#define NOTIFICATION_SUPPORTED_GET                  0x07
-#define NOTIFICATION_SUPPORTED_REPORT               0x08
-#define EVENT_SUPPORTED_GET                         0x01
-#define EVENT_SUPPORTED_REPORT                      0x02
+
+/* Notification command class commands */
+#define NOTIFICATION_VERSION                                                          0x08
+#define NOTIFICATION_GET                                                              0x04
+#define NOTIFICATION_REPORT                                                           0x05
+#define NOTIFICATION_SET                                                              0x06
+#define NOTIFICATION_SUPPORTED_GET                                                    0x07
+#define NOTIFICATION_SUPPORTED_REPORT                                                 0x08
+#define EVENT_SUPPORTED_GET                                                           0x01
+#define EVENT_SUPPORTED_REPORT                                                        0x02
+
+/* Values used for Notification Supported Report command */
+#define NOTIFICATION_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASKS_MASK               0x1F
+#define NOTIFICATION_SUPPORTED_REPORT_PROPERTIES1_RESERVED_MASK                          0x60
+#define NOTIFICATION_SUPPORTED_REPORT_PROPERTIES1_RESERVED_SHIFT                         0x05
+#define NOTIFICATION_SUPPORTED_REPORT_PROPERTIES1_V1_ALARM_BIT_MASK                      0x80
 
 // TYPES
 #define NOTIFICATION_TYPE_SMOKE_ALARM					0x01
@@ -42,6 +45,7 @@
 #define NOTIFICATION_TYPE_WEATHER_ALAR					0x10
 #define NOTIFICATION_TYPE_IRRIGATION					0x11
 #define NOTIFICATION_TYPE_GAS_ALARM						0x12
+#define NOTIFICATION_TYPE_MAX							0x12
 
 /*
 #define NOTIFICATION_SET_HOME_HEALTH_V7                                                  0x0D
@@ -139,6 +143,42 @@
 #define NOTIFICATION_EVENT_GAS_COMBUSTIBLE				0x02
 #define NOTIFICATION_EVENT_GAS_TOXIC					0x04
 
+#define NOTIFICATION_EVENT_MAX							0x16
+
+/************************************************************/
+/* Notification Set V8 command class structs */             
+/************************************************************/
+typedef struct								ZwNotificationSetFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									notificationType;/**/
+	uint8_t									notificationStatus;/**/
+}											ZwNotificationSetFrame_t;
+
+/************************************************************/
+/* Notification Supported Report  command class structs */
+/************************************************************/
+typedef struct								ZwNotificationSupportedReportFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									properties1;/* masked byte */
+	uint8_t									bitMask[];
+}											ZwNotificationSupportedReportFrame_t;
+
+/************************************************************/
+/* Notification Get command class structs */             
+/************************************************************/
+typedef struct								ZwNotificationGetFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									v1AlarmType;/**/
+	uint8_t									notificationType;/**/
+	uint8_t									mevent;/**/
+}											ZwNotificationGetFrame_t;
+
 /************************************************************/
 /* Notification Report command class structs */    
 /************************************************************/
@@ -215,7 +255,33 @@ typedef union								ZwNotificationReportFrame_u {//For more convenient support,
 	ZwNotificationReportByte4Frame_t		byte4;
 }											ZwNotificationReportFrame_t;
 
-void zuno_CCNotificationInitData();
+/************************************************************/
+/* Event Supported Get command class structs */          
+/************************************************************/
+typedef struct								ZwEventSupportedGetFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									notificationType;/**/
+}											ZwEventSupportedGetFrame_t;
+
+/************************************************************/
+/* Event Supported Report command class structs */ 
+/************************************************************/
+typedef struct								ZwEventSupportedReportFrame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									notificationType;/**/
+	uint8_t									properties1;/* masked byte */
+	uint8_t									bitMask[];
+}											ZwEventSupportedReportFrame_t;
+
+inline void zuno_CCNotificationInitData() {
+	uint32_t eeprom_mask = 0xFFFFFFFF; 
+	zunoEEPROMWrite(NOTIFICATION_CC_EEPROM, 4, (byte*)&eeprom_mask);
+};
+
 int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd);
 int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t * cmd);
 

@@ -73,28 +73,6 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     ZUNO_SKETCH_BUILD_TS,
                                                                                     DBG_CONSOLE_PIN};
 
-uint8_t zunoIsMalloc(void *b) {
-	if (b >= (void *)&__HeapBase && b < (void *)&__HeapLimit)
-		return (true);
-	return (false);
-}
-
-extern "C" void *_sbrk(intptr_t delta) {
-	static uint8_t		*heap_end = 0;
-	uint8_t				*prev_heap_end;
-
-	if (heap_end == 0)
-		heap_end = (uint8_t *)&__HeapBase;
-	prev_heap_end = heap_end;
-	delta = ((delta + (sizeof(size_t) - 1)) & (0 - sizeof(size_t)));
-	if (heap_end + delta > (uint8_t *)&__HeapLimit) {
-		errno = ENOMEM;
-		return (void *) -1;
-	}
-	heap_end = heap_end + delta;
-	return (prev_heap_end);
-}
-
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
 void zuno_CCTimer(uint32_t);

@@ -243,6 +243,41 @@ enum{
 #define TRANSMIT_OPTION_EXPLORE                 0x20
 #define ZWAVE_PLUS_TX_OPTIONS 					(TRANSMIT_OPTION_ACK | TRANSMIT_OPTION_AUTO_ROUTE | TRANSMIT_OPTION_EXPLORE)
 
+/**
+* A response route is locked by the application
+*/
+#define RECEIVE_STATUS_ROUTED_BUSY 0x01
+/**
+* Received at low output power level, this must
+* have the same value as TRANSMIT_OPTION_LOW_POWER
+*/
+#define RECEIVE_STATUS_LOW_POWER 0x02
+/**
+* Mask for masking out the received frametype bits
+*/
+#define RECEIVE_STATUS_TYPE_MASK 0x0C
+/**
+* Received frame is singlecast frame (rxOptions == xxxx00xx)
+*/
+#define RECEIVE_STATUS_TYPE_SINGLE 0x00
+/**
+* Received frame is broadcast frame (rxOptions == xxxx01xx)
+*/
+#define RECEIVE_STATUS_TYPE_BROAD 0x04
+/**
+* Received frame is multicast frame (rxOptions == xxxx10xx)
+*/
+#define RECEIVE_STATUS_TYPE_MULTI 0x08
+/**
+* Received frame is an explore frame (rxOptions == xxx1xxxx)
+* Only TYPE_BROAD can be active at the same time as TYPE_EXPLORE
+*/
+#define RECEIVE_STATUS_TYPE_EXPLORE 0x10
+/**
+* Received frame is not send to me (rxOptions == x1xxxxxx)
+* - useful only in promiscuous mode
+*/
+#define RECEIVE_STATUS_FOREIGN_FRAME 0x40
 
 // ----------------------------------------------------------
 // CHANNELS CONFIGURAION HELPERS/CONSTANTS 
@@ -831,9 +866,17 @@ enum {
 
 	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 1000
+	#define RX0					11
+	#define TX0					7
+	#define RX1					13
+	#define TX1					12
+	#define RX2					20
+	#define TX2					10
+
 	#define HIGH                1
 	#define LOW                 0
 	#define BATTERY             0xFF
+	#define ZUNO_PIN_LAST_INDEX	5
 #else
 	#error ZUNO_PIN_V
 #endif

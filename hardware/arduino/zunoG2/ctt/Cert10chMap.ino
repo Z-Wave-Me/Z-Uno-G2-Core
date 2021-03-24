@@ -186,5 +186,5 @@ void loop() {
 		lastHumidityValue = currentHumidityValue;
 		zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
 	}
-	delay(500); 
+	delay(50);
 }

@@ -12,6 +12,17 @@
  ******************************************************************************/
 /** RTCC Register Declaration */
 typedef struct {
+  __IOM uint32_t REG; /**< Retention Register  */
+} RTCC_RET_TypeDef;
+
+typedef struct {
+  __IOM uint32_t CTRL; /**< CC Channel Control Register  */
+  __IOM uint32_t CCV;  /**< Capture/Compare Value Register  */
+  __IOM uint32_t TIME; /**< Capture/Compare Time Register  */
+  __IOM uint32_t DATE; /**< Capture/Compare Date Register  */
+} RTCC_CC_TypeDef;
+
+typedef struct {
   __IOM uint32_t   CTRL;           /**< Control Register  */
   __IOM uint32_t   PRECNT;         /**< Pre-Counter Value Register  */
   __IOM uint32_t   CNT;            /**< Counter Value Register  */
@@ -1023,7 +1034,7 @@ typedef struct {
  ******************************************************************************/
 __STATIC_INLINE uint32_t RTCC_ChannelCompareValueGet(int ch)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
 #if defined (_RTCC_CC_CCV_MASK)
   return RTCC->CC[ch].CCV;
 #elif defined (_RTCC_CC_OCVALUE_MASK)
@@ -1043,7 +1054,7 @@ __STATIC_INLINE uint32_t RTCC_ChannelCompareValueGet(int ch)
  ******************************************************************************/
 __STATIC_INLINE void RTCC_ChannelCompareValueSet(int ch, uint32_t value)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
 #if defined (_RTCC_CC_CCV_MASK)
   RTCC->CC[ch].CCV = value;
 #elif defined (_RTCC_CC_OCVALUE_MASK)
@@ -1063,7 +1074,7 @@ __STATIC_INLINE void RTCC_ChannelCompareValueSet(int ch, uint32_t value)
  ******************************************************************************/
 __STATIC_INLINE uint32_t RTCC_ChannelCaptureValueGet(int ch)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
 #if defined (_RTCC_CC_CCV_MASK)
   return RTCC->CC[ch].CCV;
 #elif defined (_RTCC_CC_ICVALUE_MASK)
@@ -1118,7 +1129,7 @@ __STATIC_INLINE void RTCC_ChannelCCVSet(int ch, uint32_t value)
  ******************************************************************************/
 __STATIC_INLINE uint32_t RTCC_ChannelDateGet(int ch)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
   return RTCC->CC[ch].DATE;
 }
 
@@ -1134,7 +1145,7 @@ __STATIC_INLINE uint32_t RTCC_ChannelDateGet(int ch)
  ******************************************************************************/
 __STATIC_INLINE void RTCC_ChannelDateSet(int ch, uint32_t date)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
   RTCC->CC[ch].DATE = date;
 }
 
@@ -1150,7 +1161,7 @@ __STATIC_INLINE void RTCC_ChannelDateSet(int ch, uint32_t date)
  ******************************************************************************/
 __STATIC_INLINE uint32_t RTCC_ChannelTimeGet(int ch)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
   return RTCC->CC[ch].TIME;
 }
 
@@ -1166,7 +1177,7 @@ __STATIC_INLINE uint32_t RTCC_ChannelTimeGet(int ch)
  ******************************************************************************/
 __STATIC_INLINE void RTCC_ChannelTimeSet(int ch, uint32_t time)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch) );
+//   EFM_ASSERT(RTCC_CH_VALID(ch) );
   RTCC->CC[ch].TIME = time;
 }
 #endif /* defined (_RTCC_CC_DATE_MASK) */

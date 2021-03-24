@@ -42,12 +42,12 @@
  ******************************************************************************/
 void RTCC_ChannelInit(int ch, RTCC_CCChConf_TypeDef const *confPtr)
 {
-  EFM_ASSERT(RTCC_CH_VALID(ch));
+//   EFM_ASSERT(RTCC_CH_VALID(ch));
 
 #if defined(_SILICON_LABS_32B_SERIES_1)
-  EFM_ASSERT((uint32_t)confPtr->compMask
-             < (_RTCC_CC_CTRL_COMPMASK_MASK >> _RTCC_CC_CTRL_COMPMASK_SHIFT)
-             + 1U);
+//   EFM_ASSERT((uint32_t)confPtr->compMask
+//              < (_RTCC_CC_CTRL_COMPMASK_MASK >> _RTCC_CC_CTRL_COMPMASK_SHIFT)
+//              + 1U);
 
   /** Configure the selected capture/compare channel. */
   RTCC->CC[ch].CTRL = ((uint32_t)confPtr->chMode << _RTCC_CC_CTRL_MODE_SHIFT)

@@ -1,9 +1,10 @@
 #include "ZUNO_SSD1306.h"
 
-ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire, 
+ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width = 128, uint16_t height, TwoWire *wire, 
 						uint8_t i2caddr) : ZUNO_GFX::ZUNO_GFX(width, height),
 						addr(i2caddr), i2c(wire), _invert(false)
 {
+	_color = 2;
 	buff_size = (width * height) >> 3;
 	s_buf = (uint8_t*)malloc(buff_size + 1);
 	memset(s_buf, 0x00, buff_size + 1);
@@ -11,12 +12,11 @@ ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire,
 	*s_buf = SSD1306_DATA_CONTINUE;
 }
 
-void ZUNO_SSD1306::drawPixel(int16_t x, int16_t y, uint8_t color)
+void ZUNO_SSD1306::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
 	if (x >= s_width || y >= s_height)
 		return;
 	uint16_t cur_byte = x + ((y >> 3) * s_width);
-	// Serial.printf("Byte%d\t x'%d'/y'%d' \t width %d\n", cur_byte, x, y, s_width);
 	uint8_t cur_bit = 1 << (y % 8);
 	switch (color)
 	{

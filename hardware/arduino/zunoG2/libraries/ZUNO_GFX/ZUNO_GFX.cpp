@@ -30,7 +30,7 @@ ZUNO_GFX::~ZUNO_GFX()
 	// free(buffer);
 }
 
-void ZUNO_GFX::drawPixel(int16_t x, int16_t y, uint8_t color)
+void ZUNO_GFX::drawPixel(int16_t x, int16_t y, uint16_t color)
 {
 	if (x >= s_width || y >= s_height || x < 0 || y < 0)
 		return;
@@ -50,12 +50,12 @@ void ZUNO_GFX::drawPixel(int16_t x, int16_t y, uint8_t color)
 	}
 }
 
-void ZUNO_GFX::writePixel(int16_t x, int16_t y, uint8_t color) {
+void ZUNO_GFX::writePixel(int16_t x, int16_t y, uint16_t color) {
   drawPixel(x, y, color);
 }
 
 void ZUNO_GFX::drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
-												 uint8_t *pic, uint8_t color)
+												 uint8_t *pic, uint16_t color)
 {
 	uint8_t col;
 	if (!pic)
@@ -85,10 +85,10 @@ void ZUNO_GFX::printChar(const uint8_t *sim_buf, uint8_t w_sim)
 			uint8_t cur_bit = 1 << (row % 8);
 			
 			if (sim_buf[cur_b] & cur_bit)
-				drawPixel(cur_x + col, cur_y + row, 2);
+				drawPixel(cur_x + col, cur_y + row, _color);
 		}
 	}
-	Serial.println();
+	
 }
 
 uint8_t ZUNO_GFX::charLen(char *ch)
@@ -218,6 +218,7 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 	while (*sub_str && size >= 0)
 	{
 		unic = utf8toUnicode(sub_str);
+		Serial0.printf("unic - %#x\n", unic);
 		write(unic);
 		sub_str += charLen(sub_str);
 		size -= charLen(sub_str);
@@ -237,7 +238,7 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 */
 /**************************************************************************/
 void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-							 uint8_t color) {
+							 uint16_t color) {
 
 	int16_t steep = abs(y1 - y0) > abs(x1 - x0);
 	if (steep) {
@@ -279,17 +280,17 @@ void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 }
 
 void ZUNO_GFX::writeFastVLine(int16_t x, int16_t y, int16_t h,
-								  uint8_t color) {
+								  uint16_t color) {
   // Overwrite in subclasses if startWrite is defined!
   // Can be just writeLine(x, y, x, y+h-1, color);
   // or writeFillRect(x, y, 1, h, color);
   drawFastVLine(x, y, h, color);
 }
-void ZUNO_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h, uint8_t color) {
+void ZUNO_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
   writeLine(x, y, x, y + h - 1, color);
 }
 
-void ZUNO_GFX::writeFastHLine(int16_t x, int16_t y, int16_t w, uint8_t color) {
+void ZUNO_GFX::writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   // Overwrite in subclasses if startWrite is defined!
   // Example: writeLine(x, y, x+w-1, y, color);
   // or writeFillRect(x, y, w, 1, color);
@@ -306,23 +307,23 @@ void ZUNO_GFX::writeFastHLine(int16_t x, int16_t y, int16_t w, uint8_t color) {
    @param    color 16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void ZUNO_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w, uint8_t color) {
+void ZUNO_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
   writeLine(x, y, x + w - 1, y, color);
 }
 
 
 void ZUNO_GFX::fillRect(int16_t x, int16_t y, int16_t w,
-													int16_t h, uint8_t color) {
+													int16_t h, uint16_t color) {
   for (int16_t i = x; i < x + w; i++) {
 	writeFastVLine(i, y, h, color);
   }
 }
 
-void ZUNO_GFX::fillScreen(uint8_t color) {
+void ZUNO_GFX::fillScreen(uint16_t color) {
   fillRect(0, 0, s_width, s_height, color);
 }
 
-void ZUNO_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color) {
+void ZUNO_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
@@ -367,7 +368,7 @@ void ZUNO_GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color) {
 */
 /**************************************************************************/
 void ZUNO_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
-											uint8_t cornername, uint8_t color) {
+											uint8_t cornername, uint16_t color) {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
@@ -402,7 +403,7 @@ void ZUNO_GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r,
   }
 }
 
-void ZUNO_GFX::fillCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color) {
+void ZUNO_GFX::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) {
   writeFastVLine(x0, y0 - r, 2 * r + 1, color);
   fillCircleHelper(x0, y0, r, 3, 0, color);
 }
@@ -419,7 +420,7 @@ void ZUNO_GFX::fillCircle(int16_t x0, int16_t y0, int16_t r, uint8_t color) {
 */
 /**************************************************************************/
 void ZUNO_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
-								uint8_t corners, int16_t delta, uint8_t color) {
+								uint8_t corners, int16_t delta, uint16_t color) {
 
   int16_t f = 1 - r;
   int16_t ddF_x = 1;

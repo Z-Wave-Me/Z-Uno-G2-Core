@@ -73,7 +73,7 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 		// ~ZUNO_SSD1306();
 		// size_t write(const uint8_t *buffer, size_t size){};
 		// uint8_t write(uint8_t){};
-		void drawPixel(int16_t x, int16_t y, uint8_t color);
+		void drawPixel(int16_t x, int16_t y, uint16_t color);
 		void begin();
 		void display();
 		void on() { sendCmd(SSD1306_DISPLAYON); };

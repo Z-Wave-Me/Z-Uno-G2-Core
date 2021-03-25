@@ -143,6 +143,7 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	zunoSyncReleseRead(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
+
 void SPIClass::endTransaction(void) {
 	const ZunoSpiUsartTypeConfig_t		*config;
 
@@ -151,6 +152,27 @@ void SPIClass::endTransaction(void) {
 		return ;
 	digitalWrite(this->_ss_pin, HIGH);//We inform slave to terminate data acquisition
 	zunoSyncReleseRead(config->lpLock, SyncMasterSpi, &this->_lpKey);
+}
+
+ZunoError_t SPIClass::transferDup(const void *b, size_t count, size_t repeat) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoError_t							ret;
+	ZunoZDmaExt_t						lpExt;
+	USART_TypeDef						*usart;
+
+	config = this->_config;
+	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
+		return (ret);
+	lpExt = ZDMA_EXT_INIT_DEFAULT;
+	lpExt.loop = repeat;
+	usart = config->usart;
+	if ((ret = ZDMA.toMemoryPeripheral(SPI_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8, &lpExt)) == ZunoErrorOk) {
+		ZDMA.waitTransfer(SPI_UNIQ_ZDMA_WRITE);
+		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
+			__NOP();
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (ret);
 }
 
 /* Private Methods */

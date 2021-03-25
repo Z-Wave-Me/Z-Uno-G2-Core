@@ -17,6 +17,7 @@
 #include "ZWCCZWavePlusInfo.h"
 #include "ZWCCTimer.h"
 #include "ZWCCSecurity.h"
+#include "ZWCCTimerParametrs.h"
 #include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -217,6 +218,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);
 				break ;
+			#ifdef WITH_CC_TIME_PARAMETERS
+			case COMMAND_CLASS_TIME_PARAMETERS:
+				result = zuno_CCTimerParametrs(cmd);
+				break ;
+			#endif
 			#ifdef WITH_CC_BATTERY
 			case COMMAND_CLASS_BATTERY:
 				result = zuno_CCBattery(cmd);
@@ -307,6 +313,13 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == DOOR_LOCK_CONFIGURATION_SET)
 				return (true);
 			return (false);
+			break ;
+		#endif
+		#ifdef WITH_CC_TIME_PARAMETERS
+		case COMMAND_CLASS_TIME_PARAMETERS:
+			if (cmd == TIME_PARAMETERS_GET)
+				return (false);
+			return (true);
 			break ;
 		#endif
 		case COMMAND_CLASS_CONFIGURATION:

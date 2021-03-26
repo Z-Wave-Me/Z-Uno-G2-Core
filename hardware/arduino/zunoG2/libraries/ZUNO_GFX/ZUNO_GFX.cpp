@@ -170,6 +170,8 @@ void	ZUNO_GFX::setFont(const uint8_t *font_name)
 		font.font_buf = font_name;
 };
 
+
+
 uint8_t ZUNO_GFX::write(uint32_t unicode)
 {
 	//получаем буфер для символа
@@ -178,8 +180,17 @@ uint8_t ZUNO_GFX::write(uint32_t unicode)
 	uint8_t			w_sim = 0;
 	if (font.font_buf == NULL)
 		return(0);
+	if (unicode == (uint32_t)('\n'))
+	{
+		if ((cur_y + font.height) < s_height)
+		{
+			cur_y += font.height;
+			cur_x = 0;
+		}
+		return(0);
+	}
 //получаем область где находится символ
-	for (i = 0; i <= font.ranges; i++)
+	for (i = 0; i < font.ranges; i++)
 	{
 		if (unicode >= font.chunks[i].st_sim && unicode <= font.chunks[i].end_sim)
 			break;
@@ -191,7 +202,7 @@ uint8_t ZUNO_GFX::write(uint32_t unicode)
 		w_sim = *(sim_buf++);
 	}
 //проверяем перенести ли курсор
-	if ((cur_x + w_sim) >= s_width || unicode == '\n')
+	if ((cur_x + w_sim) >= s_width)
 	{
 		if ((cur_y + font.height) < s_height)
 		{
@@ -250,7 +261,6 @@ void ZUNO_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 	_swap_int16_t(x0, x1);
 	_swap_int16_t(y0, y1);
 	}
-
 
 	int16_t dx, dy;
 	dx = x1 - x0;

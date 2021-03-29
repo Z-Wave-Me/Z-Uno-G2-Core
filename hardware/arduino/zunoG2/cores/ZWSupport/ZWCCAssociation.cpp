@@ -9,6 +9,7 @@
 #include "ZWCCSwitchColor.h"
 #include "ZWCCThermostat.h"
 #include "ZWCCBattery.h"
+#include "ZWCCMeterTbl.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -231,6 +232,11 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#ifdef WITH_CC_METER
 		case COMMAND_CLASS_METER:
 			cmd = METER_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_METER_TBL_MONITOR
+		case COMMAND_CLASS_METER_TBL_MONITOR:
+			cmd = METER_TBL_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_SENSOR_MULTILEVEL

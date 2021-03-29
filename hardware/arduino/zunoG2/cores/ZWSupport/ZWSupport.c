@@ -18,6 +18,7 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSecurity.h"
 #include "ZWCCTimerParametrs.h"
+#include "ZWCCMeterTbl.h"
 #include "Debug.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
@@ -111,6 +112,12 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_METER)
 				return true;
 			break;
+		#ifdef WITH_CC_METER_TBL_MONITOR
+		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_METER_TBL_MONITOR)
+				return true;
+			break;
+		#endif
 	}
 	return false;
 }
@@ -431,6 +438,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_METER
 				case COMMAND_CLASS_METER:
 					result = zuno_CCMeterHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_METER_TBL_MONITOR
+				case COMMAND_CLASS_METER_TBL_MONITOR:
+					result = zuno_CCMeterTblMonitorHandler(zuno_ch, cmd);
 					break;
 				#endif
 				#ifdef WITH_CC_DOORLOCK
@@ -903,12 +915,23 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 	return NULL;
 }
 
-static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks)
-{	
-	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
-	if((ZUNO_CFG_CHANNEL(ch).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) || 
-		(ZUNO_CFG_CHANNEL(ch).type == ZUNO_METER_CHANNEL_NUMBER))
-		return (ticks -  g_report_data.last_report_time[ch]) > 3000UL; // We can't send too frequent for these CCs
+static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
+	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER) | defined(WITH_CC_METER_TBL_MONITOR)
+	switch (ZUNO_CFG_CHANNEL(ch).type) {
+		#ifdef WITH_CC_SENSOR_MULTILEVEL
+		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
+		#endif
+		#ifdef WITH_CC_METER
+		case ZUNO_METER_CHANNEL_NUMBER:
+		#endif
+		#ifdef WITH_CC_METER_TBL_MONITOR
+		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
+		#endif
+			return (ticks -  g_report_data.last_report_time[ch]) > 3000UL; // We can't send too frequent for these CCs
+			break ;
+		default:
+			break ;
+	}
 	#endif
 	(void)ch;
 	(void)ticks;
@@ -931,9 +954,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
 		fillOutgoingReportPacket(ch);
-		rs = ZUNO_UNKNOWN_CMD;	
-		switch(ZUNO_CFG_CHANNEL(ch).type)
-		{
+		rs = ZUNO_UNKNOWN_CMD;
+		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchBinaryReport(ch);
@@ -968,6 +990,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			case ZUNO_METER_CHANNEL_NUMBER:
 				rs = zuno_CCMeterReport(ch);
 				break;
+			#endif
+			#ifdef WITH_CC_METER_TBL_MONITOR
+			case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
+				rs = zuno_CCMeterTblMonitorReport(ch);
+				break ;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:

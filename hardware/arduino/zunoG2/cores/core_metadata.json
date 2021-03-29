@@ -211,6 +211,20 @@
                 {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"}
             ],
             "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER", "type_val":13,
+            "cc_flags":["WITH_CC_METER_TBL_MONITOR"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_METER_TBL_MONITOR","version":"METER_TBL_MONITOR_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_METER",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
+            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
+            "cluster_rule":"${type}"
         }
     ]
 }

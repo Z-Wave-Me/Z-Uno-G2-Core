@@ -377,6 +377,10 @@ void HardwareSerial::_USART2_IRQHandler(size_t flags) {
 		HardwareSerial Serial(2);// USB
 		HardwareSerial Serial1(1); // UART1
 		HardwareSerial Serial0(0); // UART0
+	#elif ZUNO_PIN_V == 6
+		HardwareSerial Serial(2);// USB
+		HardwareSerial Serial1(1); // UART1
+		HardwareSerial Serial0(0); // UART0
 	#else
 		#error ZUNO_PIN_V
 	#endif

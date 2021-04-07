@@ -1,6 +1,7 @@
 #ifndef ZUNO_DEFINITIONS
 #define ZUNO_DEFINITIONS
 #include "ZUNO_CoreDefs.h"
+#include "time.h"
 
 #ifndef ZUNO_PREPROC_PHASE
 	#include "Custom_defs.h"
@@ -468,7 +469,145 @@ enum{
 #define METER_EMPTY_RESETTER							
 
 
+// Meter TBL Monitor
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_SINGLE				0x01
+#define ZUNO_METER_TBL_MONITOR_TYPE_GAS							0x02
+#define ZUNO_METER_TBL_MONITOR_TYPE_WATER						0x03
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_TWIN				0x04
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_3P_SINGLE_DIRECT	0x05
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_3P_SINGLE_ECT		0x06
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_ONE_PHASE_DIRECT	0x07
+#define ZUNO_METER_TBL_MONITOR_TYPE_HEATING						0x08
+#define ZUNO_METER_TBL_MONITOR_TYPE_COOLING						0x09
+#define ZUNO_METER_TBL_MONITOR_TYPE_HEATING_AND_COOLING			0x0A
+#define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_SUB				0x0B
 
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_KWH					0x0//kilowatt hours (kWh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_KVARH					0x1//kiloVolt-Ampere reactive hours (kVARh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_PERCENTAGE			0x2//Percentage (%)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_PULSE_COUNT			0x3//Pulse count (unitless)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_KVAR					0x4//kiloVolt-Ampere reactive (kVAR)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_VOLTAGE				0x5//Voltage (V)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_AMPERE				0x6//Amperes (A)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_KW					0x7//kilowatt (kW)
+#define ZUNO_METER_TBL_MONITOR_SCALE_ELECTRIC_RATIO					0x8//Ratio (unitless)
+
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_METER3				0x0//Cubic meter (m3)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_FEET3				0x1//Cubic feet (ft3)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_GALLON_US			0x2//US gallon
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_PULSE_COUNT			0x3//Pulse count (unitless)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_GALLON_IMP			0x4//IMP gallon
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_LITER				0x5//Liter (l)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_KPA					0x6//kiloPascal (kPa)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_CCF					0x7//Centum cubic feet (CCF)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_M3H					0x8//Cubic meter per hour (m3/h)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_LITTERH				0x9//Liter per hour (l/h)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_KWH					0xA//kilowatt hour (kWh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_MWH					0xB//megawatt hour (MWh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_KW					0xC//kilowatt (kW)
+#define ZUNO_METER_TBL_MONITOR_SCALE_GAS_WATER_HOUR					0xD//hour (h)
+
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_METER3		0x0//Cubic meter (m3)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_TONNE		0x1//Tonne / Metric ton (t=1000kg)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_M3H		0x2//Cubic meter per hour (m3/h)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_LITTERH	0x3//Liter per hour (l/h)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_KW			0x4//kilowatt (kW)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_MW			0x5//megawatt (MW)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_KWH		0x6//kilowatt hour (kWh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_MWH		0x7//megawatt hour (MWh)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_GJOULE		0x8//Giga Joule (GJ)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_GCALORIE	0x9//Giga Calorie (Gcal)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_CELCIUS	0xA//Degree Celcius (Co)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_FAHRENHEIT	0xB//Degree Fahrenheit (oF)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_HOUR		0xC//hour (h)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_TEMPERATURE	0xD//volume-based temperature (m3 x Co)
+#define ZUNO_METER_TBL_MONITOR_SCALE_HEATING_AND_COOLING_KPA		0xE//kiloPascal (kPa)
+
+#define ZUNO_METER_TBL_MONITOR_RATE_UNSPECIFIED					0x00
+#define ZUNO_METER_TBL_MONITOR_RATE_IMPORT						0x01
+#define ZUNO_METER_TBL_MONITOR_RATE_EXPORT						0x02
+
+#define ZUNO_METER_TBL_MONITOR_PAY_CREDIT						0x01
+#define ZUNO_METER_TBL_MONITOR_PAY_PREPAYMENT					0x02
+#define ZUNO_METER_TBL_MONITOR_PAY_PREPAYMENT_DEBT_RECOVERY		0x03
+
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_TOTAL_PRIMARY_ACTIVE_ENERGY					(1 << 00)//kWh                                    Energy delivered to the unit before transformation.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_TOTAL_PRIMARY_REACTIVE_ENERGY				(1 << 01)//kVARh                                  Energy delivered to the unit before transformation.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_TOTAL_SECONDARY_ACTIVE_ENERGY				(1 << 02)//kVARh                                  Consumed energy after transformation.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_TOTAL_SECONDARY_REACTIVE_ENERGY				(1 << 03)//kVARh                                  EConsumed energy after transformation.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_INSTANTANEOUS_PRIMARY_ACTIVE_ENERGY			(1 << 04)//kW                                     Current power consumption.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_INSTANTANEOUS_PRIMARY_REACTIVE_ENERGY		(1 << 05)//kvar                                   Current power consumption.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_PRIMARY_ACTIVE_MAXIMUM_DEMAND				(1 << 06)//kW                                     All time maximum active power demand.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_PRIMARY_REACTIVE_MAXIMUM_DEMAND				(1 << 07)//kVAR                                   All time maximum reactive power demand.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_CUMULATIVE_PRIMARY_ACTIVE_MAXIMUM_DEMAND	(1 << 08)//kW                                     Accumulated power over period.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_CUMULATIVE_REACTIVE_MAXIMUM_DEMAND			(1 << 09)//kVAR                                   Accumulated power over period.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_VOLTAGE_PHASE1								(1 << 10)//V                                      Voltage measured on phase 1.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_VOLTAGE_PHASE2								(1 << 11)//V                                      Voltage measured on phase 2.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_VOLTAGE_PHASE3								(1 << 12)//V                                      Voltage measured on phase 3.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_AMPERE_PHASE1								(1 << 13)//V                                      Amperes measured on phase 1.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_AMPERE_PHASE2								(1 << 14)//V                                      Amperes measured on phase 2.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_AMPERE_PHASE3								(1 << 15)//V                                      Amperes measured on phase 3.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_PULSE_INPUT									(1 << 16)//Pulse Count                            Pulse count on pulse input port of meter.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_CURRENT_TRANFORMATION_RATIO					(1 << 17)//ratio                                  Transformation ratio between primary and secondary energy.
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_POWER_FACTOR								(1 << 18)//%                                      Power factor contains the ratio of real power to total power expressed as a percentage (-100 to +100).
+
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_ACCUMULATED_VOLUME							(1 << 00)//m3                                     Total accumulated volume.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_CURRENT_FLOW								(1 << 01)//l/h, m3/h                              Current flow value.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_CURRENT_PRESSURE							(1 << 02)//kPa                                    Current pressure value.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_PEAK_FLOW									(1 << 03)//l/h, m3/h                              Peak flow demand recorded.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_HOUR_COUNTER								(1 << 04)//h                                      Hours in operation.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_INPUT_A									(1 << 05)//m3/h, kW, m3, kWh, MWh, Pulse Count    Value of input port A on the meter.
+#define ZUNO_METER_TBL_MONITOR_DATASET_GAS_WATER_INPUT_B									(1 << 06)//m3/h, kW, m3, kWh, MWh, Pulse Count    Value of input port B on the meter.
+
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_HEAT_ENERGY						(1 << 00)//kWh, MWh, GJ, GCal                     Total accumulated energy used for heating.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_COOLING_ENERGY					(1 << 01)//kWh, MWh, GJ, GCal                     Total accumulated energy used for cooling.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_VOLUME_FORWARD					(1 << 02)//m3, ton                                Volume counter 1 – forward flow.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_VOLUME_RETURN					(1 << 03)//m3, ton                                Volume counter 2 – return flow.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_TEMPERATURE_FORWARD				(1 << 04)//Co, oF                                 Forward temperature.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_TEMPERATURE_RETURN				(1 << 05)//Co, oF                                 Return temperature.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_TEMPERATURE_SENSOR				(1 << 06)//Co, oF                                 Temperature sensor 3.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_ACTUAL_FLOW_VOLUME1				(1 << 07)//l/h, m3/h                              Current flow on volume 1.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_ACTUAL_FLOW_VOLUME2				(1 << 08)//l/h, m3/h                              Current flow on volume 2.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_ACTUAL_POWER						(1 << 09)//kW, MW                                 Current power.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_PEAK_FLOW						(1 << 10)//l/h, m3/h                              Peak flow recorded.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_PEAK_POWER						(1 << 11)//kW, MW                                 Peak power recorded.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_INPUT_A							(1 << 12)//m3/h, kW, m3, kWh, MWh, Pulse Count    Value of input port A on the meter.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_INPUT_B							(1 << 13)//m3/h, kW, m3, kWh, MWh, Pulse Count    Value of input port B on the meter.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_HOUR_COUNTER						(1 << 14)//h                                      Hour Counter.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_AVERAGE_TEMPERATURE_INLET		(1 << 15)//m3 x Co                                Volumed based average temperature for inlet pipe.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_AVERAGE_TEMPERATURE_OUTLET		(1 << 16)//m3 x Co                                Volumed based average temperature for outlet pipe.
+#define ZUNO_METER_TBL_MONITOR_DATASET_HEATING_AND_COOLING_CURRENT_PRESSURE					(1 << 17)//kPa                                    Current pressure value.
+
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_ACCUMULATED1							(1 << 00)//kWh
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_ACCUMULATED2							(1 << 01)//kVAh
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_INSTANT1								(1 << 02)//W
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_ACCUMULATED3							(1 << 03)//Pulse Count
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_INSTANT2								(1 << 04)//V
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_INSTANT3								(1 << 05)//A
+#define ZUNO_METER_TBL_MONITOR_DATASET_ELECTRIC_SUB_POWER_FACTOR							(1 << 06)//%                                      Power factor contains the ratio of real power to total power.
+
+#define ZUNO_METER_TBL_PRECISION_ZERO_DECIMALS					0x00
+#define ZUNO_METER_TBL_PRECISION_ONE_DECIMAL					0x01
+#define ZUNO_METER_TBL_PRECISION_TWO_DECIMALS					0x02
+#define ZUNO_METER_TBL_PRECISION_THREE_DECIMALS					0x03
+
+#define METER_TBL_REPORT_PROPERTIES1_METER_TYPE_MASK                                     0x3F
+#define METER_TBL_REPORT_PROPERTIES1_RATE_TYPE_SHIFT                                     0x06
+#define METER_TBL_REPORT_PROPERTIES2_PAY_METER_MASK                                      0x0F
+
+typedef struct												ZunoMeterTblCapability_s
+{
+	uint32_t												datasetSupported;
+	uint32_t												datasetHistorySupported;
+	uint32_t												dataHistorySupported;
+}															ZunoMeterTblCapability_t;
+
+typedef struct												ZunoMeterTblHistoryValue_s
+{
+	uint32_t												value;
+	uint8_t													precision;
+	uint8_t													scale;
+}															ZunoMeterTblHistoryValue_t;
 
 // Sensor Multilevel types
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_TEMPERATURE		                                   	0x01

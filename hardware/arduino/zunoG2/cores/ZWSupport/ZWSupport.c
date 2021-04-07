@@ -227,7 +227,7 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 				break ;
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
-				result = zuno_CCTimerParametrs(cmd);
+				result = zuno_CCTimerParametrsHandler(cmd);
 				break ;
 			#endif
 			#ifdef WITH_CC_BATTERY
@@ -286,6 +286,11 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == METER_GET)
 				return (false);
 			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_METER_TBL_MONITOR
+		case COMMAND_CLASS_METER_TBL_MONITOR:
+			return (false);
 			break ;
 		#endif
 		#ifdef WITH_CC_SWITCH_COLOR
@@ -990,11 +995,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			case ZUNO_METER_CHANNEL_NUMBER:
 				rs = zuno_CCMeterReport(ch);
 				break;
-			#endif
-			#ifdef WITH_CC_METER_TBL_MONITOR
-			case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
-				rs = zuno_CCMeterTblMonitorReport(ch);
-				break ;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:

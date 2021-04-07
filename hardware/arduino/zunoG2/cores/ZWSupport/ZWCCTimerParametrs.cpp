@@ -5,6 +5,32 @@
 #include "Libft.h"
 #include "errno.h"
 
+time_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet) {
+	struct tm					timeinfo;
+
+	timeinfo.tm_year = ((packet->year1 << 8) | packet->year2) - 1900;
+	timeinfo.tm_mon = packet->month - 1;
+	timeinfo.tm_mday = packet->day;
+	timeinfo.tm_hour = packet->hourUtc;
+	timeinfo.tm_min = packet->minuteUtc;
+	timeinfo.tm_sec = packet->secondUtc;
+	return (mktime(&timeinfo));
+}
+
+void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time) {
+	struct tm								timeinfo;
+	size_t									tempos;
+	gmtime_r(&time, &timeinfo);
+	tempos = timeinfo.tm_year + 1900;
+	packet->year1 = tempos >> 8;
+	packet->year2 = tempos;
+	packet->month = timeinfo.tm_mon + 1;
+	packet->day = timeinfo.tm_mday;
+	packet->hourUtc = timeinfo.tm_hour;
+	packet->minuteUtc = timeinfo.tm_min;
+	packet->secondUtc = timeinfo.tm_sec;
+}
+
 // extern unsigned long __etext;
 // extern unsigned long __data_start__;
 // extern unsigned long __data_end__;
@@ -33,43 +59,25 @@ static time_t _timeUnix = 0;
 static uint32_t _time = 0;
 
 static int _set(ZwTimerParametrsSetFrame_t *packet) {
-	struct tm					timeinfo;
-
-	timeinfo.tm_year = ((packet->year1 << 8) | packet->year2) - 1900;
-	timeinfo.tm_mon = packet->month - 1;
-	timeinfo.tm_mday = packet->day;
-	timeinfo.tm_hour = packet->hourUtc;
-	timeinfo.tm_min = packet->minuteUtc;
-	timeinfo.tm_sec = packet->secondUtc;
-	_timeUnix= mktime(&timeinfo);
+	_timeUnix= zuno_CCTimerParametrsGet(&packet->time);
 	_time = millis() / 1000;
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
 static int _report(void) {
 	ZwTimerParametrsReportFrame_t			*report;
-	struct tm								timeinfo;
-	size_t									tempos;
 	time_t									time;
 
-	time = _timeUnix + ((millis() / 1000) - _time);
-	gmtime_r(&time, &timeinfo);
 	report = (ZwTimerParametrsReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_TIME_PARAMETERS; //set in - fillOutgoingPacket
 	// report->cmd = TIME_PARAMETERS_REPORT; //set in - fillOutgoingPacket
-	tempos = timeinfo.tm_year + 1900;
-	report->year1 = tempos >> 8;
-	report->year2 = tempos;
-	report->month = timeinfo.tm_mon + 1;
-	report->day = timeinfo.tm_mday;
-	report->hourUtc = timeinfo.tm_hour;
-	report->minuteUtc = timeinfo.tm_min;
-	report->secondUtc = timeinfo.tm_sec;
+	time = _timeUnix + ((millis() / 1000) - _time);
+	zuno_CCTimerParametrsSet(&report->time, time);
 	CMD_REPLY_LEN = sizeof(ZwTimerParametrsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCTimerParametrs(ZUNOCommandPacket_t *cmd) {
+int zuno_CCTimerParametrsHandler(ZUNOCommandPacket_t *cmd) {
 	int								rs;
 
 	switch (ZW_CMD) {

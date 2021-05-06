@@ -14,15 +14,9 @@ void zuno_sendWUP_Notification(){
         //return;
         wakeup_data |= 0x01;
     }
-    memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
-	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
-	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
-	g_outgoing_packet.flags 	= 0;
-	g_outgoing_packet.dst_node	= wakeup_data & 0xFF; 
-	g_outgoing_packet.src_node  = zunoNID();
-	g_outgoing_packet.src_zw_channel  = 0; 
-	g_outgoing_packet.zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
-    // !!! DBG
+    fillOutgoingReportPacket(0);
+    g_outgoing_packet.src_zw_channel  = 0; 
+	// !!! DBG
     Serial0.println("SENDING WUP NOTIFICATION!");
     CMD_REPLY_CC = COMMAND_CLASS_WAKE_UP;
     CMD_REPLY_CMD = WAKE_UP_NOTIFICATION;

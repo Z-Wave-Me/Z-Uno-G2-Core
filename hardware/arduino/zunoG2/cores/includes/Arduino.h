@@ -33,7 +33,15 @@ void *zunoSysCall(uint8_t ct, uint8_t n, ...);
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 #define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
-inline void zunoSetSleepingMode(byte mode) {g_zuno_sys->zwave_cfg->flags = (g_zuno_sys->zwave_cfg->flags & ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP)) | (mode & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);};
+inline void zunoSetSleepingMode(byte mode) {
+	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
+	g_zuno_sys->zwave_cfg->flags |= mode;
+	//Serial0.print("FFLAGS:");
+	//Serial0.println(g_zuno_sys->zwave_cfg->flags, HEX);
+	
+	
+}
 inline uint8_t zunoGetSleepingMode(void) {return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);};
 
 

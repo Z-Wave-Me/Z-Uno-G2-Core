@@ -373,12 +373,14 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
+            
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
             #ifdef LOGGING_DBG
             LOGGING_UART.begin(115200);
             #endif
+            
             
             g_sketch_inited = false;
             break;

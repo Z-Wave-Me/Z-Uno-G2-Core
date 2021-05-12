@@ -32,7 +32,7 @@ void *zunoSysCall(uint8_t ct, uint8_t n, ...);
 
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
-#define zunoSendDeviceToSleep() zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
+void zunoSendDeviceToSleep(void);
 inline void zunoSetSleepingMode(byte mode) {
 	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;

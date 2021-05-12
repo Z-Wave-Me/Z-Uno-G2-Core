@@ -56,6 +56,17 @@ typedef struct ZUnoReportDta_s{
 	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 }ZUnoReportDta_t;
 volatile ZUnoReportDta_t g_report_data;
+
+void zunoSendDeviceToSleep(void) {
+	size_t					tempos;
+
+	if (g_report_data.channels_mask == 0)
+		tempos = ZUNO_AWAKETIMEOUT_SLEEPNOW;
+	else
+		tempos = WAKEUP_SLEEP_TIMEOUT;
+	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, tempos);
+}
+
 //-------------------------------------------------------------------------------------------------
 void ZWCCSetup(){
 	#ifdef WITH_CC_BATTERY

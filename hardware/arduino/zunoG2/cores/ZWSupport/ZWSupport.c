@@ -955,6 +955,7 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 }
 
 void zunoSendReportHandler(uint32_t ticks) {
+	zunoSendBatteryReportHandler();
 	if(g_report_data.channels_mask == 0)
 		return;
 	int rs = ZUNO_UNKNOWN_CMD;

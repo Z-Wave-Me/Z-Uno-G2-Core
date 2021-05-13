@@ -52,7 +52,7 @@ typedef enum
 	ZunoErrorSomfyNack,
 	ZunoErrorNotData,
 	ZunoErrorOverflow,
-	ZunoErrorFalled,
+	ZunoErrorFailed,
 	ZunoErrorTimeout,
 	ZunoErrorRepeat,
 	ZunoErrorBusy,

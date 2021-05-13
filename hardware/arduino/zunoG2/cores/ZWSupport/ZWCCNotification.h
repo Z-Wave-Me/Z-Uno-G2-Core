@@ -7,9 +7,6 @@
 
 #define NOTIFICATION_REPORT_LEN                     11
 
-// EEPROM ADDR                                      
-#define NOTIFICATION_CC_EEPROM                      0x200
-
 /* Notification command class commands */
 #define NOTIFICATION_VERSION                                                          0x08
 #define NOTIFICATION_GET                                                              0x04
@@ -279,7 +276,7 @@ typedef struct								ZwEventSupportedReportFrame_s
 
 inline void zuno_CCNotificationInitData() {
 	uint32_t eeprom_mask = 0xFFFFFFFF; 
-	zunoEEPROMWrite(NOTIFICATION_CC_EEPROM, 4, (byte*)&eeprom_mask);
+	zunoEEPROMWrite(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);
 };
 
 int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd);

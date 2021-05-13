@@ -5,7 +5,7 @@ void zuno_sendWUP_Notification(){
     if(zunoNID() == 0)
         return;
     uint32_t wakeup_data;
-    zunoEEPROMRead(WAKEUP_ADDR, 4, (byte*)&wakeup_data);
+    zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);
 
     //Serial0.print("\n\nWUP DATA:");
     //Serial0.println(wakeup_data, HEX);
@@ -38,7 +38,7 @@ void zuno_CCWakeup_OnSetup(){
       (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUP_EM4)
       ){
         uint32_t wakeup_data;
-        zunoEEPROMRead(WAKEUP_ADDR, 4, (byte*)&wakeup_data);
+        zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);
         wakeup_data >>= 8;
         //Serial0.println(wakeup_data);
         zunoSetWUPTimer(wakeup_data);
@@ -50,7 +50,7 @@ void zuno_CCWakeup_OnSetup(){
 void zuno_CCWakeup_OnDefault(){
     // Serial0.println("WUP DEFAULT");
     uint32_t wakeup_data = (WAKEUP_INTERVAL_DEFAULT << 8) | 0x01; 
-    zunoEEPROMWrite(WAKEUP_ADDR, 4, (byte*)&wakeup_data);
+    zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);
 }
 int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
     int rs = ZUNO_UNKNOWN_CMD;
@@ -71,7 +71,7 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
             CMD_REPLY_LEN = 15;
             return ZUNO_COMMAND_ANSWERED;
         case WAKE_UP_INTERVAL_GET:{
-                zunoEEPROMRead(WAKEUP_ADDR, 4, (byte*)&CMD_REPLY_DATA(0));
+                zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&CMD_REPLY_DATA(0));
                 CMD_REPLY_LEN = 6;
             }
             return ZUNO_COMMAND_ANSWERED;
@@ -84,7 +84,7 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
                 wakeup_data |= ZW_CMD_BPARAM(2);
                 wakeup_data <<= 8;
                 wakeup_data |= ZW_CMD_BPARAM(3);
-                zunoEEPROMWrite(WAKEUP_ADDR, 4, (byte*)&wakeup_data);
+                zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);
                 zunoSetWUPTimer(wakeup_data >> 8);
             }
             return ZUNO_COMMAND_PROCESSED;

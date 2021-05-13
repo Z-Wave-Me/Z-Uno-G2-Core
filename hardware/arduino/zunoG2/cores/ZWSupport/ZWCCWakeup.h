@@ -22,7 +22,6 @@
 #ifndef WAKEUP_INTERVAL_STEP 
 #define WAKEUP_INTERVAL_STEP                                                          1 // One second
 #endif 
-#define WAKEUP_ADDR                                                                   0x290
 #define WAKEUP_SLEEP_TIMEOUT                                                          3000
 
 void zuno_sendWUP_Notification();

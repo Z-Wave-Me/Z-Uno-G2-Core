@@ -1,5 +1,5 @@
 #include "ZWCCBattery.h"
-#ifdef WITH_CC_BATTERY
+
 #ifndef BATTERY_LOW
 #define BATTERY_LOW 2500
 #endif
@@ -26,18 +26,27 @@ void zuno_CCBattery_OnSetup(){
         zunoSendBatteryReport();
     }
 }
-void    zunoSendBatteryReport(){
-    fillOutgoingReportPacket(0);
-    CMD_REPLY_CC = COMMAND_CLASS_BATTERY;
-    CMD_REPLY_CMD = BATTERY_REPORT;
-    #ifdef WITH_CUSTOM_BATTERY_HANDLER
-    CMD_REPLY_DATA(0) = ((uint32_t)(void*)zunoSysHandlerCall(ZUNO_HANDLER_ZW_BATTERY, 0))&0xFF;
-    #else
-    CMD_REPLY_DATA(0) = defaultBatteryHandler();
-    #endif // WITH_CUSTOM_BATTERY_HANDLER 
-    CMD_REPLY_LEN = 3;
-    zunoSendZWPackage(&g_outgoing_packet);
+
+void zunoSendBatteryReport() {
+	g_zuno_odhw_cfg.bBatteryReport = true;
 }
+
+void zunoSendBatteryReportHandler() {
+	if (g_zuno_odhw_cfg.bBatteryReport == false)
+		return ;
+	g_zuno_odhw_cfg.bBatteryReport = false;
+	fillOutgoingReportPacket(0);
+	CMD_REPLY_CC = COMMAND_CLASS_BATTERY;
+	CMD_REPLY_CMD = BATTERY_REPORT;
+	#ifdef WITH_CUSTOM_BATTERY_HANDLER
+	CMD_REPLY_DATA(0) = ((uint32_t)(void*)zunoSysHandlerCall(ZUNO_HANDLER_ZW_BATTERY, 0))&0xFF;
+	#else
+	CMD_REPLY_DATA(0) = defaultBatteryHandler();
+	#endif // WITH_CUSTOM_BATTERY_HANDLER 
+	CMD_REPLY_LEN = 3;
+	zunoSendZWPackage(&g_outgoing_packet);
+}
+
 int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
     int rs = ZUNO_UNKNOWN_CMD;
     switch(ZW_CMD){
@@ -47,4 +56,3 @@ int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
     }
     return rs;
 }
-#endif // WITH_CC_BATTERY

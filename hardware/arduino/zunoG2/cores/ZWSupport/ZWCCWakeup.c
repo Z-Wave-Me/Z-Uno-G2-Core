@@ -1,6 +1,8 @@
 #include "ZWCCWakeup.h"
 #ifdef WITH_CC_WAKEUP
 extern uint8_t     g_outgoing_data[];
+
+static uint8_t    g_wup_sended_notify = 0;
 void zuno_sendWUP_Notification(){
     if(zunoNID() == 0)
         return;
@@ -22,10 +24,15 @@ void zuno_sendWUP_Notification(){
     CMD_REPLY_CMD = WAKE_UP_NOTIFICATION;
     CMD_REPLY_LEN = 2;
 	zunoSendZWPackage(&g_outgoing_packet);
-	
+
+    g_wup_sended_notify = true;
+    zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
 }
 void zuno_CCWakeup_OnAnyRx(){
     // go on waiting...
+    if(g_wup_sended_notify){
+        return; // Controller directs this timer
+    }
     Serial0.println("Kick WUP Timer");
     zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
 }
@@ -89,6 +96,7 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
             }
             return ZUNO_COMMAND_PROCESSED;
         case WAKE_UP_NO_MORE_INFORMATION:
+            g_wup_sended_notify = false;
             zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
             return ZUNO_COMMAND_PROCESSED; 
     }

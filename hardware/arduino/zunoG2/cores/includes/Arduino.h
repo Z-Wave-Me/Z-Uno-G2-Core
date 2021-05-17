@@ -24,6 +24,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
+#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 
 
 /* Supervisor call */
@@ -114,6 +115,7 @@ inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = key
 void zunoStartLearn(byte timeout, bool secured);
 void _zme_memcpy(byte *dst, byte *src, byte count);
 void zunoSetWUPTimer(uint32_t timeout);
+void zuno_sendWUP_Notification();
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"

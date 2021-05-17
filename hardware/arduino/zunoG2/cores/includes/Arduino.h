@@ -115,7 +115,9 @@ inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = key
 void zunoStartLearn(byte timeout, bool secured);
 void _zme_memcpy(byte *dst, byte *src, byte count);
 void zunoSetWUPTimer(uint32_t timeout);
+/* Sleep & PowerDown mode */
 void zuno_sendWUP_Notification();
+ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"

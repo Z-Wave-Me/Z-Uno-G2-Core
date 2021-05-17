@@ -421,9 +421,9 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #ifdef LOGGING_DBG
-            LOGGING_UART.println("!SLEEP");
+
+            //LOGGING_UART.println("!SLEEP");
             #endif
-            //LLDestroy();
             break;
         default:
             break; // UNKNOWN VECTOR
@@ -790,6 +790,52 @@ void _zme_memcpy(byte * dst, byte * src, byte count)
     }
 }
 
+ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
+	size_t							tempos;
+	size_t							real_pin;
+
+	// Устанавливаем пин на INPUT_PULLUP - используется внутренняя подтяжка
+	pinMode(em4_pin, INPUT_PULLUP_FILTER);
+	real_pin = getRealPin(em4_pin);
+	switch (getRealPort(em4_pin)) {
+		case 0:// PA3
+			if (real_pin != 3)
+				return (ZunoErrorInvalidPin);
+			tempos = GPIO_EXTILEVEL_EM4WU8;
+			break ;
+		case 1://PB13
+			if (real_pin != 13)
+				return (ZunoErrorInvalidPin);
+			tempos = GPIO_EXTILEVEL_EM4WU9;
+			break ;
+		case 2://PC10
+			if (real_pin != 10)
+				return (ZunoErrorInvalidPin);
+			tempos = GPIO_EXTILEVEL_EM4WU12;
+			break ;
+		case 3://PD14
+			if (real_pin != 14)
+				return (ZunoErrorInvalidPin);
+			tempos = GPIO_EXTILEVEL_EM4WU4;
+			break ;
+		case 5:
+			if (real_pin == 2) {//PF2
+				tempos = GPIO_EXTILEVEL_EM4WU0;
+				break ;
+			}
+			if (real_pin == 7) {//PF7
+				tempos = GPIO_EXTILEVEL_EM4WU1;
+				break ;
+			}
+			return (ZunoErrorInvalidPin);
+			break ;
+		default:
+			return (ZunoErrorInvalidPin);
+			break ;
+	}
+	GPIO_EM4EnablePinWakeup(tempos , 0);
+	return (ZunoErrorOk);
+}
 int main(){
 
     return 0;

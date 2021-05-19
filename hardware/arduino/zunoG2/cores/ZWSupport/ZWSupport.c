@@ -57,15 +57,6 @@ typedef struct ZUnoReportDta_s{
 }ZUnoReportDta_t;
 volatile ZUnoReportDta_t g_report_data;
 
-void zunoSendDeviceToSleep(void) {
-	size_t					tempos;
-
-	if (g_report_data.channels_mask == 0)
-		tempos = ZUNO_AWAKETIMEOUT_SLEEPNOW;
-	else
-		tempos = WAKEUP_SLEEP_TIMEOUT;
-	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, tempos);
-}
 
 //-------------------------------------------------------------------------------------------------
 void ZWCCSetup(){
@@ -388,8 +379,10 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	LOGGING_UART.print("INCOMING  "); 
 	zuno_dbgdumpZWPacakge(cmd);
 	#endif
-	#ifdef WITH_CC_WAKEUP
- 	zuno_CCWakeup_OnAnyRx();
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	zunoKickSleepTimeout(ZUNO_SLEEP_RX_TIMEOUT);
+    //g_wup_sended_notify = true;
+ 	//zuno_CCWakeup_OnAnyRx();
 	#endif
 	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 		return (ZUNO_COMMAND_BLOCKED);
@@ -1049,8 +1042,8 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 		return;
 		
 	}
-	#ifdef WITH_CC_WAKEUP
-	zuno_CCWakeup_OnAnyRx();
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	zunoKickSleepTimeout(ZUNO_SLEEP_TX_TIMEOUT);
 	#endif
     #ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());

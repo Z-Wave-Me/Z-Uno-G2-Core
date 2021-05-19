@@ -24,6 +24,8 @@
 #endif 
 #define WAKEUP_SLEEP_TIMEOUT                                                          3000
 #define WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT                                             15000 
+#define WAKEUP_MAXIMUM_LEARN_TIMEOUT                                                  30000 
+
 
 void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();

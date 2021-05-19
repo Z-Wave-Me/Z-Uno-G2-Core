@@ -22,6 +22,7 @@
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)
+#define zunoSecurityStatus()    (g_zuno_sys->avaliable_keys)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
 #define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
@@ -34,17 +35,21 @@ void *zunoSysCall(uint8_t ct, uint8_t n, ...);
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 void zunoSendDeviceToSleep(void);
+void zunoKickSleepTimeout(uint32_t ms);
 inline void zunoSetSleepingMode(byte mode) {
 	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
 	g_zuno_sys->zwave_cfg->flags |= mode;
 	//Serial0.print("FFLAGS:");
 	//Serial0.println(g_zuno_sys->zwave_cfg->flags, HEX);
-	
-	
 }
 inline uint8_t zunoGetSleepingMode(void) {return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);};
-
+inline void zunoEnableSmartStart(bool en){
+	if(en)
+		g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
+	else
+		g_zuno_sys->zwave_cfg->flags |= (DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
+}
 
 /* time */
 void delay(dword ms);

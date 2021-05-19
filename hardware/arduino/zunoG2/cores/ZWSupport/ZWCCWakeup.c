@@ -3,6 +3,8 @@
 extern uint8_t     g_outgoing_data[];
 
 static uint8_t    g_wup_sended_notify = 0;
+static uint8_t    g_wup_inclusion = 0;
+
 void zuno_sendWUP_Notification(){
     if(zunoNID() == 0)
         return;
@@ -25,17 +27,24 @@ void zuno_sendWUP_Notification(){
     CMD_REPLY_LEN = 2;
 	zunoSendZWPackage(&g_outgoing_packet);
 
-    g_wup_sended_notify = true;
-    zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
+    zunoKickSleepTimeout(WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
+    //g_wup_sended_notify = true;
+    //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
 }
+/*
 void zuno_CCWakeup_OnAnyRx(){
     // go on waiting...
     if(g_wup_sended_notify){
         return; // Controller directs this timer
     }
-    Serial0.println("Kick WUP Timer");
+    if(g_wup_inclusion){
+        return; // Inclusion in process
+    }
+    #ifdef LOGGING_DBG
+    LOGGING_UART.print("Kick WUP Timer");
+    #endif
     zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
-}
+}*/
 void zuno_CCWakeup_OnSetup(){
     
     if ((zunoGetWakeReason() == ZUNO_WAKEUP_REASON_POR) ||
@@ -51,8 +60,10 @@ void zuno_CCWakeup_OnSetup(){
         zunoSetWUPTimer(wakeup_data);
         //Serial0.println("WUP NOTIFY");
         zuno_sendWUP_Notification();
-        zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
+        return;
+        //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
     }    
+    //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
 }
 void zuno_CCWakeup_OnDefault(){
     // Serial0.println("WUP DEFAULT");
@@ -97,6 +108,12 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
             return ZUNO_COMMAND_PROCESSED;
         case WAKE_UP_NO_MORE_INFORMATION:
             g_wup_sended_notify = false;
+            if(g_wup_inclusion){
+                g_wup_inclusion = false;
+                #ifdef LOGGING_DBG
+                LOGGING_UART.print("Inclusion timer stop");
+                #endif
+            }
             zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
             return ZUNO_COMMAND_PROCESSED; 
     }

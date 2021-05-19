@@ -346,11 +346,30 @@ void zuno_static_autosetup();
 #endif
 
 
+
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+void _zunoInitSleepingData();
+void _zunoSleepingUpd();
+void zunoKickSleepTimeout(uint32_t ms);
+void zunoSendDeviceToSleep(void);
+void _zunoSleepOnInclusionStart();
+void _zunoSleepOnInclusionComplete();
+typedef struct ZUNOSleepData_s{
+	uint32_t timeout;
+	bool     user_latch;
+	bool     inclusion_latch;
+}ZUNOSleepData_t;
+
+#endif
+
 #ifdef LOGGING_DBG
 bool g_logging_inited = false;
 #endif
 bool g_sketch_inited = false;
-
+#ifdef WITH_CC_WAKEUP
+void zuno_CCWakeup_OnInclusionStart();
+void zuno_CCWakeup_OnInclusionComplete();
+#endif
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -377,6 +396,9 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
+			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+			_zunoInitSleepingData();
+			#endif
             #ifdef LOGGING_DBG
             LOGGING_UART.begin(115200);
             #endif
@@ -395,9 +417,26 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
-        #ifdef LOGGING_DBG
+        
         case ZUNO_JUMPTBL_SYSEVENT:{
-                ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+				ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+				#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+				if((evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED)){
+					zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
+				}
+				if(evnt->event == ZUNO_SYS_EVENT_LEARNCOMPLETED){
+					if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
+					 	_zunoSleepOnInclusionStart();
+					else if (evnt->params[0] != INCLUSION_STATUS_USER_ABORT){
+						// Add an extra time for interview 
+						if(evnt->params[0] == INCLUSION_STATUS_SUCESS)
+							zunoKickSleepTimeout(ZUNO_SLEEP_INTERVIEW_TIMEOUT);
+						_zunoSleepOnInclusionComplete();
+						
+					}
+				}
+				#endif
+                #ifdef LOGGING_DBG
                 LOGGING_UART.print("[");
                 LOGGING_UART.print(millis());
                 LOGGING_UART.print("] ");
@@ -407,11 +446,15 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(evnt->params[0], HEX);
                 LOGGING_UART.print(" ");
                 LOGGING_UART.println(evnt->params[1], HEX);
+				#endif
             }
             break;
-        #endif
+       
         case ZUNO_JUMPTBL_SYSTIMER:
             zuno_CCTimer(((uint32_t)data));
+			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+			_zunoSleepingUpd();
+			#endif
             break;
         case ZUNO_JUMPTBL_IRQ:
             {
@@ -445,6 +488,12 @@ void zunoStartLearn(byte timeout, bool secured){
 
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
+	#ifdef LOGGING_DBG
+    LOGGING_UART.print(">>>SleepTimeout:");
+    LOGGING_UART.print(index);
+    LOGGING_UART.print(", ");
+	LOGGING_UART.println(timeout);
+	#endif
     zunoSysCall(ZUNO_SYSFUNC_SLEEP_CONTROL, 2, index, timeout);
 }
 
@@ -836,6 +885,68 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
 	GPIO_EM4EnablePinWakeup(tempos , 0);
 	return (ZunoErrorOk);
 }
+
+
+
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+ZUNOSleepData_t g_sleep_data;
+void _zunoInitSleepingData(){
+	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
+	g_sleep_data.user_latch = true;
+	g_sleep_data.inclusion_latch = false;
+}
+
+
+void _zunoSleepingUpd(){
+	if(g_sleep_data.user_latch)
+		return;
+	if(g_sleep_data.inclusion_latch){
+		return;
+	}
+	if(g_sleep_data.timeout >= millis()){
+		return;
+	}
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
+	#endif
+	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
+	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
+	
+}
+void _zunoSleepOnInclusionStart(){
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("INCLUDE STARTED");
+	#endif
+	g_sleep_data.inclusion_latch = true;
+}
+void _zunoSleepOnInclusionComplete(){
+	if(g_sleep_data.inclusion_latch){
+		#ifdef LOGGING_DBG
+    	LOGGING_UART.println("INCLUSION COMPLETED");
+		#endif
+	}
+	g_sleep_data.inclusion_latch = false;
+	_zunoSleepingUpd();
+}
+void zunoKickSleepTimeout(uint32_t ms){
+	uint32_t new_timeout = millis() + ms;
+	if(g_sleep_data.timeout < new_timeout)
+		g_sleep_data.timeout = new_timeout;
+	#ifdef LOGGING_DBG
+    LOGGING_UART.print("NEW SLEEP TIMEOUT:");
+	LOGGING_UART.print(g_sleep_data.timeout);
+	
+	#endif
+}
+void zunoSendDeviceToSleep(void) {
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
+	#endif
+	g_sleep_data.user_latch = false;
+	_zunoSleepingUpd();
+	//delay(MAX_SLEEP_DELAY);
+}
+#endif 
 int main(){
 
     return 0;

@@ -162,17 +162,18 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	g_outgoing_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	g_outgoing_packet.zw_rx_opts        = ZWAVE_PLUS_TX_OPTIONS;
 }
-void fillOutgoingReportPacket(uint8_t ch) {
+void fillOutgoingRawPacket(uint8_t ch, uint8_t flags, uint8_t dst){
 	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
 	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
 	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
-	g_outgoing_packet.flags 	= ZUNO_PACKETFLAGS_GROUP;
-	g_outgoing_packet.dst_node	= ZUNO_LIFELINE_GRP; 
+	g_outgoing_packet.flags 	= flags;
+	g_outgoing_packet.dst_node	= dst; 
 	g_outgoing_packet.src_node  = zunoNID();
 	g_outgoing_packet.src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel; //& ~(ZWAVE_CHANNEL_MAPPED_BIT);
 	g_outgoing_packet.zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
-
-	// ZUNO_CFG_CHANNEL(ch)
+}
+void fillOutgoingReportPacket(uint8_t ch) {
+	fillOutgoingRawPacket(ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
 }
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
@@ -1047,7 +1048,7 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 	#endif
     #ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());
-	LOGGING_UART.print(" OUTGOING PACAKAGE");
+	LOGGING_UART.print(" OUTGOING PACKAGE");
 	zuno_dbgdumpZWPacakge(&g_outgoing_packet);
 	#endif
 	// DBG

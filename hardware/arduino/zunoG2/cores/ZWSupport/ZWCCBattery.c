@@ -30,7 +30,13 @@ void zuno_CCBattery_OnSetup(){
 void zunoSendBatteryReport() {
 	g_zuno_odhw_cfg.bBatteryReport = true;
 }
-
+static uint8_t batteryReportValue(){
+	#ifdef WITH_CUSTOM_BATTERY_HANDLER
+	return ((uint32_t)(void*)zunoSysHandlerCall(ZUNO_HANDLER_ZW_BATTERY, 0))&0xFF;
+	#else
+	return defaultBatteryHandler();
+    #endif // WITH_CUSTOM_BATTERY_HANDLER
+}
 void zunoSendBatteryReportHandler() {
 	if (g_zuno_odhw_cfg.bBatteryReport == false)
 		return ;
@@ -38,11 +44,7 @@ void zunoSendBatteryReportHandler() {
 	fillOutgoingReportPacket(0);
 	CMD_REPLY_CC = COMMAND_CLASS_BATTERY;
 	CMD_REPLY_CMD = BATTERY_REPORT;
-	#ifdef WITH_CUSTOM_BATTERY_HANDLER
-	CMD_REPLY_DATA(0) = ((uint32_t)(void*)zunoSysHandlerCall(ZUNO_HANDLER_ZW_BATTERY, 0))&0xFF;
-	#else
-	CMD_REPLY_DATA(0) = defaultBatteryHandler();
-	#endif // WITH_CUSTOM_BATTERY_HANDLER 
+	CMD_REPLY_DATA(0) = batteryReportValue();
 	CMD_REPLY_LEN = 3;
 	zunoSendZWPackage(&g_outgoing_packet);
 }
@@ -51,8 +53,10 @@ int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
     int rs = ZUNO_UNKNOWN_CMD;
     switch(ZW_CMD){
         case BATTERY_GET:
-            zunoSendBatteryReport();
-            return ZUNO_COMMAND_PROCESSED;
+            //zunoSendBatteryReport();
+            CMD_REPLY_DATA(0) = batteryReportValue();
+            CMD_REPLY_LEN = 3;
+            return ZUNO_COMMAND_ANSWERED;
     }
     return rs;
 }

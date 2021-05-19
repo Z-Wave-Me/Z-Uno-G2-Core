@@ -96,6 +96,7 @@ typedef enum
 #define INCLUSION_STATUS_SUCESS							0x00
 #define INCLUSION_STATUS_IN_PROGRESS  					0x06
 #define INCLUSION_STATUS_USER_ABORT                     0xFF
+#define MAX_NODEID										232
 
 
 

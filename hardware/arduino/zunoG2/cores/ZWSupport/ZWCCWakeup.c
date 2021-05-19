@@ -13,12 +13,11 @@ void zuno_sendWUP_Notification(){
 
     //Serial0.print("\n\nWUP DATA:");
     //Serial0.println(wakeup_data, HEX);
-    if((wakeup_data & 0xFF) == 0){
-        //wakeup_data &= ~0xFF;
-        //return;
-        wakeup_data |= 0x01;
+    uint8_t wake_nodeid = wakeup_data & 0xFF;
+    if((wake_nodeid < 1) || (wake_nodeid > MAX_NODEID) ){
+        wake_nodeid = 1;
     }
-    fillOutgoingReportPacket(0);
+    fillOutgoingRawPacket(0, 0, wake_nodeid);
     g_outgoing_packet.src_zw_channel  = 0; 
 	// !!! DBG
     Serial0.println("SENDING WUP NOTIFICATION!");

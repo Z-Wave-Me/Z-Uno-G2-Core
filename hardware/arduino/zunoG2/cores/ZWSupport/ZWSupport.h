@@ -100,6 +100,7 @@ byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 byte getMaxChannelTypes();
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd);
 void fillOutgoingReportPacket(uint8_t ch);
+void fillOutgoingRawPacket(uint8_t ch, uint8_t flags, uint8_t dst);
 void ZWCCSetup();
 
 #define CMD_REPLY_LEN g_outgoing_packet.len 

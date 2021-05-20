@@ -419,8 +419,8 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
-				ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
 				#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+				ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
 				if((evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED)){
 					zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
 				}

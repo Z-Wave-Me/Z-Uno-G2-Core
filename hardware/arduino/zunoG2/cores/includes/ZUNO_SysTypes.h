@@ -40,6 +40,10 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint16_t            __reserved;
 	uint16_t            crc16;
 }ZUNODeviceConfiguation_t;
+typedef struct ZUNOOTAFWDescr_s{
+	uint16_t id;
+	uint16_t version;
+}ZUNOOTAFWDescr_t;
 // Z-Wave packet
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN						300
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						46//scientific poke method ))

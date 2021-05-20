@@ -22,6 +22,8 @@
     "static_strlst_list":[
         "___zunoDisableList",
         "___zunoEnableList",
+        "___zunoDeclareList",
+        "___zunoIncludeList",
         "___zunoCustomLnk"
     ],
     "static_handler_list":[

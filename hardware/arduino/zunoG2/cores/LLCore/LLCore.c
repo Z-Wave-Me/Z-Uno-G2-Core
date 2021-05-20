@@ -35,6 +35,9 @@
 #ifndef SKETCH_FLAGS
 #define SKETCH_FLAGS 0x00
 #endif
+#ifndef SKETCH_VERSION
+#define SKETCH_VERSION 0x0100
+#endif
 
 extern unsigned long __etext;
 extern unsigned long __data_start__;
@@ -63,7 +66,12 @@ extern unsigned long __HeapLimit;
 #define DBG_CONSOLE_PIN 0xFF
 #endif
 #endif
-
+#ifndef ZUNO_EXT_FIRMWARES_COUNT
+#define ZUNO_EXT_FIRMWARES_COUNT 0
+#endif
+#ifndef ZUNO_EXT_FIRMWARES_DESCR_PTR
+#define ZUNO_EXT_FIRMWARES_DESCR_PTR ((ZUNOOTAFWDescr_t*)NULL)
+#endif
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {
                                                                                     {'Z','M','E','Z','U','N','O','C'}, 
@@ -73,7 +81,10 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     SKETCH_FWID, 
                                                                                     (uint32_t)&zunoJumpTable, 
                                                                                     ZUNO_SKETCH_BUILD_TS,
-                                                                                    DBG_CONSOLE_PIN};
+                                                                                    DBG_CONSOLE_PIN,
+																					SKETCH_VERSION,
+																					ZUNO_EXT_FIRMWARES_COUNT,
+																					ZUNO_EXT_FIRMWARES_DESCR_PTR};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
@@ -424,7 +435,7 @@ void * zunoJumpTable(int vec, void * data) {
 				if((evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED)){
 					zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
 				}
-				if(evnt->event == ZUNO_SYS_EVENT_LEARNCOMPLETED){
+				if(evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS){
 					if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
 					 	_zunoSleepOnInclusionStart();
 					else if (evnt->params[0] != INCLUSION_STATUS_USER_ABORT){

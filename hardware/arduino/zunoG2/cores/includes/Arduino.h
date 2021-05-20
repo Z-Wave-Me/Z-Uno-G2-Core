@@ -3,9 +3,10 @@
 #define ZUNO_ARDUINOH
 
 #include "new.h"
-#include "ZUNO_Definitions.h"
+
 #include "ArduinoTypes.h"
 #include "LLCore.h"
+#include "ZUNO_Definitions.h"
 #include "ZUNO_StaticData.h"
 #ifndef ZUNO_PREPROC_PHASE
 #include <string.h>
@@ -18,7 +19,7 @@
 #include "Libft.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
 
-
+#include "Custom_decl.h" // 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               (g_zuno_sys->node_id)

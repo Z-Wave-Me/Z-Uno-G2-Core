@@ -1,9 +1,9 @@
 #ifndef ARDUINO_LIKE_TYPES__
 #define ARDUINO_LIKE_TYPES__
-#include "ZUNO_Definitions.h"
+
 #include "stdint-gcc.h"
 #include "ZUNO_SysTypes.h"
-
+#include "ZUNO_Definitions.h"
 
 
 typedef unsigned char 	boolean;

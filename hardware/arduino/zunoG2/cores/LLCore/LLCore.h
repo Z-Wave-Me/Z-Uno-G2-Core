@@ -16,6 +16,10 @@ typedef struct ZUNOCodeHeader_s{
 	uint32_t    jumptable_offset;
 	uint32_t    build_timestamp;
 	uint8_t     console_pin;
+	uint16_t    sketch_version;
+	uint8_t     ota_firmwares_count;
+	ZUNOOTAFWDescr_t * ota_firmwares_descriptions;
+	
 } ZUNOCodeHeader_t;
 
 // Universal apport index

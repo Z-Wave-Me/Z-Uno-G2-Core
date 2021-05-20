@@ -143,6 +143,12 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 								char ___zunoEnableList[] = #VAR_NAMES
 #define ZUNO_CUSTOMLNK(VAR_NAME)\
 								char ___zunoCustomLnk[] = #VAR_NAME
+#define ZUNO_DECLARE(VAR_NAMES) \
+								char ___zunoDeclareList[] = #VAR_NAMES
+#define ZUNO_INCLUDE(VAR_NAMES) \
+								char ___zunoIncludeList[] = #VAR_NAMES
+
+#define ZUNO_INCLUDE(VAR_NAMES) 
 #define ZUNO_NO_CHANNEL 														{0, 0, 0, 0, 0}
 #define ZUNO_SWITCH_BINARY(GETTER, SETTER)   												{ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER, (void*)0, (void*)0}
 #define ZUNO_SIREN(GETTER, SETTER)   														{ZUNO_SIREN_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
@@ -172,6 +178,9 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_SETUP_S2ACCESS(B)   
 #define ZUNO_DISABLE(VAR_NAMES)
 #define ZUNO_ENABLE(VAR_NAMES) 
+#define ZUNO_DECLARE(VAR_NAMES) 
+#define ZUNO_INCLUDE(VAR_NAMES) 
+
 #define ZUNO_CUSTOMLNK(VAR_NAME)
 #define ZUNO_NO_CHANNEL 														
 #define ZUNO_SWITCH_BINARY(GETTER, SETTER)   												

@@ -42,11 +42,11 @@ void zunoSendBatteryReportHandler() {
 		return ;
 	g_zuno_odhw_cfg.bBatteryReport = false;
 	fillOutgoingReportPacket(0);
-	CMD_REPLY_CC = COMMAND_CLASS_BATTERY;
-	CMD_REPLY_CMD = BATTERY_REPORT;
-	CMD_REPLY_DATA(0) = batteryReportValue();
-	CMD_REPLY_LEN = 3;
-	zunoSendZWPackage(&g_outgoing_packet);
+	CMD_REPORT_CC = COMMAND_CLASS_BATTERY;
+	CMD_REPORT_CMD = BATTERY_REPORT;
+	CMD_REPORT_DATA(0) = batteryReportValue();
+	CMD_REPORT_LEN = 3;
+	zunoSendZWPackage(&g_outgoing_report_packet);
 }
 
 int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){

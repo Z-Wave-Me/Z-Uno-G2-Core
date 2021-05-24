@@ -14,13 +14,20 @@ typedef struct					ZunoTimerDimmingSwitchBinary_s
 
 static ZunoTimerDimmingSwitchBinary_t _switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL];
 
-int zuno_CCSwitchBinaryReport(byte channel) {
+int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 	ZwBasicBinaryReportFrame_t				*report;
 	size_t									currentValue;
 	size_t									targetValue;
 	size_t									duration;
 	ZunoTimerDimmingSwitchBinary_t			*lpV2;
 
+	if(reply){
+		CMD_REPLY_LEN = sizeof(report->v2);
+		report = (ZwBasicBinaryReportFrame_t *)&CMD_REPLY_CC;
+	} else {
+		CMD_REPORT_LEN = sizeof(report->v2);
+		report = (ZwBasicBinaryReportFrame_t *)&CMD_REPORT_CC;
+	}	
 	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
 	zunoEnterCritical();
 	lpV2 = (ZunoTimerDimmingSwitchBinary_t *)zuno_CCTimerFind(channel, &_switchBinary[0], &_switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL], sizeof(ZunoTimerDimmingSwitchBinary_t));
@@ -78,7 +85,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 
 	switch(ZW_CMD) {
 		case SWITCH_BINARY_GET:
-			rs = zuno_CCSwitchBinaryReport(channel);
+			rs = zuno_CCSwitchBinaryReport(channel, true);
 			break;
 		case SWITCH_BINARY_SET:
 			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel);

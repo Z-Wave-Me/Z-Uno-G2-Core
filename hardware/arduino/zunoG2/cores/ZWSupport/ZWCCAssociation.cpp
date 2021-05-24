@@ -194,7 +194,7 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 				lp->variantgroup.profile2 = ZUNO_CFG_ASSOCIATION(groupIndex - 2).type;
 				break ;
 		}
-		zunoSendZWPackage(&g_outgoing_packet);
+		zunoSendZWPackage(&g_outgoing_main_packet);
 		groupIndex++;
 	}
 	return (ZUNO_COMMAND_PROCESSED);
@@ -387,9 +387,9 @@ void zunoAddAssociation(byte type, uint32_t params) {
 
 static void _send_group(uint8_t groupIndex)
 {
-	g_outgoing_packet.dst_node = groupIndex + 1;
-	g_outgoing_packet.src_zw_channel = 0;
-	zunoSendZWPackage(&g_outgoing_packet);
+	g_outgoing_main_packet.dst_node = groupIndex + 1;
+	g_outgoing_main_packet.src_zw_channel = 0;
+	zunoSendZWPackage(&g_outgoing_main_packet);
 }
 
 

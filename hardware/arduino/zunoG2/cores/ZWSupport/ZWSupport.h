@@ -89,7 +89,9 @@ typedef void zuno_multisetter4ub_2p_t(uint8_t, uint32_t, uint32_t);
 typedef void zuno_configuration_changed(uint8_t, uint32_t);
 
 // Common CC subroutines and data
-extern ZUNOCommandPacket_t g_outgoing_packet;
+extern ZUNOCommandPacket_t g_outgoing_main_packet;
+extern ZUNOCommandPacket_t g_outgoing_report_packet;
+
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);
 void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add);
 int32_t zuno_universalGetter1P(byte zuno_ch);
@@ -100,13 +102,18 @@ byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 byte getMaxChannelTypes();
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd);
 void fillOutgoingReportPacket(uint8_t ch);
-void fillOutgoingRawPacket(uint8_t ch, uint8_t flags, uint8_t dst);
+bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, uint8_t dst);
 void ZWCCSetup();
 
-#define CMD_REPLY_LEN g_outgoing_packet.len 
-#define CMD_REPLY_CMD g_outgoing_packet.cmd[1]
-#define CMD_REPLY_DATA(N) g_outgoing_packet.cmd[N+2]
-#define CMD_REPLY_CC  g_outgoing_packet.cmd[0]
+#define CMD_REPLY_LEN g_outgoing_main_packet.len 
+#define CMD_REPLY_CMD g_outgoing_main_packet.cmd[1]
+#define CMD_REPLY_DATA(N) g_outgoing_main_packet.cmd[N+2]
+#define CMD_REPLY_CC  g_outgoing_main_packet.cmd[0]
+
+#define CMD_REPORT_LEN g_outgoing_report_packet.len 
+#define CMD_REPORT_CMD g_outgoing_report_packet.cmd[1]
+#define CMD_REPORT_DATA(N) g_outgoing_report_packet.cmd[N+2]
+#define CMD_REPORT_CC  g_outgoing_report_packet.cmd[0]
 
 #define ZW_CMD_CLASS          (cmd->cmd[0])
 #define ZW_CMD                (cmd->cmd[1])

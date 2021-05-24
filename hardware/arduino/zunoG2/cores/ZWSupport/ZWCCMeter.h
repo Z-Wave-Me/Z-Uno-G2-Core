@@ -218,6 +218,6 @@ typedef union								ZwMeterReportFrame_u {//For more convenient support, severa
 }											ZwMeterReportFrame_t;
 
 int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd);
-int zuno_CCMeterReport(byte channel);
+int zuno_CCMeterReport(byte channel, bool reply);
 
 #endif // __ZWCC_METER_H__

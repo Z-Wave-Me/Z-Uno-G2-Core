@@ -66,7 +66,7 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 	zunoExitCritical();
 }
 
-int zuno_CCSwitchMultilevelReport(byte channel) {
+int zuno_CCSwitchMultilevelReport(byte channel, bool reply) {
 	SwitchMultilevelReportFrame_t			*report;
 	size_t									currentValue;
 	size_t									targetValue;
@@ -78,6 +78,13 @@ int zuno_CCSwitchMultilevelReport(byte channel) {
 		currentValue = 99;
 	if (currentValue != 0)
 		ZUNO_CFG_CHANNEL(channel).params[0] = currentValue;
+	if(reply){
+		report = (SwitchMultilevelReportFrame_t *)&CMD_REPLY_CC;
+		CMD_REPLY_LEN = sizeof(report->v4);
+	} else {
+		report = (SwitchMultilevelReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = sizeof(report->v4);
+	}
 	zunoEnterCritical();
 	lpV4 = (ZunoTimerSwitchMultilevel_t *)zuno_CCTimerFind(channel, &_switchMultiLevel[0], &_switchMultiLevel[ZUNO_TIMER_SWITCH_MULTILEVEL_MAX_CHANNEL], sizeof(ZunoTimerSwitchMultilevel_t));
 	if (lpV4 == 0 || lpV4->start.channel == 0) {
@@ -89,13 +96,13 @@ int zuno_CCSwitchMultilevelReport(byte channel) {
 		duration = zuno_CCTimerTable8(lpV4->ticks - g_zuno_timer.ticks);
 	}
 	zunoExitCritical();
-	report = (SwitchMultilevelReportFrame_t *)&CMD_REPLY_CC;
+	
 	report->v4.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	report->v4.cmd = SWITCH_MULTILEVEL_REPORT;
 	report->v4.currentValue = currentValue;
 	report->v4.targetValue = targetValue;
 	report->v4.duration = duration;
-	CMD_REPLY_LEN = sizeof(report->v4);
+	
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -166,7 +173,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 
 	switch(ZW_CMD) {
 		case SWITCH_MULTILEVEL_GET:
-			rs = zuno_CCSwitchMultilevelReport(channel);
+			rs = zuno_CCSwitchMultilevelReport(channel, true);
 			break;
 		case SWITCH_MULTILEVEL_SET:
 			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel);

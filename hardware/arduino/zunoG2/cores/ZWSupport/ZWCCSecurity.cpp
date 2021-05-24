@@ -13,7 +13,7 @@ static int _report(size_t channel) {
 
 	report = (ZwSecurity2CommandsSupportedFrame_t *)&CMD_REPLY_CC;
 	report->cmdClass = COMMAND_CLASS_SECURITY_2;
-	report->cmd = SECURITY_2_COMMANDS_SUPPORTED_REPORT;
+	report->cmd = SECURITY_2_COMMANDS_SUPPORTED_REPORT; 
 	commandClass = &report->commandClass[0];
 	commandClass = zuno_AddCommonClass(commandClass);
 	if (channel != 0) {

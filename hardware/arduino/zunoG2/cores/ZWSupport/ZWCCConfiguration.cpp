@@ -169,7 +169,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 			memcpy(&report->name[0], str, (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t)));
 			str = str + (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t));
 			CMD_REPLY_LEN = ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT;
-			zunoSendZWPackage(&g_outgoing_packet);
+			zunoSendZWPackage(&g_outgoing_main_packet);
 		}
 		memcpy(&report->name[0], str, len);
 		len = len + sizeof(ZwConfigurationNameReportFrame_t);

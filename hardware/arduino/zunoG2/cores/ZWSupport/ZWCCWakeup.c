@@ -6,9 +6,17 @@ static uint8_t    g_wup_sended_notify = 0;
 static uint8_t    g_wup_inclusion = 0;
 
 void zuno_sendWUP_Notification(){
+    g_zuno_odhw_cfg.bWUPReport = true;
+}
+extern uint8_t g_outgoing_report_data[];
+void zuno_sendWUP_NotificationReport(){
     if(zunoNID() == 0)
         return;
+    if(!g_zuno_odhw_cfg.bWUPReport)
+        return;
+    
     uint32_t wakeup_data;
+
     zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);
 
     //Serial0.print("\n\nWUP DATA:");
@@ -17,18 +25,16 @@ void zuno_sendWUP_Notification(){
     if((wake_nodeid < 1) || (wake_nodeid > MAX_NODEID) ){
         wake_nodeid = 1;
     }
-    fillOutgoingRawPacket(0, 0, wake_nodeid);
-    g_outgoing_packet.src_zw_channel  = 0; 
+    fillOutgoingRawPacket(&g_outgoing_report_packet, g_outgoing_report_data, 0, 0, wake_nodeid);
+    g_outgoing_report_packet.src_zw_channel  = 0; 
 	// !!! DBG
     Serial0.println("SENDING WUP NOTIFICATION!");
-    CMD_REPLY_CC = COMMAND_CLASS_WAKE_UP;
-    CMD_REPLY_CMD = WAKE_UP_NOTIFICATION;
-    CMD_REPLY_LEN = 2;
-	zunoSendZWPackage(&g_outgoing_packet);
-
+    CMD_REPORT_CC = COMMAND_CLASS_WAKE_UP;
+    CMD_REPORT_CMD = WAKE_UP_NOTIFICATION;
+    CMD_REPORT_LEN = 2;
+	zunoSendZWPackage(&g_outgoing_report_packet);
     zunoKickSleepTimeout(WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
-    //g_wup_sended_notify = true;
-    //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
+    g_zuno_odhw_cfg.bWUPReport = false;
 }
 /*
 void zuno_CCWakeup_OnAnyRx(){

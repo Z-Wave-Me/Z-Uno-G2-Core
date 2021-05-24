@@ -45,10 +45,10 @@ typedef struct ZUnoChannelDtaHandler_s{
 }ZUnoChannelDtaHandler_t;
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
-ZUNOCommandPacket_t g_outgoing_packet;
-
-uint8_t             g_outgoing_data[MAX_ZW_PACKAGE];
-
+ZUNOCommandPacket_t g_outgoing_main_packet;
+ZUNOCommandPacket_t g_outgoing_report_packet;
+uint8_t             g_outgoing_main_data[MAX_ZW_PACKAGE];
+uint8_t             g_outgoing_report_data[MAX_ZW_PACKAGE];
 // Report data
 //-------------------------------------------------------------------------------------------------
 typedef struct ZUnoReportDta_s{
@@ -147,33 +147,32 @@ byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	return UNKNOWN_CHANNEL;
 }
 
-
-void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
-	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
-	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
-	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
-	g_outgoing_packet.cmd[0] = cmd->cmd[0];  // the same command class
-	g_outgoing_packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
-	// Reply as we were asked
-	g_outgoing_packet.src_node          = zunoNID();
-	g_outgoing_packet.dst_node          = cmd->src_node;
-	g_outgoing_packet.src_zw_channel    = cmd->dst_zw_channel;
-	g_outgoing_packet.dst_zw_channel    = cmd->src_zw_channel;
-	g_outgoing_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
-	g_outgoing_packet.zw_rx_opts        = ZWAVE_PLUS_TX_OPTIONS;
+bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, uint8_t dst){
+	bool res = true;
+	memset(p, 0, sizeof(ZUNOCommandPacket_t));
+	memset(d, 0, MAX_ZW_PACKAGE);
+	p->cmd = d + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
+	p->flags 	= flags;
+	p->dst_node	= dst; 
+	p->src_node  = zunoNID();
+	p->src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel; //& ~(ZWAVE_CHANNEL_MAPPED_BIT);
+	p->zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
+	return res;
 }
-void fillOutgoingRawPacket(uint8_t ch, uint8_t flags, uint8_t dst){
-	memset(&g_outgoing_packet, 0, sizeof(ZUNOCommandPacket_t));
-	memset(g_outgoing_data, 0, MAX_ZW_PACKAGE);
-	g_outgoing_packet.cmd = g_outgoing_data + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
-	g_outgoing_packet.flags 	= flags;
-	g_outgoing_packet.dst_node	= dst; 
-	g_outgoing_packet.src_node  = zunoNID();
-	g_outgoing_packet.src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel; //& ~(ZWAVE_CHANNEL_MAPPED_BIT);
-	g_outgoing_packet.zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
+void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
+	
+	fillOutgoingRawPacket(&g_outgoing_main_packet, g_outgoing_main_data, cmd->src_node, 0, 0);
+	g_outgoing_main_data[0] = cmd->cmd[0];  // the same command class
+	g_outgoing_main_data[1] = cmd->cmd[1]+1; // in most cases report = get+1
+	// Reply as we were asked
+	g_outgoing_main_packet.src_zw_channel    = cmd->dst_zw_channel;
+	g_outgoing_main_packet.dst_zw_channel    = cmd->src_zw_channel;
+	g_outgoing_main_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 }
 void fillOutgoingReportPacket(uint8_t ch) {
-	fillOutgoingRawPacket(ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
+	fillOutgoingRawPacket(&g_outgoing_report_packet, 
+						  g_outgoing_report_data,
+						 ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
 }
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
@@ -484,7 +483,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	}
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
-		zunoSendZWPackage(&g_outgoing_packet);
+		zunoSendZWPackage(&g_outgoing_main_packet);
 	}
 	return result;
 }
@@ -949,6 +948,9 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 }
 
 void zunoSendReportHandler(uint32_t ticks) {
+	if(zunoNID() == 0)
+        return;
+	zuno_sendWUP_NotificationReport();
 	zunoSendBatteryReportHandler();
 	if(g_report_data.channels_mask == 0)
 		return;
@@ -970,12 +972,12 @@ void zunoSendReportHandler(uint32_t ticks) {
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchBinaryReport(ch);
+				rs = zuno_CCSwitchBinaryReport(ch, false);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchMultilevelReport(ch);
+				rs = zuno_CCSwitchMultilevelReport(ch, false);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_COLOR
@@ -985,7 +987,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_DOORLOCK
 			case ZUNO_DOORLOCK_CHANNEL_NUMBER:
-				rs = zuno_CCDoorLockReport(ch);
+				rs = zuno_CCDoorLockReport(ch, false);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
@@ -995,12 +997,12 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL
 			case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSensorMultilevelReport(ch);
+				rs = zuno_CCSensorMultilevelReport(ch, false);
 				break;
 			#endif
 			#ifdef WITH_CC_METER
 			case ZUNO_METER_CHANNEL_NUMBER:
-				rs = zuno_CCMeterReport(ch);
+				rs = zuno_CCMeterReport(ch, false);
 				break;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
@@ -1012,7 +1014,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 				break;
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
-			zunoSendZWPackage(&g_outgoing_packet);
+			zunoSendZWPackage(&g_outgoing_report_packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			g_report_data.channels_mask &= ~(1UL<<ch); // remove channel bit from pending report bitmap
@@ -1047,9 +1049,10 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 	zunoKickSleepTimeout(ZUNO_SLEEP_TX_TIMEOUT);
 	#endif
     #ifdef LOGGING_DBG
+	LOGGING_UART.print("\n >>> (");
 	LOGGING_UART.print(millis());
-	LOGGING_UART.print(" OUTGOING PACKAGE");
-	zuno_dbgdumpZWPacakge(&g_outgoing_packet);
+	LOGGING_UART.print(") OUTGOING PACKAGE: ");
+	zuno_dbgdumpZWPacakge(pkg);
 	#endif
 	// DBG
 	//g_outgoing_packet.src_zw_channel    = 0;

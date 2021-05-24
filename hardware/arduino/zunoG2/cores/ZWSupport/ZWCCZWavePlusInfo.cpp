@@ -25,7 +25,7 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 
 int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd) {
 	int								rs;
-
+ 
 	switch (ZW_CMD) {
 		case ZWAVEPLUS_INFO_GET:
 			rs = _report(cmd);

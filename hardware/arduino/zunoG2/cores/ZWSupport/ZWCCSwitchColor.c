@@ -144,20 +144,25 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	
 	if (cmd != NULL) {
 		mask = 1 << (((ZwSwitchColorGetFrame_t *)cmd->cmd)->colorComponentId);
+		lp = (ZwSwitchColorReportFrame_t *)&CMD_REPLY_CC;
+		CMD_REPLY_LEN = sizeof(lp->v2);
 	} else {
 		mask = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
+		lp = (ZwSwitchColorReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = sizeof(lp->v2);
 	}
-	lp = (ZwSwitchColorReportFrame_t *)&CMD_REPLY_CC;
 	lp->v2.cmdClass = COMMAND_CLASS_SWITCH_COLOR;
 	lp->v2.cmd = SWITCH_COLOR_REPORT;
-	CMD_REPLY_LEN = sizeof(lp->v2);
 	colorComponentId = 0;
 	while (mask != 0) {//We will pass through all the colors and send a report for each
 		if ((mask & 0x01) != 0) {
 			lp->v2.colorComponentId = colorComponentId;
-
 			lp->v2.value = zuno_universalGetter2P(channel, colorComponentId);
-			zunoSendZWPackage(&g_outgoing_packet);
+			if(cmd != 0){
+				zunoSendZWPackage(&g_outgoing_main_packet);
+			} else {
+				zunoSendZWPackage(&g_outgoing_report_packet);
+			}
 		}
 		colorComponentId++;
 		mask >>=  1;

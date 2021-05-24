@@ -32,6 +32,7 @@ void zuno_CCWakeup_OnSetup();
 void zuno_CCWakeup_OnDefault();
 int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd);
 void zuno_CCWakeup_OnAnyRx();
+void zuno_sendWUP_NotificationReport();
 
 
 #endif // ZWCC_WAKEUP

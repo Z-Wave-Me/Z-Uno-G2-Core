@@ -25,6 +25,6 @@ typedef struct							ZwDoorLockOperationSet_s
 }										ZwDoorLockOperationSet_t;//_ZW_DOOR_LOCK_OPERATION_SET_V4_FRAME_
 
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-int zuno_CCDoorLockReport(uint8_t channel);
+int zuno_CCDoorLockReport(uint8_t channel, bool reply);
 
 #endif // ZWCC_DOOOR_LOCK_H

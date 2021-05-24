@@ -1,12 +1,18 @@
 #include "Arduino.h"
 #include "ZWCCSensorMultilevel.h"
 
-int zuno_CCSensorMultilevelReport(byte channel) {
+int zuno_CCSensorMultilevelReport(byte channel, bool reply) {
 	ZwSensorMultilevelReportFrame_t					*report;
 	size_t											channel_size;
 	size_t											value;
 
-	report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPLY_CC;
+	if(reply){
+		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPLY_CC;
+		CMD_REPLY_LEN = channel_size + (sizeof(report->byte1) - 1);
+	} else {
+		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = channel_size + (sizeof(report->byte1) - 1);
+	}
 	channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
 	report->byte1.cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
 	report->byte1.cmd = SENSOR_MULTILEVEL_REPORT;
@@ -15,7 +21,7 @@ int zuno_CCSensorMultilevelReport(byte channel) {
 	channel_size &= SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
 	value = zuno_universalGetter1P(channel);
 	_zme_memcpy(&report->byte1.sensorValue1, (uint8_t *)&value, channel_size);
-	CMD_REPLY_LEN = channel_size + (sizeof(report->byte1) - 1);
+	
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -65,7 +71,7 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 
 	switch (ZW_CMD) {
 		case SENSOR_MULTILEVEL_GET:
-			rs = zuno_CCSensorMultilevelReport(channel);
+			rs = zuno_CCSensorMultilevelReport(channel, true);
 			break;
 		case SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR:
 			rs = _supported_sensor(cmd, channel);

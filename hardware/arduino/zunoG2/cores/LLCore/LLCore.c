@@ -424,6 +424,7 @@ void * zunoJumpTable(int vec, void * data) {
                 g_sketch_inited = true;
             }
             loop();
+			
             delay(20); // to avoid starvation
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
@@ -462,7 +463,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
        
         case ZUNO_JUMPTBL_SYSTIMER:
-            zuno_CCTimer(((uint32_t)data));
+            zuno_CCTimer((uint32_t)data);
 			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 			_zunoSleepingUpd();
 			#endif

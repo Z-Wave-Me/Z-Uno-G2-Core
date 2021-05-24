@@ -101,6 +101,6 @@ typedef struct												ZwSensorMultilevelSupportedSensorReportFrame_s
 }															ZwSensorMultilevelSupportedSensorReportFrame_t;
 
 int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
-int zuno_CCSensorMultilevelReport(byte channel);
+int zuno_CCSensorMultilevelReport(byte channel, bool reply);
 
 #endif // __SENSOR_MULTILEVEL_H__

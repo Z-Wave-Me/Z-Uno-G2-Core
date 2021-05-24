@@ -9,7 +9,7 @@
 
 #define dbgprintln(a) DEBUGSERIAL.println(a, HEX)
 
-int zuno_CCMeterReport(byte channel) {
+int zuno_CCMeterReport(byte channel, bool reply) {
 	ZwMeterReportFrame_t				*report;
 	uint32_t							params;
 	uint32_t							channel_size;
@@ -17,6 +17,9 @@ int zuno_CCMeterReport(byte channel) {
 	uint8_t								*lp;
 
 	report = (ZwMeterReportFrame_t *)&CMD_REPLY_CC;
+    if(!reply){
+        report = (ZwMeterReportFrame_t *)&CMD_REPORT_CC;
+    }
 	report->v3.byte1.cmdClass = COMMAND_CLASS_METER;
 	report->v3.byte1.cmd = METER_REPORT;
 	params = ZUNO_CFG_CHANNEL(channel).params[0];
@@ -28,7 +31,11 @@ int zuno_CCMeterReport(byte channel) {
 	_zme_memcpy(lp, (uint8_t *)&value, channel_size);
 	lp[channel_size] = 0;//deltaTime1
 	lp[channel_size + 1] = 0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
-	CMD_REPLY_LEN = 6 + channel_size;
+	if(reply){
+        CMD_REPLY_LEN = 6 + channel_size;
+    } else {
+        CMD_REPORT_LEN = 6 + channel_size;
+    }
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -39,7 +46,7 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd)
     switch (ZW_CMD)
     {
         case METER_GET:
-            rs = zuno_CCMeterReport(channel);
+            rs = zuno_CCMeterReport(channel, true);
             break;
 
         case METER_SUPPORTED_GET:

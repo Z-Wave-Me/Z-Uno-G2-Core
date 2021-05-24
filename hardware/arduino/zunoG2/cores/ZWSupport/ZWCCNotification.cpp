@@ -34,10 +34,15 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	ZwNotificationGetFrame_t			*cmd_get;
 
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);// Load report mask from EEPROM
-	if(cmd == NULL)// If it's unsolicited report we have to check if it was turned on by user
+	if(cmd == NULL){// If it's unsolicited report we have to check if it was turned on by user
 		if((eeprom_mask & (1UL << channel)) == 0)// Unsolicited => doesn't have incoming package
 			return (ZUNO_COMMAND_BLOCKED); // User don't want this report => don't send it
-	report = (ZwNotificationReportFrame_t *)&CMD_REPLY_CC;
+		report = (ZwNotificationReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = NOTIFICATION_REPORT_LEN; 
+	} else {
+		report = (ZwNotificationReportFrame_t *)&CMD_REPLY_CC;
+		CMD_REPLY_LEN = NOTIFICATION_REPORT_LEN; 
+	}
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
 	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
 	if(cmd != NULL) {
@@ -49,7 +54,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	}
 	report->byte1.cmdClass = COMMAND_CLASS_NOTIFICATION;
 	report->byte1.cmd = NOTIFICATION_REPORT;
-	CMD_REPLY_LEN = NOTIFICATION_REPORT_LEN; 
+	
 	if(report->byte1.mevent != 0xFE) {
 		report->byte1.notificationStatus = (eeprom_mask & (1UL << channel)) ? NOTIFICATION_ON_VALUE : NOTIFICATION_OFF_VALUE;
 		report->byte1.notificationType = NOTIFICATION_MAPPER[index];

@@ -14,6 +14,7 @@ typedef struct							ZunoHardwareSerialInit_s
 {
 	const ZunoHardwareSerialConfig_t	*config;
 	size_t								baudrate;
+	size_t								bIrq;
 }										ZunoHardwareSerialInit_t;
 
 typedef struct							ZunoHardwareSerialDeInit_s
@@ -272,7 +273,7 @@ ZunoError_t HardwareSerial::_init(size_t param) {
 
 	init = (ZunoHardwareSerialInit_t *)param;
 	config = init->config;
-	if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler)) != ZunoErrorOk)
+	if (init->bIrq != 0 && (ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler)) != ZunoErrorOk)
 		return (ret);
 	usartInit = USART_INITASYNC_DEFAULT;
 	usartInit.baudrate = init->baudrate;
@@ -281,7 +282,8 @@ ZunoError_t HardwareSerial::_init(size_t param) {
 	USART_InitAsync(usart, &usartInit);
 	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
 	usart->IEN = USART_IEN_RXDATAV;
-	NVIC_EnableIRQ(config->irqType);/* Enable interrupts in NVIC */
+	if (init->bIrq != 0)
+		NVIC_EnableIRQ(config->irqType);/* Enable interrupts in NVIC */
 	return (ZunoErrorOk);
 }
 
@@ -318,10 +320,9 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	tx_loc = getLocation(location_ptr, location_sz, tx);
 	if (rx == tx || rx_loc == INVALID_PIN_INDEX || tx_loc == INVALID_PIN_INDEX)
 		return (this->_beginFaill(ZunoErrorInvalidPin, bFree, b));// wrong index or pin combination // The pin is valid, but it doesn't support by this USART interface
-	if (len == 0)
-		return (this->_beginFaill(ZunoErrorMemory, bFree, b));
 	init.config = config;
 	init.baudrate = baudrate;
+	init.bIrq = (size_t)b;
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk)
 		return (this->_beginFaill(ret, bFree, b));
 	pinMode(tx, OUTPUT_UP);

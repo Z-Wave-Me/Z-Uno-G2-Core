@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "LLCore.h"
 /*
 // Is not needed anymore

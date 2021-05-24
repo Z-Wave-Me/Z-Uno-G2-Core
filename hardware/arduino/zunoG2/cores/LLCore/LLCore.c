@@ -358,7 +358,6 @@ void zuno_static_autosetup();
 
 
 
-#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 void _zunoInitSleepingData();
 void _zunoSleepingUpd();
 void zunoKickSleepTimeout(uint32_t ms);
@@ -371,7 +370,6 @@ typedef struct ZUNOSleepData_s{
 	bool     inclusion_latch;
 }ZUNOSleepData_t;
 
-#endif
 
 #ifdef LOGGING_DBG
 bool g_logging_inited = false;
@@ -899,8 +897,6 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
 }
 
 
-
-#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 ZUNOSleepData_t g_sleep_data;
 void _zunoInitSleepingData(){
 	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
@@ -958,7 +954,7 @@ void zunoSendDeviceToSleep(void) {
 	_zunoSleepingUpd();
 	//delay(MAX_SLEEP_DELAY);
 }
-#endif 
+
 int main(){
 
     return 0;

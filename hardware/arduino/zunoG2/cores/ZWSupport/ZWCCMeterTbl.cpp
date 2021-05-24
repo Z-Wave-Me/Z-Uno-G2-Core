@@ -143,7 +143,7 @@ static int _current_data_get(size_t channel, ZwMeterTblCurrentDataGetFrame_t *pa
 		zuno_CCTimerParametrsSet(&report->time, current_time);
 		report->properties2 = (out.precision << 0x5) | out.scale;
 		_zme_memcpy((byte *)&report->currentValue[0], (byte *)&out.value, sizeof(report->currentValue));
-		zunoSendZWPackage(&g_outgoing_packet);
+		zunoSendZWPackage(&g_outgoing_main_packet);
 	}
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -189,7 +189,7 @@ static int _historical_data_get(size_t channel, ZwMeterTblHistoricalDataGet_t *p
 			zunoMeterTblHistoryGetValue(channel, stop_time, tempos, &out);
 			report->properties2 = (out.precision << 0x5) | out.scale;
 			_zme_memcpy((byte *)&report->historicalValue[0], (byte *)&out.value, sizeof(report->historicalValue));
-			zunoSendZWPackage(&g_outgoing_packet);
+			zunoSendZWPackage(&g_outgoing_main_packet);
 			stop_time = next_time;
 		}
 	}

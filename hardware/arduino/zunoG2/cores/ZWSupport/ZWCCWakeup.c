@@ -1,5 +1,5 @@
 #include "ZWCCWakeup.h"
-#ifdef WITH_CC_WAKEUP
+
 extern uint8_t     g_outgoing_data[];
 
 static uint8_t    g_wup_sended_notify = 0;
@@ -124,4 +124,3 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
     }
     return rs;
 }
-#endif // WITH_CC_WAKEUP

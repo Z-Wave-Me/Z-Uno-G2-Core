@@ -6,6 +6,7 @@ int zuno_CCSensorMultilevelReport(byte channel, bool reply) {
 	size_t											channel_size;
 	size_t											value;
 
+	channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
 	if(reply){
 		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPLY_CC;
 		CMD_REPLY_LEN = channel_size + (sizeof(report->byte1) - 1);
@@ -13,7 +14,6 @@ int zuno_CCSensorMultilevelReport(byte channel, bool reply) {
 		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPORT_CC;
 		CMD_REPORT_LEN = channel_size + (sizeof(report->byte1) - 1);
 	}
-	channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
 	report->byte1.cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
 	report->byte1.cmd = SENSOR_MULTILEVEL_REPORT;
 	report->byte1.sensorType = ZUNO_CFG_CHANNEL(channel).sub_type;

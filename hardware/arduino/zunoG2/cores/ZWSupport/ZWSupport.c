@@ -161,9 +161,9 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 }
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	
-	fillOutgoingRawPacket(&g_outgoing_main_packet, g_outgoing_main_data, cmd->src_node, 0, 0);
-	g_outgoing_main_data[0] = cmd->cmd[0];  // the same command class
-	g_outgoing_main_data[1] = cmd->cmd[1]+1; // in most cases report = get+1
+	fillOutgoingRawPacket(&g_outgoing_main_packet, g_outgoing_main_data, 0, 0, cmd->src_node);
+	g_outgoing_main_packet.cmd[0] = cmd->cmd[0];  // the same command class
+	g_outgoing_main_packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
 	// Reply as we were asked
 	g_outgoing_main_packet.src_zw_channel    = cmd->dst_zw_channel;
 	g_outgoing_main_packet.dst_zw_channel    = cmd->src_zw_channel;

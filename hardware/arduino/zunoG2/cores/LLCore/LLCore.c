@@ -64,7 +64,7 @@ extern unsigned long __HeapLimit;
 #define DBG_CONSOLE_PIN 0x3D // D13
 #else
 #define DBG_CONSOLE_PIN 0xFF
-#endif
+#endif 
 #endif
 #ifndef ZUNO_EXT_FIRMWARES_COUNT
 #define ZUNO_EXT_FIRMWARES_COUNT 0
@@ -366,8 +366,11 @@ void _zunoSleepOnInclusionStart();
 void _zunoSleepOnInclusionComplete();
 typedef struct ZUNOSleepData_s{
 	uint32_t timeout;
-	bool     user_latch;
-	bool     inclusion_latch;
+	uint32_t wup_timeout;
+	bool     user_latch:1;
+	bool     inclusion_latch:1;
+	bool     wup_latch:1;
+
 }ZUNOSleepData_t;
 
 
@@ -902,8 +905,9 @@ void _zunoInitSleepingData(){
 	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
 	g_sleep_data.user_latch = true;
 	g_sleep_data.inclusion_latch = false;
+	g_sleep_data.wup_latch = false;
+	g_sleep_data.wup_timeout = 0;
 }
-
 
 void _zunoSleepingUpd(){
 	if(g_sleep_data.user_latch)
@@ -911,15 +915,47 @@ void _zunoSleepingUpd(){
 	if(g_sleep_data.inclusion_latch){
 		return;
 	}
+	if(_zunoHasPendingReports()){
+		#ifdef LOGGING_DBG
+    	LOGGING_UART.println("PENDING REPORTS");
+		#endif
+		return;
+	}
+	if(g_sleep_data.wup_latch){
+		if(millis() > g_sleep_data.wup_timeout){
+			#ifdef LOGGING_DBG
+    		LOGGING_UART.println("***WUP LOCK RELEASED (TIMEOUT)!");
+    		#endif
+			g_sleep_data.wup_latch = false;
+		}
+		else{
+			return;
+		}
+	}
 	if(g_sleep_data.timeout >= millis()){
 		return;
 	}
+	
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
 	#endif
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	
+}
+void _zunoSleepOnWUPStart(){
+	g_sleep_data.wup_latch = true;
+	g_sleep_data.wup_timeout = millis() + ZUNO_MAX_CONTROLLER_WUP_TIMEOUT;
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("***WUP LOCK ARMED!");
+    #endif
+}
+void _zunoSleepOnWUPStop(){
+	g_sleep_data.wup_latch = false;
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("***WUP LOCK RELEASED!");
+    #endif
+
 }
 void _zunoSleepOnInclusionStart(){
 	#ifdef LOGGING_DBG
@@ -948,7 +984,7 @@ void zunoKickSleepTimeout(uint32_t ms){
 }
 void zunoSendDeviceToSleep(void) {
 	#ifdef LOGGING_DBG
-    LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
+    //LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
 	#endif
 	g_sleep_data.user_latch = false;
 	_zunoSleepingUpd();

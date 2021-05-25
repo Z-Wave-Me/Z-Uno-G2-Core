@@ -936,7 +936,8 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 		#ifdef WITH_CC_METER_TBL_MONITOR
 		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
 		#endif
-			return (g_report_data.last_report_time[ch] == 0) || ((ticks -  g_report_data.last_report_time[ch]) > 3000UL); // We can't send too frequent for these CCs
+			return (g_report_data.last_report_time[ch] == 0) || 
+			        ((ticks -  g_report_data.last_report_time[ch]) > 3000UL); // We can't send too frequent for these CCs
 			break ;
 		default:
 			break ;
@@ -945,6 +946,10 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 	(void)ch;
 	(void)ticks;
 	return true;
+}
+
+bool _zunoHasPendingReports(){
+	return g_report_data.channels_mask != 0;
 }
 
 void zunoSendReportHandler(uint32_t ticks) {

@@ -105,6 +105,8 @@ void fillOutgoingReportPacket(uint8_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, uint8_t dst);
 void ZWCCSetup();
 
+bool _zunoHasPendingReports();
+
 #define CMD_REPLY_LEN g_outgoing_main_packet.len 
 #define CMD_REPLY_CMD g_outgoing_main_packet.cmd[1]
 #define CMD_REPLY_DATA(N) g_outgoing_main_packet.cmd[N+2]

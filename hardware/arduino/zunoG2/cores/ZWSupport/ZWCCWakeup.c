@@ -9,6 +9,10 @@ void zuno_sendWUP_Notification(){
     g_zuno_odhw_cfg.bWUPReport = true;
 }
 extern uint8_t g_outgoing_report_data[];
+
+void _zunoSleepOnWUPStart();
+void _zunoSleepOnWUPStop();
+
 void zuno_sendWUP_NotificationReport(){
     if(zunoNID() == 0)
         return;
@@ -33,7 +37,8 @@ void zuno_sendWUP_NotificationReport(){
     CMD_REPORT_CMD = WAKE_UP_NOTIFICATION;
     CMD_REPORT_LEN = 2;
 	zunoSendZWPackage(&g_outgoing_report_packet);
-    zunoKickSleepTimeout(WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
+    _zunoSleepOnWUPStart();
+    //zunoKickSleepTimeout(WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT);
     g_zuno_odhw_cfg.bWUPReport = false;
 }
 /*
@@ -119,7 +124,8 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
                 LOGGING_UART.print("Inclusion timer stop");
                 #endif
             }
-            zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
+            _zunoSleepOnWUPStop();
+            //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
             return ZUNO_COMMAND_PROCESSED; 
     }
     return rs;

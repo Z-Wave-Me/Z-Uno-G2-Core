@@ -12,6 +12,9 @@
 #include "errno.h"
 #include "sys/stat.h"
 
+#ifndef SKETCH_FLAGS_LOOP_DELAY
+	#define SKETCH_FLAGS_LOOP_DELAY			0x20
+#endif
 
 #ifdef LOGGING_DBG
 	#pragma message "LOGGING_DBG: ON"
@@ -426,7 +429,7 @@ void * zunoJumpTable(int vec, void * data) {
             }
             loop();
 			
-            delay(20); // to avoid starvation
+            delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);

@@ -949,7 +949,11 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 }
 
 bool _zunoHasPendingReports(){
-	return g_report_data.channels_mask != 0;
+	if (zunoInNetwork() == false)
+		return (false);
+	if (g_zuno_odhw_cfg.bBatteryReport == true || g_report_data.channels_mask != 0 || g_zuno_odhw_cfg.bWUPReport == true)
+		return (true);
+	return (false);
 }
 
 void zunoSendReportHandler(uint32_t ticks) {

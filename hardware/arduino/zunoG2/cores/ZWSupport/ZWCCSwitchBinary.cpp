@@ -86,6 +86,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 	switch(ZW_CMD) {
 		case SWITCH_BINARY_GET:
 			rs = zuno_CCSwitchBinaryReport(channel, true);
+			_zunoMarkChannelRequested(channel);
 			break;
 		case SWITCH_BINARY_SET:
 			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel);

@@ -174,6 +174,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	switch(ZW_CMD) {
 		case SWITCH_MULTILEVEL_GET:
 			rs = zuno_CCSwitchMultilevelReport(channel, true);
+			_zunoMarkChannelRequested(channel);
 			break;
 		case SWITCH_MULTILEVEL_SET:
 			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel);

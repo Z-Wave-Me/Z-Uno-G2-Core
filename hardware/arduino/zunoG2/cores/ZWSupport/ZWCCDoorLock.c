@@ -35,6 +35,7 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			break ;
 		case DOOR_LOCK_OPERATION_GET:
 			rs = zuno_CCDoorLockReport(channel, true);
+			_zunoMarkChannelRequested(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_SET:
 			_set_operation(channel, cmd);

@@ -143,8 +143,6 @@ typedef struct ZUNOOnDemandHW_s {
 	struct
 	{
 		bool					bExtInit: 1;
-		bool					bBatteryReport: 1;
-		bool					bWUPReport:1;
 		bool					ADCInitialized: 1;
 	};
 	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS

@@ -72,6 +72,7 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	switch (ZW_CMD) {
 		case SENSOR_MULTILEVEL_GET:
 			rs = zuno_CCSensorMultilevelReport(channel, true);
+			_zunoMarkChannelRequested(channel);
 			break;
 		case SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR:
 			rs = _supported_sensor(cmd, channel);

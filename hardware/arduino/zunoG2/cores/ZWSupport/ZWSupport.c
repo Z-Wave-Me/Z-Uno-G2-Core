@@ -51,15 +51,58 @@ uint8_t             g_outgoing_main_data[MAX_ZW_PACKAGE];
 uint8_t             g_outgoing_report_data[MAX_ZW_PACKAGE];
 // Report data
 //-------------------------------------------------------------------------------------------------
-typedef struct ZUnoReportDta_s{
-	uint32_t channels_mask;
+
+
+typedef struct ZUNOChannelsData_s{
+	uint32_t update_map;
+	uint32_t request_map;
+	uint32_t report_map;
 	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
-}ZUnoReportDta_t;
-volatile ZUnoReportDta_t g_report_data;
+	uint32_t sys_reports;
+	uint32_t sys_requests;
+}ZUNOChannelsData_t;
+ZUNOChannelsData_t g_channels_data;
 
-
+inline void __setSyncVar(uint32_t * var, uint32_t val){
+	zunoEnterCritical();
+	*var |= val;
+	zunoExitCritical();
+}
+inline uint32_t __getSyncVar(uint32_t * var){
+	uint32_t res = 0;
+	zunoEnterCritical();
+	res = *var;
+	zunoExitCritical();
+	return res;
+}
+inline void __setSyncMapChannel(uint32_t * map, uint8_t ch){
+	zunoEnterCritical();
+	*map |= (1UL << ch);
+	zunoExitCritical();
+}
+inline void __clearSyncMapChannel(uint32_t * map, uint8_t ch){
+	zunoEnterCritical();
+	*map &= ~(1UL << ch);
+	zunoExitCritical();
+}
+inline bool __isSyncMapChannel(uint32_t * map, uint8_t ch){
+	uint32_t res = 0;
+	zunoEnterCritical();
+	res = *map;
+	zunoExitCritical();
+	return (res & (1UL << ch)) != 0;
+}
+inline bool __isSyncMapChannelAndClear(uint32_t * map, uint8_t ch){
+	bool res = false;
+	zunoEnterCritical();
+	res =  (*map & (1UL << ch)) != 0;
+	*map &= ~(1UL << ch);
+	zunoExitCritical();
+	return res;
+}
 //-------------------------------------------------------------------------------------------------
 void ZWCCSetup(){
+	memset(&g_channels_data, 0, sizeof(g_channels_data));
 	#ifdef WITH_CC_BATTERY
 	zuno_CCBattery_OnSetup();
 	#endif
@@ -935,9 +978,11 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 		#endif
 		#ifdef WITH_CC_METER_TBL_MONITOR
 		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
-		#endif
-			return (g_report_data.last_report_time[ch] == 0) || 
-			        ((ticks -  g_report_data.last_report_time[ch]) > 3000UL); // We can't send too frequent for these CCs
+		#endif 
+			{
+				uint32_t ch_time  = __getSyncVar(&(g_channels_data.last_report_time[ch]));
+				return (ch_time == 0) || ((ticks -  ch_time) > 3000UL); // We can't send too frequent for these CCs
+			}
 			break ;
 		default:
 			break ;
@@ -951,21 +996,61 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 bool _zunoHasPendingReports(){
 	if (zunoInNetwork() == false)
 		return (false);
-	if (g_zuno_odhw_cfg.bBatteryReport == true || g_report_data.channels_mask != 0 || g_zuno_odhw_cfg.bWUPReport == true)
-		return (true);
+	if(__isSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_BATTERY_BIT))
+		return true;
+	if(__isSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT))
+		return true;
+	if(__getSyncVar(&g_channels_data.report_map) != 0)
+		return true;	
 	return (false);
 }
 
+
+bool zunoIsChannelUpdated(uint8_t ch){
+	return __isSyncMapChannelAndClear(&g_channels_data.update_map, ch);
+}
+bool zunoIsChannelRequested(uint8_t ch){
+	return __isSyncMapChannelAndClear(&g_channels_data.request_map, ch);
+}
+bool zunoIsBatteryRequested(){
+	return __isSyncMapChannelAndClear(&g_channels_data.sys_requests, SYSREQUEST_MAP_BATTERY_BIT);
+}
+void _zunoMarkChannelRequested(uint8_t ch){
+	__setSyncMapChannel(&g_channels_data.request_map, ch);
+}
+void _zunoMarkSystemClassRequested(uint8_t systembit){
+	__setSyncMapChannel(&g_channels_data.sys_requests, systembit);
+}
+bool __zunoDispatchPendingBatteryReport(){
+	return __isSyncMapChannelAndClear(&g_channels_data.sys_reports, SYSREPORT_MAP_BATTERY_BIT);
+}
+bool __zunoDispatchPendingWUPReport(){
+	return __isSyncMapChannelAndClear(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT);
+}
+void zunoSendBatteryReport() {
+	__setSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_BATTERY_BIT);
+}
+void zunoSendWakeUpNotification(){
+	__setSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT);
+}
 void zunoSendReportHandler(uint32_t ticks) {
 	if(zunoNID() == 0)
         return;
-	zuno_sendWUP_NotificationReport();
-	zunoSendBatteryReportHandler();
-	if(g_report_data.channels_mask == 0)
+	#ifdef WITH_CC_WAKEUP
+	if(__zunoDispatchPendingWUPReport())
+		zuno_sendWUP_NotificationReport();
+	#endif
+	#ifdef WITH_CC_BATTERY
+	if(__zunoDispatchPendingBatteryReport())
+		zunoSendBatteryReportHandler();
+	#endif
+	if(__getSyncVar(&g_channels_data.report_map) == 0)
 		return;
 	int rs = ZUNO_UNKNOWN_CMD;
 	for(uint8_t ch = 0; ch < ZUNO_MAX_MULTI_CHANNEL_NUMBER; ch++) {
-		if((g_report_data.channels_mask & (1UL << ch)) == 0)
+		if(__getSyncVar(&g_channels_data.report_map) == 0)
+			break;
+		if(!__isSyncMapChannel(&g_channels_data.report_map, ch))
 			continue;
 		if(!aux_check_last_reporttime(ch, ticks))
 			continue;
@@ -976,7 +1061,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
 		fillOutgoingReportPacket(ch);
-		g_report_data.last_report_time[ch] = ticks;
+		__setSyncVar(&g_channels_data.last_report_time[ch], ticks);
 		rs = ZUNO_UNKNOWN_CMD;
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
@@ -1026,7 +1111,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			zunoSendZWPackage(&g_outgoing_report_packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
-			g_report_data.channels_mask &= ~(1UL<<ch); // remove channel bit from pending report bitmap
+			__clearSyncMapChannel(&g_channels_data.report_map, ch);
 			break; // Only one report per 1 pass
 		}
 	}
@@ -1036,7 +1121,7 @@ void zunoSendReport(byte ch){
 	if((ch < 1) || (ch > (ZUNO_CFG_CHANNEL_COUNT)))
 		return;
 	ch--;
-	g_report_data.channels_mask |= (1 << ch);
+	__setSyncMapChannel(&g_channels_data.report_map, ch);
 }
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 	byte byte_index = b >> 3;

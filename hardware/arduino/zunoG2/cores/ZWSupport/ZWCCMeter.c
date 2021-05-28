@@ -47,6 +47,7 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd)
     {
         case METER_GET:
             rs = zuno_CCMeterReport(channel, true);
+            _zunoMarkChannelRequested(channel);
             break;
 
         case METER_SUPPORTED_GET:

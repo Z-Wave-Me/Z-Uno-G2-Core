@@ -38,7 +38,13 @@ enum
 	COMMAND_CLASS_SECURITY_2 = 0x9F
 };
 
-
+enum{
+	SYSREPORT_MAP_BATTERY_BIT = 0x01,
+	SYSREPORT_MAP_WAKEUP_BIT = 0x02
+};
+enum{
+	SYSREQUEST_MAP_BATTERY_BIT = 0x01
+};
 // SINGLE_GETTER
 typedef uint8_t zuno_singlegetter1ub_t(void);
 typedef uint16_t zuno_singlegetter2ub_t(void);
@@ -106,6 +112,8 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 void ZWCCSetup();
 
 bool _zunoHasPendingReports();
+void _zunoMarkChannelRequested(uint8_t ch);
+void _zunoMarkSystemClassRequested(uint8_t systembit);
 
 #define CMD_REPLY_LEN g_outgoing_main_packet.len 
 #define CMD_REPLY_CMD g_outgoing_main_packet.cmd[1]

@@ -27,9 +27,7 @@ void zuno_CCBattery_OnSetup(){
     }
 }
 
-void zunoSendBatteryReport() {
-	g_zuno_odhw_cfg.bBatteryReport = true;
-}
+
 static uint8_t batteryReportValue(){
 	#ifdef WITH_CUSTOM_BATTERY_HANDLER
 	return ((uint32_t)(void*)zunoSysHandlerCall(ZUNO_HANDLER_ZW_BATTERY, 0))&0xFF;
@@ -38,9 +36,6 @@ static uint8_t batteryReportValue(){
     #endif // WITH_CUSTOM_BATTERY_HANDLER
 }
 void zunoSendBatteryReportHandler() {
-	if (g_zuno_odhw_cfg.bBatteryReport == false)
-		return ;
-	g_zuno_odhw_cfg.bBatteryReport = false;
 	fillOutgoingReportPacket(0);
 	CMD_REPORT_CC = COMMAND_CLASS_BATTERY;
 	CMD_REPORT_CMD = BATTERY_REPORT;
@@ -56,6 +51,7 @@ int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
             //zunoSendBatteryReport();
             CMD_REPLY_DATA(0) = batteryReportValue();
             CMD_REPLY_LEN = 3;
+            _zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
             return ZUNO_COMMAND_ANSWERED;
     }
     return rs;

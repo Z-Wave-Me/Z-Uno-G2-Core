@@ -153,6 +153,7 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 			break ;
 		case THERMOSTAT_SETPOINT_GET:
 			rs = _report_setpoint(channel, cmd);
+			_zunoMarkChannelRequested(channel);
 			break ;
 		case THERMOSTAT_SETPOINT_SUPPORTED_GET:
 			rs = _supported_report_setpoint(channel);

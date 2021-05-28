@@ -48,10 +48,10 @@ int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
     int rs = ZUNO_UNKNOWN_CMD;
     switch(ZW_CMD){
         case BATTERY_GET:
-            //zunoSendBatteryReport();
+            _zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
             CMD_REPLY_DATA(0) = batteryReportValue();
             CMD_REPLY_LEN = 3;
-            _zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
+            
             return ZUNO_COMMAND_ANSWERED;
     }
     return rs;

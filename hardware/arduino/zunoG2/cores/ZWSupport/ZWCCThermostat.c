@@ -49,6 +49,7 @@ int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case THERMOSTAT_MODE_GET:
+			_zunoMarkChannelRequested(channel);
 			rs = _report_mode(channel, true);
 			break ;
 		case THERMOSTAT_MODE_SUPPORTED_GET:
@@ -152,8 +153,8 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case THERMOSTAT_SETPOINT_GET:
-			rs = _report_setpoint(channel, cmd);
 			_zunoMarkChannelRequested(channel);
+			rs = _report_setpoint(channel, cmd);
 			break ;
 		case THERMOSTAT_SETPOINT_SUPPORTED_GET:
 			rs = _supported_report_setpoint(channel);

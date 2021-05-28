@@ -127,8 +127,8 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd){
 
 	switch(ZW_CMD) {
 		case NOTIFICATION_GET:
-			rs = zuno_CCNotificationReport(channel, cmd);
 			_zunoMarkChannelRequested(channel);
+			rs = zuno_CCNotificationReport(channel, cmd);	
 			break ;
 		case NOTIFICATION_SET:
 			rs = _set(channel, (ZwNotificationSetFrame_t *)cmd->cmd);

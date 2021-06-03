@@ -44,6 +44,8 @@ void zuno_sendWUP_NotificationReport(){
     _zunoSleepOnWUPStart();
 }
 
+void zunoSendWakeUpNotification(void);
+
 void zuno_CCWakeup_OnSetup(){
     
     if ((zunoGetWakeReason() == ZUNO_WAKEUP_REASON_POR) ||

@@ -318,8 +318,8 @@ extern void (*__init_array_end []) (void) __attribute__((weak));
 extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
 
-void LLInit() {
-	size_t				i;
+void LLInit() { 
+	size_t				i; 
 	uint32_t			*b;
 	uint32_t			*e;
 
@@ -330,7 +330,7 @@ void LLInit() {
 	// Global values initialization
 	uint32_t * cd = &__etext;
 	for(uint32_t * p=&__data_start__; p<&__data_end__; p++, cd++){
-		*p = *cd;
+		*p = *cd; 
 	}
 	for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
 		*p = 0;
@@ -945,6 +945,9 @@ void _zunoSleepingUpd(){
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	
+}
+bool _zunoIsWUPLocked(){
+	return g_sleep_data.wup_latch;
 }
 void _zunoSleepOnWUPStart(){
 	g_sleep_data.wup_latch = true;

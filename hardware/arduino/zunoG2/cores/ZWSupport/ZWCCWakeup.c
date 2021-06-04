@@ -8,6 +8,7 @@ extern uint8_t g_outgoing_report_data[];
 
 void _zunoSleepOnWUPStart();
 void _zunoSleepOnWUPStop();
+bool _zunoIsWUPLocked();
 
 static void __zunoSetupWUPTimeout(){
     uint32_t wakeup_data;
@@ -23,6 +24,13 @@ static void __zunoSetupWUPTimeout(){
 void zuno_sendWUP_NotificationReport(){
     if(zunoNID() == 0)
         return;
+    if(_zunoIsWUPLocked()){
+        // We have already sent WakeUp notofication and controller haven't responded to it
+        #ifdef LOGGING_DBG
+        LOGGING_UART.println("WUP Locked!");
+        #endif
+        return;
+    }
     uint32_t wakeup_data;
 
     zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&wakeup_data);

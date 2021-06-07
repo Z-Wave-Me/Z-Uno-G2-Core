@@ -6,12 +6,24 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	ZwZwavePlusInfoReportFrame_t		*report;
 	size_t								installerIconType;
 	size_t								userIconType;
+	size_t								roleType;
 
 	report = (ZwZwavePlusInfoReportFrame_t *)&CMD_REPLY_CC;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
-	report->v2.roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_ALWAYS_ON;
+	switch (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) {
+		case DEVICE_CONFIGURATION_FLAGS_SLEEP:
+			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_SLEEPING_REPORTING;
+			break ;
+		case DEVICE_CONFIGURATION_FLAGS_FLIRS:
+			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_SLEEPING_LISTENING;
+			break ;
+		default:
+			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_ALWAYS_ON;
+			break ;
+	}
+	report->v2.roleType = roleType;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
 	installerIconType = ZUNO_DEV_TYPES[cmd->dst_zw_channel].icon;
 	userIconType = ZUNO_DEV_TYPES[cmd->dst_zw_channel].app_icon;

@@ -22,8 +22,9 @@
 #include "Custom_decl.h" // 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
-#define zunoNID()               (g_zuno_sys->node_id)
-#define zunoSecurityStatus()    (g_zuno_sys->avaliable_keys)
+#define zunoNID()               	(g_zuno_sys->node_id)
+#define zunoSecurityStatus()    	(g_zuno_sys->highest_security_level)
+#define zunoGrantedSecurityKeys()   (g_zuno_sys->granted_keys)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->reset_reason)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()

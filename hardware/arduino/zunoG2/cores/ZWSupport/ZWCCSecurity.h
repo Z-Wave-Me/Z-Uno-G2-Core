@@ -18,6 +18,16 @@
 #define SECURITY_2_COMMANDS_SUPPORTED_GET                                                0x0D
 #define SECURITY_2_COMMANDS_SUPPORTED_REPORT                                             0x0E
 
+#define SECURITY_COMMANDS_SUPPORTED_GET                                                  0x02
+#define SECURITY_COMMANDS_SUPPORTED_REPORT                                               0x03
+#define SECURITY_MESSAGE_ENCAPSULATION                                                   0x81
+#define SECURITY_MESSAGE_ENCAPSULATION_NONCE_GET                                         0xC1
+#define SECURITY_NONCE_GET                                                               0x40
+#define SECURITY_NONCE_REPORT                                                            0x80
+#define SECURITY_SCHEME_GET                                                              0x04
+#define SECURITY_SCHEME_INHERIT                                                          0x08
+#define SECURITY_SCHEME_REPORT                                                           0x05
+
 /************************************************************/
 /* Security 2 Commands Supported Report command class structs */
 /************************************************************/
@@ -28,6 +38,19 @@ typedef struct										ZwSecurity2CommandsSupportedFrame_s
 	uint8_t											commandClass[];
 }													ZwSecurity2CommandsSupportedFrame_t;
 
+
+/************************************************************/
+/* Security Commands Supported Report command class structs */
+/************************************************************/
+typedef struct										ZwSecurityCommandsSupportedFrame_s
+{
+	uint8_t											cmdClass;/* The command class */
+	uint8_t											cmd;/* The command */
+	uint8_t											reportsToFollow;
+	uint8_t											commandClassSupport[];
+}													ZwSecurityCommandsSupportedFrame_t;
+
+int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd);
 int zuno_CCSecurity(ZUNOCommandPacket_t *cmd);
 
 #endif//ZWCC_SECURITY_H

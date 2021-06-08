@@ -1,4 +1,5 @@
 #include "ZWCCWakeup.h"
+#include "Debug.h"
 
 extern uint8_t     g_outgoing_data[];
 

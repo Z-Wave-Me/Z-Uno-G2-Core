@@ -4,17 +4,12 @@
 
 uint8_t *zuno_AddCommonClass(uint8_t *b);
 
-static int _report(size_t channel) {
-	ZwSecurity2CommandsSupportedFrame_t					*report;
-	uint8_t												*commandClass;
-	const ZUNOChannelCCS_t								*lp;
+static uint8_t *_reportGeneral(uint8_t *commandClass, size_t channel) {
 	size_t												i;
 	size_t												max;
+	size_t												clss;
+	const ZUNOChannelCCS_t								*lp;
 
-	report = (ZwSecurity2CommandsSupportedFrame_t *)&CMD_REPLY_CC;
-	report->cmdClass = COMMAND_CLASS_SECURITY_2;
-	report->cmd = SECURITY_2_COMMANDS_SUPPORTED_REPORT; 
-	commandClass = &report->commandClass[0];
 	commandClass = zuno_AddCommonClass(commandClass);
 	if (channel != 0) {
 		channel--;
@@ -22,9 +17,49 @@ static int _report(size_t channel) {
 		lp = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(channel).type - 1];
 		max = lp->num_ccs;
 		while (i < max)
-				commandClass++[0] = lp->ccs[i++].cc;
+			if ((clss = lp->ccs[i++].cc) != COMMAND_CLASS_BASIC)
+				commandClass++[0] = clss;
+		commandClass++[0] = COMMAND_CLASS_BASIC;
 	}
+	return (commandClass);
+}
+
+static int _report2(size_t channel) {
+	ZwSecurity2CommandsSupportedFrame_t					*report;
+	uint8_t												*commandClass;
+
+	report = (ZwSecurity2CommandsSupportedFrame_t *)&CMD_REPLY_CC;
+	// report->cmdClass = COMMAND_CLASS_SECURITY_2; set in - fillOutgoingPacket
+	// report->cmd = SECURITY_2_COMMANDS_SUPPORTED_REPORT; set in - fillOutgoingPacket
+	commandClass = _reportGeneral(&report->commandClass[0], channel);
 	CMD_REPLY_LEN = sizeof(ZwSecurity2CommandsSupportedFrame_t) + (commandClass - &report->commandClass[0]);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd) {
+	int								rs;
+
+	switch (ZW_CMD) {
+		case SECURITY_2_COMMANDS_SUPPORTED_GET:
+			rs = _report2(cmd->dst_zw_channel);
+			break ;
+		default:
+			rs = ZUNO_UNKNOWN_CMD;
+			break ;
+	}
+	return (rs);
+}
+
+static int _report(size_t channel) {
+	ZwSecurityCommandsSupportedFrame_t					*report;
+	uint8_t												*commandClass;
+
+	report = (ZwSecurityCommandsSupportedFrame_t *)&CMD_REPLY_CC;
+	// report->cmdClass = COMMAND_CLASS_SECURITY; set in - fillOutgoingPacket
+	// report->cmd = SECURITY_COMMANDS_SUPPORTED_REPORT; set in - fillOutgoingPacket
+	report->reportsToFollow = 0x0;
+	commandClass = _reportGeneral(&report->commandClassSupport[0], channel);
+	CMD_REPLY_LEN = sizeof(ZwSecurityCommandsSupportedFrame_t) + (commandClass - &report->commandClassSupport[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -32,7 +67,7 @@ int zuno_CCSecurity(ZUNOCommandPacket_t *cmd) {
 	int								rs;
 
 	switch (ZW_CMD) {
-		case SECURITY_2_COMMANDS_SUPPORTED_GET:
+		case SECURITY_COMMANDS_SUPPORTED_GET:
 			rs = _report(cmd->dst_zw_channel);
 			break ;
 		default:

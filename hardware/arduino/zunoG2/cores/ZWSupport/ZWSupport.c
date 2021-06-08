@@ -252,8 +252,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 	int result = ZUNO_UNKNOWN_CMD;
 
 	switch(ZW_CMD_CLASS) {
-			case COMMAND_CLASS_SECURITY_2:
+			case COMMAND_CLASS_SECURITY:
 				result = zuno_CCSecurity(cmd);
+				break ;
+			case COMMAND_CLASS_SECURITY_2:
+				result = zuno_CCSecurity2(cmd);
 				break ;
 			case COMMAND_CLASS_CONFIGURATION:
 				result = zuno_CCConfigurationHandler(cmd);
@@ -395,6 +398,15 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (false);
 			break ;
 		#endif
+		case COMMAND_CLASS_SECURITY:
+			if (cmd == SECURITY_COMMANDS_SUPPORTED_GET)
+				return (false);
+			if (cmd == SECURITY_NONCE_GET)
+				return (false);
+			if (cmd == SECURITY_SCHEME_GET)
+				return (false);
+			return (true);
+			break ;
 		case COMMAND_CLASS_SECURITY_2:
 			if (cmd == SECURITY_2_COMMANDS_SUPPORTED_GET)
 				return (false);

@@ -373,6 +373,7 @@ typedef struct ZUNOSleepData_s{
 	bool     user_latch:1;
 	bool     inclusion_latch:1;
 	bool     wup_latch:1;
+	bool     fwupd_latch:1;
 
 }ZUNOSleepData_t;
 
@@ -384,6 +385,10 @@ bool g_sketch_inited = false;
 #ifdef WITH_CC_WAKEUP
 void zuno_CCWakeup_OnInclusionStart();
 void zuno_CCWakeup_OnInclusionComplete();
+#endif
+#ifdef WITH_CC_BATTERY
+void _zunoSleepOnFWUpgradeStop();
+void _zunoSleepOnFWUpgradeStart();
 #endif
 void * zunoJumpTable(int vec, void * data) {
   
@@ -435,10 +440,16 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
-				#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 				ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
-				if((evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED)){
+				#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+				if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
 					zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
+				}
+				if(evnt->event == ZUNO_SYS_EVENT_OTA_STARTED){
+					_zunoSleepOnFWUpgradeStart();
+				}
+				if(evnt->event == ZUNO_SYS_EVENT_OTA_FINISHED){
+					_zunoSleepOnFWUpgradeStop();
 				}
 				if(evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS){
 					if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
@@ -455,7 +466,7 @@ void * zunoJumpTable(int vec, void * data) {
                 #ifdef LOGGING_DBG
                 LOGGING_UART.print("[");
                 LOGGING_UART.print(millis());
-                LOGGING_UART.print("] ");
+                LOGGING_UART.print("] "); 
                 LOGGING_UART.print("SYSEVENT: ");
                 LOGGING_UART.print(evnt->event, HEX);
                 LOGGING_UART.print(" ARGS: ");
@@ -918,9 +929,12 @@ void _zunoSleepingUpd(){
 	if(g_sleep_data.inclusion_latch){
 		return;
 	}
+	if(g_sleep_data.fwupd_latch){
+		return;
+	}
 	if(_zunoHasPendingReports()){
 		#ifdef LOGGING_DBG
-    	LOGGING_UART.println("PENDING REPORTS");
+    	//LOGGING_UART.println("PENDING REPORTS");
 		#endif
 		return;
 	}
@@ -948,6 +962,19 @@ void _zunoSleepingUpd(){
 }
 bool _zunoIsWUPLocked(){
 	return g_sleep_data.wup_latch;
+}
+void _zunoSleepOnFWUpgradeStart(){
+	g_sleep_data.fwupd_latch = true;
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("***FWUPD LOCK ARMED!");
+    #endif
+}
+void _zunoSleepOnFWUpgradeStop(){
+	g_sleep_data.fwupd_latch = false;
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("***FWUPD LOCK RELEASED!");
+    #endif
+
 }
 void _zunoSleepOnWUPStart(){
 	g_sleep_data.wup_latch = true;

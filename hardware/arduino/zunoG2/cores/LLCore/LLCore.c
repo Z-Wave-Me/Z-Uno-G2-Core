@@ -949,7 +949,12 @@ void _zunoSleepingUpd(){
 			return;
 		}
 	}
-	if(g_sleep_data.timeout >= millis()){
+	uint32_t timeout;
+	zunoEnterCritical();
+	timeout = g_sleep_data.timeout;
+	zunoExitCritical();
+	
+	if(timeout >= millis()){
 		return;
 	}
 	
@@ -961,30 +966,42 @@ void _zunoSleepingUpd(){
 	
 }
 bool _zunoIsWUPLocked(){
-	return g_sleep_data.wup_latch;
+	bool res = false;
+	zunoEnterCritical();
+	res =  g_sleep_data.wup_latch;
+	zunoExitCritical();
+	return res;
 }
 void _zunoSleepOnFWUpgradeStart(){
+	zunoEnterCritical();
 	g_sleep_data.fwupd_latch = true;
+	zunoExitCritical();
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("***FWUPD LOCK ARMED!");
     #endif
 }
 void _zunoSleepOnFWUpgradeStop(){
+	zunoEnterCritical();
 	g_sleep_data.fwupd_latch = false;
+	zunoExitCritical();
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("***FWUPD LOCK RELEASED!");
     #endif
 
 }
 void _zunoSleepOnWUPStart(){
+	zunoEnterCritical();
 	g_sleep_data.wup_latch = true;
 	g_sleep_data.wup_timeout = millis() + ZUNO_MAX_CONTROLLER_WUP_TIMEOUT;
+	zunoExitCritical();
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("***WUP LOCK ARMED!");
     #endif
 }
 void _zunoSleepOnWUPStop(){
+	zunoEnterCritical();
 	g_sleep_data.wup_latch = false;
+	zunoExitCritical();
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("***WUP LOCK RELEASED!");
     #endif
@@ -994,7 +1011,9 @@ void _zunoSleepOnInclusionStart(){
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("INCLUDE STARTED");
 	#endif
+	zunoEnterCritical();
 	g_sleep_data.inclusion_latch = true;
+	zunoExitCritical();
 }
 void _zunoSleepOnInclusionComplete(){
 	if(g_sleep_data.inclusion_latch){
@@ -1002,7 +1021,9 @@ void _zunoSleepOnInclusionComplete(){
     	LOGGING_UART.println("INCLUSION COMPLETED");
 		#endif
 	}
+	zunoEnterCritical();
 	g_sleep_data.inclusion_latch = false;
+	zunoExitCritical();
 	_zunoSleepingUpd();
 }
 void zunoKickSleepTimeout(uint32_t ms){
@@ -1022,6 +1043,11 @@ void zunoSendDeviceToSleep(void) {
 	g_sleep_data.user_latch = false;
 	_zunoSleepingUpd();
 	//delay(MAX_SLEEP_DELAY);
+}
+void zunoLockSleep(void){
+	zunoEnterCritical();
+	g_sleep_data.user_latch = true;
+	zunoExitCritical();
 }
 
 int main(){

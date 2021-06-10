@@ -40,6 +40,7 @@ bool zunoIsBatteryRequested();
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 void zunoSendDeviceToSleep(void);
+void zunoLockSleep(void);
 void zunoKickSleepTimeout(uint32_t ms);
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();

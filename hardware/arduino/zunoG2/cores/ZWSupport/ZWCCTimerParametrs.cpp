@@ -58,9 +58,14 @@ void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time) {
 static time_t _timeUnix = 0;
 static uint32_t _time = 0;
 
+time_t zunoGetTimeStamp(void) {
+	return (_timeUnix + ((millis() / 1000) - _time));
+}
+
 static int _set(ZwTimerParametrsSetFrame_t *packet) {
 	_timeUnix= zuno_CCTimerParametrsGet(&packet->time);
 	_time = millis() / 1000;
+	zunoSysHandlerCall(ZUNO_HANDLER_NOTIFICATON_TIME_STAMP, 0x0);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 

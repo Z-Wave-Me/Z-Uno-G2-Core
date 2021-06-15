@@ -733,6 +733,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
 					case ZUNO_HANDLER_GPT:
                     case ZUNO_HANDLER_SLEEP:
                     case ZUNO_HANDLER_WUP:
+					case ZUNO_HANDLER_NOTIFICATON_TIME_STAMP:
                         ((zuno_void_handler*)(base_addr))();
                         break;
                     case ZUNO_HANDLER_ZW_CFG:

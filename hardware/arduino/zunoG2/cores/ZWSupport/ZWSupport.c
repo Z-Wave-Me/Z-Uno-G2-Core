@@ -922,7 +922,15 @@ static void initCCSData() {
 	#endif
 
 }
-
+// Adds user-defined command class support to main end-point NIF and Secure NIF. Be careful with that! 
+bool zunoAddBaseCCS(byte ccs, byte version){
+	if(ZUNO_CFG_BASE_CCS_NUM >= ZUNO_MAX_CUSTOM_CCS)
+		return false;
+	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).cc = ccs;
+	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).version = version;
+	ZUNO_CFG_BASE_CCS_NUM++;
+	return true;
+}
 byte zunoAddChannel(byte type, byte subtype, byte options) {
 	#ifdef LOGGING_DBG
 	// dbgCCTypes();

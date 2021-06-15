@@ -30,6 +30,8 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint8_t 			num_associations;
 	uint8_t 			num_channel_types;
 	ZUNOChannelCCS_t    channel_types[ZUNO_MAX_CCTYPES];
+	ZUNOCCSVersion_t    custom_base_ccs[ZUNO_MAX_CUSTOM_CCS];
+	uint8_t             num_custom_base_ccs;
 	uint16_t            app_version;
 	uint16_t            product_id;
 	uint8_t				device_generic_type;

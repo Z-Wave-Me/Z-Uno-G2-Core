@@ -134,6 +134,9 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ZUNO_CFG_TYPE_COUNT     (g_zuno_sys->zwave_cfg->num_channel_types)
 #define ZUNO_CFG_TYPE(N)        g_zuno_sys->zwave_cfg->channel_types[N]
 #define ZUNO_CFG_TYPES          g_zuno_sys->zwave_cfg->channel_types
+#define ZUNO_CFG_BASECCS(N)     g_zuno_sys->zwave_cfg->custom_base_ccs[N]
+#define ZUNO_CFG_BASE_CCS_NUM  g_zuno_sys->zwave_cfg->num_custom_base_ccs
+
 
 #define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_sys->zwave_cfg->num_associations)
 #define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_sys->zwave_cfg->associations[N])

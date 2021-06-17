@@ -20,6 +20,7 @@
 #include "ZWCCTimerParametrs.h"
 #include "ZWCCMeterTbl.h"
 #include "Debug.h"
+#include "ZWCCSuperVision.h"
 
 #define UNKNOWN_CHANNEL       0xFF 
 
@@ -296,8 +297,6 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 }
 
 static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
-	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
-		return (false);
 	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) == 0)//test multicast
 		return (true);
 	switch (cmdClass) {
@@ -439,7 +438,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
     //g_wup_sended_notify = true;
  	//zuno_CCWakeup_OnAnyRx();
 	#endif
-	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
+	if ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
 		return (ZUNO_COMMAND_BLOCKED);
 	// prepare packet for report
 	fillOutgoingPacket(cmd);
@@ -461,6 +460,13 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 		}
 	}
 	#endif
+	if (ZW_CMD_CLASS == COMMAND_CLASS_SUPERVISION) {
+		if (zuno_CCSuperVisionHandler(cmd) == ZUNO_UNKNOWN_CMD)
+			return (ZUNO_UNKNOWN_CMD);
+		fillOutgoingPacket(cmd);
+	}
+	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
+		return (ZUNO_COMMAND_BLOCKED);
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
 		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 		zunoReportHandler(cmd);

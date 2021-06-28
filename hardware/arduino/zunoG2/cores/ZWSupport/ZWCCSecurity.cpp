@@ -19,7 +19,6 @@ static uint8_t *_reportGeneral(uint8_t *commandClass, size_t channel) {
 		while (i < max)
 			if ((clss = lp->ccs[i++].cc) != COMMAND_CLASS_BASIC)
 				commandClass++[0] = clss;
-		commandClass++[0] = COMMAND_CLASS_BASIC;
 	}
 	return (commandClass);
 }

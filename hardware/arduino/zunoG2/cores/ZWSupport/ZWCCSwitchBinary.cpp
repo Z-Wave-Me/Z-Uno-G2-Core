@@ -40,7 +40,6 @@ int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 		duration = zuno_CCTimerTable8(lpV2->ticksEnd - g_zuno_timer.ticks);
 	}
 	zunoExitCritical();
-	report = (ZwBasicBinaryReportFrame_t *)&CMD_REPLY_CC;
 	report->v2.cmdClass = COMMAND_CLASS_SWITCH_BINARY;
 	report->v2.cmd = SWITCH_BINARY_REPORT;
 	report->v2.currentValue = currentValue;

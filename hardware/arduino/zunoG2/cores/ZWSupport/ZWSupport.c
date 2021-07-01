@@ -460,11 +460,12 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 		}
 	}
 	#endif
+	result = zuno_CCSupervisionUnpack(cmd);
+	/*
 	if (ZW_CMD_CLASS == COMMAND_CLASS_SUPERVISION) {
 		if (zuno_CCSuperVisionHandler(cmd) == ZUNO_UNKNOWN_CMD)
 			return (ZUNO_UNKNOWN_CMD);
-		fillOutgoingPacket(cmd);
-	}
+	}*/
 	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 		return (ZUNO_COMMAND_BLOCKED);
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
@@ -542,6 +543,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			}
 		}
 	}
+	result = zuno_CCSupervisionReport(result);
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
 		zunoSendZWPackage(&g_outgoing_main_packet);

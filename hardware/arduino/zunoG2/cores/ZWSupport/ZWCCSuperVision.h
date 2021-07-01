@@ -43,6 +43,7 @@ typedef struct								ZwCSuperVisionReportFrame_s
 	uint8_t									duration;/**/
 }											ZwCSuperVisionReportFrame_t;
 
-int zuno_CCSuperVisionHandler(ZUNOCommandPacket_t *cmd);
+uint8_t zuno_CCSupervisionUnpack(ZUNOCommandPacket_t *cmd);
+uint8_t zuno_CCSupervisionReport(uint8_t process_result);
 
 #endif//ZWCC_SUPER_VISION_H

@@ -275,9 +275,7 @@ void GPIO_PinModeSet(uint8_t port,
   }
 }
 
-/***************************************************************************//**
- * @brief
- *   Get the mode for a GPIO pin.
+/**************************\,,k GPIO pin.
  *
  * @param[in] port
  *   The GPIO port to access.

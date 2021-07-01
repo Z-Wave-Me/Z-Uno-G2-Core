@@ -59,11 +59,12 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	if(report->byte1.mevent != 0xFE) {
 		report->byte1.notificationStatus = (eeprom_mask & (1UL << channel)) ? NOTIFICATION_ON_VALUE : NOTIFICATION_OFF_VALUE;
 		report->byte1.notificationType = NOTIFICATION_MAPPER[index];
-		if(zuno_universalGetter1P(channel))
+		if(zuno_universalGetter1P(channel)){
 			mevent = NOTIFICATION_MAPPER[index + 1];
-		else if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED)// For window/door sensor we have special values => process this case
+		} else if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
+			// For window/door sensor we have special values => process this case
 			mevent = NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED;
-		else {
+		} else {
 			mevent = NOTIFICATION_OFF_VALUE;
 			report->byte1.properties1 = 1;
 			report->byte1.eventParameter1 = NOTIFICATION_MAPPER[index + 1];
@@ -113,13 +114,20 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd) 
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = EVENT_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
-	if((notificationType = cmd->notificationType) != NOTIFICATION_MAPPER[index] && notificationType != 0xFF)
+	uint8_t sz = ((NOTIFICATION_EVENT_MAX >> 3) + 1);
+	if(((notificationType = cmd->notificationType) != NOTIFICATION_MAPPER[index]) && (notificationType != 0xFF))
 		return (ZUNO_COMMAND_BLOCKED);// We don't support this request
 	report->notificationType = notificationType;
-	report->properties1 = ((NOTIFICATION_EVENT_MAX >> 3) + 1);
-	CMD_REPLY_LEN = sizeof(ZwEventSupportedReportFrame_t) + ((NOTIFICATION_EVENT_MAX >> 3) + 1);
-	memset(&report->bitMask[0], 0x0, ((NOTIFICATION_EVENT_MAX >> 3) + 1));
-	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[index +1 ], ((NOTIFICATION_EVENT_MAX >> 3) + 1));
+	report->properties1 = sz;
+	CMD_REPLY_LEN = sizeof(ZwEventSupportedReportFrame_t) + sz;
+	
+	memset(&report->bitMask[0], 0x0, sz);
+	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[index +1 ], sz);
+	if(notificationType == NOTIFICATION_TYPE_ACCESS_CONTROL_ALARM){
+		// In this case we have to add another one event
+		// For window/door sensor we have special values => process this case
+		zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED, sz);
+	}
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

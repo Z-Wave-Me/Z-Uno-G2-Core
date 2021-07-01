@@ -39,7 +39,7 @@
 #define SKETCH_FLAGS 0x00
 #endif
 #ifndef SKETCH_VERSION
-#define SKETCH_VERSION 0x0100
+#define SKETCH_VERSION 0x0101
 #endif
 
 extern unsigned long __etext;

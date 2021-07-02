@@ -15,7 +15,7 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 uint8_t zuno_CCSupervisionUnpack(ZUNOCommandPacket_t *cmd){
 	__cc_supervision._unpacked = false;
-	if((ZW_CMD_CLASS != COMMAND_CLASS_SUPERVISION) && (ZW_CMD != SUPERVISION_GET))
+	if((ZW_CMD_CLASS != COMMAND_CLASS_SUPERVISION) || (ZW_CMD != SUPERVISION_GET))
 		return ZUNO_UNKNOWN_CMD;
 
 	ZwCSuperVisionGetFrame_t * frame = (ZwCSuperVisionGetFrame_t *)cmd->cmd;
@@ -45,41 +45,3 @@ uint8_t zuno_CCSupervisionReport(uint8_t process_result){
 	__cc_supervision._unpacked = false;
 	return ZUNO_COMMAND_ANSWERED;
 }
-/*
-static int _report(ZwCSuperVisionGetFrame_t *cmd) {
-	ZwCSuperVisionReportFrame_t		*report;
-	size_t							id;
-
-	id = (cmd->properties1 & SUPERVISION_GET_PROPERTIES1_SESSION_ID_MASK);
-	memcpy(cmd, &cmd->data[0], cmd->encapsulatedCommandLength);
-	#ifdef LOGGING_DBG
-	LOGGING_UART.print(millis());
-	LOGGING_UART.print("SUPERVISIONED:  "); 
-	zuno_dbgdumpZWPacakge(cmd);
-	#endif
-	if (_previously_receive_session_id == id)
-		return (ZUNO_COMMAND_PROCESSED);
-	_previously_receive_session_id = id;
-	report = (ZwCSuperVisionReportFrame_t *)&CMD_REPLY_CC;
-	report->properties1 = id;
-	report->status = SUPERVISION_REPORT_SUCCESS;
-	report->duration = 0x0;
-	CMD_REPLY_LEN = sizeof(ZwCSuperVisionReportFrame_t);
-	zunoSendZWPackage(&g_outgoing_main_packet);
-
-	return (ZUNO_COMMAND_PROCESSED);
-}
-
-int zuno_CCSuperVisionHandler(ZUNOCommandPacket_t *cmd) {
-	int								rs;
- 
-	switch (ZW_CMD) {
-		case SUPERVISION_GET:
-			rs = _report((ZwCSuperVisionGetFrame_t *)cmd->cmd);
-			break ;
-		default:
-			rs = ZUNO_UNKNOWN_CMD;
-			break ;
-	}
-	return (rs);
-}*/

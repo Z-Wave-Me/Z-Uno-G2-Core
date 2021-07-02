@@ -457,15 +457,10 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			zuno_dbgdumpZWPacakge(cmd);
 			#endif
 			fillOutgoingPacket(cmd);
+			result = zuno_CCSupervisionUnpack(cmd);
 		}
 	}
 	#endif
-	result = zuno_CCSupervisionUnpack(cmd);
-	/*
-	if (ZW_CMD_CLASS == COMMAND_CLASS_SUPERVISION) {
-		if (zuno_CCSuperVisionHandler(cmd) == ZUNO_UNKNOWN_CMD)
-			return (ZUNO_UNKNOWN_CMD);
-	}*/
 	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 		return (ZUNO_COMMAND_BLOCKED);
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {

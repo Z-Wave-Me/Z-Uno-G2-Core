@@ -460,6 +460,8 @@ enum{
 #define NOTIFICATION_EVENT_GAS_COMBUSTIBLE				0x02
 #define NOTIFICATION_EVENT_GAS_TOXIC					0x04
 
+#define NOTIFICATION_EVENT_PARAM_ADD                    0xEF
+
 // Meter
 #define ZUNO_METER_TYPE_ELECTRIC	                    0x01
 #define ZUNO_METER_TYPE_GAS		                        0x02

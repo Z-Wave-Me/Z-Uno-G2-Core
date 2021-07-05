@@ -513,7 +513,12 @@ void zunoSetWUPTimer(uint32_t timeout){
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
 }
-
+void zunoResetLocally(){
+    zunoSysCall(ZUNO_SYSFUNC_SETDEFAULT, 1, 0);   
+}
+void zunoSendNIF(){
+    zunoSysCall(ZUNO_SYSFUNC_SENDNIF, 0);   
+}
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
 	#ifdef LOGGING_DBG

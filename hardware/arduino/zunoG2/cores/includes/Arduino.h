@@ -32,7 +32,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 
 /* Supervisor call */
 void *zunoSysCall(uint8_t ct, uint8_t n, ...);
-/* Some z-wave channels staff*/
+/* Some z-wave channels stuff*/
 bool zunoIsChannelUpdated(uint8_t ch);
 bool zunoIsChannelRequested(uint8_t ch);
 bool zunoIsBatteryRequested();
@@ -102,14 +102,15 @@ inline int zunoEEPROMRead(word address, word size, byte * data) {return (int)zun
 inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ERASE, 1, 0xCAFE0ACE);};
 
 
-/* Support */
+/* Z-Wave protocol support */
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;};
 byte zunoAddChannel(byte type, byte subtype, byte options);
 void zunoSendReport(byte ch);
-
+void zunoResetLocally();
+void zunoSendNIF();
 
 /* CFG */
 #include "ZWCCConfiguration_define.h"
@@ -122,7 +123,7 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
-/* Unknown */
+/* Misc */
 void WDOG_Feed();
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
 bool zunoStartDeviceConfiguration();

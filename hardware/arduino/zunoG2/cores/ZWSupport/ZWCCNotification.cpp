@@ -59,7 +59,21 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	if(report->byte1.mevent != 0xFE) {
 		report->byte1.notificationStatus = (eeprom_mask & (1UL << channel)) ? NOTIFICATION_ON_VALUE : NOTIFICATION_OFF_VALUE;
 		report->byte1.notificationType = NOTIFICATION_MAPPER[index];
-		if(zuno_universalGetter1P(channel)){
+		uint32_t val = zuno_universalGetter1P(channel);
+		uint8_t  param = val & 0xFF;
+
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("*** Notification V:");
+		LOGGING_UART.print(val, HEX);
+		LOGGING_UART.print(" T:");
+		LOGGING_UART.println(param, HEX);
+		#endif
+
+		if(param){
+			if(param == NOTIFICATION_EVENT_PARAM_ADD){
+				report->byte1.properties1 = 1;
+				report->byte1.eventParameter1 = (val >> 8) & 0xFF;
+			}
 			mevent = NOTIFICATION_MAPPER[index + 1];
 		} else if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
 			// For window/door sensor we have special values => process this case

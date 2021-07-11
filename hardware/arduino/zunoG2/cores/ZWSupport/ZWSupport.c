@@ -474,7 +474,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef LOGGING_DBG
 				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
 				#endif
-				return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
+				return (zuno_CCSupervisionReport(result)); // Command doesn't fit => forward it to firmware CommandHandler
 			}
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 

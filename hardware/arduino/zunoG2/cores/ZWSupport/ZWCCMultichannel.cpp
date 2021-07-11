@@ -41,8 +41,8 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	if((channel = zuno_findChannelByZWChannel(endpoint)) == NULL)// According to z-wave specification we must to ignore unsupported end points numbers - see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
 		return (ZUNO_COMMAND_BLOCKED);
 	report = (ZwMultiChannelCapabilityReportFrame_t *)&CMD_REPLY_CC;
-	report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL;
-	report->cmd = MULTI_CHANNEL_CAPABILITY_REPORT;
+	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
+	// report->cmd = MULTI_CHANNEL_CAPABILITY_REPORT; set in - fillOutgoingPacket
 	report->properties1 = endpoint; // The index of selected endpoint
 	type_index = zuno_findChannelType(channel->type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
 	report->genericDeviceClass = ZUNO_DEV_TYPES[type_index].gen_type;
@@ -66,8 +66,8 @@ static int _point_get(void) {
 
 	// Request of endpoint's count
 	report = (ZwMultiChannelEndPointReportFrame_t *)&CMD_REPLY_CC;
-	report->v4.cmdClass = COMMAND_CLASS_MULTI_CHANNEL;
-	report->v4.cmd = MULTI_CHANNEL_END_POINT_REPORT;
+	// report->v4.cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
+	// report->v4.cmd = MULTI_CHANNEL_END_POINT_REPORT; set in - fillOutgoingPacket
 	report->v4.properties1 = 0; // No dynamic/identical endpoints
 	report->v4.properties2 = g_mch_aux_data.num_channels;// Number of endpoints ZUno has
 	report->v4.properties3 = 0;// No aggregated end points
@@ -87,8 +87,8 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd) {
 	genericDeviceClass = cmd->genericDeviceClass;
 	specificDeviceClass = cmd->specificDeviceClass;
 	report = (ZwMultiChannelEndPointFindReportFrame_t *)&CMD_REPLY_CC;
-	report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL;
-	report->cmd = MULTI_CHANNEL_END_POINT_FIND_REPORT;
+	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
+	// report->cmd = MULTI_CHANNEL_END_POINT_FIND_REPORT; set in - fillOutgoingPacket
 	report->reportsToFollow = 0;
 	report->genericDeviceClass = genericDeviceClass;
 	report->specificDeviceClass = specificDeviceClass;
@@ -114,6 +114,8 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd) {
 			i++;
 		}
 	}
+	if (end_point == &report->variantgroup[0])
+		end_point++[0] = 0x0;
 	CMD_REPLY_LEN = sizeof(ZwMultiChannelEndPointFindReportFrame_t) + (end_point - &report->variantgroup[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }

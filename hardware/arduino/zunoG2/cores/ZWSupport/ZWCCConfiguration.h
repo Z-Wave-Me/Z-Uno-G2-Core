@@ -4,6 +4,7 @@
 #define MAX_CFGUPDATE_LISTENERS 2
 /* Configuration command class commands */
 #define CONFIGURATION_VERSION                                                            0x04
+#define CONFIGURATION_BULK_GET                                                           0x08
 #define CONFIGURATION_BULK_REPORT                                                        0x09
 #define CONFIGURATION_BULK_SET                                                           0x07
 #define CONFIGURATION_GET                                                                0x05
@@ -403,6 +404,33 @@ typedef struct										ZwConfigurationInfoReportFrame_s
 	uint8_t											reportsToFollow;/**/
 	uint8_t											info[];
 }													ZwConfigurationInfoReportFrame_t;
+
+/************************************************************/
+/* Configuration Bulk Get command class structs */       
+/************************************************************/
+typedef struct										ZwConfigurationBuilkGetFrame_s
+{
+	uint8_t											cmdClass;/* The command class */
+	uint8_t											cmd;/* The command */
+	uint8_t											parameterOffset1;/* MSB */
+	uint8_t											parameterOffset2;/* LSB */
+	uint8_t											numberOfParameters;/**/
+}													ZwConfigurationBuilkGetFrame_t;
+
+/************************************************************/
+/* Configuration Bulk Report V4 command class structs */
+/************************************************************/
+typedef struct										ZwConfigurationBuilkReportFrame_s
+{
+	uint8_t											cmdClass;/* The command class */
+	uint8_t											cmd;/* The command */
+	uint8_t											parameterOffset1;/* MSB */
+	uint8_t											parameterOffset2;/* LSB */
+	uint8_t											numberOfParameters;/**/
+	uint8_t											reportsToFollow;/**/
+	uint8_t											properties1;/* masked byte */
+	uint8_t											parameter[];/* MSB  LSB */
+}													ZwConfigurationBuilkReportFrame_t;
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd);
 

@@ -129,12 +129,8 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-			if(cmd_class != COMMAND_CLASS_SENSOR_MULTILEVEL)
-				return false;
-			if(cmd_bytes[1] == SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR)
-				return true;
-			if(cmd_bytes[2] == channel->sub_type)
-				return true;
+			if(cmd_class == COMMAND_CLASS_SENSOR_MULTILEVEL)
+				return (true);
 			break;
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)

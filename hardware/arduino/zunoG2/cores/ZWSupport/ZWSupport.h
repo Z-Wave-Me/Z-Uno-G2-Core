@@ -3,15 +3,30 @@
 #define MAX_ZW_PACKAGE 56
 #define ZUNO_LIFELINE_GRP 1
 
-// DBG
-/*#define LOGGING_DBG                 1
-#define WITH_CC_SWITCH_BINARY       1
-#define WITH_CC_SWITCH_MULTILEVEL   1
-#define WITH_CC_MULTICHANNEL        1*/
+/* Application Status command class commands */
+#define APPLICATION_STATUS_VERSION                                                       0x01
+#define APPLICATION_BUSY                                                                 0x01
+#define APPLICATION_REJECTED_REQUEST                                                     0x02
+
+/* Values used for Application Busy command */
+#define APPLICATION_BUSY_TRY_AGAIN_LATER                                                 0x00
+#define APPLICATION_BUSY_TRY_AGAIN_IN_WAIT_TIME_SECONDS                                  0x01
+#define APPLICATION_BUSY_REQUEST_QUEUED_EXECUTED_LATER                                   0x02
+
+/************************************************************/
+/* Application Rejected Request command class structs */    
+/************************************************************/
+typedef struct											ZwApplicationRejectedRequestFrame_s
+{
+	uint8_t												cmdClass;/* The command class */
+	uint8_t												cmd;/* The command */
+	uint8_t												status;/**/
+}														ZwApplicationRejectedRequestFrame_t;
 
 enum
 {
 	COMMAND_CLASS_BASIC = 0x20,
+	COMMAND_CLASS_APPLICATION_STATUS = 0x22,
 	COMMAND_CLASS_SWITCH_BINARY = 0x25,
 	COMMAND_CLASS_SWITCH_MULTILEVEL = 0x26,
 	COMMAND_CLASS_SCENE_ACTIVATION = 0x2B,

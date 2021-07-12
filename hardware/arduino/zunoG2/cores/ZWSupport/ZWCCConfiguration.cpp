@@ -203,45 +203,16 @@ static int _configuration_default_reset(void) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-// static int _configuration_builk_get(const ZwConfigurationBuilkGetFrame_t *paket) {
-// 	size_t										parameterOffset;
-// 	size_t										param;
-// 	size_t										numberOfParameters;
-// 	ZwConfigurationBuilkReportFrame_t			*lp;
-// 	const ZunoCFGParameter_t					*cfg;
-// 	uint32_t									value;
-// 	size_t										properties1;
+static int _builk_not_support(void) {
+	ZwApplicationRejectedRequestFrame_t						*report;
 
-// 	parameterOffset = paket->parameterOffset1 << 0x8 | paket->parameterOffset2;
-// 	param = CONFIGPARAM_MIN_PARAM + parameterOffset;
-// 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-// 		return (ZUNO_UNKNOWN_CMD);
-// 	numberOfParameters = paket->numberOfParameters;
-// 	lp = (ZwConfigurationBuilkReportFrame_t *)&CMD_REPLY_CC;
-// 	// lp->cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
-// 	// lp->cmd = CONFIGURATION_BULK_REPORT; set in - fillOutgoingPacket
-// 	lp->numberOfParameters = 0x1;
-// 	while (numberOfParameters-- != 0x0)
-// 	{
-// 		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-// 			cfg = &_param;
-// 		lp->parameterOffset1 = parameterOffset >> 0x8;
-// 		lp->parameterOffset2 = parameterOffset;
-// 		lp->reportsToFollow = numberOfParameters;
-// 		value = zunoLoadCFGParam(param);
-// 		properties1 = cfg->size;
-// 		CMD_REPLY_LEN = sizeof(ZwConfigurationBuilkReportFrame_t) + properties1;
-// 		_zme_memcpy(&lp->parameter[0], (uint8_t *)&value, properties1);
-// 		if ((uint32_t)cfg->defaultValue == value)
-// 			properties1 = properties1 | CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK;
-// 		lp->properties1 = properties1;
-// 		param++;
-// 		parameterOffset++;
-
-// 		zunoSendZWPackage(&g_outgoing_main_packet);
-// 	}
-// 	return (ZUNO_COMMAND_PROCESSED);
-// }
+	report = (ZwApplicationRejectedRequestFrame_t *)&CMD_REPLY_CC;
+	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
+	report->cmd = APPLICATION_REJECTED_REQUEST;
+	report->status = 0x0;
+	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
+	return (ZUNO_COMMAND_ANSWERED);
+}
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
@@ -250,9 +221,10 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 		case CONFIGURATION_DEFAULT_RESET:
 			rs = _configuration_default_reset();
 			break ;
-		// case CONFIGURATION_BULK_GET:
-		// 	rs = _configuration_builk_get((const ZwConfigurationBuilkGetFrame_t *)cmd->cmd);
-		// 	break ;
+		case CONFIGURATION_BULK_SET:
+		case CONFIGURATION_BULK_GET:
+			rs = _builk_not_support();
+			break ;
 		case CONFIGURATION_GET:
 			rs = _configuration_get(((ZwConfigurationGetFrame_t *)cmd->cmd)->parameterNumber);
 			break ;

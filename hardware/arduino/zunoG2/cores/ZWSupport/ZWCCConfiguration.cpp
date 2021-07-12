@@ -211,7 +211,8 @@ static int _builk_not_support(void) {
 	report->cmd = APPLICATION_REJECTED_REQUEST;
 	report->status = 0x0;
 	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
-	return (ZUNO_COMMAND_ANSWERED);
+	zunoSendZWPackage(&g_outgoing_main_packet);
+	return (ZUNO_UNKNOWN_CMD);
 }
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {

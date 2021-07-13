@@ -9,17 +9,6 @@ typedef uint32_t CONFIGPARAM_MAX_SIZE;
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
-static const ZunoCFGParameter_t _param =
-{
-	.name = 0,
-	.info = 0,
-	.minValue = -2147483648,
-	.maxValue = 2147483647,
-	.defaultValue = -1,
-	.format = ZunoCFGParameterFormatSigned,
-	.size = ZunoCFGParameterSize32bit
-};
-
 typedef enum				ZunoCFGTypeHandler_e
 {
 	ZunoCFGTypeHandlerInfo,
@@ -38,6 +27,16 @@ static int _configuration_get(uint8_t param) {
 
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_UNKNOWN_CMD);
+	if (zunoCFGParameter(param) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+		param = CONFIGPARAM_MIN_PARAM;
+		while (param <= CONFIGPARAM_MAX_PARAM) {
+			if (zunoCFGParameter(param) != ZUNO_CFG_PARAMETER_UNKNOWN)
+				break ;
+			param++;
+		}
+		if (param > CONFIGPARAM_MAX_PARAM)
+			return (ZUNO_UNKNOWN_CMD);
+	}
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
@@ -65,7 +64,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 		return (ZUNO_UNKNOWN_CMD);
 	if (((size = lp->byte1.level) & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
 		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-			value = (uint32_t)-1;
+			return (ZUNO_UNKNOWN_CMD);
 		else
 			value = (uint32_t)cfg->defaultValue;
 	}
@@ -114,13 +113,11 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)&report->v4.byte4.minValue1;
 	}
 	else {
-		if (cfg == ZUNO_CFG_PARAMETER_DEFAULT)
-			cfg = &_param;
 		size = cfg->size;
 		_zme_memcpy(&report->v4.byte4.minValue1, (uint8_t *)&cfg->minValue, size);
 		_zme_memcpy(&report->v4.byte4.maxValue1, (uint8_t *)&cfg->maxValue, size);
 		_zme_memcpy(&report->v4.byte4.defaultValue1, (uint8_t *)&cfg->defaultValue, size);
-		properties1 = (cfg->format << CONFIGURATION_PROPERTIES_REPORT_PROPERTIES1_FORMAT_SHIFT) | size;
+		properties1 = ((uint8_t *)((uint8_t *)&cfg->defaultValue + sizeof(cfg->defaultValue)))[0];
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)((size_t)&report->v4.byte4.minValue1 + size * 3);
 	}
 	report->v4.byte4.properties1 = properties1;
@@ -155,13 +152,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	report->parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
 	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-		len = sizeof(ZwConfigurationNameReportFrame_t);
-	else if (cfg == ZUNO_CFG_PARAMETER_DEFAULT) {
-		report->name[(sizeof(CONFIGPARAM_STANDART_NAME) - 1)] = parameter / 10 + 0x30;
-		report->name[(sizeof(CONFIGPARAM_STANDART_NAME) - 1) + 1] = parameter % 10 + 0x30;
-		memcpy(&report->name[0], CONFIGPARAM_STANDART_NAME, sizeof(CONFIGPARAM_STANDART_NAME) - 1);
-		len = sizeof(CONFIGPARAM_STANDART_NAME) - 1 + sizeof(ZwConfigurationNameReportFrame_t) + 2;//+2 fot numbers
-	}
+		return (ZUNO_UNKNOWN_CMD);
 	else {
 		report->reportsToFollow = 1;
 		str = (type == ZunoCFGTypeHandlerInfo) ? cfg->info : cfg->name;

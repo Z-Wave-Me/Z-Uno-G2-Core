@@ -4,18 +4,12 @@
 uint32_t zunoLoadCFGParam(uint8_t param);
 void zunoSaveCFGParam(uint8_t param, uint32_t value);
 
-typedef enum						ZunoCFGParameterFormat_e
-{
-	ZunoCFGParameterFormatSigned = 0,
-	ZunoCFGParameterFormatUnsigned
-}									ZunoCFGParameterFormat_t;
+#define ZUNO_CFG_PARAMETER_FORMAT_SIGNED			0x0
+#define ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED			0x1
 
-typedef enum						ZunoCFGParameterSize_e
-{
-	ZunoCFGParameterSize8bit = 1,
-	ZunoCFGParameterSize16bit = 2,
-	ZunoCFGParameterSize32bit = 4
-}									ZunoCFGParameterSize_t;
+#define ZUNO_CFG_PARAMETER_SIZE_8BIT				0x1
+#define ZUNO_CFG_PARAMETER_SIZE_16BIT				0x2
+#define ZUNO_CFG_PARAMETER_SIZE_32BIT				0x4
 
 typedef struct						ZunoCFGParameter_s
 {
@@ -24,11 +18,12 @@ typedef struct						ZunoCFGParameter_s
 	ssize_t							minValue;
 	ssize_t							maxValue;
 	ssize_t							defaultValue;
-	ZunoCFGParameterFormat_t		format;
-	ZunoCFGParameterSize_t			size;
+	uint8_t							size: 3;
+	uint8_t							format: 3;
+	uint8_t							readOnly: 1;
+	uint8_t							altering: 1;
 }									ZunoCFGParameter_t;
 
 #define ZUNO_CFG_PARAMETER_UNKNOWN			((const ZunoCFGParameter_t *)0)
-#define ZUNO_CFG_PARAMETER_DEFAULT			((const ZunoCFGParameter_t *)1)
 
 #endif // ZWCC_CONFIGURATION_DEFINE_H

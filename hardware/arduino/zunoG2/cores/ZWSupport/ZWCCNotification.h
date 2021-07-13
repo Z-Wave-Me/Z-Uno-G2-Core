@@ -5,8 +5,6 @@
 
 #define NOTIFICATION_PROPERTIES_PARAMLENGTH_MASK	0x1F
 
-#define NOTIFICATION_REPORT_LEN                     11
-
 /* Notification command class commands */
 #define NOTIFICATION_VERSION                                                          0x08
 #define NOTIFICATION_GET                                                              0x04

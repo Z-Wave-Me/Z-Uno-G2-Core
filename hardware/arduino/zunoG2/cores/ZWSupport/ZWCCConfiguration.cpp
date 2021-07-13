@@ -26,7 +26,7 @@ static int _configuration_get(uint8_t param) {
 	uint32_t								value;
 
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_UNKNOWN_CMD);
+		return (ZUNO_COMMAND_BLOCKED);
 	if (zunoCFGParameter(param) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		param = CONFIGPARAM_MIN_PARAM;
 		while (param <= CONFIGPARAM_MAX_PARAM) {
@@ -35,7 +35,7 @@ static int _configuration_get(uint8_t param) {
 			param++;
 		}
 		if (param > CONFIGPARAM_MAX_PARAM)
-			return (ZUNO_UNKNOWN_CMD);
+			return (ZUNO_COMMAND_BLOCKED);
 	}
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
@@ -61,10 +61,10 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_UNKNOWN_CMD);
+		return (ZUNO_COMMAND_BLOCKED);
 	if (((size = lp->byte1.level) & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
 		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-			return (ZUNO_UNKNOWN_CMD);
+			return (ZUNO_COMMAND_BLOCKED);
 		else
 			value = (uint32_t)cfg->defaultValue;
 	}
@@ -152,7 +152,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	report->parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
 	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-		return (ZUNO_UNKNOWN_CMD);
+		return (ZUNO_COMMAND_BLOCKED);
 	else {
 		report->reportsToFollow = 1;
 		str = (type == ZunoCFGTypeHandlerInfo) ? cfg->info : cfg->name;
@@ -203,7 +203,7 @@ static int _builk_not_support(void) {
 	report->status = 0x0;
 	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
 	zunoSendZWPackage(&g_outgoing_main_packet);
-	return (ZUNO_UNKNOWN_CMD);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {

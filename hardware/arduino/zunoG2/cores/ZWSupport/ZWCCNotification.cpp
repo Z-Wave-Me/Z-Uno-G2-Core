@@ -123,18 +123,22 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd) 
 	ZwEventSupportedReportFrame_t						*report;
 	size_t												index;
 	size_t												notificationType;
+	size_t												sz;
 
 	report = (ZwEventSupportedReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = EVENT_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
-	uint8_t sz = ((NOTIFICATION_EVENT_MAX >> 3) + 1);
-	if(((notificationType = cmd->notificationType) != NOTIFICATION_MAPPER[index]) && (notificationType != 0xFF))
-		return (ZUNO_COMMAND_BLOCKED);// We don't support this request
+	notificationType = cmd->notificationType;
 	report->notificationType = notificationType;
+	if(notificationType != NOTIFICATION_MAPPER[index] && notificationType != 0xFF) {
+		report->properties1 = 0x0;
+		CMD_REPLY_LEN = sizeof(ZwEventSupportedReportFrame_t);
+		return (ZUNO_COMMAND_ANSWERED);// We don't support this request
+	}
+	sz = ((NOTIFICATION_EVENT_MAX >> 3) + 1);
 	report->properties1 = sz;
 	CMD_REPLY_LEN = sizeof(ZwEventSupportedReportFrame_t) + sz;
-	
 	memset(&report->bitMask[0], 0x0, sz);
 	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[index +1 ], sz);
 	if(notificationType == NOTIFICATION_TYPE_ACCESS_CONTROL_ALARM){

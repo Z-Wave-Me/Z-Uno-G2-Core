@@ -8,7 +8,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	size_t							value;
 
 	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0)
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0)
 		lp->channel = 0x0;
 	zunoExitCritical();
 	value = paket->value;
@@ -18,6 +18,21 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			if (value > 0x63 && value < 0xFF)
 				return (ZUNO_COMMAND_BLOCKED);
 			value = value ? 0xFF : 0x00;// Map the value right way
+			break;
+		#endif
+		#ifdef WITH_CC_SWITCH_MULTILEVEL
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			if (value > 0x63 && value < 0xFF)
+				return (ZUNO_COMMAND_BLOCKED);
+			if (value == 0xFF) {
+				size_t							tempos;
+				if ((tempos = ZUNO_CFG_CHANNEL(channel).params[0]) != 0)
+					value = tempos;
+				else
+					value = 0x63;
+			}
+			else if (value != 0x0)
+				ZUNO_CFG_CHANNEL(channel).params[0] = value;
 			break;
 		#endif
 		default:

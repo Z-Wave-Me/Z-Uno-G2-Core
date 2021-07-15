@@ -7,7 +7,6 @@
 
 #define ZUNO_TIMER_SWITCH_INC					0x1//Indicates what should be up
 #define ZUNO_TIMER_SWITCH_DEC					0x2//Indicates what should be down
-#define ZUNO_TIMER_SWITCH_DIMMING				0x80//Indicates that dimming is in progress.
 
 # define ZUNO_TIMER_COLOR_MAX_SUPPORT_CHANNAL	0x3//How many channels at the same time support for dimming
 

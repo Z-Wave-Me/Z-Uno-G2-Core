@@ -1,6 +1,5 @@
 #ifndef BASIC_CC_H
 #define BASIC_CC_H
-#include "Arduino.h"
 
 /* Basic command class commands */
 #define BASIC_VERSION                                                                    0x02

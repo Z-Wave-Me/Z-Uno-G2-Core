@@ -515,6 +515,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SENSOR_MULTILEVEL
 				case COMMAND_CLASS_SENSOR_MULTILEVEL:
 					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
+					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:

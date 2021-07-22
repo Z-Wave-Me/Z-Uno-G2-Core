@@ -1,6 +1,5 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
+#include "em_timer.h"
 
 #define PWM_TIMER						TIMER1
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1

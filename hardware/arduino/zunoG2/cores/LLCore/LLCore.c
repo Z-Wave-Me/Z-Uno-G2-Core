@@ -1,16 +1,12 @@
 #include "Arduino.h"
 #include "LLCore.h"
-#include "ZGecko.h"
-#include "CrtxGPIO.h"
-#include "CrtxADC.h"
-#include "CrtxTimer.h"
-#include "CrtxCore.h"
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
 #include "Debug.h"
 #include "errno.h"
 #include "sys/stat.h"
+#include "em_adc.h"
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
 	#define SKETCH_FLAGS_LOOP_DELAY			0x20
@@ -22,14 +18,6 @@
 
 #ifdef ASSERT_DBG
 	#pragma message "ASSERT_DBG: ON"
-#endif
-
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#pragma message "ZUNO_ASSEMBLY_TYPE == ZUNO_UNO"
-#elif ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI
-	#pragma message "ZUNO_ASSEMBLY_TYPE == ZUNO_RASBERI"
-#elif ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
-	#pragma message "ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER"
 #endif
 
 #ifndef SKETCH_FWID
@@ -552,7 +540,7 @@ void delayMicroseconds(word tdelay){
 
 /* pin */
 void pinMode(uint8_t pin, int mode){
-	GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
+	GPIO_PinModeSet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
 }
 
 uint8_t pin2HWPin(uint8_t pin) {
@@ -566,9 +554,9 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
 	real_port = getRealPort(pin);
 	real_pin = getRealPin(pin);
 	if (mode == true)
-		GPIO_PinOutSet(real_port, real_pin);
+		GPIO_PinOutSet((GPIO_Port_TypeDef)real_port, real_pin);
 	else
-		GPIO_PinOutClear(real_port, real_pin);
+		GPIO_PinOutClear((GPIO_Port_TypeDef)real_port, real_pin);
 }
 
 uint8_t getPin(uint8_t port, uint8_t pin) {
@@ -605,6 +593,91 @@ size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
 	loc = (loc + 32 - ch) & 0x1F;
 	ch <<= 3;
 	return (loc << ch);
+}
+
+ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
+  switch(pin){
+      /*
+      case A0:
+          return adcPosSelAPORT3XCH30;
+      case A1:
+          return adcPosSelAPORT4XCH31;
+      case A2:   
+          return adcPosSelAPORT1XCH6;
+      case A3:
+          return adcPosSelAPORT2XCH7;
+          */
+#if ZUNO_PIN_V == 1
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 2
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 3
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 4
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 6
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 1000
+
+#else
+	#error ZUNO_PIN_V
+#endif
+      case BATTERY:
+          return adcPosSelAVDD;
+      default:
+          return adcPosSelAVDD;
+  }
+
+}
+void zme_ADC_Enable(){
+   ADC_Init_TypeDef adcInit = ADC_INIT_DEFAULT;
+   // Enable ADC clock
+   CMU_ClockEnable(cmuClock_ADC0, true);
+   // Setup ADC
+   adcInit.timebase = ADC_TimebaseCalc(0);
+   // Set ADC clock to 7 MHz, use default HFPERCLK
+   adcInit.prescale = ADC_PrescaleCalc(7000000, 0);
+   ADC_Init(ADC0, &adcInit);
+}
+void zme_ADC_Disable(){
+   ADC_Reset(ADC0);
+   // Disable ADC clock
+   CMU_ClockEnable(cmuClock_ADC0, false);
 }
 
 int analogRead(uint8_t pin) {
@@ -712,13 +785,11 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
                         va_end (args);
                         break;
-					#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 					case ZUNO_HANDLER_REPORT:
 						va_start (args, sub_type);
 						((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
 						va_end (args);
 						break;
-					#endif
                     case ZUNO_HANDLER_SYSEVENT:
                         va_start (args, sub_type);
                         ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));

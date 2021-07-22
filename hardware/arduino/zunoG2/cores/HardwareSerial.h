@@ -3,9 +3,11 @@
 
 #include "Stream.h"
 #include "stdio.h"
+#include "em_ldma.h"
+#include "em_cmu.h"
+#include "em_usart.h"
 #include "ZDma_define.h"
 #include "Sync.h"
-#include "CrtxUSART.h"
 
 typedef uint16_t hardware_serial_buffer_len;
 

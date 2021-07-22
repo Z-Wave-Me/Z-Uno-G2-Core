@@ -1,6 +1,5 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
+#include "em_timer.h"
 #include "Sync.h"
 #include "GeneralPurposeTimer.h"
 

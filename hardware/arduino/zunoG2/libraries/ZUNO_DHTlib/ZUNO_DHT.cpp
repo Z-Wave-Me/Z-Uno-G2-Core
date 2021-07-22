@@ -1,11 +1,9 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
 #include "ZDma.h"
 #include "Sync.h"
 #include "ZUNO_DHT.h"
 #include "Libft.h"
-
+#include "em_timer.h"
 
 #define DHT_CHANNEL								0
 

@@ -1,9 +1,6 @@
 #ifndef ZUNO_NEOPIXEL_DEFINE_H
 #define ZUNO_NEOPIXEL_DEFINE_H
 
-#include "CrtxTimer.h"
-#include "CrtxUSART.h"
-
 typedef uint16_t ZunoNeoOptionMax_t;
 
 // The order of primary colors in the NeoPixel data stream can vary among

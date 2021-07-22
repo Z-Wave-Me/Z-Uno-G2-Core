@@ -1,13 +1,6 @@
 #ifndef ZDMA_DEFINE_H
 #define ZDMA_DEFINE_H
 
-#if defined(ZGM130S037HGN)
-	#include "em_ldma.h"
-#else
-	#include "CrtxLDMA.h"
-#endif
-
-
 /// Peripherals that can trigger LDMA transfers.
 typedef enum {
   zdmaPeripheralSignal_NONE = LDMA_CH_REQSEL_SOURCESEL_NONE,                                                              ///< No peripheral selected for DMA triggering.

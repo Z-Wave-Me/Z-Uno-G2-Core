@@ -2,6 +2,21 @@
 #ifndef ZUNO_ARDUINOH
 #define ZUNO_ARDUINOH
 
+#include "zgm130s037hgn1.h"
+#include "em_gpio.h"
+
+#define DISABLED						_GPIO_P_MODEL_MODE0_DISABLED
+#define OUTPUT							_GPIO_P_MODEL_MODE0_PUSHPULL
+#define INPUT							_GPIO_P_MODEL_MODE0_INPUT
+#define INPUT_PULLUP					0x100 | _GPIO_P_MODEL_MODE0_INPUTPULL
+#define INPUT_PULLDOWN 					_GPIO_P_MODEL_MODE0_INPUTPULL
+#define INPUT_PULLUP_FILTER				0x100 | _GPIO_P_MODEL_MODE0_INPUTPULLFILTER
+#define INPUT_PULLDOWN_FILTER			_GPIO_P_MODEL_MODE0_INPUTPULLFILTER
+#define OUTPUT_UP						0x100 | _GPIO_P_MODEL_MODE0_PUSHPULL
+#define OUTPUT_DOWN						_GPIO_P_MODEL_MODE0_PUSHPULL
+#define INPUT_UP						0x100 | _GPIO_P_MODEL_MODE0_INPUT
+#define INPUT_DOWN						_GPIO_P_MODEL_MODE0_INPUT
+
 #include "new.h"
 
 #include "ArduinoTypes.h"
@@ -12,9 +27,7 @@
 #include <string.h>
 #endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
-#include "CrtxGPIO.h"
 #include "ZWSupport.h"
-#include "CrtxCmu.h"
 #include "HardwareSerial.h"
 #include "Libft.h"
 // #include "Print.h"  // <- Здесь должен быть HardwareSerial
@@ -76,7 +89,7 @@ inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
 inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
-inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};
+inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 int  analogRead(uint8_t pin);
 
 
@@ -140,8 +153,6 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin);
 #include "Tone.h"
 #include "Threading.h"
 
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#include "ReportHandler.h"
-#endif
+#include "ReportHandler.h"
 
 #endif // ZUNO_ARDUINOH

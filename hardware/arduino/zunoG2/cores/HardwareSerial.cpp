@@ -361,46 +361,43 @@ void HardwareSerial::_USART2_IRQHandler(size_t flags) {
 }
 
 /* Preinstantiate Objects */
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#if ZUNO_PIN_V == 1
-		HardwareSerial Serial(1);// USB
-		HardwareSerial Serial1(1); // UART1  - разделяет один физический UART на разных пинах с Serial
-		HardwareSerial Serial0(0); // UART0 
-	#elif ZUNO_PIN_V == 2
-		HardwareSerial Serial(1);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 3
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 4
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 6
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#else
-		#error ZUNO_PIN_V
-	#endif
-	//For printf
-	ssize_t write(int fd, const void *buf, size_t count) {
-		switch (fd) {
-			case 0:
-				return (Serial0.write((const uint8_t *)buf, count));
-				break ;
-			case 1:
-				return (Serial1.write((const uint8_t *)buf, count));
-				break ;
-			case 2:
-				return (Serial.write((const uint8_t *)buf, count));
-				break ;
-			default:
-				break ;
-		}
-		return (-1);
-	}
+#if ZUNO_PIN_V == 1
+	HardwareSerial Serial(1);// USB
+	HardwareSerial Serial1(1); // UART1  - разделяет один физический UART на разных пинах с Serial
+	HardwareSerial Serial0(0); // UART0 
+#elif ZUNO_PIN_V == 2
+	HardwareSerial Serial(1);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 3
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
+	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 4
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 6
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
 #else
+	#error ZUNO_PIN_V
 #endif
+//For printf
+ssize_t write(int fd, const void *buf, size_t count) {
+	switch (fd) {
+		case 0:
+			return (Serial0.write((const uint8_t *)buf, count));
+			break ;
+		case 1:
+			return (Serial1.write((const uint8_t *)buf, count));
+			break ;
+		case 2:
+			return (Serial.write((const uint8_t *)buf, count));
+			break ;
+		default:
+			break ;
+	}
+	return (-1);
+}

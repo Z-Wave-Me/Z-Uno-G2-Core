@@ -1,7 +1,5 @@
 #ifndef SPI_H
 #define SPI_H
-
-#include "CrtxUSART.h"
 #include "Sync.h"
 
 #define SPI_MODE0		usartClockMode0

@@ -1,7 +1,6 @@
 #ifndef WIRE_H
 #define WIRE_H
 
-#include "CrtxI2C.h"
 
 // If you need more, please use ZUNO_ENABLE(WIRE_BUFFER_LENGTH=[NEEDED_LEN])
 #ifndef WIRE_BUFFER_LENGTH 

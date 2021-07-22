@@ -460,9 +460,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 		return (ZUNO_COMMAND_BLOCKED);
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
-		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 		zunoReportHandler(cmd);
-		#endif
 		// Check if command fits to any existing channel
 		if(_multiinstance(cmd, &result) == true) {
 			byte zuno_ch = zuno_findTargetChannel(cmd);

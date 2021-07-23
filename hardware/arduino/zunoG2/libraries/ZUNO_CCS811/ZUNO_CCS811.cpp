@@ -15,7 +15,6 @@ bool ZUNO_CCS811::begin(uint8_t addr) {
 
 	SWReset();
 	delay(100);
-		uint8_t ret = 0x66;
 
 	// check that the HW id is correct
 	if (this->read8(CCS811_HW_ID) != CCS811_HW_ID_CODE)
@@ -271,7 +270,6 @@ void ZUNO_CCS811::_i2c_init() {
 }
 
 void ZUNO_CCS811::read(uint8_t reg, uint8_t *buf, uint8_t num) {
-	uint8_t pos = 0;
 		Wire.beginTransmission(_i2caddr);
 		Wire.write(reg);
 		Wire.endTransmission();

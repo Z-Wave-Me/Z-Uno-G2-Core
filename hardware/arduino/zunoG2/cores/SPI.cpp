@@ -1,6 +1,17 @@
 #include "Arduino.h"
 #include "ZDma.h"
 #include "SPI.h"
+#include "em_usart.h"
+
+static uint16_t _USART_SpiTransfer16(USART_TypeDef *usart, uint16_t data)
+{
+	while (!(usart->STATUS & USART_STATUS_TXBL))
+		;
+	usart->TXDOUBLE = (uint32_t)data;
+	while (!(usart->STATUS & USART_STATUS_TXC))
+		;
+	return (uint16_t)usart->RXDOUBLE;
+}
 
 /* Public Constructors */
 SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {
@@ -187,7 +198,7 @@ size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	usart = config->usart;
 	if ((bFlags & SPI_FLAGS_16BIT) != 0) {
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
-		out = USART_SpiTransfer16(usart, (uint16_t)data);
+		out = _USART_SpiTransfer16(usart, (uint16_t)data);
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits8;
 	}
 	else

@@ -54,7 +54,7 @@ boolean ZUNO_BMP180::begin(uint8_t mode) {
   mb = read16(BMP085_CAL_MB);
   mc = read16(BMP085_CAL_MC);
   md = read16(BMP085_CAL_MD);
-
+  return (true);
 }
 void     ZUNO_BMP180::dumpInternal()
 {

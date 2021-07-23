@@ -8,6 +8,82 @@
 #include "sys/stat.h"
 #include "em_adc.h"
 
+static uint32_t _get_cmu(CMU_Clock_TypeDef clock) {
+	uint32_t					tempos;
+
+	switch (clock) {
+		case cmuClock_HFPER:
+			tempos = CMU_CLOCK_TYPE_HFPER;
+			break ;
+		case cmuClock_ADC0:
+			tempos = CMU_CLOCK_TYPE_ADC0;
+			break ;
+		case cmuClock_TIMER0:
+			tempos = CMU_CLOCK_TYPE_TIMER0;
+			break ;
+		case cmuClock_TIMER1:
+			tempos = CMU_CLOCK_TYPE_TIMER1;
+			break ;
+		case cmuClock_I2C0:
+			tempos = CMU_CLOCK_TYPE_I2C0;
+			break ;
+		case cmuClock_I2C1:
+			tempos = CMU_CLOCK_TYPE_I2C1;
+			break ;
+		case cmuClock_USART0:
+			tempos = CMU_CLOCK_TYPE_USART0;
+			break ;
+		case cmuClock_USART1:
+			tempos = CMU_CLOCK_TYPE_USART1;
+			break ;
+		case cmuClock_USART2:
+			tempos = CMU_CLOCK_TYPE_USART2;
+			break ;
+		case cmuClock_GPIO:
+			tempos = CMU_CLOCK_TYPE_GPIO;
+			break ;
+		case cmuClock_CSEN_HF:
+			tempos = CMU_CLOCK_TYPE_CSEN_HF;
+			break ;
+		case cmuClock_CSEN_LF:
+			tempos = CMU_CLOCK_TYPE_CSEN_LF;
+			break ;
+		case cmuClock_WTIMER0:
+			tempos = CMU_CLOCK_TYPE_WTIMER0;
+			break ;
+		case cmuClock_LDMA:
+			tempos = CMU_CLOCK_TYPE_LDMA;
+			break ;
+		case cmuClock_CRYPTO:
+			tempos = CMU_CLOCK_TYPE_CRYPTO;
+			break ;
+		case cmuClock_GPCRC:
+			tempos = CMU_CLOCK_TYPE_CRC;
+			break ;
+		case cmuClock_TRNG0:
+			tempos = CMU_CLOCK_TYPE_RND;
+			break ;
+		case cmuClock_HFLE:
+			tempos = CMU_CLOCK_TYPE_HFLE;
+			break ;
+		case cmuClock_LEUART0:
+			tempos = CMU_CLOCK_TYPE_LEUART0;
+			break ;
+		default:
+			tempos = (uint32_t)(-1);
+			break ;
+	}
+	return (tempos);
+}
+
+uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock) {
+	return (((uint32_t)zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 2, CMU_CLOCK_SUBFUNC_GETFREQ, _get_cmu(clock))));
+}
+
+void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable) {
+	zunoSysCall(ZUNO_SYSFUNC_GECKOEXT_CMUCLOCK, 3, CMU_CLOCK_SUBFUNC_ENABLE, _get_cmu(clock), enable);
+}
+
 #ifndef SKETCH_FLAGS_LOOP_DELAY
 	#define SKETCH_FLAGS_LOOP_DELAY			0x20
 #endif

@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "ZUNO_ModBus.h"
-
+#include "zwaveme_gpcrc.h"
 
 #define MOD_BUS_RTU_FN_ERROR				0x80
 #define MOD_BUS_RTU_FN_READ_HR				0x3

@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "ZDma.h"
 #include "ZUNO_NeoPixel.h"
+#include "em_timer.h"
 
 #define NEO_RESET_MICROSECONDS			50
 

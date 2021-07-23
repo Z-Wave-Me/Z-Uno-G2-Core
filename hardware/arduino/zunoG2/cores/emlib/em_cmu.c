@@ -218,33 +218,33 @@ static void     wdog1ClkGet(uint32_t *freq, CMU_Select_TypeDef *sel);
  *   @li true - enable specified clock.
  *   @li false - disable specified clock.
  ******************************************************************************/
-void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
-{
-  volatile uint32_t *reg = NULL;
-  uint32_t          bit;
+// void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
+// {
+//   volatile uint32_t *reg = NULL;
+//   uint32_t          bit;
 
-  /* Identify the enable register. */
-  if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_NO_EN_REG) {
-    EFM_ASSERT(false);                      /* No enable for this clock. */
-  } else if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_CLKEN0_EN_REG) {
-    reg = &CMU->CLKEN0;
-  } else if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_CLKEN1_EN_REG) {
-    reg = &CMU->CLKEN1;
-  } else {
-#if defined(CRYPTOACC_PRESENT)
-    reg = &CMU->CRYPTOACCCLKCTRL;
-#else
-    // No register to enable clock. Possible hard fault exception.
-    EFM_ASSERT(false);
-#endif
-  }
+//   /* Identify the enable register. */
+//   if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_NO_EN_REG) {
+//     EFM_ASSERT(false);                      /* No enable for this clock. */
+//   } else if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_CLKEN0_EN_REG) {
+//     reg = &CMU->CLKEN0;
+//   } else if (((unsigned)clock >> CMU_EN_REG_POS) == CMU_CLKEN1_EN_REG) {
+//     reg = &CMU->CLKEN1;
+//   } else {
+// #if defined(CRYPTOACC_PRESENT)
+//     reg = &CMU->CRYPTOACCCLKCTRL;
+// #else
+//     // No register to enable clock. Possible hard fault exception.
+//     EFM_ASSERT(false);
+// #endif
+//   }
 
-  /* Get the bit position used to enable/disable. */
-  bit = ((unsigned)clock >> CMU_EN_BIT_POS) & CMU_EN_BIT_MASK;
+//   /* Get the bit position used to enable/disable. */
+//   bit = ((unsigned)clock >> CMU_EN_BIT_POS) & CMU_EN_BIT_MASK;
 
-  /* Set/clear bit as requested. */
-  BUS_RegBitWrite(reg, bit, (uint32_t)enable);
-}
+//   /* Set/clear bit as requested. */
+//   BUS_RegBitWrite(reg, bit, (uint32_t)enable);
+// }
 
 /***************************************************************************//**
  * @brief
@@ -256,184 +256,184 @@ void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
  * @return
  *   The current frequency in Hz.
  ******************************************************************************/
-uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
-{
-  uint32_t ret = 0U;
+// uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
+// {
+//   uint32_t ret = 0U;
 
-  switch (clock) {
-    case cmuClock_SYSCLK:
-      ret = SystemSYSCLKGet();
-      break;
+//   switch (clock) {
+//     case cmuClock_SYSCLK:
+//       ret = SystemSYSCLKGet();
+//       break;
 
-    case cmuClock_HCLK:
-    case cmuClock_CORE:
-    case cmuClock_ICACHE:
-    case cmuClock_MSC:
-    case cmuClock_LDMA:
-    case cmuClock_SMU:
-#if defined(CRYPTOACC_PRESENT)
-    case cmuClock_CRYPTOACC:
-#endif
-#if defined(RADIOAES_PRESENT)
-    case cmuClock_RADIOAES:
-#endif
-#if defined(CRYPTOACC_PRESENT)
-    case cmuClock_CRYPTOAES:
-    case cmuClock_CRYPTOPK:
-#endif
-      ret = SystemHCLKGet();
-      break;
+//     case cmuClock_HCLK:
+//     case cmuClock_CORE:
+//     case cmuClock_ICACHE:
+//     case cmuClock_MSC:
+//     case cmuClock_LDMA:
+//     case cmuClock_SMU:
+// #if defined(CRYPTOACC_PRESENT)
+//     case cmuClock_CRYPTOACC:
+// #endif
+// #if defined(RADIOAES_PRESENT)
+//     case cmuClock_RADIOAES:
+// #endif
+// #if defined(CRYPTOACC_PRESENT)
+//     case cmuClock_CRYPTOAES:
+//     case cmuClock_CRYPTOPK:
+// #endif
+//       ret = SystemHCLKGet();
+//       break;
 
-    case cmuClock_EXPCLK:
-      ret = SystemSYSCLKGet() / CMU_ClockDivGet(cmuClock_EXPCLK);
-      break;
+//     case cmuClock_EXPCLK:
+//       ret = SystemSYSCLKGet() / CMU_ClockDivGet(cmuClock_EXPCLK);
+//       break;
 
-    case cmuClock_PCLK:
-    case cmuClock_USART0:
-#if defined(USART_PRESENT) && USART_COUNT > 1
-    case cmuClock_USART1:
-#endif
-    case cmuClock_I2C1:
-    case cmuClock_PRS:
-    case cmuClock_GPIO:
-    case cmuClock_GPCRC:
-    case cmuClock_LDMAXBAR:
-    case cmuClock_SYSCFG:
-    case cmuClock_DCDC:
-    case cmuClock_BURAM:
-    case cmuClock_DPLL0:
-      ret = SystemHCLKGet() / CMU_ClockDivGet(cmuClock_PCLK);
-      break;
+//     case cmuClock_PCLK:
+//     case cmuClock_USART0:
+// #if defined(USART_PRESENT) && USART_COUNT > 1
+//     case cmuClock_USART1:
+// #endif
+//     case cmuClock_I2C1:
+//     case cmuClock_PRS:
+//     case cmuClock_GPIO:
+//     case cmuClock_GPCRC:
+//     case cmuClock_LDMAXBAR:
+//     case cmuClock_SYSCFG:
+//     case cmuClock_DCDC:
+//     case cmuClock_BURAM:
+//     case cmuClock_DPLL0:
+//       ret = SystemHCLKGet() / CMU_ClockDivGet(cmuClock_PCLK);
+//       break;
 
-    case cmuClock_LSPCLK:
-    case cmuClock_I2C0:
-    case cmuClock_AMUXCP0:
-#if defined(ACMP_PRESENT)
-    case cmuClock_ACMP0:
-#if ACMP_COUNT > 1
-    case cmuClock_ACMP1:
-#endif
-#endif
-      ret = SystemHCLKGet() / CMU_ClockDivGet(cmuClock_PCLK) / 2U;
-      break;
+//     case cmuClock_LSPCLK:
+//     case cmuClock_I2C0:
+//     case cmuClock_AMUXCP0:
+// #if defined(ACMP_PRESENT)
+//     case cmuClock_ACMP0:
+// #if ACMP_COUNT > 1
+//     case cmuClock_ACMP1:
+// #endif
+// #endif
+//       ret = SystemHCLKGet() / CMU_ClockDivGet(cmuClock_PCLK) / 2U;
+//       break;
 
-    case cmuClock_TRACECLK:
-      ret = SystemSYSCLKGet() / CMU_ClockDivGet(cmuClock_TRACECLK);
-      break;
+//     case cmuClock_TRACECLK:
+//       ret = SystemSYSCLKGet() / CMU_ClockDivGet(cmuClock_TRACECLK);
+//       break;
 
-    case cmuClock_TIMER0:
-    case cmuClock_TIMER1:
-    case cmuClock_TIMER2:
-    case cmuClock_TIMER3:
-#if TIMER_COUNT > 4
-    case cmuClock_TIMER4:
-#endif
-#if defined(KEYSCAN_PRESENT)
-    case cmuClock_KEYSCAN:
-#endif
-    case cmuClock_EM01GRPACLK:
-      em01GrpaClkGet(&ret, NULL);
-      break;
-#if defined(PDM_PRESENT)
-    case cmuClock_PDM:
-    case cmuClock_EM01GRPBCLK:
-      em01GrpbClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(EUART_PRESENT)
-    case cmuClock_EUART0:
-    case cmuClock_EUART0CLK:
-      euart0ClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(EUSART_PRESENT) && EUSART_COUNT > 0
-    case cmuClock_EUSART0:
-    case cmuClock_EUSART0CLK:
-      eusart0ClkGet(&ret, NULL);
-      break;
-#if defined(EUSART_PRESENT) && EUSART_COUNT > 1
-    case cmuClock_EUSART1:
-#if defined(EUSART_PRESENT) && EUSART_COUNT > 2
-    case cmuClock_EUSART2:
-#endif
-    case cmuClock_EM01GRPCCLK:
-      em01GrpcClkGet(&ret, NULL);
-      break;
-#endif
-#endif
+//     case cmuClock_TIMER0:
+//     case cmuClock_TIMER1:
+//     case cmuClock_TIMER2:
+//     case cmuClock_TIMER3:
+// #if TIMER_COUNT > 4
+//     case cmuClock_TIMER4:
+// #endif
+// #if defined(KEYSCAN_PRESENT)
+//     case cmuClock_KEYSCAN:
+// #endif
+//     case cmuClock_EM01GRPACLK:
+//       em01GrpaClkGet(&ret, NULL);
+//       break;
+// #if defined(PDM_PRESENT)
+//     case cmuClock_PDM:
+//     case cmuClock_EM01GRPBCLK:
+//       em01GrpbClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(EUART_PRESENT)
+//     case cmuClock_EUART0:
+//     case cmuClock_EUART0CLK:
+//       euart0ClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(EUSART_PRESENT) && EUSART_COUNT > 0
+//     case cmuClock_EUSART0:
+//     case cmuClock_EUSART0CLK:
+//       eusart0ClkGet(&ret, NULL);
+//       break;
+// #if defined(EUSART_PRESENT) && EUSART_COUNT > 1
+//     case cmuClock_EUSART1:
+// #if defined(EUSART_PRESENT) && EUSART_COUNT > 2
+//     case cmuClock_EUSART2:
+// #endif
+//     case cmuClock_EM01GRPCCLK:
+//       em01GrpcClkGet(&ret, NULL);
+//       break;
+// #endif
+// #endif
 
-    case cmuClock_IADC0:
-    case cmuClock_IADCCLK:
-      iadcClkGet(&ret, NULL);
-      break;
+//     case cmuClock_IADC0:
+//     case cmuClock_IADCCLK:
+//       iadcClkGet(&ret, NULL);
+//       break;
 
-    case cmuClock_SYSTICK:
-    case cmuClock_LETIMER0:
-    case cmuClock_EM23GRPACLK:
-#if defined(LESENSE_PRESENT)
-    case cmuClock_LESENSELFCLK:
-#endif
-      em23GrpaClkGet(&ret, NULL);
-      break;
+//     case cmuClock_SYSTICK:
+//     case cmuClock_LETIMER0:
+//     case cmuClock_EM23GRPACLK:
+// #if defined(LESENSE_PRESENT)
+//     case cmuClock_LESENSELFCLK:
+// #endif
+//       em23GrpaClkGet(&ret, NULL);
+//       break;
 
-    case cmuClock_WDOG0:
-    case cmuClock_WDOG0CLK:
-      wdog0ClkGet(&ret, NULL);
-      break;
-#if WDOG_COUNT > 1
-    case cmuClock_WDOG1:
-    case cmuClock_WDOG1CLK:
-      wdog1ClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(RTCC_PRESENT)
-    case cmuClock_RTCC:
-    case cmuClock_RTCCCLK:
-      rtccClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(SYSRTC_PRESENT)
-    case cmuClock_SYSRTC:
-    case cmuClock_SYSRTCCLK:
-      sysrtcClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(LCD_PRESENT)
-    case cmuClock_LCD:
-    case cmuClock_LCDCLK:
-      lcdClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(VDAC_PRESENT)
-    case cmuClock_VDAC0:
-    case cmuClock_VDAC0CLK:
-      vdac0ClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(PCNT_PRESENT)
-    case cmuClock_PCNT0:
-    case cmuClock_PCNT0CLK:
-      pcnt0ClkGet(&ret, NULL);
-      break;
-#endif
-#if defined(LESENSE_PRESENT)
-    case cmuClock_LESENSEHF:
-    case cmuClock_LESENSEHFCLK:
-      lesenseHFClkGet(&ret, NULL);
-      break;
-#endif
-    case cmuClock_BURTC:
-    case cmuClock_EM4GRPACLK:
-      em4GrpaClkGet(&ret, NULL);
-      break;
+//     case cmuClock_WDOG0:
+//     case cmuClock_WDOG0CLK:
+//       wdog0ClkGet(&ret, NULL);
+//       break;
+// #if WDOG_COUNT > 1
+//     case cmuClock_WDOG1:
+//     case cmuClock_WDOG1CLK:
+//       wdog1ClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(RTCC_PRESENT)
+//     case cmuClock_RTCC:
+//     case cmuClock_RTCCCLK:
+//       rtccClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(SYSRTC_PRESENT)
+//     case cmuClock_SYSRTC:
+//     case cmuClock_SYSRTCCLK:
+//       sysrtcClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(LCD_PRESENT)
+//     case cmuClock_LCD:
+//     case cmuClock_LCDCLK:
+//       lcdClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(VDAC_PRESENT)
+//     case cmuClock_VDAC0:
+//     case cmuClock_VDAC0CLK:
+//       vdac0ClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(PCNT_PRESENT)
+//     case cmuClock_PCNT0:
+//     case cmuClock_PCNT0CLK:
+//       pcnt0ClkGet(&ret, NULL);
+//       break;
+// #endif
+// #if defined(LESENSE_PRESENT)
+//     case cmuClock_LESENSEHF:
+//     case cmuClock_LESENSEHFCLK:
+//       lesenseHFClkGet(&ret, NULL);
+//       break;
+// #endif
+//     case cmuClock_BURTC:
+//     case cmuClock_EM4GRPACLK:
+//       em4GrpaClkGet(&ret, NULL);
+//       break;
 
-    default:
-      EFM_ASSERT(false);
-      break;
-  }
+//     default:
+//       EFM_ASSERT(false);
+//       break;
+//   }
 
-  return ret;
-}
+//   return ret;
+// }
 
 /*******************************************************************************
  **************************   LOCAL FUNCTIONS   ********************************
@@ -4225,83 +4225,6 @@ static uint32_t getHfLeConfig(void)
  * @return
  *   AUX Frequency in Hz.
  ******************************************************************************/
-static uint32_t auxClkGet(void)
-{
-  uint32_t ret;
-
-#if defined(_CMU_AUXHFRCOCTRL_FREQRANGE_MASK)
-  ret = (uint32_t)auxHfrcoFreq;
-
-#elif defined(_CMU_AUXHFRCOCTRL_BAND_MASK)
-  /* All series 0 families except EFM32G */
-  switch (CMU->AUXHFRCOCTRL & _CMU_AUXHFRCOCTRL_BAND_MASK) {
-    case CMU_AUXHFRCOCTRL_BAND_1MHZ:
-      if ( SYSTEM_GetProdRev() >= 19 ) {
-        ret = 1200000;
-      } else {
-        ret = 1000000;
-      }
-      break;
-
-    case CMU_AUXHFRCOCTRL_BAND_7MHZ:
-      if ( SYSTEM_GetProdRev() >= 19 ) {
-        ret = 6600000;
-      } else {
-        ret = 7000000;
-      }
-      break;
-
-    case CMU_AUXHFRCOCTRL_BAND_11MHZ:
-      ret = 11000000;
-      break;
-
-    case CMU_AUXHFRCOCTRL_BAND_14MHZ:
-      ret = 14000000;
-      break;
-
-    case CMU_AUXHFRCOCTRL_BAND_21MHZ:
-      ret = 21000000;
-      break;
-
-#if defined(_CMU_AUXHFRCOCTRL_BAND_28MHZ)
-    case CMU_AUXHFRCOCTRL_BAND_28MHZ:
-      ret = 28000000;
-      break;
-#endif
-
-    default:
-      ret = 0;
-      EFM_ASSERT(false);
-      break;
-  }
-
-#else
-  /* Gecko has a fixed 14 MHz AUXHFRCO clock. */
-  ret = 14000000;
-
-#endif
-
-  return ret;
-}
-
-#if defined (_CMU_ADCCTRL_ADC0CLKSEL_HFSRCCLK) \
-  || defined (_CMU_ADCCTRL_ADC1CLKSEL_HFSRCCLK)
-/***************************************************************************//**
- * @brief
- *   Get the HFSRCCLK frequency.
- *
- * @return
- *   HFSRCCLK Frequency in Hz.
- ******************************************************************************/
-static uint32_t hfSrcClkGet(void)
-{
-  uint32_t ret;
-
-  ret = SystemHFClockGet();
-  return ret * (1U + ((CMU->HFPRESC & _CMU_HFPRESC_PRESC_MASK)
-                      >> _CMU_HFPRESC_PRESC_SHIFT));
-}
-#endif
 
 /***************************************************************************//**
  * @brief
@@ -4310,86 +4233,6 @@ static uint32_t hfSrcClkGet(void)
  * @return
  *   Debug Trace frequency in Hz.
  ******************************************************************************/
-static uint32_t dbgClkGet(void)
-{
-  uint32_t ret;
-  CMU_Select_TypeDef clk;
-
-  /* Get selected clock source */
-  clk = CMU_ClockSelectGet(cmuClock_DBG);
-
-  switch (clk) {
-    case cmuSelect_HFCLK:
-      ret = SystemHFClockGet();
-      break;
-
-    case cmuSelect_AUXHFRCO:
-      ret = auxClkGet();
-      break;
-
-    default:
-      ret = 0;
-      EFM_ASSERT(false);
-      break;
-  }
-  return ret;
-}
-
-#if defined(_CMU_ADCCTRL_ADC0CLKSEL_MASK)
-/***************************************************************************//**
- * @brief
- *   Get the ADC n asynchronous clock frequency.
- *
- * @return
- *   ADC n asynchronous frequency in Hz.
- ******************************************************************************/
-static uint32_t adcAsyncClkGet(uint32_t adc)
-{
-  uint32_t ret;
-  CMU_Select_TypeDef clk;
-
-  /* Get the selected clock source. */
-  switch (adc) {
-    case 0:
-      clk = CMU_ClockSelectGet(cmuClock_ADC0ASYNC);
-      break;
-
-#if defined(_CMU_ADCCTRL_ADC1CLKSEL_MASK)
-    case 1:
-      clk = CMU_ClockSelectGet(cmuClock_ADC1ASYNC);
-      break;
-#endif
-
-    default:
-      EFM_ASSERT(false);
-      return 0;
-  }
-
-  switch (clk) {
-    case cmuSelect_Disabled:
-      ret = 0;
-      break;
-
-    case cmuSelect_AUXHFRCO:
-      ret = auxClkGet();
-      break;
-
-    case cmuSelect_HFXO:
-      ret = SystemHFXOClockGet();
-      break;
-
-    case cmuSelect_HFSRCCLK:
-      ret = hfSrcClkGet();
-      break;
-
-    default:
-      ret = 0;
-      EFM_ASSERT(false);
-      break;
-  }
-  return ret;
-}
-#endif
 
 #if defined(_CMU_SDIOCTRL_MASK)
 /***************************************************************************//**
@@ -4886,159 +4729,6 @@ __STATIC_INLINE void setHfxoTuningMode(uint32_t mode)
  *   The LFnCLK frequency in Hz. If no LFnCLK is selected (disabled), 0 is
  *   returned.
  ******************************************************************************/
-static uint32_t lfClkGet(CMU_Clock_TypeDef lfClkBranch)
-{
-  uint32_t sel;
-  uint32_t ret = 0;
-
-  switch (lfClkBranch) {
-    case cmuClock_LFA:
-    case cmuClock_LFB:
-#if defined(_CMU_LFCCLKEN0_MASK)
-    case cmuClock_LFC:
-#endif
-#if defined(_CMU_LFECLKSEL_MASK)
-    case cmuClock_LFE:
-#endif
-      break;
-
-    default:
-      EFM_ASSERT(false);
-      break;
-  }
-
-  sel = (uint32_t)CMU_ClockSelectGet(lfClkBranch);
-
-  /* Get clock select field */
-  switch (lfClkBranch) {
-    case cmuClock_LFA:
-#if defined(_CMU_LFCLKSEL_MASK)
-      sel = (CMU->LFCLKSEL & _CMU_LFCLKSEL_LFA_MASK) >> _CMU_LFCLKSEL_LFA_SHIFT;
-#elif defined(_CMU_LFACLKSEL_MASK)
-      sel = (CMU->LFACLKSEL & _CMU_LFACLKSEL_LFA_MASK) >> _CMU_LFACLKSEL_LFA_SHIFT;
-#else
-      EFM_ASSERT(false);
-#endif
-      break;
-
-    case cmuClock_LFB:
-#if defined(_CMU_LFCLKSEL_MASK)
-      sel = (CMU->LFCLKSEL & _CMU_LFCLKSEL_LFB_MASK) >> _CMU_LFCLKSEL_LFB_SHIFT;
-#elif defined(_CMU_LFBCLKSEL_MASK)
-      sel = (CMU->LFBCLKSEL & _CMU_LFBCLKSEL_LFB_MASK) >> _CMU_LFBCLKSEL_LFB_SHIFT;
-#else
-      EFM_ASSERT(false);
-#endif
-      break;
-
-#if defined(_CMU_LFCCLKEN0_MASK)
-    case cmuClock_LFC:
-#if defined(_CMU_LFCLKSEL_LFC_MASK)
-      sel = (CMU->LFCLKSEL & _CMU_LFCLKSEL_LFC_MASK) >> _CMU_LFCLKSEL_LFC_SHIFT;
-#elif defined(_CMU_LFCCLKSEL_LFC_MASK)
-      sel = (CMU->LFCCLKSEL & _CMU_LFCCLKSEL_LFC_MASK) >> _CMU_LFCCLKSEL_LFC_SHIFT;
-#else
-      EFM_ASSERT(false);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_LFECLKSEL_MASK)
-    case cmuClock_LFE:
-      sel = (CMU->LFECLKSEL & _CMU_LFECLKSEL_LFE_MASK) >> _CMU_LFECLKSEL_LFE_SHIFT;
-      break;
-#endif
-
-    default:
-      EFM_ASSERT(false);
-      break;
-  }
-
-  /* Get the clock frequency. */
-#if defined(_CMU_LFCLKSEL_MASK)
-  switch (sel) {
-    case _CMU_LFCLKSEL_LFA_LFRCO:
-      ret = SystemLFRCOClockGet();
-      break;
-
-    case _CMU_LFCLKSEL_LFA_LFXO:
-      ret = SystemLFXOClockGet();
-      break;
-
-#if defined(_CMU_LFCLKSEL_LFA_HFCORECLKLEDIV2)
-    case _CMU_LFCLKSEL_LFA_HFCORECLKLEDIV2:
-#if defined(CMU_MAX_FREQ_HFLE)
-      /* HFLE bit is or'ed by hardware with HFCORECLKLEDIV to reduce the
-       * frequency of CMU_HFCORECLKLEDIV2. */
-      ret = SystemCoreClockGet() / (1U << (getHfLeConfig() + 1));
-#else
-      ret = SystemCoreClockGet() / 2U;
-#endif
-      break;
-#endif
-
-    case _CMU_LFCLKSEL_LFA_DISABLED:
-      ret = 0;
-#if defined(CMU_LFCLKSEL_LFAE)
-      /* Check LF Extended bit setting for LFA or LFB ULFRCO clock. */
-      if ((lfClkBranch == cmuClock_LFA) || (lfClkBranch == cmuClock_LFB)) {
-        if (CMU->LFCLKSEL >> (lfClkBranch == cmuClock_LFA
-                              ? _CMU_LFCLKSEL_LFAE_SHIFT
-                              : _CMU_LFCLKSEL_LFBE_SHIFT)) {
-          ret = SystemULFRCOClockGet();
-        }
-      }
-#endif
-      break;
-
-    default:
-      ret = 0U;
-      EFM_ASSERT(false);
-      break;
-  }
-#endif /* _CMU_LFCLKSEL_MASK */
-
-#if defined(_CMU_LFACLKSEL_MASK)
-  switch (sel) {
-    case _CMU_LFACLKSEL_LFA_LFRCO:
-      ret = SystemLFRCOClockGet();
-      break;
-
-    case _CMU_LFACLKSEL_LFA_LFXO:
-      ret = SystemLFXOClockGet();
-      break;
-
-    case _CMU_LFACLKSEL_LFA_ULFRCO:
-      ret = SystemULFRCOClockGet();
-      break;
-
-#if defined(PLFRCO_PRESENT)
-    case _CMU_LFACLKSEL_LFA_PLFRCO:
-      ret = SystemLFRCOClockGet();
-      break;
-#endif
-
-#if defined(_CMU_LFBCLKSEL_LFB_HFCLKLE)
-    case _CMU_LFBCLKSEL_LFB_HFCLKLE:
-      ret = SystemHFClockGet()
-            / SL_Log2ToDiv(((CMU->HFPRESC & _CMU_HFPRESC_HFCLKLEPRESC_MASK)
-                            >> _CMU_HFPRESC_HFCLKLEPRESC_SHIFT) + 1UL);
-      break;
-#endif
-
-    case _CMU_LFACLKSEL_LFA_DISABLED:
-      ret = 0;
-      break;
-
-    default:
-      ret = 0U;
-      EFM_ASSERT(false);
-      break;
-  }
-#endif
-
-  return ret;
-}
 
 /***************************************************************************//**
  * @brief
@@ -5986,119 +5676,119 @@ void CMU_ClockDivSet(CMU_Clock_TypeDef clock, CMU_ClkDiv_TypeDef div)
  *   @li true - enable specified clock.
  *   @li false - disable specified clock.
  ******************************************************************************/
-void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
-{
-  volatile uint32_t *reg;
-  uint32_t          bit;
-  uint32_t          sync = 0;
+// void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
+// {
+//   volatile uint32_t *reg;
+//   uint32_t          bit;
+//   uint32_t          sync = 0;
 
-  /* Identify enable register */
-  switch (((unsigned)clock >> CMU_EN_REG_POS) & CMU_EN_REG_MASK) {
-#if defined(_CMU_CTRL_HFPERCLKEN_MASK)
-    case CMU_CTRL_EN_REG:
-      reg = &CMU->CTRL;
-      break;
-#endif
+//   /* Identify enable register */
+//   switch (((unsigned)clock >> CMU_EN_REG_POS) & CMU_EN_REG_MASK) {
+// #if defined(_CMU_CTRL_HFPERCLKEN_MASK)
+//     case CMU_CTRL_EN_REG:
+//       reg = &CMU->CTRL;
+//       break;
+// #endif
 
-#if defined(_CMU_HFCORECLKEN0_MASK)
-    case CMU_HFCORECLKEN0_EN_REG:
-      reg = &CMU->HFCORECLKEN0;
-#if defined(CMU_MAX_FREQ_HFLE)
-      setHfLeConfig(SystemCoreClockGet());
-#endif
-      break;
-#endif
+// #if defined(_CMU_HFCORECLKEN0_MASK)
+//     case CMU_HFCORECLKEN0_EN_REG:
+//       reg = &CMU->HFCORECLKEN0;
+// #if defined(CMU_MAX_FREQ_HFLE)
+//       setHfLeConfig(SystemCoreClockGet());
+// #endif
+//       break;
+// #endif
 
-#if defined(_CMU_HFBUSCLKEN0_MASK)
-    case CMU_HFBUSCLKEN0_EN_REG:
-      reg = &CMU->HFBUSCLKEN0;
-      break;
-#endif
+// #if defined(_CMU_HFBUSCLKEN0_MASK)
+//     case CMU_HFBUSCLKEN0_EN_REG:
+//       reg = &CMU->HFBUSCLKEN0;
+//       break;
+// #endif
 
-#if defined(_CMU_HFPERCLKDIV_MASK)
-    case CMU_HFPERCLKDIV_EN_REG:
-      reg = &CMU->HFPERCLKDIV;
-      break;
-#endif
+// #if defined(_CMU_HFPERCLKDIV_MASK)
+//     case CMU_HFPERCLKDIV_EN_REG:
+//       reg = &CMU->HFPERCLKDIV;
+//       break;
+// #endif
 
-    case CMU_HFPERCLKEN0_EN_REG:
-      reg = &CMU->HFPERCLKEN0;
-      break;
+//     case CMU_HFPERCLKEN0_EN_REG:
+//       reg = &CMU->HFPERCLKEN0;
+//       break;
 
-#if defined(_CMU_HFPERCLKEN1_MASK)
-    case CMU_HFPERCLKEN1_EN_REG:
-      reg = &CMU->HFPERCLKEN1;
-      break;
-#endif
+// #if defined(_CMU_HFPERCLKEN1_MASK)
+//     case CMU_HFPERCLKEN1_EN_REG:
+//       reg = &CMU->HFPERCLKEN1;
+//       break;
+// #endif
 
-    case CMU_LFACLKEN0_EN_REG:
-      reg  = &CMU->LFACLKEN0;
-      sync = CMU_SYNCBUSY_LFACLKEN0;
-      break;
+//     case CMU_LFACLKEN0_EN_REG:
+//       reg  = &CMU->LFACLKEN0;
+//       sync = CMU_SYNCBUSY_LFACLKEN0;
+//       break;
 
-    case CMU_LFBCLKEN0_EN_REG:
-      reg  = &CMU->LFBCLKEN0;
-      sync = CMU_SYNCBUSY_LFBCLKEN0;
-      break;
+//     case CMU_LFBCLKEN0_EN_REG:
+//       reg  = &CMU->LFBCLKEN0;
+//       sync = CMU_SYNCBUSY_LFBCLKEN0;
+//       break;
 
-#if defined(_CMU_LFCCLKEN0_MASK)
-    case CMU_LFCCLKEN0_EN_REG:
-      reg = &CMU->LFCCLKEN0;
-      sync = CMU_SYNCBUSY_LFCCLKEN0;
-      break;
-#endif
+// #if defined(_CMU_LFCCLKEN0_MASK)
+//     case CMU_LFCCLKEN0_EN_REG:
+//       reg = &CMU->LFCCLKEN0;
+//       sync = CMU_SYNCBUSY_LFCCLKEN0;
+//       break;
+// #endif
 
-#if defined(_CMU_LFECLKEN0_MASK)
-    case CMU_LFECLKEN0_EN_REG:
-      reg  = &CMU->LFECLKEN0;
-      sync = CMU_SYNCBUSY_LFECLKEN0;
-      break;
-#endif
+// #if defined(_CMU_LFECLKEN0_MASK)
+//     case CMU_LFECLKEN0_EN_REG:
+//       reg  = &CMU->LFECLKEN0;
+//       sync = CMU_SYNCBUSY_LFECLKEN0;
+//       break;
+// #endif
 
-#if defined(_CMU_SDIOCTRL_MASK)
-    case CMU_SDIOREF_EN_REG:
-      reg = &CMU->SDIOCTRL;
-      enable = !enable;
-      break;
-#endif
+// #if defined(_CMU_SDIOCTRL_MASK)
+//     case CMU_SDIOREF_EN_REG:
+//       reg = &CMU->SDIOCTRL;
+//       enable = !enable;
+//       break;
+// #endif
 
-#if defined(_CMU_QSPICTRL_MASK)
-    case CMU_QSPI0REF_EN_REG:
-      reg = &CMU->QSPICTRL;
-      enable = !enable;
-      break;
-#endif
-#if defined(_CMU_USBCTRL_MASK)
-    case CMU_USBRCLK_EN_REG:
-      reg = &CMU->USBCTRL;
-      break;
-#endif
-#if defined(_CMU_PDMCTRL_MASK)
-    case CMU_PDMREF_EN_REG:
-      reg = &CMU->PDMCTRL;
-      break;
-#endif
+// #if defined(_CMU_QSPICTRL_MASK)
+//     case CMU_QSPI0REF_EN_REG:
+//       reg = &CMU->QSPICTRL;
+//       enable = !enable;
+//       break;
+// #endif
+// #if defined(_CMU_USBCTRL_MASK)
+//     case CMU_USBRCLK_EN_REG:
+//       reg = &CMU->USBCTRL;
+//       break;
+// #endif
+// #if defined(_CMU_PDMCTRL_MASK)
+//     case CMU_PDMREF_EN_REG:
+//       reg = &CMU->PDMCTRL;
+//       break;
+// #endif
 
-    case CMU_PCNT_EN_REG:
-      reg = &CMU->PCNTCTRL;
-      break;
+//     case CMU_PCNT_EN_REG:
+//       reg = &CMU->PCNTCTRL;
+//       break;
 
-    default: /* Cannot enable/disable a clock point. */
-      EFM_ASSERT(false);
-      return;
-  }
+//     default: /* Cannot enable/disable a clock point. */
+//       EFM_ASSERT(false);
+//       return;
+//   }
 
-  /* Get the bit position used to enable/disable. */
-  bit = ((unsigned)clock >> CMU_EN_BIT_POS) & CMU_EN_BIT_MASK;
+//   /* Get the bit position used to enable/disable. */
+//   bit = ((unsigned)clock >> CMU_EN_BIT_POS) & CMU_EN_BIT_MASK;
 
-  /* LF synchronization required. */
-  if (sync > 0UL) {
-    syncReg(sync);
-  }
+//   /* LF synchronization required. */
+//   if (sync > 0UL) {
+//     syncReg(sync);
+//   }
 
-  /* Set/clear bit as requested. */
-  BUS_RegBitWrite(reg, bit, (uint32_t)enable);
-}
+//   /* Set/clear bit as requested. */
+//   BUS_RegBitWrite(reg, bit, (uint32_t)enable);
+// }
 
 /***************************************************************************//**
  * @brief
@@ -6110,290 +5800,7 @@ void CMU_ClockEnable(CMU_Clock_TypeDef clock, bool enable)
  * @return
  *   The current frequency in Hz.
  ******************************************************************************/
-uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
-{
-  uint32_t ret;
 
-  switch ((unsigned)clock & (CMU_CLK_BRANCH_MASK << CMU_CLK_BRANCH_POS)) {
-    case (CMU_HF_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      break;
-
-    case (CMU_HFPER_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      /* Calculate frequency after HFPER divider. */
-#if defined(_CMU_HFPERCLKDIV_HFPERCLKDIV_MASK)
-      ret >>= (CMU->HFPERCLKDIV & _CMU_HFPERCLKDIV_HFPERCLKDIV_MASK)
-              >> _CMU_HFPERCLKDIV_HFPERCLKDIV_SHIFT;
-#endif
-#if defined(_CMU_HFPERPRESC_PRESC_MASK)
-      ret /= 1U + ((CMU->HFPERPRESC & _CMU_HFPERPRESC_PRESC_MASK)
-                   >> _CMU_HFPERPRESC_PRESC_SHIFT);
-#endif
-      break;
-
-#if defined(_CMU_HFPERPRESCB_MASK)
-    case (CMU_HFPERB_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      /* Calculate frequency after HFPERB prescaler. */
-      ret /= 1U + ((CMU->HFPERPRESCB & _CMU_HFPERPRESCB_PRESC_MASK)
-                   >> _CMU_HFPERPRESCB_PRESC_SHIFT);
-      break;
-#endif
-
-#if defined(_CMU_HFPERPRESCC_MASK)
-    case (CMU_HFPERC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      /* Calculate frequency after HFPERC prescaler. */
-      ret /= 1U + ((CMU->HFPERPRESCC & _CMU_HFPERPRESCC_PRESC_MASK)
-                   >> _CMU_HFPERPRESCC_PRESC_SHIFT);
-      break;
-#endif
-
-#if defined(_SILICON_LABS_32B_SERIES_1)
-#if defined(CRYPTO_PRESENT)     \
-      || defined(LDMA_PRESENT)  \
-      || defined(GPCRC_PRESENT) \
-      || defined(PRS_PRESENT)   \
-      || defined(GPIO_PRESENT)
-    case (CMU_HFBUS_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-#if defined(_CMU_HFBUSPRESC_MASK)
-      ret /= 1U + ((CMU->HFBUSPRESC & _CMU_HFBUSPRESC_MASK)
-                   >> _CMU_HFBUSPRESC_PRESC_SHIFT);
-#endif
-      break;
-#endif
-
-    case (CMU_HFCORE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      ret /= 1U + ((CMU->HFCOREPRESC & _CMU_HFCOREPRESC_PRESC_MASK)
-                   >> _CMU_HFCOREPRESC_PRESC_SHIFT);
-      break;
-
-    case (CMU_HFEXP_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = SystemHFClockGet();
-      ret /= 1U + ((CMU->HFEXPPRESC & _CMU_HFEXPPRESC_PRESC_MASK)
-                   >> _CMU_HFEXPPRESC_PRESC_SHIFT);
-      break;
-#endif
-
-#if defined(_SILICON_LABS_32B_SERIES_0)
-#if defined(AES_PRESENT)      \
-      || defined(DMA_PRESENT) \
-      || defined(EBI_PRESENT) \
-      || defined(USB_PRESENT)
-    case (CMU_HFCORE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-    {
-      ret = SystemCoreClockGet();
-    } break;
-#endif
-#endif
-
-    case (CMU_LFA_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-      break;
-
-#if defined(_CMU_LFACLKEN0_RTC_MASK)
-    case (CMU_RTC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-      ret >>= (CMU->LFAPRESC0 & _CMU_LFAPRESC0_RTC_MASK)
-              >> _CMU_LFAPRESC0_RTC_SHIFT;
-      break;
-#endif
-
-#if defined(_CMU_LFECLKEN0_RTCC_MASK)
-    case (CMU_RTCC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFE);
-      ret >>= (CMU->LFEPRESC0 & _CMU_LFEPRESC0_RTCC_MASK)
-              >> _CMU_LFEPRESC0_RTCC_SHIFT;
-      break;
-#endif
-
-#if defined(_CMU_LFACLKEN0_LETIMER0_MASK)
-    case (CMU_LETIMER0_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-#if defined(_SILICON_LABS_32B_SERIES_0)
-      ret >>= (CMU->LFAPRESC0 & _CMU_LFAPRESC0_LETIMER0_MASK)
-              >> _CMU_LFAPRESC0_LETIMER0_SHIFT;
-#else
-      ret /= SL_Log2ToDiv((CMU->LFAPRESC0 & _CMU_LFAPRESC0_LETIMER0_MASK)
-                          >> _CMU_LFAPRESC0_LETIMER0_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_LFACLKEN0_LETIMER1_MASK)
-    case (CMU_LETIMER1_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-#if defined(_SILICON_LABS_32B_SERIES_0)
-      ret >>= (CMU->LFAPRESC0 & _CMU_LFAPRESC0_LETIMER1_MASK)
-              >> _CMU_LFAPRESC0_LETIMER1_SHIFT;
-#else
-      ret /= SL_Log2ToDiv((CMU->LFAPRESC0 & _CMU_LFAPRESC0_LETIMER1_MASK)
-                          >> _CMU_LFAPRESC0_LETIMER1_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_LFACLKEN0_LCD_MASK)
-    case (CMU_LCDPRE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-#if defined(_SILICON_LABS_32B_SERIES_0)
-      ret >>= ((CMU->LFAPRESC0 & _CMU_LFAPRESC0_LCD_MASK)
-               >> _CMU_LFAPRESC0_LCD_SHIFT)
-              + CMU_DivToLog2(cmuClkDiv_16);
-#else
-      ret /= SL_Log2ToDiv((CMU->LFAPRESC0 & _CMU_LFAPRESC0_LCD_MASK)
-                          >> _CMU_LFAPRESC0_LCD_SHIFT);
-#endif
-      break;
-
-#if defined(_CMU_LCDCTRL_MASK)
-    case (CMU_LCD_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-      ret >>= (CMU->LFAPRESC0 & _CMU_LFAPRESC0_LCD_MASK)
-              >> _CMU_LFAPRESC0_LCD_SHIFT;
-      ret /= 1U + ((CMU->LCDCTRL & _CMU_LCDCTRL_FDIV_MASK)
-                   >> _CMU_LCDCTRL_FDIV_SHIFT);
-      break;
-#endif
-#endif
-
-#if defined(_CMU_LFACLKEN0_LESENSE_MASK)
-    case (CMU_LESENSE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFA);
-      ret >>= (CMU->LFAPRESC0 & _CMU_LFAPRESC0_LESENSE_MASK)
-              >> _CMU_LFAPRESC0_LESENSE_SHIFT;
-      break;
-#endif
-
-    case (CMU_LFB_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFB);
-      break;
-
-#if defined(_CMU_LFBCLKEN0_LEUART0_MASK)
-    case (CMU_LEUART0_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFB);
-#if defined(_SILICON_LABS_32B_SERIES_0)
-      ret >>= (CMU->LFBPRESC0 & _CMU_LFBPRESC0_LEUART0_MASK)
-              >> _CMU_LFBPRESC0_LEUART0_SHIFT;
-#else
-      ret /= SL_Log2ToDiv((CMU->LFBPRESC0 & _CMU_LFBPRESC0_LEUART0_MASK)
-                          >> _CMU_LFBPRESC0_LEUART0_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_LFBCLKEN0_LEUART1_MASK)
-    case (CMU_LEUART1_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFB);
-#if defined(_SILICON_LABS_32B_SERIES_0)
-      ret >>= (CMU->LFBPRESC0 & _CMU_LFBPRESC0_LEUART1_MASK)
-              >> _CMU_LFBPRESC0_LEUART1_SHIFT;
-#else
-      ret /= SL_Log2ToDiv((CMU->LFBPRESC0 & _CMU_LFBPRESC0_LEUART1_MASK)
-                          >> _CMU_LFBPRESC0_LEUART1_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_LFBCLKEN0_CSEN_MASK)
-    case (CMU_CSEN_LF_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFB);
-      ret /= SL_Log2ToDiv(((CMU->LFBPRESC0 & _CMU_LFBPRESC0_CSEN_MASK)
-                           >> _CMU_LFBPRESC0_CSEN_SHIFT) + 4UL);
-      break;
-#endif
-
-#if defined(CMU_LFCCLKEN0_USB)
-    case (CMU_USBLE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFC);
-      break;
-#endif
-
-#if defined(_SILICON_LABS_32B_SERIES_1)
-    case (CMU_LFE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = lfClkGet(cmuClock_LFE);
-      break;
-#endif
-
-    case (CMU_DBG_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = dbgClkGet();
-      break;
-
-    case (CMU_AUX_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = auxClkGet();
-      break;
-
-#if defined(USBC_CLOCK_PRESENT)
-    case (CMU_USBC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = usbCClkGet();
-      break;
-#endif
-
-#if defined(_CMU_ADCCTRL_ADC0CLKSEL_MASK)
-    case (CMU_ADC0ASYNC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = adcAsyncClkGet(0);
-#if defined(_CMU_ADCCTRL_ADC0CLKDIV_MASK)
-      ret /= 1U + ((CMU->ADCCTRL & _CMU_ADCCTRL_ADC0CLKDIV_MASK)
-                   >> _CMU_ADCCTRL_ADC0CLKDIV_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_ADCCTRL_ADC1CLKSEL_MASK)
-    case (CMU_ADC1ASYNC_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = adcAsyncClkGet(1);
-#if defined(_CMU_ADCCTRL_ADC1CLKDIV_MASK)
-      ret /= 1U + ((CMU->ADCCTRL & _CMU_ADCCTRL_ADC1CLKDIV_MASK)
-                   >> _CMU_ADCCTRL_ADC1CLKDIV_SHIFT);
-#endif
-      break;
-#endif
-
-#if defined(_CMU_SDIOCTRL_SDIOCLKSEL_MASK)
-    case (CMU_SDIOREF_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = sdioRefClkGet();
-      break;
-#endif
-
-#if defined(_CMU_QSPICTRL_QSPI0CLKSEL_MASK)
-    case (CMU_QSPI0REF_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = qspiRefClkGet(0);
-      break;
-#endif
-
-#if defined(USBR_CLOCK_PRESENT)
-    case (CMU_USBR_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = usbRateClkGet();
-      break;
-#endif
-
-#if defined(_CMU_PDMCTRL_PDMCLKSEL_MASK)
-    case (CMU_PDMREF_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-      ret = pdmRefClkGet();
-      break;
-#endif
-
-    case (CMU_HFLE_CLK_BRANCH << CMU_CLK_BRANCH_POS):
-#if defined(_CMU_HFCORECLKDIV_HFCORECLKLEDIV_MASK)
-      ret = SystemCoreClockGet() / CMU_ClockDivGet(clock);
-#elif defined(_CMU_HFPRESC_HFCLKLEPRESC_MASK)
-      ret = SystemHFClockGet() / CMU_ClockDivGet(clock);
-#else
-      ret = SystemCoreClockGet() / 2;
-#endif
-      break;
-
-    default:
-      ret = 0;
-      EFM_ASSERT(false);
-      break;
-  }
-
-  return ret;
-}
 
 #if defined(_SILICON_LABS_32B_SERIES_1)
 /***************************************************************************//**

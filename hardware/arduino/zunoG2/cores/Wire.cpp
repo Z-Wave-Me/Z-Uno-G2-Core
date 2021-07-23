@@ -1,8 +1,9 @@
 #include "Arduino.h"
-#include "ZGecko.h"
 #include "ZDma.h"
 #include "Wire.h"
 #include "stdlib.h"
+#include "em_i2c.h"
+#include "em_gpio.h"
 
 /* Layout details, A = address bit, X = don't care bit (set to 0):
 	7 bit address - use format AAAA AAAX.
@@ -269,8 +270,8 @@ ZunoError_t TwoWire::_begin(uint8_t address, uint8_t scl, uint8_t sda, void *b, 
 	this->_bFree = bFree;
 	this->_buffer = (uint8_t *)b;
 	this->_buffer_max = len;
-	pinMode(scl, GPIOMODE_OUTPUT_OPENDRAINPUP);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
-	pinMode(sda, GPIOMODE_OUTPUT_OPENDRAINPUP);
+	pinMode(scl, _GPIO_P_MODEL_MODE0_WIREDANDPULLUP);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
+	pinMode(sda, _GPIO_P_MODEL_MODE0_WIREDANDPULLUP);
 	i2c->CTRL |= (((address == 0) ? 0 : 1) << _I2C_CTRL_SLAVE_SHIFT);// Set SLAVE select mode. 0 == master
 	if (i2c == I2C0)
 		location = (getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (((getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), scl) -1) % sizeof(g_loc_pa0_pf7_all)) << _I2C_ROUTELOC0_SCLLOC_SHIFT);

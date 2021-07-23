@@ -5,6 +5,7 @@
 #include "Threading.h"
 #include "Sync.h"
 #include "ZUNO_Buttons.h"
+#include "em_csen.h"
 
 /* Constants */
 const ZunoBtnButtonInit_t PinBtn::_initBtnButton = BTN_BUTTON_INIT_DEFAULT;

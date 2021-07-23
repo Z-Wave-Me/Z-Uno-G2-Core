@@ -274,7 +274,7 @@ void I2C_BusFreqSet(I2C_TypeDef *i2c,
   }
 
   /* Ensure mode is valid */
-  i2cMode &= _I2C_CTRL_CLHR_MASK >> _I2C_CTRL_CLHR_SHIFT;
+  i2cMode = (I2C_ClockHLR_TypeDef)(i2cMode & (_I2C_CTRL_CLHR_MASK >> _I2C_CTRL_CLHR_SHIFT));
 
   /* Set the CLHR (clock low-to-high ratio). */
   i2c->CTRL &= ~_I2C_CTRL_CLHR_MASK;

@@ -44,7 +44,6 @@ ZUNO_BMP280::ZUNO_BMP280() {
 
 boolean ZUNO_BMP280::begin(uint8_t addr) {
 
-  byte tmp;
   Wire.begin();
 
   this->addr = addr;

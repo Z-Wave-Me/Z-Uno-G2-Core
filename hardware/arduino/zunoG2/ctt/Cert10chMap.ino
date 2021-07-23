@@ -79,8 +79,10 @@ const ZunoCFGParameter_t param64 =
 	.minValue = 0x1,
 	.maxValue = 0x14,
 	.defaultValue = 0x5,
-	.format = ZunoCFGParameterFormatUnsigned,
-	.size = ZunoCFGParameterSize32bit
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
 };
 
 const ZunoCFGParameter_t param65 =
@@ -90,8 +92,10 @@ const ZunoCFGParameter_t param65 =
 	.minValue = 0x1,
 	.maxValue = 0x14,
 	.defaultValue = 0x5,
-	.format = ZunoCFGParameterFormatUnsigned,
-	.size = ZunoCFGParameterSize32bit
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
 };
 
 const ZunoCFGParameter_t param66 =
@@ -101,8 +105,10 @@ const ZunoCFGParameter_t param66 =
 	.minValue = 0x0,
 	.maxValue = 0x5000,
 	.defaultValue = 0x1000,
-	.format = ZunoCFGParameterFormatUnsigned,
-	.size = ZunoCFGParameterSize32bit
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
 };
 
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {

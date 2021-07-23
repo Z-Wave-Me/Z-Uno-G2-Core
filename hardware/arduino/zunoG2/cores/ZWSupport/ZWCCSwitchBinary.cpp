@@ -3,23 +3,12 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSwitchBinary.h"
 
-#define ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL	0x3//How many channels at the same time support for dimming
-
-typedef struct					ZunoTimerDimmingSwitchBinary_s
-{
-	ZunoTimerDimmingStart_t		start;
-	uint8_t						targetValue;
-	uint32_t					ticksEnd;
-}								ZunoTimerDimmingSwitchBinary_t;
-
-static ZunoTimerDimmingSwitchBinary_t _switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL];
-
 int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 	ZwBasicBinaryReportFrame_t				*report;
 	size_t									currentValue;
 	size_t									targetValue;
 	size_t									duration;
-	ZunoTimerDimmingSwitchBinary_t			*lpV2;
+	ZunoTimerBasic_t						*lp;
 
 	if(reply){
 		CMD_REPLY_LEN = sizeof(report->v2);
@@ -30,14 +19,13 @@ int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 	}	
 	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
 	zunoEnterCritical();
-	lpV2 = (ZunoTimerDimmingSwitchBinary_t *)zuno_CCTimerFind(channel, &_switchBinary[0], &_switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL], sizeof(ZunoTimerDimmingSwitchBinary_t));
-	if (lpV2 == 0 || lpV2->start.channel == 0) {
-		targetValue = currentValue;
-		duration = 0;
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
+		targetValue = lp->targetValue;
+		duration = zuno_CCTimerTable8(lp->ticksEnd - g_zuno_timer.ticks);
 	}
 	else {
-		targetValue = lpV2->targetValue;
-		duration = zuno_CCTimerTable8(lpV2->ticksEnd - g_zuno_timer.ticks);
+		targetValue = currentValue;
+		duration = 0x0;
 	}
 	zunoExitCritical();
 	report->v2.cmdClass = COMMAND_CLASS_SWITCH_BINARY;
@@ -52,30 +40,35 @@ int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 	size_t							value;
 	size_t							duration;
-	ZunoTimerDimmingSwitchBinary_t	*lpV2;
+	ZunoTimerBasic_t				*lp;
+	size_t							currentValue;
 
-	value = cmd->v2.targetValue ? 0xFF : 0x00;// Map the value right way
-	switch (len) {
-		case sizeof(cmd->v2):
-			if ((duration = zuno_CCTimerTicksTable7(cmd->v2.duration)) == 0)
-				break ;
-			zunoEnterCritical();
-			if ((lpV2 = (ZunoTimerDimmingSwitchBinary_t *)zuno_CCTimerFind(channel, &_switchBinary[0], &_switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL], sizeof(ZunoTimerDimmingSwitchBinary_t))) == 0) {
+	if ((value = cmd->v2.targetValue) > 0x63 && value < 0xFF)
+		return (ZUNO_COMMAND_BLOCKED);
+	value = value ? 0xFF : 0x00;// Map the value right way
+	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
+	if (currentValue != value) {
+		switch (len) {
+			case sizeof(cmd->v2):
+				if ((duration = zuno_CCTimerTicksTable7(cmd->v2.duration)) == 0x0)
+					break ;
+				zunoEnterCritical();
+				if ((lp = zuno_CCTimerBasicFind(channel)) == 0x0) {
+					zunoExitCritical();
+					break ;
+				}
+				lp->channel = channel + 0x1;
+				lp->ticksEnd = g_zuno_timer.ticks + duration;
+				lp->targetValue = value;
 				zunoExitCritical();
+				return (ZUNO_COMMAND_PROCESSED);
 				break ;
-			}
-			lpV2->start.channel = channel + 1;
-			lpV2->start.bMode = ZUNO_TIMER_SWITCH_DIMMING;
-			lpV2->ticksEnd = g_zuno_timer.ticks + duration;
-			lpV2->targetValue = value;
-			zunoExitCritical();
-			return (ZUNO_COMMAND_PROCESSED);
-			break ;
-		default:
-			break ;
+			default:
+				break ;
+		}
 	}
 	zuno_universalSetter1P(channel, value);
-	zunoSendReport(channel + 1);
+	zunoSendReport(channel + 0x1);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -97,26 +90,13 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 	return (rs);
 }
 
-static void _zuno_CCSwitchBinaryTimer(size_t ticks, ZunoTimerDimmingSwitchBinary_t *lpV2) {
+void zuno_CCSwitchBinaryTimer(size_t ticks, ZunoTimerBasic_t *lp) {
 	size_t									channel;
 
-	if (ticks < lpV2->ticksEnd)
+	if (ticks < lp->ticksEnd)
 		return ;
-	channel = lpV2->start.channel;
-	zuno_universalSetter1P(channel - 1, lpV2->targetValue);
+	channel = lp->channel;
+	zuno_universalSetter1P(channel - 1, lp->targetValue);
 	zunoSendReport(channel);
-	lpV2->start.bMode = lpV2->start.bMode ^ ZUNO_TIMER_SWITCH_DIMMING;
-}
-
-void zuno_CCSwitchBinaryTimer(size_t ticks) {
-	ZunoTimerDimmingSwitchBinary_t				*lp_b;
-	ZunoTimerDimmingSwitchBinary_t				*lp_e;
-
-	lp_b = &_switchBinary[0];
-	lp_e = &_switchBinary[ZUNO_TIMER_SWITCH_BINARY_MAX_CHANNAL];
-	while (lp_b < lp_e) {
-		if ((lp_b->start.bMode & ZUNO_TIMER_SWITCH_DIMMING) != 0)
-			_zuno_CCSwitchBinaryTimer(ticks, lp_b);
-		lp_b++;
-	}
+	lp->channel = 0x0;
 }

@@ -129,12 +129,8 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-			if(cmd_class != COMMAND_CLASS_SENSOR_MULTILEVEL)
-				return false;
-			if(cmd_bytes[1] == SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR)
-				return true;
-			if(cmd_bytes[2] == channel->sub_type)
-				return true;
+			if(cmd_class == COMMAND_CLASS_SENSOR_MULTILEVEL)
+				return (true);
 			break;
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
@@ -474,7 +470,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef LOGGING_DBG
 				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
 				#endif
-				return ZUNO_UNKNOWN_CMD; // Command doesn't fit => forward it to firmware CommandHandler
+				return (zuno_CCSupervisionReport(result)); // Command doesn't fit => forward it to firmware CommandHandler
 			}
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
@@ -519,6 +515,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SENSOR_MULTILEVEL
 				case COMMAND_CLASS_SENSOR_MULTILEVEL:
 					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
+					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:

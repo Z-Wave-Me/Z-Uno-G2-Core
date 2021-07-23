@@ -9,12 +9,34 @@ typedef uint32_t CONFIGPARAM_MAX_SIZE;
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
+typedef enum				ZunoCFGTypeHandler_e
+{
+	ZunoCFGTypeHandlerInfo,
+	ZunoCFGTypeHandlerName
+}							ZunoCFGTypeHandler_t;
+
+const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
+const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
+	(void)param;
+	return (ZUNO_CFG_PARAMETER_UNKNOWN);
+}
+
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
 
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_UNKNOWN_CMD);
+		return (ZUNO_COMMAND_BLOCKED);
+	if (zunoCFGParameter(param) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+		param = CONFIGPARAM_MIN_PARAM;
+		while (param <= CONFIGPARAM_MAX_PARAM) {
+			if (zunoCFGParameter(param) != ZUNO_CFG_PARAMETER_UNKNOWN)
+				break ;
+			param++;
+		}
+		if (param > CONFIGPARAM_MAX_PARAM)
+			return (ZUNO_COMMAND_BLOCKED);
+	}
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
@@ -34,59 +56,38 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 	uint8_t								size;
 	uint8_t								param;
 	uint32_t							value;
+	const ZunoCFGParameter_t			*cfg;
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_UNKNOWN_CMD);
-	if (((size = lp->byte1.level) & 0x80) != 0)// Check whether you want to restore the default value
-		size = 0;
-	else
-		size = size & 0x7;
+		return (ZUNO_COMMAND_BLOCKED);
+	if (((size = lp->byte1.level) & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
+		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
+			return (ZUNO_COMMAND_BLOCKED);
+		else
+			value = (uint32_t)cfg->defaultValue;
+	}
+	else {
+		value = lp->byte4.configurationValue1 << 24;
+		value = value | (lp->byte4.configurationValue2 << 16);
+		value = value | (lp->byte4.configurationValue3 << 8);
+		value = value | lp->byte4.configurationValue4;
+	}
+	size = size & 0x7;
 	switch (size) {
-		case 4:
-			value = lp->byte4.configurationValue1 << 24;
-			value = value | (lp->byte4.configurationValue2 << 16);
-			value = value | (lp->byte4.configurationValue3 << 8);
-			value = value | lp->byte4.configurationValue4;
-			break;
 		case 2:
-			value = lp->byte2.configurationValue1 << 8;
-			value = value | lp->byte2.configurationValue2;
+			value = value & 0xFFFF;
 			break;
 		case 1:
-			value = lp->byte1.configurationValue1;
-			break;
+			value = value & 0xFF;
+			break ;
 		default:
-			value = -1;
-			break;
+			break ;
 	}
 	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
-    zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
+	zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	return (ZUNO_COMMAND_PROCESSED);
-}
-
-const ZunoCFGParameter_t _param =
-{
-	.name = 0,
-	.info = 0,
-	.minValue = -2147483648,
-	.maxValue = 2147483647,
-	.defaultValue = -1,
-	.format = ZunoCFGParameterFormatSigned,
-	.size = ZunoCFGParameterSize32bit
-};
-
-typedef enum				ZunoCFGTypeHandler_e
-{
-	ZunoCFGTypeHandlerInfo,
-	ZunoCFGTypeHandlerName
-}							ZunoCFGTypeHandler_t;
-
-const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
-const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
-	(void)param;
-	return (ZUNO_CFG_PARAMETER_UNKNOWN);
 }
 
 static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cmd) {
@@ -112,13 +113,11 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)&report->v4.byte4.minValue1;
 	}
 	else {
-		if (cfg == ZUNO_CFG_PARAMETER_DEFAULT)
-			cfg = &_param;
 		size = cfg->size;
 		_zme_memcpy(&report->v4.byte4.minValue1, (uint8_t *)&cfg->minValue, size);
 		_zme_memcpy(&report->v4.byte4.maxValue1, (uint8_t *)&cfg->maxValue, size);
 		_zme_memcpy(&report->v4.byte4.defaultValue1, (uint8_t *)&cfg->defaultValue, size);
-		properties1 = (cfg->format << CONFIGURATION_PROPERTIES_REPORT_PROPERTIES1_FORMAT_SHIFT) | size;
+		properties1 = ((uint8_t *)((uint8_t *)&cfg->defaultValue + sizeof(cfg->defaultValue)))[0];
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)((size_t)&report->v4.byte4.minValue1 + size * 3);
 	}
 	report->v4.byte4.properties1 = properties1;
@@ -153,13 +152,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	report->parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
 	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-		len = sizeof(ZwConfigurationNameReportFrame_t);
-	else if (cfg == ZUNO_CFG_PARAMETER_DEFAULT) {
-		report->name[(sizeof(CONFIGPARAM_STANDART_NAME) - 1)] = parameter / 10 + 0x30;
-		report->name[(sizeof(CONFIGPARAM_STANDART_NAME) - 1) + 1] = parameter % 10 + 0x30;
-		memcpy(&report->name[0], CONFIGPARAM_STANDART_NAME, sizeof(CONFIGPARAM_STANDART_NAME) - 1);
-		len = sizeof(CONFIGPARAM_STANDART_NAME) - 1 + sizeof(ZwConfigurationNameReportFrame_t) + 2;//+2 fot numbers
-	}
+		return (ZUNO_COMMAND_BLOCKED);
 	else {
 		report->reportsToFollow = 1;
 		str = (type == ZunoCFGTypeHandlerInfo) ? cfg->info : cfg->name;
@@ -184,10 +177,46 @@ static int _configuration_info_get(ZwConfigurationInfoGetFrame_t *cmd) {
 	return (_configuration_name_get((ZwConfigurationNameGetFrame_t *)cmd, ZunoCFGTypeHandlerInfo));
 }
 
+static int _configuration_default_reset(void) {
+	size_t												param;
+	const ZunoCFGParameter_t							*cfg;
+	uint32_t											value;
+
+	param = CONFIGPARAM_MIN_PARAM;
+	while (param <= CONFIGPARAM_MAX_PARAM)
+	{
+		if ((cfg = zunoCFGParameter(param)) != ZUNO_CFG_PARAMETER_UNKNOWN) {
+			value = (uint32_t)cfg->defaultValue;
+			zunoSaveCFGParam(param, value);
+		}
+		param++;
+	}
+	return (ZUNO_COMMAND_PROCESSED);
+}
+
+static int _builk_not_support(void) {
+	ZwApplicationRejectedRequestFrame_t						*report;
+
+	report = (ZwApplicationRejectedRequestFrame_t *)&CMD_REPLY_CC;
+	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
+	report->cmd = APPLICATION_REJECTED_REQUEST;
+	report->status = 0x0;
+	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
+	zunoSendZWPackage(&g_outgoing_main_packet);
+	return (ZUNO_COMMAND_PROCESSED);
+}
+
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
 	switch(ZW_CMD) {
+		case CONFIGURATION_DEFAULT_RESET:
+			rs = _configuration_default_reset();
+			break ;
+		case CONFIGURATION_BULK_SET:
+		case CONFIGURATION_BULK_GET:
+			rs = _builk_not_support();
+			break ;
 		case CONFIGURATION_GET:
 			rs = _configuration_get(((ZwConfigurationGetFrame_t *)cmd->cmd)->parameterNumber);
 			break ;

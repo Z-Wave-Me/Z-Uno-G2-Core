@@ -10,36 +10,40 @@ int zuno_CCSensorMultilevelReport(byte channel, bool reply) {
 	uint8_t sz = channel_size & SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
 	if(reply){
 		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sz + (sizeof(report->byte1) - 1);
+		CMD_REPLY_LEN = sz + sizeof(ZwSensorMultilevelReportFrame_t);
 	} else {
 		report = (ZwSensorMultilevelReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sz + (sizeof(report->byte1) - 1);
+		CMD_REPORT_LEN = sz + sizeof(ZwSensorMultilevelReportFrame_t);
 	}
-	report->byte1.cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
-	report->byte1.cmd = SENSOR_MULTILEVEL_REPORT;
-	report->byte1.sensorType = ZUNO_CFG_CHANNEL(channel).sub_type;
-	report->byte1.level = channel_size;
-	channel_size &= SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
+	report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
+	report->cmd = SENSOR_MULTILEVEL_REPORT;
+	report->sensorType = ZUNO_CFG_CHANNEL(channel).sub_type;
+	report->level = channel_size;
 	value = zuno_universalGetter1P(channel);
-	_zme_memcpy(&report->byte1.sensorValue1, (uint8_t *)&value, sz);
-	
+	_zme_memcpy(&report->sensorValue[0], (uint8_t *)&value, sz);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _supported_scale(ZwSensorMultilevelSupportedGetScaleFrame_t *cmd, size_t channel) {
+static int _supported_scale(ZwSensorMultilevelSupportedGetScaleFrame_t *cmd) {
 	ZwSensorMultilevelSupportedScaleReportFrame_t				*report;
 	size_t														sensorType;
 	size_t														properties1;
+	size_t														i;
 
 	report = (ZwSensorMultilevelSupportedScaleReportFrame_t *)&CMD_REPLY_CC;
 	sensorType = cmd->sensorType;
 	report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
 	report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT;
 	report->sensorType = sensorType;
-	if (ZUNO_CFG_CHANNEL(channel).sub_type == sensorType)
-		properties1 = 1 << ((ZUNO_CFG_CHANNEL(channel).params[0] & SENSOR_MULTILEVEL_PROPERTIES_SCALE_MASK) >> SENSOR_MULTILEVEL_PROPERTIES_SCALE_SHIFT);
-	else
-		properties1 = 0;
+	i = 0x0;
+	properties1 = 0x0;
+	while (i < ZUNO_CFG_CHANNEL_COUNT) {
+		if (ZUNO_CFG_CHANNEL(i).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER && ZUNO_CFG_CHANNEL(i).sub_type == sensorType) {
+			properties1 = 1 << ((ZUNO_CFG_CHANNEL(i).params[0] & SENSOR_MULTILEVEL_PROPERTIES_SCALE_MASK) >> SENSOR_MULTILEVEL_PROPERTIES_SCALE_SHIFT);
+			break ;
+		}
+		i++;
+	}
 	report->properties1 = properties1;
 	CMD_REPLY_LEN = sizeof(ZwSensorMultilevelSupportedScaleReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
@@ -51,8 +55,8 @@ static int _supported_sensor(ZUNOCommandPacket_t *pack, size_t channel) {
 
 	report = (ZwSensorMultilevelSupportedSensorReportFrame_t *)&CMD_REPLY_CC;
 	memset(&report->bitMask[0], 0, SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK);// clear reply bit mask
-	report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
-	report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SENSOR_REPORT;
+	// report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL; set in - fillOutgoingPacket
+	// report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SENSOR_REPORT; set in - fillOutgoingPacket
 	if(pack->dst_zw_channel == 0) {// In case it's a 0 channel mapping we have to declare all the types.
 		for (i = 0; i < ZUNO_CFG_CHANNEL_COUNT; i++){
 			if (ZUNO_CFG_CHANNEL(i).type != ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER)
@@ -67,24 +71,47 @@ static int _supported_sensor(ZUNOCommandPacket_t *pack, size_t channel) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+static int _sensor_multilevel_get(size_t channel, ZUNOCommandPacket_t *cmd) {
+	const ZwSensorMultilevelGetV11Frame_t			*paket;
+	size_t											i;
+	size_t											sensorType;
+
+	_zunoMarkChannelRequested(channel);
+	paket = (const ZwSensorMultilevelGetV11Frame_t *)cmd->cmd;
+	if (cmd->len != sizeof(ZwSensorMultilevelGetV4Frame_t))
+		sensorType = paket->sensorType;
+	else
+		sensorType = (size_t)-1;
+	if (ZUNO_CFG_CHANNEL(channel).sub_type == sensorType)
+		return (zuno_CCSensorMultilevelReport(channel, true));
+	i = 0x0;
+	while (i < ZUNO_CFG_CHANNEL_COUNT) {
+		if (ZUNO_CFG_CHANNEL(i).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) {
+			channel = i;
+			if (ZUNO_CFG_CHANNEL(i).sub_type == sensorType)
+				return (zuno_CCSensorMultilevelReport(i, true));
+		}
+		i++;
+	}
+	return (zuno_CCSensorMultilevelReport(channel, true));
+}
+
 int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	int							rs;
 
 	switch (ZW_CMD) {
 		case SENSOR_MULTILEVEL_GET:
-			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCSensorMultilevelReport(channel, true);
+			rs = _sensor_multilevel_get(channel, cmd);
 			break;
 		case SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR:
 			rs = _supported_sensor(cmd, channel);
 			break;
 		case SENSOR_MULTILEVEL_SUPPORTED_GET_SCALE:
-			rs = _supported_scale((ZwSensorMultilevelSupportedGetScaleFrame_t *)cmd->cmd, channel);
+			rs = _supported_scale((ZwSensorMultilevelSupportedGetScaleFrame_t *)cmd->cmd);
 			break;
 		default:
 			rs = ZUNO_UNKNOWN_CMD;
 			break ;
 	}
-
-	return rs;
+	return (rs);
 }

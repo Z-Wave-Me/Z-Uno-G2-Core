@@ -241,7 +241,7 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#endif
 		#ifdef WITH_CC_SWITCH_COLOR
 		case COMMAND_CLASS_SWITCH_COLOR:
-			cmd = SWITCH_COLOR_REPORT
+			cmd = SWITCH_COLOR_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE

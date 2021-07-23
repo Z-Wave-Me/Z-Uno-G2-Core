@@ -43,5 +43,6 @@ uint8_t zuno_CCSupervisionReport(uint8_t process_result){
 	report->duration = 0x0;
 	CMD_REPLY_LEN = sizeof(ZwCSuperVisionReportFrame_t);
 	__cc_supervision._unpacked = false;
-	return ZUNO_COMMAND_ANSWERED;
+	zunoSendZWPackage(&g_outgoing_main_packet);
+	return (ZUNO_COMMAND_PROCESSED);
 }

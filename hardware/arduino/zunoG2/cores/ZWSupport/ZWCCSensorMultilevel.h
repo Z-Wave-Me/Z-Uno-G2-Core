@@ -17,57 +17,45 @@
 
 #define SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK 6
 
+
+/************************************************************/
+/* Sensor Multilevel Get V4 command class structs */        
+/************************************************************/
+typedef struct										ZwSensorMultilevelGetV4Frame_s
+{
+	uint8_t											cmdClass;/* The command class */
+	uint8_t											cmd;/* The command */
+}													ZwSensorMultilevelGetV4Frame_t;
+
+/************************************************************/
+/* Sensor Multilevel Get V11 command class structs */       
+/************************************************************/
+typedef struct										ZwSensorMultilevelGetV11Frame_s
+{
+	uint8_t											cmdClass;/* The command class */
+	uint8_t											cmd;/* The command */
+	uint8_t											sensorType;/**/
+	uint8_t											properties1;/* masked byte */
+}													ZwSensorMultilevelGetV11Frame_t;
+
+typedef union								ZwSensorMultilevelGetVFrame_u {//For more convenient support, several versions of commands
+	ZwSensorMultilevelGetV4Frame_t			v4;
+	ZwSensorMultilevelGetV11Frame_t			v11;
+}											ZwSensorMultilevelGetVFrame_t;
+
+
 /************************************************************/
 /* Sensor Multilevel Report 1byte command class structs */  
 /************************************************************/
-typedef struct								ZwSensorMultilevelReportByte1Frame_s
+typedef struct								ZwSensorMultilevelReportFrame_s
 {
 	uint8_t									cmdClass;/* The command class */
 	uint8_t									cmd;/* The command */
 	uint8_t									sensorType;/**/
 	uint8_t									level;/* masked byte */
-	uint8_t									sensorValue1;
-}											ZwSensorMultilevelReportByte1Frame_t;
-
-typedef struct								ZwSensorMultilevelReportByte2Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									sensorType;/**/
-	uint8_t									level;/* masked byte */
-	uint8_t									sensorValue1;/* MSB */
-	uint8_t									sensorValue2;/* LSB */
-}											ZwSensorMultilevelReportByte2Frame_t;
-
-typedef struct								ZwSensorMultilevelReportByte3Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									sensorType;/**/
-	uint8_t									level;/* masked byte */
-	uint8_t									sensorValue1;/* MSB */
-	uint8_t									sensorValue2;
-	uint8_t									sensorValue3;/* LSB */
-}											ZwSensorMultilevelReportByte3Frame_t;
-
-typedef struct								ZwSensorMultilevelReportByte4Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									sensorType;/**/
-	uint8_t									level;/* masked byte */
-	uint8_t									sensorValue1;/* MSB */
-	uint8_t									sensorValue2;
-	uint8_t									sensorValue3;
-	uint8_t									sensorValue4;/* LSB */
-}											ZwSensorMultilevelReportByte4Frame_t;
-
-typedef union								ZwSensorMultilevelReportFrame_u {//For more convenient support, several versions of commands
-	ZwSensorMultilevelReportByte1Frame_t	byte1;
-	ZwSensorMultilevelReportByte2Frame_t	byte2;
-	ZwSensorMultilevelReportByte3Frame_t	byte3;
-	ZwSensorMultilevelReportByte4Frame_t	byte4;
+	uint8_t									sensorValue[];/* MSB  LSB */
 }											ZwSensorMultilevelReportFrame_t;
+
 
 /************************************************************/
 /* Sensor Multilevel Supported Get Scale command class structs */

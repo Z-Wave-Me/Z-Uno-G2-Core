@@ -1,5 +1,6 @@
 #include "ZWCCNotification.h"
 #include "ZWSupport.h"
+#include "Arduino.h"
 
 static const byte NOTIFICATION_MAPPER[] = {
 	0,0,

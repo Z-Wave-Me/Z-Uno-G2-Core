@@ -34,7 +34,7 @@
 #define THERMOSTAT_HEATING_TIMED_OFF_SET                                                 0x11
 
 /* Thermostat Mode command class commands */
-#define THERMOSTAT_MODE_VERSION                                                          0x01
+#define THERMOSTAT_MODE_VERSION                                                          0x03
 #define THERMOSTAT_MODE_GET                                                              0x02
 #define THERMOSTAT_MODE_REPORT                                                           0x03
 #define THERMOSTAT_MODE_SET                                                              0x01

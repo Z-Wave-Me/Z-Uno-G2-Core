@@ -172,6 +172,20 @@
             "cluster_rule":"${type}"
         },
         {   
+            "type_name":"ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER", "type_val":9,
+            "cc_flags":["WITH_CC_METER_TBL_MONITOR"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_METER_TBL_MONITOR","version":"METER_TBL_MONITOR_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_METER",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
+            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
+            "cluster_rule":"${type}"
+        },
+        {   
             "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
             "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
@@ -189,7 +203,7 @@
             "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":11,
             "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT"],
             "generic_type":"GENERIC_TYPE_THERMOSTAT",
-            "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL",
+            "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL_V2",
             "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "icon_app_id":"ICON_TYPE_GENERIC_THERMOSTAT",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
@@ -202,7 +216,7 @@
         },
         {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
-            "cc_flags":["WITH_CC_SWITCH_COLOR"],
+            "cc_flags":["WITH_CC_SWITCH_COLOR", "WITH_CC_SWITCH_MULTILEVEL"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
@@ -210,22 +224,9 @@
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"},
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
             ],
-            "cluster_rule":"${type}"
-        },
-        {   
-            "type_name":"ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER", "type_val":13,
-            "cc_flags":["WITH_CC_METER_TBL_MONITOR"],
-            "ccs":[
-                {"name":"COMMAND_CLASS_METER_TBL_MONITOR","version":"METER_TBL_MONITOR_VERSION"}
-            ],
-            "generic_type":"GENERIC_TYPE_METER",
-            "specific_type":"SPECIFIC_TYPE_NOT_USED",
-            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
-            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
-            "preproc_flags":[],
             "cluster_rule":"${type}"
         }
     ]

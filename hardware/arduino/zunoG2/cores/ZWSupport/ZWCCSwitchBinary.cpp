@@ -50,7 +50,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 	if (currentValue != value) {
 		switch (len) {
 			case sizeof(cmd->v2):
-				if ((duration = zuno_CCTimerTicksTable7(cmd->v2.duration)) == 0x0)
+				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration) / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0)
 					break ;
 				zunoEnterCritical();
 				if ((lp = zuno_CCTimerBasicFind(channel)) == 0x0) {

@@ -132,10 +132,16 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_SENSOR_MULTILEVEL)
 				return (true);
 			break;
+		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
 				return true;
+			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
+				return true;
+			if(cmd_class == COMMAND_CLASS_BASIC)
+				return true;
 			break;
+		#endif
 		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;

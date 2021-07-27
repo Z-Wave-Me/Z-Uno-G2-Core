@@ -41,5 +41,16 @@ typedef union								ZwBasicReportFrame_u {//For more convenient support, severa
 	ZwBasicReportV2Frame_t			v2;
 }											ZwBasicReportFrame_t;
 
+#define ZWCC_BASIC_SAVE_LAST(channel)				ZUNO_CFG_CHANNEL(channel).params[0x0]
+#define ZWCC_BASIC_SAVE_COLOR(channel)				ZUNO_CFG_CHANNEL(channel).params[0x1]
+
+#ifdef WITH_CC_SWITCH_COLOR
+	#define ZWCC_BASIC_SETTER_1P(zuno_ch, value)							zuno_SwitchMultilevelUniversalSetter1P(zuno_ch, value)
+	#define ZWCC_BASIC_GETTER_1P(zuno_ch)									zuno_SwitchMultilevelUniversalGetter1P(zuno_ch)
+#else
+	#define ZWCC_BASIC_SETTER_1P(zuno_ch, value)							zuno_universalSetter1P(zuno_ch, value)
+	#define ZWCC_BASIC_GETTER_1P(zuno_ch)									zuno_universalGetter1P(zuno_ch)
+#endif
+
 int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t * cmd);
 #endif // BASIC_CC_H

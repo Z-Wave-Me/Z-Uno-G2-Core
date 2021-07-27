@@ -2,6 +2,7 @@
 #include "ZWSupport.h"
 #include "ZWCCTimer.h"
 #include "ZWCCBasic.h"
+#include "ZWCCSwitchMultilevel.h"
 
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	ZunoTimerBasic_t				*lp;
@@ -20,25 +21,28 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			value = value ? 0xFF : 0x00;// Map the value right way
 			break;
 		#endif
+		#ifdef WITH_CC_SWITCH_COLOR
+		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+		#endif
 		#ifdef WITH_CC_SWITCH_MULTILEVEL
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			if (value > 0x63 && value < 0xFF)
 				return (ZUNO_COMMAND_BLOCKED);
 			if (value == 0xFF) {
 				size_t							tempos;
-				if ((tempos = ZUNO_CFG_CHANNEL(channel).params[0]) != 0)
+				if ((tempos = ZWCC_BASIC_SAVE_LAST(channel)) != 0)
 					value = tempos;
 				else
 					value = 0x63;
 			}
 			else if (value != 0x0)
-				ZUNO_CFG_CHANNEL(channel).params[0] = value;
+				ZWCC_BASIC_SAVE_LAST(channel) = value;
 			break;
 		#endif
 		default:
 			break;
 	}
-	zuno_universalSetter1P(channel, value);
+	ZWCC_BASIC_SETTER_1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -53,7 +57,7 @@ static int _basic_get(byte channel) {
 	report = (ZwBasicReportV2Frame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
-	currentValue = zuno_universalGetter1P(channel);
+	currentValue = ZWCC_BASIC_GETTER_1P(channel);
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
 		#ifdef WITH_CC_SWITCH_BINARY
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
@@ -64,7 +68,7 @@ static int _basic_get(byte channel) {
 			break;
 	}
 	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0 && (lp->bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0) {
 		duration = zuno_CCTimerTable8(lp->ticksEnd - lp->ticks);
 		targetValue = lp->targetValue;
 	}

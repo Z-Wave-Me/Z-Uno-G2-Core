@@ -119,7 +119,7 @@
             "type_name":"ZUNO_METER_CHANNEL_NUMBER", "type_val":5,
             "cc_flags":["WITH_CC_METER"],
             "ccs":[
-                {"name":"COMMAND_CLASS_METER","version":"3"}
+                {"name":"COMMAND_CLASS_METER","version":"METER_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_METER",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",

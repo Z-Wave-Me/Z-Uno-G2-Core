@@ -254,6 +254,11 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 			cmd = THERMOSTAT_SETPOINT_REPORT;
 			break ;
 		#endif
+		#ifdef WITH_CC_METER_TBL_MONITOR
+		case COMMAND_CLASS_METER_TBL_MONITOR:
+			cmd = METER_TBL_REPORT;
+			break ;
+		#endif
 		default:
 			return (command);
 			break ;

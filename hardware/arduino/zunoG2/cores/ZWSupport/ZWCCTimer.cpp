@@ -53,6 +53,7 @@ void zunoSendReportHandler(uint32_t ticks);
 void zuno_CCSwitchBinaryTimer(size_t ticks, ZunoTimerBasic_t *lp);
 void zuno_CCSwitchMultilevelTimer(size_t ticks, ZunoTimerBasic_t *lp);
 void zuno_CCSwitchColorTimer(size_t ticks, ZunoTimerBasic_t *lp);
+void zuno_CCDoorLockTimer(size_t ticks, ZunoTimerBasic_t *lp);
 
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
@@ -80,6 +81,11 @@ void _exe(uint32_t ticks) {
 				#ifdef WITH_CC_SWITCH_COLOR
 				case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 					zuno_CCSwitchColorTimer(ticks, lp_b);
+					break ;
+				#endif
+				#ifdef WITH_CC_DOORLOCK
+				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+					zuno_CCDoorLockTimer(ticks, lp_b);
 					break ;
 				#endif
 				default:

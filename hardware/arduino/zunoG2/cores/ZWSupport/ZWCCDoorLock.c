@@ -1,69 +1,326 @@
+#include "Arduino.h"
+#include "ZWCCTimer.h"
 #include "ZWCCDoorLock.h"
-#include "./includes/ZWCCDoorLock_private.h"
 
-static int _report_configuration(uint8_t channel, bool reply) {
+
+typedef union							ZwDoorLockProperties_u
+{
+	uint8_t								properties;
+	struct
+	{
+		uint8_t							InsideDoorHandlesMode: 0x2;
+		uint8_t							OutsideDoorHandlesMode: 0x2;
+	};
+}										ZwDoorLockProperties_t;
+
+typedef union							ZwDoorLockPropertiesSave_u
+{
+	uint8_t								properties_save;
+	struct
+	{
+		uint8_t							InsideDoorHandlesMode: 0x2;
+		uint8_t							OutsideDoorHandlesMode: 0x2;
+		uint8_t							operationType: 0x4;
+	};
+}										ZwDoorLockPropertiesSave_t;
+
+#define DOOR_LOCK_GET_PROPERTIES(channel, struct)					struct.properties = ZUNO_CFG_CHANNEL(channel).params[0x0]
+
+#define DOOR_LOCK_GET_PROPERTIES_SAVE(channel, struct)				struct.properties_save = ZUNO_CFG_CHANNEL(channel).params[0x1]
+#define DOOR_LOCK_SET_PROPERTIES_SAVE(channel, struct)				ZUNO_CFG_CHANNEL(channel).params[0x1] = struct.properties_save
+#define DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel)						ZUNO_CFG_CHANNEL(channel).params[0x2]
+#define DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel)						ZUNO_CFG_CHANNEL(channel).params[0x3]
+
+
+// #define DOOR_LOCK_GET_MODE(channel)									ZUNO_CFG_CHANNEL(channel).sub_type
+// static size_t _flag_to_mode(size_t flag) {
+// 	size_t						mode;
+
+// 	switch (flag) {
+// 		case ZUNO_DOOR_LOCK_MODE_UNSECURED_WITH_TIMEOUT:
+// 			mode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4;
+// 			break ;
+// 		case ZUNO_DOOR_LOCK_MODE_UNSECURED_FOR_INSIDE_DOOR_HANDLES:
+// 			mode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4;
+// 			break ;
+// 		case ZUNO_DOOR_LOCK_MODE_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT:
+// 			mode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4;
+// 			break ;
+// 		case ZUNO_DOOR_LOCK_MODE_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES:
+// 			mode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4;
+// 			break ;
+// 		case ZUNO_DOOR_LOCK_MODE_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT:
+// 			mode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4;
+// 			break ;
+// 		default:
+// 			mode = 0x0;
+// 			break ;
+// 	}
+// 	return (mode);
+// }
+
+// static uint8_t *_capabilities_get_set_mode(size_t channel, uint8_t *report) {
+// 	size_t								mode;
+// 	size_t								flag;
+// 	size_t								tempos;
+
+// 	mode = DOOR_LOCK_GET_MODE(channel);
+// 	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4;
+// 	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
+// 	flag = 0x1;
+// 	while (mode != 0x0) {
+// 		if (((mode & 0x1) != 0x0))
+// 			if ((tempos = _flag_to_mode(flag)) != 0x0)
+// 				report++[0] = tempos;
+// 		flag = flag << 0x1;
+// 		mode = mode >> 0x1;
+// 	}
+// 	return (report);
+// }
+
+static void _free_diming(size_t channel) {
+	ZunoTimerBasic_t				*lp;
+
+	zunoEnterCritical();
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) 
+		lp->channel = 0x0;
+	zunoExitCritical();
+}
+
+static int _report_configuration(uint8_t channel) {
 	ZwDoorLockConfigurationReportFrame_t		*lp;
-	if(reply){
-		lp = (ZwDoorLockConfigurationReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(lp->v3);
-	} else {
-		lp = (ZwDoorLockConfigurationReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(lp->v3);
-	}
+	ZwDoorLockPropertiesSave_t					properties_save;
+
 	lp = (ZwDoorLockConfigurationReportFrame_t *)&CMD_REPLY_CC;
-	lp->v3.cmdClass = COMMAND_CLASS_DOOR_LOCK;
-	lp->v3.cmd = DOOR_LOCK_CONFIGURATION_REPORT;
-	lp->v3.operationType = 0x1;
-	lp->v3.properties1 = 0x1;
-	lp->v3.lockTimeoutMinutes = 0xFE;
-	lp->v3.lockTimeoutSeconds = 0xFE;
+	// lp->v4.cmdClass = COMMAND_CLASS_DOOR_LOCK; set in - fillOutgoingPacket
+	// lp->v4.cmd = DOOR_LOCK_CONFIGURATION_REPORT; set in - fillOutgoingPacket
+	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
+	if ((lp->v4.operationType = properties_save.operationType) == DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4)
+		_free_diming(channel);
+	lp->v4.properties1 = properties_save.InsideDoorHandlesMode | (properties_save.OutsideDoorHandlesMode << DOOR_LOCK_CONFIGURATION_SET_PROPERTIES1_OUTSIDE_DOOR_HANDLES_STATE_SHIFT_V4);
+	lp->v4.lockTimeoutMinutes = DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel);
+	lp->v4.lockTimeoutSeconds = DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel);
+	lp->v4.holdAndReleaseTime1 = 0x0;
+	lp->v4.holdAndReleaseTime2 = 0x0;
+	lp->v4.autoRelockTime1 = 0x0;
+	lp->v4.autoRelockTime2 = 0x0;
+	CMD_REPLY_LEN = sizeof(lp->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 	(void)channel;
 }
 
-static void _set_operation(uint8_t channel, ZUNOCommandPacket_t *cmd) {
-	zuno_universalSetter1P(channel, ((ZwDoorLockOperationSet_t *)cmd->cmd)->doorLockMode);
+static int _set_operation(size_t channel, const ZwDoorLockOperationSet_t *cmd) {
+	ZwDoorLockPropertiesSave_t					properties_save;
+	size_t										doorLockMode;
+	size_t										operationType;
+	size_t										duration;
+	ZunoTimerBasic_t							*lp;
+
+	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
+	doorLockMode = cmd->doorLockMode;
+	if ((operationType = properties_save.operationType) == DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4) {
+		switch (doorLockMode) {
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4:
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4:
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4:
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4:
+				break ;
+			default:
+				return (ZUNO_COMMAND_BLOCKED);
+				break ;
+		}
+	}
+	switch (doorLockMode) {
+		case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4:
+		case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+			if (properties_save.InsideDoorHandlesMode == 0x0)
+				return (ZUNO_COMMAND_BLOCKED);
+			break ;
+		case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4:
+		case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+			if (properties_save.OutsideDoorHandlesMode == 0x0)
+				return (ZUNO_COMMAND_BLOCKED);
+			break ;
+		default:
+			break ;
+	}
+	if (operationType == DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4) {
+		switch (doorLockMode) {
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4:
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+				if ((duration = (DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel) * 60 + DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel)) * (1000 / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0) {
+					doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
+					_free_diming(channel);
+					break ;
+				}
+				zunoEnterCritical();
+				if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
+					lp->channel = channel + 0x1;
+					lp->ticksEnd = g_zuno_timer.ticks + duration;
+				}
+				zunoExitCritical();
+				break ;
+			default:
+				break ;
+		}
+	}
+	else
+		_free_diming(channel);
+	zuno_universalSetter1P(channel, doorLockMode);
+	zunoSendReport(channel + 0x1);
+	return (ZUNO_COMMAND_PROCESSED);
+}
+
+
+static uint8_t *_capabilities_get_set_mode(size_t channel, uint8_t *report) {
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4;
+	report++[0] = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4;
+	return (report);
+	(void)channel;
+}
+
+static uint8_t *_capabilities_get_set_operation(size_t channel, uint8_t *report) {
+	report++[0] = (0x1 << DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4) | (0x1 << DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4);
+	return (report);
+	(void)channel;
+}
+
+static int _capabilities_get(size_t channel) {
+	uint8_t					*report;
+	uint8_t					*properties1;
+	uint8_t					*supportedDoorLockModeListLength;
+	size_t					tempos;
+	ZwDoorLockProperties_t	properties;
+
+	report = &CMD_REPLY_CC + 0x2;//cmdClass + cmd// COMMAND_CLASS_DOOR_LOCK DOOR_LOCK_CAPABILITIES_REPORT ; set in - fillOutgoingPacket
+	properties1 = report;
+	report = _capabilities_get_set_operation(channel, report + 0x1);
+	tempos = report - properties1 - 0x1;
+	properties1[0] = tempos;
+	supportedDoorLockModeListLength = report;
+	report = _capabilities_get_set_mode(channel, report + 0x1);
+	tempos = report - supportedDoorLockModeListLength - 0x1;
+	supportedDoorLockModeListLength[0] = tempos;
+	DOOR_LOCK_GET_PROPERTIES(channel, properties);
+	report++[0] = properties.InsideDoorHandlesMode | (properties.OutsideDoorHandlesMode << DOOR_LOCK_CONFIGURATION_SET_PROPERTIES1_OUTSIDE_DOOR_HANDLES_STATE_SHIFT_V4);//properties2
+	report++[0] = 0x0;//supportedDoorComponents//Supported Door components (8 bits)
+	report++[0] = 0x0;//properties3//ARS (Auto-Relock support) (1 bit)//HRS (Hold and release support) (1 bit)//TAS (Twist assist support) (1 bit)//BTBS (Block-to-block support) (1 bit)
+	CMD_REPLY_LEN = report - &CMD_REPLY_CC;
+	return (ZUNO_COMMAND_ANSWERED);
+
+}
+
+static int _configuration_set(size_t channel, const ZwDoorLockConfigurationSetFrame_t *cmd) {
+	size_t								properties1;
+	ZwDoorLockPropertiesSave_t			properties_save;
+
+	properties1 = cmd->v3.properties1;
+	properties_save.operationType = cmd->v3.operationType;
+	properties_save.InsideDoorHandlesMode = properties1;
+	properties_save.OutsideDoorHandlesMode = properties1 >> DOOR_LOCK_CONFIGURATION_SET_PROPERTIES1_OUTSIDE_DOOR_HANDLES_STATE_SHIFT_V4;
+	DOOR_LOCK_SET_PROPERTIES_SAVE(channel, properties_save);
+	DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel) = cmd->v3.lockTimeoutMinutes;
+	DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel) = cmd->v3.lockTimeoutSeconds;
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
-	int				rs;
+	int											rs;
+	ZwDoorLockPropertiesSave_t					properties_save;
+	ZwDoorLockProperties_t						properties;
 
-	rs = ZUNO_UNKNOWN_CMD;
+	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
+	if (properties_save.properties_save == 0x0) {
+		DOOR_LOCK_GET_PROPERTIES(channel, properties);
+		properties_save.properties_save = properties.properties;
+		properties_save.operationType = DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4;
+		DOOR_LOCK_SET_PROPERTIES_SAVE(channel, properties_save);
+		DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel) = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
+		DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel) = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
+	}
 	switch(ZW_CMD) {
+		case DOOR_LOCK_CONFIGURATION_SET:
+			rs = _configuration_set(channel, (const ZwDoorLockConfigurationSetFrame_t *)cmd->cmd);
+			break ;
 		case DOOR_LOCK_CONFIGURATION_GET:
-			rs = _report_configuration(channel, true);
+			rs = _report_configuration(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_GET:
 			rs = zuno_CCDoorLockReport(channel, true);
 			_zunoMarkChannelRequested(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_SET:
-			_set_operation(channel, cmd);
-			zunoSendReport(channel + 1);
-			rs = ZUNO_COMMAND_PROCESSED;
+			rs = _set_operation(channel, (const ZwDoorLockOperationSet_t *)cmd->cmd);
+			break ;
+		case DOOR_LOCK_CAPABILITIES_GET:
+			rs = _capabilities_get(channel);
+			break ;
+		default:
+			rs = ZUNO_UNKNOWN_CMD;
 			break ;
 	}
 	return (rs);
 }
 
 int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
-	ZwDoorLockOperationReportFrame_t		*lp;
-	uint8_t									doorLockMode;
+	ZwDoorLockOperationReportFrame_t		*report;
+	size_t									doorLockMode;
+	size_t									duration;
+	size_t									ticks;
+	size_t									tempos;
+	size_t									lockTimeoutMinutes;
+	size_t									lockTimeoutSeconds;
+	ZwDoorLockPropertiesSave_t				properties_save;
+	ZunoTimerBasic_t						*lp;
 
 	if(reply){
-		lp = (ZwDoorLockOperationReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(lp->v2);
+		report = (ZwDoorLockOperationReportFrame_t *)&CMD_REPLY_CC;
+		CMD_REPLY_LEN = sizeof(report->v4);
 	} else {
-		lp = (ZwDoorLockOperationReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(lp->v2);
+		report = (ZwDoorLockOperationReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = sizeof(report->v4);
 	}
 	doorLockMode = zuno_universalGetter1P(channel);
-	lp->v2.cmdClass = COMMAND_CLASS_DOOR_LOCK;
-	lp->v2.cmd = DOOR_LOCK_OPERATION_REPORT;
-	lp->v2.doorLockMode = doorLockMode;
-	lp->v2.properties1 = 0x1;
-	lp->v2.doorCondition = (doorLockMode == 0) ? 0x0 : 0x1;
-	lp->v2.lockTimeoutMinutes = 0xFE;
-	lp->v2.lockTimeoutSeconds = 0xFE;
+	zunoEnterCritical();
+	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
+	if (properties_save.operationType == DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4 && (lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
+		ticks = lp->ticksEnd - g_zuno_timer.ticks;
+		tempos = ticks * ZUNO_SYSTIMER_PERIOD_MC / 1000;
+		lockTimeoutMinutes = tempos / 60;
+		lockTimeoutSeconds = tempos % 60;
+		duration = zuno_CCTimerTable8(ticks);
+	}
+	else {
+		duration = 0x0;
+		lockTimeoutMinutes = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
+		lockTimeoutSeconds = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
+	}
+	zunoExitCritical();
+	report->v4.cmdClass = COMMAND_CLASS_DOOR_LOCK;
+	report->v4.cmd = DOOR_LOCK_OPERATION_REPORT;
+	report->v4.currentDoorLockMode = doorLockMode;
+	report->v4.properties1 = properties_save.InsideDoorHandlesMode | (properties_save.OutsideDoorHandlesMode << DOOR_LOCK_CONFIGURATION_SET_PROPERTIES1_OUTSIDE_DOOR_HANDLES_STATE_SHIFT_V4);;
+	report->v4.doorCondition = 0x0;
+	report->v4.lockTimeoutMinutes = lockTimeoutMinutes;
+	report->v4.lockTimeoutSeconds = lockTimeoutSeconds;
+	report->v4.targetDoorLockMode = doorLockMode;
+	report->v4.duration = duration;
 	return (ZUNO_COMMAND_ANSWERED);
+}
+
+void zuno_CCDoorLockTimer(size_t ticks, ZunoTimerBasic_t *lp) {
+	size_t									channel;
+
+	if (ticks < lp->ticksEnd)
+		return ;
+	channel = lp->channel;
+	zuno_universalSetter1P(channel - 1, DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4);
+	zunoSendReport(channel);
+	lp->channel = 0x0;
 }

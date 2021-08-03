@@ -47,7 +47,6 @@ time_t zunoGetTimeStamp(void) {
 static int _set(ZwTimerParametrsSetFrame_t *packet) {
 	time_t						timeUnix;
 
-	Serial0.print("test: ");
 	if (zuno_CCTimerParametrsGet(&packet->time, &timeUnix) == false)
 		return (ZUNO_COMMAND_BLOCKED);
 	_timeUnix = timeUnix;

@@ -81,7 +81,7 @@
 #define METER_SUPPORTED_REPORT_PROPERTIES2_SCALE_SUPPORTED_0_MASK                        0x7F
 #define METER_SUPPORTED_REPORT_PROPERTIES2_M_S_T_BIT_MASK                                0x80
 
-#define GET_SCALE2(params) ((params & 0x04) << 5)
+#define GET_SCALE2(params) ((params & 0x04) << 7)
 #define GET_SCALE1(params) ((params & 0x03) << 3)
 #define GET_SCALE(params) (params & 0x07)
 #define GET_SIZE(params) ((params >> 6) + 1)
@@ -143,7 +143,8 @@ typedef struct _ZW_METER_RESET_1BYTE_V6_FRAME_
     uint8_t   cmdClass;                     /* The command class */
     uint8_t   cmd;                          /* The command */
     uint8_t   properties1;                  /* masked byte */
-    uint8_t   meterValue1;                  
+    uint8_t   properties2;                  /* masked byte */
+    uint8_t   meterValue[];                  
 } ZW_METER_RESET_1BYTE_V6_FRAME;
 
 typedef union								ZwMeterResetFrame_u {//For more convenient support, several versions of commands

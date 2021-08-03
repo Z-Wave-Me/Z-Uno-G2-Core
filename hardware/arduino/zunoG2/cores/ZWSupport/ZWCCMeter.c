@@ -2,14 +2,7 @@
 #include "ZWSupport.h"
 #include "Arduino.h"
 
-#define DEBUGSERIAL Serial0
-#define dbgprint(a)              \
-    DEBUGSERIAL.print("[DBG] "); \
-    DEBUGSERIAL.print(a)
-
-#define dbgprintln(a) DEBUGSERIAL.println(a, HEX)
-
-int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {
+int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {//v6
 	ZwMeterReportFrame_t				*report;
 	uint32_t							params;
 	uint32_t							channel_size;
@@ -60,13 +53,19 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {
 
 static int _reset(size_t channel, const ZwMeterResetFrame_t *cmd, size_t len) {
 	size_t							value;
+	size_t							params;
 
 	value = 0x0;
 	switch (len) {
 		case sizeof(cmd->v2):
 			break ;
 		default:
-			_zme_memcpy((uint8_t *)&value, (uint8_t *)&cmd->v6.meterValue1, cmd->v6.properties1 >> METER_RESET_PROPERTIES1_SIZE_SHIFT);
+			params = ZUNO_CFG_CHANNEL(channel).params[0];
+			if (cmd->v6.properties1 != (GET_SCALE2(params) | (METER_GET_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | (ZUNO_CFG_CHANNEL(channel).sub_type & METER_REPORT_PROPERTIES1_METER_TYPE_MASK)))
+				return (ZUNO_COMMAND_BLOCKED);
+			if (cmd->v6.properties2 != COMBINE_PARAMS(params))
+				return (ZUNO_COMMAND_BLOCKED);
+			_zme_memcpy((uint8_t *)&value, (uint8_t *)&cmd->v6.meterValue[0], GET_SIZE(params));
 			break ;
 	}
 	zuno_universalSetter1P(channel, value);

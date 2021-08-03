@@ -4,17 +4,23 @@
 #include "time.h"
 #include "Libft.h"
 #include "errno.h"
+#include "string.h"
 
-time_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet) {
+size_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet, time_t *timeUnix) {
 	struct tm					timeinfo;
+	int							tm_year;
 
-	timeinfo.tm_year = ((packet->year1 << 8) | packet->year2) - 1900;
+	tm_year = ((packet->year1 << 8) | packet->year2) - 1900;
+	timeinfo.tm_year = tm_year;
 	timeinfo.tm_mon = packet->month - 1;
 	timeinfo.tm_mday = packet->day;
 	timeinfo.tm_hour = packet->hourUtc;
 	timeinfo.tm_min = packet->minuteUtc;
 	timeinfo.tm_sec = packet->secondUtc;
-	return (mktime(&timeinfo));
+	timeUnix[0x0] = mktime(&timeinfo);
+	if (timeinfo.tm_sec != packet->secondUtc || timeinfo.tm_min != packet->minuteUtc || timeinfo.tm_hour != packet->hourUtc || timeinfo.tm_mday != packet->day || timeinfo.tm_mon != packet->month - 1 || timeinfo.tm_year != tm_year)
+		return (false);
+	return (true);
 }
 
 void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time) {
@@ -31,40 +37,21 @@ void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time) {
 	packet->secondUtc = timeinfo.tm_sec;
 }
 
-// extern unsigned long __etext;
-// extern unsigned long __data_start__;
-// extern unsigned long __data_end__;
-// extern unsigned long __bss_start__;
-// extern unsigned long __bss_end__;
-// extern unsigned long __HeapBase;
-// extern unsigned long __HeapLimit;
-
-// extern "C" void *_sbrk(intptr_t delta) {
-// 	static uint8_t		*heap_end = 0;
-// 	uint8_t				*prev_heap_end;
-
-// 	if (heap_end == 0)
-// 		heap_end = (uint8_t *)&__HeapBase;
-// 	prev_heap_end = heap_end;
-// 	delta = ((delta + (sizeof(size_t) - 1)) & (0 - sizeof(size_t)));
-// 	if (heap_end + delta > (uint8_t *)&__HeapLimit) {
-// 		errno = ENOMEM;
-// 		return (void *) -1;
-// 	}
-// 	heap_end = heap_end + delta;
-// 	return (prev_heap_end);
-// }
-
 static time_t _timeUnix = 0;
 static uint32_t _time = 0;
 
 time_t zunoGetTimeStamp(void) {
-	return (_timeUnix + ((millis() / 1000) - _time));
+	return (_timeUnix + ((millis() - _time) / 1000));
 }
 
 static int _set(ZwTimerParametrsSetFrame_t *packet) {
-	_timeUnix= zuno_CCTimerParametrsGet(&packet->time);
-	_time = millis() / 1000;
+	time_t						timeUnix;
+
+	Serial0.print("test: ");
+	if (zuno_CCTimerParametrsGet(&packet->time, &timeUnix) == false)
+		return (ZUNO_COMMAND_BLOCKED);
+	_timeUnix = timeUnix;
+	_time = millis();
 	zunoSysHandlerCall(ZUNO_HANDLER_NOTIFICATON_TIME_STAMP, 0x0);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -76,7 +63,7 @@ static int _report(void) {
 	report = (ZwTimerParametrsReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_TIME_PARAMETERS; //set in - fillOutgoingPacket
 	// report->cmd = TIME_PARAMETERS_REPORT; //set in - fillOutgoingPacket
-	time = _timeUnix + ((millis() / 1000) - _time);
+	time = _timeUnix + ((millis() - _time) / 1000);
 	zuno_CCTimerParametrsSet(&report->time, time);
 	CMD_REPLY_LEN = sizeof(ZwTimerParametrsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);

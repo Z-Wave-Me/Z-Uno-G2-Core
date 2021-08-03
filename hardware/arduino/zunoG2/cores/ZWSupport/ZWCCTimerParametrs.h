@@ -39,7 +39,7 @@ typedef struct									ZwTimerParametrsSetFrame_s
 }												ZwTimerParametrsSetFrame_t;
 
 int zuno_CCTimerParametrsHandler(ZUNOCommandPacket_t *cmd);
-time_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet);
+size_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet, time_t *timeUnix);
 void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time);
 
 #endif// ZWCC_TIMER_PARAMETERS_H

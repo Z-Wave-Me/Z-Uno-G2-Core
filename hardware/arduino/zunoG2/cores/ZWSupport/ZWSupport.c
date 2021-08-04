@@ -159,13 +159,11 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 		case ZUNO_METER_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_METER)
 				return true;
-			break;
-		#ifdef WITH_CC_METER_TBL_MONITOR
-		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
+			#ifdef WITH_CC_METER_TBL_MONITOR
 			if(cmd_class == COMMAND_CLASS_METER_TBL_MONITOR)
 				return true;
+			#endif
 			break;
-		#endif
 	}
 	return false;
 }
@@ -1002,9 +1000,6 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 		#ifdef WITH_CC_METER
 		case ZUNO_METER_CHANNEL_NUMBER:
 		#endif
-		#ifdef WITH_CC_METER_TBL_MONITOR
-		case ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER:
-		#endif 
 			{
 				uint32_t ch_time  = __getSyncVar(&(g_channels_data.last_report_time[ch]));
 				return (ch_time == 0) || ((ticks -  ch_time) > 3000UL); // We can't send too frequent for these CCs

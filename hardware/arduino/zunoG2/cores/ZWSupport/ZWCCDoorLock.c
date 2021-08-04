@@ -271,7 +271,6 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	ZwDoorLockOperationReportFrame_t		*report;
 	size_t									doorLockMode;
-	size_t									duration;
 	size_t									ticks;
 	size_t									tempos;
 	size_t									lockTimeoutMinutes;
@@ -294,10 +293,10 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 		tempos = ticks * ZUNO_SYSTIMER_PERIOD_MC / 1000;
 		lockTimeoutMinutes = tempos / 60;
 		lockTimeoutSeconds = tempos % 60;
-		duration = zuno_CCTimerTable8(ticks);
+		if (lockTimeoutSeconds == 0x0 && lockTimeoutMinutes == 0x0 && ticks != 0)
+			lockTimeoutSeconds++;
 	}
 	else {
-		duration = 0x0;
 		lockTimeoutMinutes = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
 		lockTimeoutSeconds = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
 	}
@@ -310,7 +309,7 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	report->v4.lockTimeoutMinutes = lockTimeoutMinutes;
 	report->v4.lockTimeoutSeconds = lockTimeoutSeconds;
 	report->v4.targetDoorLockMode = doorLockMode;
-	report->v4.duration = duration;
+	report->v4.duration = 0x0;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

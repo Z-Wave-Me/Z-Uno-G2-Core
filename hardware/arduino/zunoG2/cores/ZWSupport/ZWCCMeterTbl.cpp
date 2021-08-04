@@ -160,8 +160,9 @@ static int _historical_data_get(size_t channel, ZwMeterTblHistoricalDataGet_t *p
 	ZunoMeterTblHistoryValue_t				out;
 	size_t									tempos;
 
-	start_time = zuno_CCTimerParametrsGet(&packed->start_time);
-	stop_time = zunoMeterTblHistoryTimeFind(zuno_CCTimerParametrsGet(&packed->stop_time));
+	zuno_CCTimerParametrsGet(&packed->start_time, &start_time);
+	zuno_CCTimerParametrsGet(&packed->stop_time, &stop_time);
+	stop_time = zunoMeterTblHistoryTimeFind(stop_time);
 	if (stop_time < start_time)
 		return (ZUNO_COMMAND_PROCESSED);
 	memcpy(&dataset, &packed->historicalDatasetRequested[0], sizeof(packed->historicalDatasetRequested));

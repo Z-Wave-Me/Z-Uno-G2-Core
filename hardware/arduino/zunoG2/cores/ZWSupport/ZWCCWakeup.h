@@ -26,6 +26,89 @@
 #define WAKEUP_MAXIMUM_CONTROLLER_TIMEOUT                                             15000 
 #define WAKEUP_MAXIMUM_LEARN_TIMEOUT                                                  30000 
 
+/************************************************************/
+/* Wake Up Interval Capabilities Report V2 command class structs */
+/************************************************************/
+typedef struct _ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V2_FRAME_
+{
+    uint8_t   cmdClass;                     /* The command class */
+    uint8_t   cmd;                          /* The command */
+    uint8_t   minimumWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   minimumWakeUpIntervalSeconds2;
+    uint8_t   minimumWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   maximumWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   maximumWakeUpIntervalSeconds2;
+    uint8_t   maximumWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   defaultWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   defaultWakeUpIntervalSeconds2;
+    uint8_t   defaultWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   wakeUpIntervalStepSeconds1;   /* MSB */
+    uint8_t   wakeUpIntervalStepSeconds2;   
+    uint8_t   wakeUpIntervalStepSeconds3;   /* LSB */
+} ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V2_FRAME;
+
+
+/************************************************************/
+/* Wake Up Interval Capabilities Report V3 command class structs */
+/************************************************************/
+typedef struct _ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V3_FRAME_
+{
+    uint8_t   cmdClass;                     /* The command class */
+    uint8_t   cmd;                          /* The command */
+    uint8_t   minimumWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   minimumWakeUpIntervalSeconds2;
+    uint8_t   minimumWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   maximumWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   maximumWakeUpIntervalSeconds2;
+    uint8_t   maximumWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   defaultWakeUpIntervalSeconds1;/* MSB */
+    uint8_t   defaultWakeUpIntervalSeconds2;
+    uint8_t   defaultWakeUpIntervalSeconds3;/* LSB */
+    uint8_t   wakeUpIntervalStepSeconds1;   /* MSB */
+    uint8_t   wakeUpIntervalStepSeconds2;   
+    uint8_t   wakeUpIntervalStepSeconds3;   /* LSB */
+    uint8_t   properties1;                  /* masked byte */
+} ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V3_FRAME;
+
+typedef union								ZwZwaveWakeUpIntervalCapabilitiesReportFrame_u {//For more convenient support, several versions of commands
+	ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V2_FRAME			v2;
+	ZW_WAKE_UP_INTERVAL_CAPABILITIES_REPORT_V3_FRAME			v3;
+}											ZwZwaveWakeUpIntervalCapabilitiesReportFrame_t;
+
+/************************************************************/
+/* Wake Up Interval Report V3 command class structs */      
+/************************************************************/
+typedef struct _ZW_WAKE_UP_INTERVAL_REPORT_V3_FRAME_
+{
+    uint8_t   cmdClass;                     /* The command class */
+    uint8_t   cmd;                          /* The command */
+    uint8_t   seconds1;                     /* MSB */
+    uint8_t   seconds2;                     
+    uint8_t   seconds3;                     /* LSB */
+    uint8_t   nodeid;                       /**/
+} ZW_WAKE_UP_INTERVAL_REPORT_V3_FRAME;
+
+typedef union								ZwZwaveWakeUpIntervalReportFrame_u {//For more convenient support, several versions of commands
+	ZW_WAKE_UP_INTERVAL_REPORT_V3_FRAME			v3;
+}											ZwZwaveWakeUpIntervalReportFrame_t;
+
+
+/************************************************************/
+/* Wake Up Interval Set V3 command class structs */         
+/************************************************************/
+typedef struct _ZW_WAKE_UP_INTERVAL_SET_V3_FRAME_
+{
+    uint8_t   cmdClass;                     /* The command class */
+    uint8_t   cmd;                          /* The command */
+    uint8_t   seconds1;                     /* MSB */
+    uint8_t   seconds2;                     
+    uint8_t   seconds3;                     /* LSB */
+    uint8_t   nodeid;                       /**/
+} ZW_WAKE_UP_INTERVAL_SET_V3_FRAME;
+
+typedef union								ZwZwaveWakeUpIntervalSetFrame_u {//For more convenient support, several versions of commands
+	ZW_WAKE_UP_INTERVAL_SET_V3_FRAME			v3;
+}											ZwZwaveWakeUpIntervalSetFrame_t;
 
 void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();

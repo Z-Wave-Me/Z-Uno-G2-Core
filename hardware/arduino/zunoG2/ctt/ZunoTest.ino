@@ -11,9 +11,10 @@
  */
 
 #include "Arduino.h"
+#include "ZWCCTimerParametrs.h"
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 
-ZUNO_ENABLE(LOGGING_UART=Serial0 ZUNO_PIN_V=4);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
+ZUNO_ENABLE(LOGGING_UART=Serial0 ZUNO_PIN_V=4 WITH_CC_TIME_PARAMETERS WITH_CC_WAKEUP WITH_CC_BATTERY);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
 #define MY_SERIAL Serial0
 
 // Pins definitions 
@@ -186,7 +187,13 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	return (cfg);
 }
 
-void setup() { 
+bool zunoAddBaseCCS(byte ccs, byte version);
+
+void setup() {
+	// if(zunoStartDeviceConfiguration()) {
+	// 	zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION);
+	// 	zunoCommitCfg();
+	// }
 	MY_SERIAL.begin(115200);
 	// Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
 	pinMode(LedPin1, OUTPUT);

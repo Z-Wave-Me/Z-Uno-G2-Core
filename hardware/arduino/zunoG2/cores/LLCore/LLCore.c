@@ -484,8 +484,7 @@ void * zunoJumpTable(int vec, void * data) {
 			_zunoSleepingUpd();
 			#endif
             break;
-        case ZUNO_JUMPTBL_IRQ:
-            {
+        case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
             }

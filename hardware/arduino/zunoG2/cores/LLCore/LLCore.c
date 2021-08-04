@@ -496,6 +496,9 @@ void * zunoJumpTable(int vec, void * data) {
             //LOGGING_UART.println("!SLEEP");
             #endif
             break;
+		case ZUNO_JUMPTBL_WUP:
+			_zunoInitSleepingData();
+			break;
         default:
             break; // UNKNOWN VECTOR
     }

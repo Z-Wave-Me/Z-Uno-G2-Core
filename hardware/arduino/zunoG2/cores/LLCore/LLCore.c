@@ -361,8 +361,9 @@ void zuno_static_autosetup();
 
 
 
-void _zunoInitSleepingData();
-void _zunoSleepingUpd();
+static void _zunoInitSleepingData();
+static void _zunoSleepingUpd();
+static void _zunoInitDefaultWakeup();
 void zunoKickSleepTimeout(uint32_t ms);
 void zunoSendDeviceToSleep(void);
 void _zunoSleepOnInclusionStart();
@@ -418,6 +419,7 @@ void * zunoJumpTable(int vec, void * data) {
             #endif
 			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 			_zunoInitSleepingData();
+			_zunoInitDefaultWakeup();
 			#endif
             #ifdef LOGGING_DBG
             LOGGING_UART.begin(115200);
@@ -924,15 +926,26 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
 
 
 ZUNOSleepData_t g_sleep_data;
-void _zunoInitSleepingData(){
+static void _zunoInitSleepingData(){
 	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
 	g_sleep_data.user_latch = true;
 	g_sleep_data.inclusion_latch = false;
 	g_sleep_data.wup_latch = false;
 	g_sleep_data.wup_timeout = 0;
 }
+static void _zunoInitDefaultWakeup(){
+	pinMode(23, INPUT); 				// Configure button as input
+	pinMode(18, INPUT_PULLUP_FILTER);	// Configure INT1 as input with pullup - for backward compatibility with ZUno S1
+	// to have an ability to wake up from EM2 mode configure interrupt controller
+	attachInterrupt(23, NULL, FALLING);
+	attachInterrupt(18, NULL, FALLING);
+	// EM4 Wakeup using BTN/INT1
+	zunoEM4EnablePinWakeup(23); 
+	zunoEM4EnablePinWakeup(18);
+	
+}
 
-void _zunoSleepingUpd(){
+static void _zunoSleepingUpd(){
 	if(g_sleep_data.user_latch)
 		return;
 	if(g_sleep_data.inclusion_latch){

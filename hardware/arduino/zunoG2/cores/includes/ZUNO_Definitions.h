@@ -135,7 +135,15 @@ enum {
 	ZUNO_COMMAND_UNPACKED,
 	ZUNO_COMMAND_BLOCKED
 };
-
+enum{
+	SLEEP_MODE_EM0 = 0,
+	SLEEP_MODE_EM2 = 1,
+	SLEEP_MODE_EM4 = 2
+};
+enum{
+	SLEEP_LOCKED = 0,
+	SLEEP_UNLOCKED = 1
+};
 enum{
     ZUNO_CFG_DENIED,
     ZUNO_CFG_THESAME,
@@ -886,7 +894,7 @@ enum {
 #endif
 
 #ifndef ZUNO_PIN_V
-	#define ZUNO_PIN_V			4//default
+	#define ZUNO_PIN_V			6//default
 #endif
 
 #define ZEROX					3

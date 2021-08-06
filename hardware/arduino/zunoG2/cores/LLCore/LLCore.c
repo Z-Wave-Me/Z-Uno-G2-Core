@@ -365,7 +365,6 @@ static void _zunoInitSleepingData();
 static void _zunoSleepingUpd();
 static void _zunoInitDefaultWakeup();
 void zunoKickSleepTimeout(uint32_t ms);
-void zunoSendDeviceToSleep(void);
 void _zunoSleepOnInclusionStart();
 void _zunoSleepOnInclusionComplete();
 typedef struct ZUNOSleepData_s{
@@ -983,9 +982,11 @@ static void _zunoSleepingUpd(){
 	#ifdef LOGGING_DBG
     LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
 	#endif
+	g_zuno_sys->sleep_latches = SLEEP_UNLOCKED;
+	/*
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
-	
+	*/
 }
 bool _zunoIsWUPLocked(){
 	bool res = false;
@@ -1058,7 +1059,8 @@ void zunoKickSleepTimeout(uint32_t ms){
 	
 	#endif
 }
-void zunoSendDeviceToSleep(void) {
+void zunoSendDeviceToSleep(uint8_t mode) {
+	g_zuno_sys->sleep_highest_mode = mode;
 	#ifdef LOGGING_DBG
     //LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
 	#endif

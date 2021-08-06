@@ -72,6 +72,8 @@ typedef struct ZUNOSetupSysState_s {
 	ZUNODeviceConfiguation_t * zwave_cfg;
 	void *  hIOThread;
 	void *  hMainThread;
+	uint8_t sleep_latches;
+	uint8_t sleep_highest_mode;
 }ZUNOSetupSysState_t;
 
 // Handlers

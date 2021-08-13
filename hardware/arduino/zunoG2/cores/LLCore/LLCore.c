@@ -11,6 +11,7 @@
 #include "Debug.h"
 #include "errno.h"
 #include "sys/stat.h"
+#include "Custom_timestamp.h"
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
 	#define SKETCH_FLAGS_LOOP_DELAY			0x20
@@ -415,7 +416,6 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_SETUP:
             LLInit();
             g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            
             #ifdef WITH_AUTOSETUP
             zuno_static_autosetup();
             #endif
@@ -426,8 +426,6 @@ void * zunoJumpTable(int vec, void * data) {
             #ifdef LOGGING_DBG
             LOGGING_UART.begin(115200);
             #endif
-            
-            
             g_sketch_inited = false;
             break;
         case ZUNO_JUMPTBL_LOOP:
@@ -437,7 +435,6 @@ void * zunoJumpTable(int vec, void * data) {
                 g_sketch_inited = true;
             }
             loop();
-			
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:

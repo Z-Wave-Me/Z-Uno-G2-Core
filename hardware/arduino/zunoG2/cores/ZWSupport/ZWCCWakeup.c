@@ -22,9 +22,9 @@ static void __zunoSetupWUPTimeout() {
 
 	zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);
 	#ifdef LOGGING_DBG
-	LOGGING_UART.print("Wakeup timer was set to:");
-	LOGGING_UART.print(save.wakeUpIntervalStepSeconds);
-	LOGGING_UART.print("seconds");
+	//LOGGING_UART.print("Wakeup timer was set to:");
+	//LOGGING_UART.print(save.wakeUpIntervalStepSeconds);
+	//LOGGING_UART.print("seconds");
 	#endif
 	zunoSetWUPTimer(save.wakeUpIntervalStepSeconds);
 }
@@ -68,15 +68,17 @@ void zuno_CCWakeup_OnSetup(){
       (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_PIN) ||
       (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_SOFTRESET) ||
       (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WATCH_DOG) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUP_EM4)
+      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM4) ||
+	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM2) ||
+	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM2) ||
+	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM4)
       ){
        
         __zunoSetupWUPTimeout();
         zunoSendWakeUpNotification();
         return;
-        //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
+       
     }    
-    //zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, WAKEUP_SLEEP_TIMEOUT);
 }
 void zuno_CCWakeup_OnDefault(){
 	ZunoWakeUpSave_t				save;

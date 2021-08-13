@@ -158,16 +158,16 @@ enum {
 enum 
 {	
 	ZUNO_WAKEUP_REASON_PIN         = 0,   /**< Reset triggered by reset pin */
-    ZUNO_WAKEUP_REASON_WUP_EM4     = 1,   /**< Reset triggered by wake up by timer from deep sleep state  */
-//Legacy: ZW_WAKEUP_SENSOR = 2,   /**< Wake up by a Wakeup Beam */
-  	ZUNO_WAKEUP_REASON_WATCH_DOG    = 3,   /**< Reset triggered by watchdog */
+    ZUNO_WAKEUP_REASON_WUT_EM4     = 1,   /**< Reset triggered by wake up by timer from deep sleep state  */
+ 	ZUNO_WAKEUP_REASON_WATCH_DOG    = 3,   /**< Reset triggered by watchdog */
   	ZUNO_WAKEUP_REASON_EXT_EM4      = 4,
 	ZUNO_WAKEUP_REASON_POR          = 5,   /**< Reset triggered by external interrupt event in deep sleep state */
-//Legacy: ZW_WAKEUP_USB_SUSPEND= 6  /**< Wake up by USB suspend */
     ZUNO_WAKEUP_REASON_SOFTRESET    = 7,   /**< Reset triggered by software */
-//Legacy: ZW_WAKEUP_EMRG_WD_RESET= 8,  /**< Wake up by emergency watchdog reset */
     ZUNO_WAKEUP_REASON_BROWNOUT    = 9,   /**< Reset triggered by brownout circuit */
-    ZUNO_WAKEUP_REASON_OTHER       = 0xFF /**< Reset triggered by none of the above */
+    ZUNO_WAKEUP_REASON_EXT_EM2 	   = 0x10,
+	ZUNO_WAKEUP_REASON_WUT_EM2 	   = 0x11,
+	ZUNO_WAKEUP_REASON_RADIO_EM2   = 0x12,
+	ZUNO_WAKEUP_REASON_OTHER       = 0xFF /**< Reset triggered by none of the above */
 };
 #define ZUNO_ASSOC_NO_PARAMS 							0x00
 

@@ -1,6 +1,6 @@
 #include "ZUNO_SSD1306.h"
 
-ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width = 128, uint16_t height, TwoWire *wire, 
+ZUNO_SSD1306::ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire, 
 						uint8_t i2caddr) : ZUNO_GFX::ZUNO_GFX(width, height),
 						addr(i2caddr), i2c(wire), _invert(false)
 {

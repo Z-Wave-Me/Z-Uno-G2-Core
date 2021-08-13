@@ -68,7 +68,7 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 		void		sendCmd(uint8_t *cmd, size_t size);
 
 	public:
-		ZUNO_SSD1306(uint16_t width, uint16_t height, TwoWire *wire = &Wire,
+		ZUNO_SSD1306(uint16_t width=128, uint16_t height=32, TwoWire *wire = &Wire,
 				uint8_t i2caddr = I2C_SCREEN_ADDRESS);
 		// ~ZUNO_SSD1306();
 		// size_t write(const uint8_t *buffer, size_t size){};

@@ -225,11 +225,10 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 	size_t		ret = 0;
 	char *sub_str = (char*)buf;
 
-
 	while (*sub_str && size >= 0)
 	{
 		unic = utf8toUnicode(sub_str);
-		Serial0.printf("unic - %#x\n", unic);
+		//Serial0.printf("unic - %#x\n", unic);
 		write(unic);
 		sub_str += charLen(sub_str);
 		size -= charLen(sub_str);

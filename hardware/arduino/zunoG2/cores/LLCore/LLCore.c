@@ -385,6 +385,7 @@ bool g_sketch_inited = false;
 #ifdef WITH_CC_WAKEUP
 void zuno_CCWakeup_OnInclusionStart();
 void zuno_CCWakeup_OnInclusionComplete();
+void zuno_CCWakeup_OnSetup();
 #endif
 #ifdef WITH_CC_BATTERY
 void _zunoSleepOnFWUpgradeStop();
@@ -492,12 +493,14 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #ifdef LOGGING_DBG
-
             //LOGGING_UART.println("!SLEEP");
             #endif
             break;
 		case ZUNO_JUMPTBL_WUP:
 			_zunoInitSleepingData();
+			#if defined(WITH_CC_WAKEUP)
+			zuno_CCWakeup_OnSetup();
+			#endif
 			break;
         default:
             break; // UNKNOWN VECTOR

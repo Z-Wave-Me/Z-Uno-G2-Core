@@ -62,7 +62,7 @@ typedef struct ZUNOCommandPacket_s{
 } __attribute__((aligned(1),packed)) ZUNOCommandPacket_t;
 // System variables mapping
 typedef struct ZUNOSetupSysState_s {
-	uint8_t reset_reason;
+	uint8_t wakeup_reason;
 	uint8_t enclusion_state;
 	uint8_t node_id;
 	uint8_t granted_keys;

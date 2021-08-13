@@ -392,9 +392,9 @@ void zunoAddAssociation(byte type, uint32_t params) {
 
 static void _send_group(uint8_t groupIndex)
 {
-	g_outgoing_main_packet.dst_node = groupIndex + 1;
-	g_outgoing_main_packet.src_zw_channel = 0;
-	zunoSendZWPackage(&g_outgoing_main_packet);
+	g_outgoing_report_packet.dst_node = groupIndex + 1;
+	g_outgoing_report_packet.src_zw_channel = 0;
+	zunoSendZWPackage(&g_outgoing_report_packet);
 }
 
 
@@ -404,11 +404,11 @@ void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	fillOutgoingReportPacket(0);
-	lp = (ZwBasicSetFrame_t *)&CMD_REPLY_CC;
+	lp = (ZwBasicSetFrame_t *)&CMD_REPORT_CC;
 	lp->cmdClass = COMMAND_CLASS_BASIC;
 	lp->cmd = BASIC_SET;
 	lp->value = value;
-	CMD_REPLY_LEN = sizeof(ZwBasicSetFrame_t);
+	CMD_REPORT_LEN = sizeof(ZwBasicSetFrame_t);
 	_send_group(groupIndex);
 }
 
@@ -418,17 +418,17 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	fillOutgoingReportPacket(0);
-	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&CMD_REPLY_CC;
+	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&CMD_REPORT_CC;
 	lp->v1.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	if(start_stop != false) {
 		lp->v1.cmd = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
 		lp->v1.properties1 = (direction == true) ? 0x60 : 0x20;
 		lp->v1.startLevel = 0;
-		CMD_REPLY_LEN = sizeof(lp->v1);
+		CMD_REPORT_LEN = sizeof(lp->v1);
 	}
 	else {
 		lp->v1.cmd = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
-		CMD_REPLY_LEN = sizeof(ZwSwitchMultilevelStopLevelChangeFrame_t);
+		CMD_REPORT_LEN = sizeof(ZwSwitchMultilevelStopLevelChangeFrame_t);
 	}
 	_send_group(groupIndex);
 }
@@ -439,13 +439,13 @@ void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene) {
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	fillOutgoingReportPacket(0);
-	lp = (ZwSceneActivationSetFrame_t *)&CMD_REPLY_CC;
+	lp = (ZwSceneActivationSetFrame_t *)&CMD_REPORT_CC;
 	lp->cmdClass = COMMAND_CLASS_SCENE_ACTIVATION;
 	lp->cmd = SCENE_ACTIVATION_SET;
 	lp->sceneId = scene;
 	//lp->dimmingDuration = 0xFF;//Specify dimming duration configured by the Scene Actuator Configuration Set and Scene Controller Configuration Set Command depending on device used.
-	//CMD_REPLY_LEN = sizeof(ZwSceneActivationSetFrame_t);
-	CMD_REPLY_LEN = 3;
+	//CMD_REPORT_LEN = sizeof(ZwSceneActivationSetFrame_t);
+	CMD_REPORT_LEN = 3;
 	_send_group(groupIndex);
 }
 
@@ -455,10 +455,10 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	fillOutgoingReportPacket(0);
-	lp = (ZwDoorLockOperationSet_t *)&CMD_REPLY_CC;
+	lp = (ZwDoorLockOperationSet_t *)&CMD_REPORT_CC;
 	lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	lp->cmd = DOOR_LOCK_OPERATION_SET;
 	lp->doorLockMode = (open_close != false) ? 0x00 : 0xFF;
-	CMD_REPLY_LEN = sizeof(ZwDoorLockOperationSet_t);// FIXME
+	CMD_REPORT_LEN = sizeof(ZwDoorLockOperationSet_t);// FIXME
 	_send_group(groupIndex);
 }

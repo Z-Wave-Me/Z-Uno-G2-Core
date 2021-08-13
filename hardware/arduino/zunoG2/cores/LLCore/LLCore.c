@@ -363,7 +363,9 @@ void zuno_static_autosetup();
 
 static void _zunoInitSleepingData();
 static void _zunoSleepingUpd();
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitDefaultWakeup();
+#endif
 void zunoKickSleepTimeout(uint32_t ms);
 void _zunoSleepOnInclusionStart();
 void _zunoSleepOnInclusionComplete();
@@ -935,6 +937,8 @@ static void _zunoInitSleepingData(){
 	g_sleep_data.wup_latch = false;
 	g_sleep_data.wup_timeout = 0;
 }
+
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitDefaultWakeup(){
 	pinMode(23, INPUT); 				// Configure button as input
 	pinMode(18, INPUT_PULLUP_FILTER);	// Configure INT1 as input with pullup - for backward compatibility with ZUno S1
@@ -946,6 +950,7 @@ static void _zunoInitDefaultWakeup(){
 	zunoEM4EnablePinWakeup(18);
 	
 }
+#endif
 
 static void _zunoSleepingUpd(){
 	if(g_sleep_data.user_latch)

@@ -13,6 +13,7 @@
 #endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "CrtxGPIO.h"
+#include "CrtxADC.h"
 #include "ZWSupport.h"
 #include "CrtxCmu.h"
 #include "HardwareSerial.h"
@@ -77,7 +78,11 @@ inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};
+
+void analogReference(ADC_Ref_TypeDef ref);
+void analogReadResolution(uint8_t bits);
 int  analogRead(uint8_t pin);
+void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 
 
 /* Handler */

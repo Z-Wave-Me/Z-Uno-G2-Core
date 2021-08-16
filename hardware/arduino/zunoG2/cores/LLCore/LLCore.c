@@ -350,6 +350,11 @@ void LLInit() {
 		b++;
 		WDOG_Feed();
 	}
+
+	// default configuration values
+	g_zuno_odhw_cfg.adc_reference  = adcRef5V;
+	g_zuno_odhw_cfg.adc_resolution = 10; // 
+	g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
 }
 
 void LLDestroy() {
@@ -611,26 +616,53 @@ size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
 	ch <<= 3;
 	return (loc << ch);
 }
-
+inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
+	if(res > 8)
+		return adcRes12Bit;
+	if(res > 6)
+		return adcRes8Bit;
+	return 	adcRes6Bit;
+}
+inline uint8_t  __adc_resolution2RealBits(uint8_t res){
+	if(res > 8)
+		return 12;
+	if(res > 6)
+		return 8;
+	return 	6;
+} 
+inline uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
+	if(src > dst)
+		return v >> (src - dst);
+	return v << (dst - src);
+}
+void analogReference(ADC_Ref_TypeDef ref){
+	g_zuno_odhw_cfg.adc_reference = ref;
+}
+void analogReadResolution(uint8_t bits){
+	g_zuno_odhw_cfg.adc_resolution = bits;
+}
+void analogAcqTime(ADC_AcqTime_TypeDef acqtime){
+	g_zuno_odhw_cfg.adc_acqtime = acqtime;
+}
 int analogRead(uint8_t pin) {
     uint32_t sampleValue;
     if(!g_zuno_odhw_cfg.ADCInitialized){
         // Initialize ADC only the first time we need it
-        zme_ADC_Enable();
+		zme_ADC_Enable();
         g_zuno_odhw_cfg.ADCInitialized = true;
     }
     ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
     // Init for single conversion use, use 5V reference
-    singleInit.reference  = adcRef5V;
+    singleInit.reference  = (ADC_Ref_TypeDef)g_zuno_odhw_cfg.adc_reference;
     singleInit.posSel     = zme_ADC_PIN2Channel(pin);
-    singleInit.resolution = adcRes12Bit;
-    singleInit.acqTime    = adcAcqTime256;
+    singleInit.resolution = __adc_resolution2Mode(g_zuno_odhw_cfg.adc_resolution);
+    singleInit.acqTime    = (ADC_AcqTime_TypeDef)g_zuno_odhw_cfg.adc_acqtime;
     ADC_InitSingle(ADC0, &singleInit);
     ADC_Start(ADC0, adcStartSingle);
     while (ADC0->STATUS & ADC_STATUS_SINGLEACT);
     sampleValue = ADC_DataSingleGet(ADC0);
     // zme_ADC_Disable(); // Move to "BEFORESLEEP" hadler
-    return sampleValue;
+    return __oversampleValue(sampleValue, __adc_resolution2RealBits(g_zuno_odhw_cfg.adc_resolution), g_zuno_odhw_cfg.adc_resolution);
 }
 
 

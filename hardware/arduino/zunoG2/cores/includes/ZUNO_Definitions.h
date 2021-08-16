@@ -15,6 +15,7 @@
 	#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
 #endif
 
+
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
@@ -101,6 +102,14 @@ typedef enum
 #define INCLUSION_STATUS_USER_ABORT                     0xFF
 #define MAX_NODEID										232
 #define BOOTLOADER_STORAGE_AREA_START					0x3a000
+
+// ANALOG Refs
+#define DEFAULT											adcRef5V
+#define INTERNAL                                        adcRef1V25
+#define INTERNAL2V56                                    adcRef2V5
+#define INTERNAL5V                                    	adcRef5V
+#define EXTERNAL                                    	adcRefExtSingle
+
 
 
 enum { 

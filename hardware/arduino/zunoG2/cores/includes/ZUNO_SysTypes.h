@@ -150,6 +150,10 @@ typedef struct ZUNOOnDemandHW_s {
 		bool					bExtInit: 1;
 		bool					ADCInitialized: 1;
 	};
+	uint32_t adc_reference;
+	uint8_t adc_resolution;
+	uint8_t adc_acqtime;
+
 	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;

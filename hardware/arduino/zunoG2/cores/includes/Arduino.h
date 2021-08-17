@@ -81,6 +81,7 @@ inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), get
 
 void analogReference(ADC_Ref_TypeDef ref);
 void analogReadResolution(uint8_t bits);
+void analogWriteResolution(uint8_t bits);
 int  analogRead(uint8_t pin);
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 

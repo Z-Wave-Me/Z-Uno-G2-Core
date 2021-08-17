@@ -6,7 +6,6 @@
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1
 #define PWM_HGZ							0x1EA
 #define PWM_DISABLED					0x0
-#define PWM_ENABLED						0xFF
 #define PWM_PIN_DISABLED				0x0
 #define PWM_PIN_ENABLED					0x1
 #define PWM_PIN_PULSE					0x2
@@ -84,24 +83,26 @@ static uint8_t _getPrescale(size_t freq) {
 	return (prescale);
 }
 
-static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
+static uint8_t _analogWrite(uint8_t pin, uint16_t value) {
 	TIMER_TypeDef				*timer;
 	uint8_t						channel;
 	size_t						location;
+	uint32_t					pwm_enabled;
 
 	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin) + 32;
 	channel = _findPWMChannelBusy(location);
 	timer = PWM_TIMER;
-	switch (value) {
-		case PWM_DISABLED:// switch off the led if it was enabled already
-			_noTone(pin);
-			return (PWM_OUT_CLOSE);
-		case PWM_ENABLED:
-			_noTone(pin);
-			if(channel != INVALID_PIN_INDEX)
-				timer->ROUTEPEN &= ~(1UL << channel);//disable CC
-			pinMode(pin, OUTPUT_UP);
-			return (true);
+	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - g_zuno_odhw_cfg.analog_write_resolution);
+	if (value == PWM_DISABLED) {
+		_noTone(pin);
+		return (PWM_OUT_CLOSE);
+	}
+	else if (value >= pwm_enabled) {
+		_noTone(pin);
+		if(channel != INVALID_PIN_INDEX)
+			timer->ROUTEPEN &= ~(1UL << channel);//disable CC
+		pinMode(pin, OUTPUT_UP);
+		return (true);
 	}
 	if(channel == INVALID_PIN_INDEX) {
 		channel = _findPWMChannelSpace();
@@ -112,7 +113,7 @@ static uint8_t _analogWrite(uint8_t pin, uint8_t value) {
 		timer->ROUTEPEN |= (1UL << channel);//enabled CC
 		pinMode(pin, OUTPUT);// enable the output
 	}
-	TIMER_CompareBufSet(timer, channel, TIMER_TopGet(timer) * value / PWM_ENABLED);
+	TIMER_CompareBufSet(timer, channel, TIMER_TopGet(timer) * value / pwm_enabled);
 	return (true);
 }
 
@@ -164,7 +165,7 @@ bool analogWrite(uint8_t pin, word value) {
 		return (false);
 	TONE_PWM_ENTER();
 	if (zunoSyncOpen(&PWM_TIMER_LOCK, SyncMasterPwm, _initPwm, 0, &PWM_TIMER_LOCK_KEY) == ZunoErrorOk) {
-		out = _analogWrite(pin, ((value > 0xFF) ? 0xFF : value));
+		out = _analogWrite(pin, value);
 		zunoSyncReleseWrite(&PWM_TIMER_LOCK, SyncMasterPwm, &PWM_TIMER_LOCK_KEY);
 		if (out == PWM_OUT_CLOSE)
 			out = _analogWriteDisable(pin);//disable pwm
@@ -277,3 +278,8 @@ ZunoError_t toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration) {
 	return (ZunoErrorOk);
 }
 
+void analogWriteResolution(uint8_t bits){
+	if (bits > 0x10)
+		bits = 0x10;
+	g_zuno_odhw_cfg.analog_write_resolution = bits;
+}

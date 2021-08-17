@@ -20,6 +20,8 @@ class ZUNO_HDC1080{
 		float getTemp();
 		float getRelativeHumidity();
 		float* getTempHumid(float* tempHumid);
+		void writeRegister(uint8_t address, uint16_t value);
+		uint16_t readData(uint8_t address);
 
 	private:
 		uint16_t _temperatureRaw;
@@ -27,7 +29,5 @@ class ZUNO_HDC1080{
 		TwoWire *_wire;
 		uint8_t _addr;
 		uint32_t _wire_speed;
-		void writeRegister(uint8_t address, uint16_t value);
-		uint16_t readData(uint8_t address);
 };
 #endif

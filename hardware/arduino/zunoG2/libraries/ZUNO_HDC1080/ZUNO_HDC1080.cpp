@@ -22,9 +22,9 @@ void ZUNO_HDC1080::begin(){
 	//config the resolution to 14 bits for temp & humidity
 	_wire->begin();
 	_wire->setClock(this->_wire_speed); //set clock speed for I2C bus to maximum allowed for HDC1080
-	
-	this->writeRegister(0x02,0x10);
-
+	delay(20);
+	writeRegister(0x02,0x00);
+	writeRegister(0x02,0x1000);
 }
 
 void ZUNO_HDC1080::begin(uint32_t wire_speed){
@@ -33,14 +33,18 @@ void ZUNO_HDC1080::begin(uint32_t wire_speed){
 	_wire_speed = wire_speed;
 	_wire->begin();
 	_wire->setClock(this->_wire_speed); //set clock speed for I2C bus to maximum allowed for HDC1080
-	this->writeRegister(0x02,0x10);
+	delay(20);
+	writeRegister(0x02,0x00);
+	writeRegister(0x02,0x1000);
+
 
 }
 
 void ZUNO_HDC1080::writeRegister(uint8_t address, uint16_t value){
 	_wire->beginTransmission(_addr);
 	_wire->write(address);
-	_wire->write(value);
+	_wire->write(value >> 8);
+	_wire->write(value & 0xff);
 	_wire->endTransmission();
 }
 
@@ -100,7 +104,7 @@ void ZUNO_HDC1080::heatUp(uint8_t seconds) {
 	reg |= 1 << 13;
 	writeRegister(0x02, reg);
 
-	for (int i = 1; i < (seconds*45); i++) {
+	for (int i = 1; i < (seconds*56); i++) {
 		_wire->beginTransmission(_addr);
 		_wire->write(0x00);
 		_wire->endTransmission();

@@ -1,22 +1,19 @@
 //Example of reading from HDC1080
 
-#include "Arduino.h"
+
 #include "ZUNO_HDC1080.h"
 #include "Wire.h"
 
 ZUNO_HDC1080 tempsensor;
 
 void setup() {
-  Wire.begin();
-  Wire.setClock(400000); //set clock speed for I2C bus to maximum allowed for HDC1080
   Serial.begin(9600);  // start serial for output
-
-  tempsensor = ZUNO_HDC1080();
-  tempsensor.config();
+  tempsensor = ZUNO_HDC1080(); 
+  tempsensor.begin(); // configure sensor
+  tempsensor.heatUp(15); // heat up sensor ~15 seconds
 }
 
 void loop() {
-
   tempsensor.readTempHumid();
   float temp = tempsensor.getTemp();
   float humid = tempsensor.getRelativeHumidity();

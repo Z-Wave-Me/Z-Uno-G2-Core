@@ -33,11 +33,11 @@ class HardwareSerial : public Stream {
 		void									end();
 		void									changeParity(USART_Parity_TypeDef parity);
 		ssize_t									printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
-		uint8_t									write(unsigned long value);
-		uint8_t									write(long value);
-		uint8_t									write(unsigned int value);
-		uint8_t									write(int value);
-		virtual uint8_t							write(uint8_t value);
+		size_t									write(unsigned long value);
+		size_t									write(long value);
+		size_t									write(unsigned int value);
+		size_t									write(int value);
+		virtual size_t							write(uint8_t value);
 		virtual size_t							write(const uint8_t *b, size_t count);
 		virtual int								available(void);
 		virtual int								peek(void);

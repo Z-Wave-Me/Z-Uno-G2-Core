@@ -142,23 +142,23 @@ ssize_t HardwareSerial::printf(const char *format, ...) {
 	return (out);
 }
 
-uint8_t HardwareSerial::write(uint8_t value) {
+size_t HardwareSerial::write(uint8_t value) {
 	return (this->write((const uint8_t *)&value, 1));
 }
 
-uint8_t HardwareSerial::write(unsigned long value) {
+size_t HardwareSerial::write(unsigned long value) {
 	return (this->write((const uint8_t *)&value, 1));
 }
 
-uint8_t HardwareSerial::write(long value) {
+size_t HardwareSerial::write(long value) {
 	return (this->write((const uint8_t *)&value, 1));
 }
 
-uint8_t HardwareSerial::write(unsigned int value) {
+size_t HardwareSerial::write(unsigned int value) {
 	return (this->write((const uint8_t *)&value, 1));
 }
 
-uint8_t HardwareSerial::write(int value) { 
+size_t HardwareSerial::write(int value) { 
 	return (this->write((const uint8_t *)&value, 1));
 }
 

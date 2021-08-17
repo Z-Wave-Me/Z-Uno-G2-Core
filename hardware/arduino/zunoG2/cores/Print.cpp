@@ -25,6 +25,10 @@ size_t Print::print(unsigned long n, int base) {
 	return (this->write(&buf[0]));
 }
 
+size_t Print::print(const String &s) {
+	return write(s.c_str(), s.length());
+}
+
 size_t Print::println(const char c[])
 {
   size_t n = print(c);
@@ -81,6 +85,14 @@ size_t Print::println(float num, int digits)
   return n;
 }
 
+size_t Print::println(const String &s)
+{
+	size_t n = print(s);
+	n += println();
+	return n;
+}
+
+
 size_t Print::printFloat(float number, uint8_t digits) {
 	char				buff[FLT_MAX_10_EXP + FLT_MAX_10_EXP + 1 + 1 + 1];//++1 - zero; +1 '.'; +1 - neg
 
@@ -88,6 +100,50 @@ size_t Print::printFloat(float number, uint8_t digits) {
 		digits = FLT_MAX_10_EXP;
 	dtostrff(number, 0, digits, &buff[0]);
 	return (this->write(&buff[0]));
+}
+
+size_t Print::printFloat(double number, uint8_t digits) {
+	size_t n = 0;
+	
+	if (isnan(number)) return print("nan");
+	if (isinf(number)) return print("inf");
+	if (number > 4294967040.0) return print ("ovf");  // constant determined empirically
+	if (number <-4294967040.0) return print ("ovf");  // constant determined empirically
+	
+	// Handle negative numbers
+	if (number < 0.0)
+	{
+		n += print('-');
+		number = -number;
+	}
+
+	// Round correctly so that print(1.999, 2) prints as "2.00"
+	double rounding = 0.5;
+	for (uint8_t i=0; i<digits; ++i)
+		rounding /= 10.0;
+	
+	number += rounding;
+
+	// Extract the integer part of the number and print it
+	unsigned long int_part = (unsigned long)number;
+	double remainder = number - (double)int_part;
+	n += print(int_part);
+
+	// Print the decimal point, but only if there are digits beyond
+	if (digits > 0) {
+		n += print('.'); 
+	}
+
+	// Extract digits from the remainder one at a time
+	while (digits-- > 0)
+	{
+		remainder *= 10.0;
+		unsigned int toPrint = (unsigned int)(remainder);
+		n += print(toPrint);
+		remainder -= toPrint; 
+	} 
+	
+	return n;
 }
 
 uint8_t Print::fixPrint(long n, uint8_t precision) {

@@ -111,10 +111,10 @@ void HardwareSerial::end() {
 	zunoSyncClose(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_deInit, (size_t)this, &this->_lpKey);
 }
 
-size_t HardwareSerial::available(void) {
+int HardwareSerial::available(void) {
 	const ZunoHardwareSerialConfig_t			*config;
 	ZunoSync_t									*lpLock;
-	size_t											out;
+	int											out;
 
 	config = &this->_configTable[this->_numberConfig];
 	lpLock = config->lpLock;
@@ -201,7 +201,7 @@ void HardwareSerial::changeParity(USART_Parity_TypeDef parity) {
 
 
 /* Private Methods */
-inline size_t HardwareSerial::_available(void) {
+inline int HardwareSerial::_available(void) {
 	size_t				count;
 	size_t				count_read;
 	size_t				count_len;

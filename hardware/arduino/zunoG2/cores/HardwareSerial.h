@@ -39,11 +39,11 @@ class HardwareSerial : public Stream {
 		uint8_t									write(int value);
 		virtual uint8_t							write(uint8_t value);
 		virtual size_t							write(const uint8_t *b, size_t count);
-		virtual size_t							available(void);
+		virtual int								available(void);
 		virtual int								peek(void);
 		virtual int								read(void);
 	private:
-		inline size_t							_available(void);
+		inline int								_available(void);
 		inline int								_readLock(uint8_t bOffset);
 		inline int								_read(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);

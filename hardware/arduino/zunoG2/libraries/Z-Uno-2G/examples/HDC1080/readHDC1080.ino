@@ -8,14 +8,12 @@ ZUNO_HDC1080 tempsensor;
 
 void setup() {
   Serial.begin(9600);  // start serial for output
-
-  tempsensor = ZUNO_HDC1080();
-  tempsensor.begin();
-  tempsensor.heatUp(20);
+  tempsensor = ZUNO_HDC1080(); 
+  tempsensor.begin(); // configure sensor
+  tempsensor.heatUp(15); // heat up sensor ~15 seconds
 }
 
 void loop() {
-
   tempsensor.readTempHumid();
   float temp = tempsensor.getTemp();
   float humid = tempsensor.getRelativeHumidity();

@@ -18,9 +18,8 @@
 #include "CrtxCmu.h"
 #include "HardwareSerial.h"
 #include "Libft.h"
-// #include "Print.h"  // <- Здесь должен быть HardwareSerial
-
 #include "Custom_decl.h" // 
+#define  ARDUINO_ARCH_ZUNOG2 1 //  To differ ZUNO from another board by means of ifdef
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)

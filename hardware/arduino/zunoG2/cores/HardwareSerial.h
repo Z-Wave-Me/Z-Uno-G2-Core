@@ -37,7 +37,7 @@ class HardwareSerial : public Stream {
 		uint8_t									write(long value);
 		uint8_t									write(unsigned int value);
 		uint8_t									write(int value);
-		virtual uint8_t							write(uint8_t value);
+		virtual size_t							write(uint8_t value);
 		virtual size_t							write(const uint8_t *b, size_t count);
 		virtual int								available(void);
 		virtual int								peek(void);

@@ -38,8 +38,8 @@ class Print{
 		size_t dumpPrint(uint8_t *b, size_t count, size_t line_size = 10);
 		uint8_t formatPrint(int n, uint8_t format);
 
-		virtual uint8_t write(uint8_t) = 0;
-		virtual size_t write(const uint8_t *buffer, size_t size) = 0;
+		virtual size_t write(uint8_t) = 0;
+		virtual size_t write(const uint8_t *buffer, size_t size);
 
 		size_t write(const char *str);
 		inline size_t write(const char *buffer, size_t size) {return (this->write((const uint8_t *)buffer, size));}

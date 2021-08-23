@@ -30,6 +30,35 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoGetWakeReason()     (g_zuno_sys->wakeup_reason)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 
+// Backward compatibility with AVR
+#define pgm_read_byte(addr) ((uint8_t*)addr)[0]
+#define PROGMEM
+// Arduino specific macroses/function
+long map(long x, long in_min, long in_max, long out_min, long out_max);
+#define ARDUINO 		    152	
+#define DEG_TO_RAD 			0.017453292519
+#define RAD_TO_DEG 			57.29577951308
+#define EULER 				2.718281828459
+
+#define min(a,b) 				((a)<(b)?(a):(b))
+#define max(a,b) 				((a)>(b)?(a):(b))
+#define abs(x) 					((x)>0?(x):-(x))
+#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
+#define round(x)     			((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
+#define radians(deg) 			((deg)*DEG_TO_RAD)
+#define degrees(rad) 			((rad)*RAD_TO_DEG)
+#define sq(x) 					((x)*(x))
+ 
+// Bit-wise operations
+#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
+#define bitSet(value, bit) ((value) |= (1UL << (bit)))
+#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
+#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+#define _BV(bit) (1 << (bit))
+
+
+#define lowByte(w) ((uint8_t) ((w) & 0xff))
+#define highByte(w) ((uint8_t) ((w) >> 8))
 
 /* Supervisor call */
 void *zunoSysCall(uint8_t ct, uint8_t n, ...);
@@ -66,6 +95,7 @@ inline void zunoEnableSmartStart(bool en){
 void delay(dword ms);
 dword millis(void);
 void delayMicroseconds(word tdelay);
+inline void yield() { delay(1); }
 
 
 /* pin */

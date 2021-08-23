@@ -142,7 +142,7 @@ ssize_t HardwareSerial::printf(const char *format, ...) {
 	return (out);
 }
 
-uint8_t HardwareSerial::write(uint8_t value) {
+size_t HardwareSerial::write(uint8_t value) {
 	return (this->write((const uint8_t *)&value, 1));
 }
 

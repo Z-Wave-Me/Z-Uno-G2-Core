@@ -1,57 +1,102 @@
-#ifndef _ZUNO_PRINT_H
-#define _ZUNO_PRINT_H
+/*
+  Print.h - Base class that provides print() and println()
+  Copyright (c) 2008 David A. Mellis.  All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+#ifndef Print_h
+#define Print_h
+
+#include <inttypes.h>
+#include <stdio.h> // for size_t
+
+#include "WString.h"
+#include "Printable.h"
 
 #define DEC 10
 #define HEX 16
 #define OCT 8
+#ifdef BIN // Prevent warnings if BIN is previously defined in "iotnx4.h" or similar
+#undef BIN
+#endif
 #define BIN 2
 
-#include "ArduinoTypes.h"
-#include <math.h>
-#include <string.h>
-#include "WString.h"
+class Print
+{
+  private:
+    int write_error;
+    size_t printNumber(unsigned long, uint8_t);
+    size_t printFloat(double, uint8_t);
+  protected:
+    void setWriteError(int err = 1) { write_error = err; }
+  public:
+    Print() : write_error(0) {}
+  
+    int getWriteError() { return write_error; }
+    void clearWriteError() { setWriteError(0); }
+  
+    virtual size_t write(uint8_t) = 0;
+    size_t write(const char *str) {
+      if (str == NULL) return 0;
+      return write((const uint8_t *)str, strlen(str));
+    }
+    virtual size_t write(const uint8_t *buffer, size_t size);
+    size_t write(const char *buffer, size_t size) {
+      return write((const uint8_t *)buffer, size);
+    }
 
-class Print{
+    // default to zero, meaning "a single write may block"
+    // should be overriden by subclasses with buffering
+    virtual int availableForWrite() { return 0; }
+
+    // size_t print(const __FlashStringHelper *);
+    size_t print(const String &);
+    size_t print(const char[]);
+    size_t print(char);
+    size_t print(unsigned char, int = DEC);
+    size_t print(int, int = DEC);
+    size_t print(unsigned int, int = DEC);
+    size_t print(long, int = DEC);
+    size_t print(unsigned long, int = DEC);
+    size_t print(double, int = 2);
+    size_t print(const Printable&);
+
+    // size_t println(const __FlashStringHelper *);
+    size_t println(const String &s);
+    size_t println(const char[]);
+    size_t println(char);
+    size_t println(unsigned char, int = DEC);
+    size_t println(int, int = DEC);
+    size_t println(unsigned int, int = DEC);
+    size_t println(long, int = DEC);
+    size_t println(unsigned long, int = DEC);
+    size_t println(double, int = 2);
+    size_t println(const Printable&);
+    size_t println(void);
+
+    virtual void flush() { /* Empty implementation for backward compatibility */ }
+
+	// Zuno
 	public:
-		inline size_t print(const char s[]) {return (this->write(s));};
-		inline size_t print(char c) {return (this->write(c));};
-		inline size_t print(unsigned char n, int base = DEC) {return (this->print((unsigned long)n, base));};
-		inline size_t print(int n, int base = DEC) {return (this->print((long) n, base));};
-		inline size_t print(unsigned int n, int base = DEC) {return (this->print((unsigned long) n, base));};
-		size_t print(long n, int base = DEC);
-		size_t print(unsigned long n, int base = DEC);
-		inline size_t print(float n, int digits = 2) {return (this->printFloat(n, digits));};
-		inline size_t print(double n, int digits = 2) {return (this->printFloat(n, digits));};
-		size_t print(const String &);
-
-		size_t println(const char[]);
-		size_t println(char);
-		size_t println(unsigned char, int = DEC);
-		size_t println(int, int = DEC);
-		size_t println(unsigned int, int = DEC);
-		size_t println(long, int = DEC);
-		size_t println(unsigned long, int = DEC);
-		size_t println(float, int = 2);
-		size_t println(double, int = 2);
-		size_t println(const String &s);
-		inline size_t println(void) {return (this->write("\r\n"));};
-
-		inline size_t printNumber(unsigned long n, uint8_t base) {return (this->print(n, base));};
-		size_t printFloat(float, uint8_t digits);
-		size_t printFloat(double, uint8_t digits);
-
-		uint8_t fixPrint(long, uint8_t  = 2);
-		size_t dumpPrint(uint8_t *b, size_t count, size_t line_size = 10);
-		uint8_t formatPrint(int n, uint8_t format);
-
-		virtual size_t write(uint8_t) = 0;
-		virtual size_t write(const uint8_t *buffer, size_t size);
-
-		size_t write(const char *str);
-		inline size_t write(const char *buffer, size_t size) {return (this->write((const uint8_t *)buffer, size));}
-
+		size_t						printFloat(float, uint8_t digits);
+		uint8_t						fixPrint(long, uint8_t  = 2);
+		size_t						dumpPrint(uint8_t *b, size_t count, size_t line_size = 10);
+		uint8_t						formatPrint(int n, uint8_t format);
 	private:
-		inline size_t _digit2hexchar(size_t d) {return ((d > 9) ? d - 10 + 'A' : d + '0');};
+		inline size_t				_digit2hexchar(size_t d) {return ((d > 9) ? d - 10 + 'A' : d + '0');};
 };
 
-#endif // _ZUNO_PRINT_H
+#endif

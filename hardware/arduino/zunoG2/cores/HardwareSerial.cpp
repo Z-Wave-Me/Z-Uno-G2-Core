@@ -1,21 +1,11 @@
 #include "Arduino.h"
 #include "stdio.h"
 #include "stdarg.h"
-#include "ZDma.h"
 #include "HardwareSerial.h"
 #include "Libft.h"
 
 #define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
-
-#define HARDWARE_SERIAL_UNIQ_ZDMA_WRITE			((size_t)&this->_buffer_len)
-
-typedef struct							ZunoHardwareSerialInit_s
-{
-	const ZunoHardwareSerialConfig_t	*config;
-	size_t								baudrate;
-	size_t								bIrq;
-}										ZunoHardwareSerialInit_t;
 
 typedef struct							ZunoHardwareSerialDeInit_s
 {
@@ -26,51 +16,39 @@ typedef struct							ZunoHardwareSerialDeInit_s
 const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART0,
-		.IRQHandler = (void *)&HardwareSerial::_USART0_IRQHandler,
 		.lpLock = &gSyncUSART0,
-		.baudrate = 115200,
-		.dmaSignalWrite = zdmaPeripheralSignal_USART0_TXBL,
+		.dmaSignalWrite = LdmaClassSignal_USART0_TXBL,
+		.dmaSignalRead = LdmaClassSignal_USART0_RXDATAV,
 		.bus_clock = cmuClock_USART0,
-		.irqType = USART0_RX_IRQn,
-		.subType = ZUNO_IRQVEC_USART0_RX,
 		.rx = RX0,
 		.tx = TX0
 	},
 	{
 		.usart = USART1,
-		.IRQHandler = (void *)&HardwareSerial::_USART1_IRQHandler,
 		.lpLock = &gSyncUSART1,
-		.baudrate = 115200,
-		.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
+		.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
+		.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
 		.bus_clock = cmuClock_USART1,
-		.irqType = USART1_RX_IRQn,
-		.subType = ZUNO_IRQVEC_USART1_RX,
 		.rx = RX1,
 		.tx = TX1
 	},
 		#if ZUNO_PIN_V <= 3
 			{
 				.usart = USART1,
-				.IRQHandler = (void *)&HardwareSerial::_USART1_IRQHandler,
 				.lpLock = &gSyncUSART2,
-				.baudrate = 115200,
-				.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
+				.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
+				.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
 				.bus_clock = cmuClock_USART1,
-				.irqType = USART1_RX_IRQn,
-				.subType = ZUNO_IRQVEC_USART1_RX,
 				.rx = RX2,
 				.tx = TX2
 			}
 		#else
 			{
 				.usart = USART2,
-				.IRQHandler = (void *)&HardwareSerial::_USART2_IRQHandler,
 				.lpLock = &gSyncUSART2,
-				.baudrate = 115200,
-				.dmaSignalWrite = zdmaPeripheralSignal_USART2_TXBL,
+				.dmaSignalWrite = LdmaClassSignal_USART2_TXBL,
+				.dmaSignalRead = LdmaClassSignal_USART2_RXDATAV,
 				.bus_clock = cmuClock_USART2,
-				.irqType = USART2_RX_IRQn,
-				.subType = ZUNO_IRQVEC_USART2_RX,
 				.rx = RX2,
 				.tx = TX2
 			}
@@ -78,30 +56,30 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 };
 
 /* Public Constructors */
-HardwareSerial::HardwareSerial(uint8_t numberConfig): _lpKey(false), _bFree(false) {
+HardwareSerial::HardwareSerial(uint8_t numberConfig): _channel(-1), _lpKey(false), _bFree(false) {
 	if (numberConfig >= (sizeof(HardwareSerial::_configTable) / sizeof(ZunoHardwareSerialConfig_t)))
 		numberConfig = 0;
 	this->_numberConfig = numberConfig;
 }
 
 /* Public Methods */
-ZunoError_t HardwareSerial::begin(size_t baudrate) {
-	const ZunoHardwareSerialConfig_t			*config;
+void HardwareSerial::begin(unsigned long baud, uint32_t config) {
+	const ZunoHardwareSerialConfig_t			*config_serial;
 
-	config = &this->_configTable[this->_numberConfig];
-	return (this->begin(baudrate, config->rx, config->tx));
+	config_serial = &this->_configTable[this->_numberConfig];
+	this->begin(baud, config, config_serial->rx, config_serial->tx);
 }
 
-ZunoError_t HardwareSerial::begin(size_t baudrate, uint8_t rx, uint8_t tx) {
+ZunoError_t HardwareSerial::begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx) {
 	void				*b;
 
 	if ((b = malloc(HARDWARE_SERIAL_BUFFER_LENGTH)) == 0)
 		return (ZunoErrorMemory);
-	return (this->_begin(baudrate, rx, tx, b, HARDWARE_SERIAL_BUFFER_LENGTH, true));
+	return (this->_begin(speed, config, rx, tx, b, HARDWARE_SERIAL_BUFFER_LENGTH, true));
 }
 
-ZunoError_t HardwareSerial::begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, uint16_t len) {
-	return (this->_begin(baudrate, rx, tx, b, len, false));
+ZunoError_t HardwareSerial::begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len) {
+	return (this->_begin(speed, config, rx, tx, buffer, len, false));
 }
 
 void HardwareSerial::end() {
@@ -120,7 +98,7 @@ int HardwareSerial::available(void) {
 	lpLock = config->lpLock;
 	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	out = this->_available();
+	out = LdmaClass::receivedAvailable(this->_channel);
 	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (out);
 }
@@ -142,82 +120,49 @@ ssize_t HardwareSerial::printf(const char *format, ...) {
 	return (out);
 }
 
-size_t HardwareSerial::write(uint8_t value) {
-	return (this->write((const uint8_t *)&value, 1));
-}
-
-size_t HardwareSerial::write(unsigned long value) {
-	return (this->write((const uint8_t *)&value, 1));
-}
-
-size_t HardwareSerial::write(long value) {
-	return (this->write((const uint8_t *)&value, 1));
-}
-
-size_t HardwareSerial::write(unsigned int value) {
-	return (this->write((const uint8_t *)&value, 1));
-}
-
-size_t HardwareSerial::write(int value) { 
-	return (this->write((const uint8_t *)&value, 1));
-}
-
+// V_uart — скорость UART (например: 9600, 115200), бод;
+// d — количество бит данных;
+// D — количество байт всех данных;
+// s — количество стоповых бит;
+// p — количество бит четности, p = 1 если бит четности присутствует, или p = 0 если бит четности отсутствует;
+// t = 8 * D * (d + 1 + s + p) * 1000 / (d * V_uart) - мс
 size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
 	const uint8_t								*e;
+	ssize_t										channel;
+	LdmaClassTransferSingle_t					array;
+	uint32_t									frame;
+	uint32_t									ms;
 
 	config = &this->_configTable[this->_numberConfig];
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (0);
 	usart = config->usart;
+	frame = usart->FRAME;
+	ms = 1000 * 0x8 * count * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
 	if (count <= HARDWARE_SERIAL_MIN_WRITE_ZDMA) {
 		e = b + count;
-		while (b < e)
-			USART_Tx(usart, b++[0]);
+		ms = ms / count;
+		while (b < e) {
+			usart->TXDATA = (uint32_t)b++[0];
+			delay(ms);
+			while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
+				__NOP();
+		}
 	}
-	else if (ZDMA.toMemoryPeripheral(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8) == ZunoErrorOk) {
-		ZDMA.waitTransfer(HARDWARE_SERIAL_UNIQ_ZDMA_WRITE);
+	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0) {
+		delay(ms);
 		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
 			__NOP();
+		LdmaClass::transferStop(channel);
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (count);
 }
 
-void HardwareSerial::changeParity(USART_Parity_TypeDef parity) {
-	const ZunoHardwareSerialConfig_t			*config;
-	ZunoSync_t									*lpLock;
-	USART_TypeDef								*usart;
-
-	config = &this->_configTable[this->_numberConfig];
-	lpLock = config->lpLock;
-	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
-		return ;
-	usart = config->usart;
-	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_PARITY_MASK)) | parity;
-	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
-}
-
 
 /* Private Methods */
-inline int HardwareSerial::_available(void) {
-	size_t				count;
-	size_t				count_read;
-	size_t				count_len;
-
-	count = this->_buffer_count;
-	if (count == (count_read = this->_buffer_count_read))
-		return (0);
-	if (count_read == (count_len = this->_buffer_len)) {
-		this->_buffer_count_read = 0;
-		count_read = 0;
-	}
-	if (count >= count_read)
-		return (count - count_read);
-	return (count_len - count_read);
-}
-
 inline int HardwareSerial::_readLock(uint8_t bOffset) {
 	const ZunoHardwareSerialConfig_t			*config;
 	ZunoSync_t									*lpLock;
@@ -227,63 +172,27 @@ inline int HardwareSerial::_readLock(uint8_t bOffset) {
 	lpLock = config->lpLock;
 	if (zunoSyncLockRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (-1);
-	out = this->_read(bOffset);
+	out = LdmaClass::receivedReadPeek(this->_channel, bOffset);
 	zunoSyncReleseRead(lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (out);
-}
-
-inline int HardwareSerial::_read(uint8_t bOffset) {
-	size_t								count;
-	size_t								count_read;
-
-	count = this->_buffer_count;
-	if (count == (count_read = this->_buffer_count_read))
-		return (-1);
-	if (count_read == this->_buffer_len) {
-		this->_buffer_count_read = 0;
-		count_read = 0;
-	}
-	if (bOffset == true)
-		this->_buffer_count_read++;
-	return (this->_buffer[count_read]);
 }
 
 ZunoError_t HardwareSerial::_deInit(size_t param) {
 	HardwareSerial								*serial;
 	const ZunoHardwareSerialConfig_t			*config;
+	ssize_t										channel;
 
 	serial = (HardwareSerial *)param;
 	config = &serial->_configTable[serial->_numberConfig];
-	NVIC_DisableIRQ(config->irqType);
+	if ((channel = serial->_channel) > 0x0) {
+		LdmaClass::transferStop(channel);
+		serial->_channel = -1;
+	}
 	USART_Reset(config->usart);
 	if (serial->_bFree == true) {
 		serial->_bFree = false;
 		free(serial->_buffer);
 	}
-	zunoDetachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler);
-	return (ZunoErrorOk);
-}
-
-ZunoError_t HardwareSerial::_init(size_t param) {
-	ZunoHardwareSerialInit_t					*init;
-	const ZunoHardwareSerialConfig_t			*config;
-	USART_InitAsync_TypeDef						usartInit;
-	USART_TypeDef								*usart;
-	ZunoError_t									ret;
-
-	init = (ZunoHardwareSerialInit_t *)param;
-	config = init->config;
-	if (init->bIrq != 0 && (ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, config->subType, config->IRQHandler)) != ZunoErrorOk)
-		return (ret);
-	usartInit = USART_INITASYNC_DEFAULT;
-	usartInit.baudrate = init->baudrate;
-	usart = config->usart;
-	CMU_ClockEnable(config->bus_clock, true);
-	USART_InitAsync(usart, &usartInit);
-	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
-	usart->IEN = USART_IEN_RXDATAV;
-	if (init->bIrq != 0)
-		NVIC_EnableIRQ(config->irqType);/* Enable interrupts in NVIC */
 	return (ZunoErrorOk);
 }
 
@@ -293,8 +202,7 @@ inline ZunoError_t HardwareSerial::_beginFaill(ZunoError_t ret, uint8_t bFree, v
 	return (ret);
 }
 
-inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree) {
-	ZunoHardwareSerialInit_t					init;
+inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
 	const uint8_t								*location_ptr;
@@ -302,6 +210,8 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	ZunoError_t									ret;
 	size_t 										rx_loc;
 	size_t 										tx_loc;
+	USART_InitAsync_TypeDef						usartInit;
+	ssize_t										channel;
 
 	config = &HardwareSerial::_configTable[this->_numberConfig];
 	usart = config->usart;
@@ -320,87 +230,66 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint8_t rx, uint8_t t
 	tx_loc = getLocation(location_ptr, location_sz, tx);
 	if (rx == tx || rx_loc == INVALID_PIN_INDEX || tx_loc == INVALID_PIN_INDEX)
 		return (this->_beginFaill(ZunoErrorInvalidPin, bFree, b));// wrong index or pin combination // The pin is valid, but it doesn't support by this USART interface
-	init.config = config;
-	init.baudrate = baudrate;
-	init.bIrq = (size_t)b;
-	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, HardwareSerial::_init, (size_t)&init, &this->_lpKey)) != ZunoErrorOk)
+	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, 0x0, 0x0, &this->_lpKey)) != ZunoErrorOk)
 		return (this->_beginFaill(ret, bFree, b));
+	CMU_ClockEnable(config->bus_clock, true);
+	usartInit = USART_INITASYNC_DEFAULT;
+	this->_baudrate = baudrate;
+	usartInit.baudrate = baudrate;
+	USART_InitAsync(usart, &usartInit);
+	usart->FRAME = option;
 	pinMode(tx, OUTPUT_UP);
 	pinMode(rx, INPUT_PULLUP);
-	USART_BaudrateAsyncSet(usart, 0, baudrate, usartOVS16);
 	if (this->_bFree == true)
 		free(this->_buffer);
 	this->_buffer = (uint8_t *)b;
 	this->_buffer_len = len;
 	this->_bFree = bFree;
-	this->_buffer_count_read = 0;
-	this->_buffer_count = 0;
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT;
+	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
+	if ((channel = this->_channel) > 0x0)
+		LdmaClass::transferStop(channel);
+	channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, b, len, config->dmaSignalRead, ldmaCtrlSizeByte, &this->_arrayReceivedCyclical);
+	this->_channel = channel;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+	if (channel < 0x0) {
+		this->end();
+		return (ZunoErrorDmaLimitChannel);
+	}
 	return (ZunoErrorOk);
 }
 
-inline void HardwareSerial::_USART_IRQHandler(size_t date) {
-	if (this->_buffer_count >= this->_buffer_len) {
-		this->_buffer_count = 0;
-	}
-	this->_buffer[this->_buffer_count++] = (uint8_t)date;
-}
-
-void HardwareSerial::_USART0_IRQHandler(size_t flags) {
-	Serial0._USART_IRQHandler(flags);
-}
-
-void HardwareSerial::_USART1_IRQHandler(size_t flags) {
-	Serial1._USART_IRQHandler(flags);
-}
-
-void HardwareSerial::_USART2_IRQHandler(size_t flags) {
-	Serial._USART_IRQHandler(flags);
-}
-
 /* Preinstantiate Objects */
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#if ZUNO_PIN_V == 1
-		HardwareSerial Serial(1);// USB
-		HardwareSerial Serial1(1); // UART1  - разделяет один физический UART на разных пинах с Serial
-		HardwareSerial Serial0(0); // UART0 
-	#elif ZUNO_PIN_V == 2
-		HardwareSerial Serial(1);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 3
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 4
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#elif ZUNO_PIN_V == 6
-		HardwareSerial Serial(2);// USB
-		HardwareSerial Serial1(1); // UART1
-		HardwareSerial Serial0(0); // UART0
-	#else
-		#error ZUNO_PIN_V
-	#endif
-	//For printf
-	ssize_t write(int fd, const void *buf, size_t count) {
-		switch (fd) {
-			case 0:
-				return (Serial0.write((const uint8_t *)buf, count));
-				break ;
-			case 1:
-				return (Serial1.write((const uint8_t *)buf, count));
-				break ;
-			case 2:
-				return (Serial.write((const uint8_t *)buf, count));
-				break ;
-			default:
-				break ;
-		}
-		return (-1);
-	}
+#if ZUNO_PIN_V == 3
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
+	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 4
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 6
+	HardwareSerial Serial(2);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
 #else
+	#error ZUNO_PIN_V
 #endif
+//For printf
+ssize_t write(int fd, const void *buf, size_t count) {
+	switch (fd) {
+		case 0:
+			return (Serial0.write((const uint8_t *)buf, count));
+			break ;
+		case 1:
+			return (Serial1.write((const uint8_t *)buf, count));
+			break ;
+		case 2:
+			return (Serial.write((const uint8_t *)buf, count));
+			break ;
+		default:
+			break ;
+	}
+	return (-1);
+}

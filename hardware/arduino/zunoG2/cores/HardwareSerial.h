@@ -3,22 +3,33 @@
 
 #include "Stream.h"
 #include "stdio.h"
-#include "ZDma_define.h"
+#include "LdmaClass.h"
 #include "Sync.h"
 #include "CrtxUSART.h"
 
-typedef uint16_t hardware_serial_buffer_len;
+#define HARDWARE_SERIAL_SPEED_DEFAULT							115200
+#define HARDWARE_SERIAL_CONFIG(databits, parity, stopbits)		(databits | parity | stopbits)
+
+#define SERIAL_8N1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_9N1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_8N2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_TWO)
+#define SERIAL_9N2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_TWO)
+#define SERIAL_8E1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_9E1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_8E2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_TWO)
+#define SERIAL_9E2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_TWO)
+#define SERIAL_8O1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_9O1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_ONE)
+#define SERIAL_8O2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_TWO)
+#define SERIAL_9O2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_TWO)
 
 typedef struct							ZunoHardwareSerialConfig_s
 {
 	USART_TypeDef						*usart;
-	void								*IRQHandler;
 	ZunoSync_t							*lpLock;
-	size_t								baudrate;
-	ZDMA_PeripheralSignal_t				dmaSignalWrite;
+	LdmaClassSignal_t					dmaSignalWrite;
+	LdmaClassSignal_t					dmaSignalRead;
 	CMU_Clock_TypeDef					bus_clock;
-	IRQn_Type							irqType;
-	uint8_t								subType;
 	uint8_t								rx;
 	uint8_t								tx;
 }										ZunoHardwareSerialConfig_t;
@@ -26,39 +37,37 @@ typedef struct							ZunoHardwareSerialConfig_s
 class HardwareSerial : public Stream {
 	public:
 		HardwareSerial(uint8_t numberConfig);
-		inline ZunoError_t						begin(void) {return (this->begin(this->_configTable[this->_numberConfig].baudrate));};
-		ZunoError_t								begin(size_t baudrate);
-		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx);
-		ZunoError_t								begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len);
+		void									begin(unsigned long baud) { begin(baud, SERIAL_8N1); }
+		void									begin(unsigned long baud, uint32_t config);
 		void									end();
-		void									changeParity(USART_Parity_TypeDef parity);
-		ssize_t									printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
-		size_t									write(unsigned long value);
-		size_t									write(long value);
-		size_t									write(unsigned int value);
-		size_t									write(int value);
-		virtual size_t							write(uint8_t value);
-		virtual size_t							write(const uint8_t *b, size_t count);
 		virtual int								available(void);
 		virtual int								peek(void);
 		virtual int								read(void);
+		virtual int								availableForWrite(void) {return (0x10);};
+		virtual void							flush(void) {};
+		virtual size_t							write(uint8_t value) {return (this->write((const uint8_t *)&value, 1));};
+		inline size_t							write(unsigned long n) { return write((uint8_t)n); }
+		inline size_t							write(long n) { return write((uint8_t)n); }
+		inline size_t							write(unsigned int n) { return write((uint8_t)n); }
+		inline size_t							write(int n) { return write((uint8_t)n); }
+
+		void									begin(void) {return (this->begin(HARDWARE_SERIAL_SPEED_DEFAULT));};
+		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
+		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);
+		ssize_t									printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
+		virtual size_t							write(const uint8_t *b, size_t count);
+
 	private:
-		inline int								_available(void);
 		inline int								_readLock(uint8_t bOffset);
-		inline int								_read(uint8_t bOffset);
-		inline ZunoError_t						_begin(size_t baudrate, uint8_t rx, uint8_t tx, void *b, hardware_serial_buffer_len len, uint8_t bFree);
+		inline ZunoError_t						_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree);
 		inline ZunoError_t						_beginFaill(ZunoError_t ret, uint8_t bFree, void *b);
-		static ZunoError_t						_init(size_t param);
 		static ZunoError_t						_deInit(size_t param);
-		static void								_USART0_IRQHandler(size_t date);
-		static void								_USART1_IRQHandler(size_t date);
-		static void								_USART2_IRQHandler(size_t date);
-		inline void								_USART_IRQHandler(size_t date);
 		static const ZunoHardwareSerialConfig_t	_configTable[];
 		uint8_t									*_buffer;
-		hardware_serial_buffer_len				_buffer_len;
-		hardware_serial_buffer_len				_buffer_count_read;
-		hardware_serial_buffer_len				_buffer_count;
+		uint32_t								_baudrate;
+		ssize_t									_channel;
+		LdmaClassReceivedCyclical_t				_arrayReceivedCyclical;
+		uint16_t								_buffer_len;
 		uint8_t									_lpKey;
 		uint8_t									_numberConfig;
 		uint8_t									_bFree;

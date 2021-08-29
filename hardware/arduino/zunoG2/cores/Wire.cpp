@@ -10,8 +10,6 @@
 #define WIRE_ADDRESS_7BIT(x)					((uint8_t)(x << _I2C_SADDR_ADDR_SHIFT))
 #define WIRE_ADDRESS_10BIT(x)					((uint16_t)((x & 0xFF) | (x >> 7) & 0x6))
 
-#define WIRE_ERROR_IF							(I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)
-
 #define WIRE_LOCATION			g_loc_pa0_pf7_all
 #define WIRE_LOCATION_SIZE		sizeof(g_loc_pa0_pf7_all)
 
@@ -54,7 +52,7 @@ typedef struct							ZunoWireI2CInit_s
 
 
 /* Public Constructors */
-TwoWire::TwoWire(uint8_t numberConfig): _user_onRequest(0x0), _user_onReceive(0x0), _adress(0x0), _timout_ms(0x19), _flagErrorLong(false), _bFree(false), _lpKey(false) {
+TwoWire::TwoWire(uint8_t numberConfig): _user_onRequest(0x0), _user_onReceive(0x0), _adress(0x0), _timout_ms(0x19), _flagErrorLong(false), _bFree(false), _lpKey(false), _address(0x0) {
 	const ZunoWireI2CTypeConfig_t				*config;
 
 	switch (numberConfig) {
@@ -282,8 +280,9 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 	uint32_t							state;
 	uint32_t							ms;
 
-	if (((state = i2c->STATE) & I2C_STATE_BUSHOLD) == 0x0 && (state & I2C_STATE_BUSY) != 0x0)
+	if ((((state = i2c->STATE) & I2C_STATE_BUSHOLD) == 0x0 && (state & I2C_STATE_BUSY) != 0x0) || this->_address != adress)
 		i2c->CMD = I2C_CMD_ABORT;
+	this->_address = adress;
 	i2c->CMD = I2C_CMD_CLEARPC | I2C_CMD_CLEARTX;
 	while ((i2c->STATUS & I2C_STATUS_RXDATAV) != 0x0)//Empty received data buffer
 		i2c->RXDATA;

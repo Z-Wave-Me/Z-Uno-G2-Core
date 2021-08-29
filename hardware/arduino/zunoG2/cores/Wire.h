@@ -96,6 +96,7 @@ class TwoWire : public Stream {
 		uint8_t											_channel;
 		uint8_t											_bFree;
 		uint8_t											_lpKey;
+		uint8_t											_address;
 };
 
 extern TwoWire Wire;

@@ -483,8 +483,8 @@ typedef union								LdmaClassChannel_u
 class LdmaClass {
 	public:
 		LdmaClass(void) {};
-		static size_t								ldmaGetDst(ssize_t channel) {return (channel);};
-		static size_t								ldmaGetSrc(ssize_t channel) {return (channel);};
+		static size_t								ldmaGetDst(ssize_t channel) {return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_GETDST, 0x1, channel));};
+		static size_t								ldmaGetSrc(ssize_t channel) {return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_GETSRC, 0x1, channel));};
 		static size_t								receivedAvailable(ssize_t channel);
 		static ssize_t								receivedReadPeek(ssize_t channel, uint8_t bBool);
 		static ssize_t								receivedCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassReceivedCyclical_t *array);

@@ -359,8 +359,10 @@ inline uint8_t TwoWire::_transferMasterToSlave(int adress, void *b, uint16_t cou
 		i2c->CMD = I2C_CMD_ABORT;
 		return (WIRE_ERORR_TRANSMISSION_OTHER);
 	}
-	if ((pending & (I2C_IF_NACK)) != 0x0)
+	if ((pending & (I2C_IF_NACK)) != 0x0) {
+		i2c->CMD = I2C_CMD_ABORT;
 		return (WIRE_ERORR_TRANSMISSION_NACK_DATA);
+	}
 	return (WIRE_ERORR_TRANSMISSION_SUCCESS);
 }
 

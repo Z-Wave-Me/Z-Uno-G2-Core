@@ -60,11 +60,15 @@ class TwoWire : public Stream {
 		ZunoError_t								begin(int address, uint8_t scl, uint8_t sda);
 		ZunoError_t								begin(int address, uint8_t scl, uint8_t sda, void *buffer, uint16_t len) {return (this->_begin(address, scl, sda, buffer, len, false));};
 		inline void								enableTS(bool en) {(void)en;};
+		uint8_t									transfer(int address, const char *buffer) {return (this->transfer(address, buffer, true));};
+		uint8_t									transfer(int address, void *buffer, uint16_t count) {return (this->transfer(address, buffer, count, true));};
+		uint8_t									transfer(int address, const char *buffer, uint8_t sendStop){return (this->transfer(address, (void *)buffer, strlen(buffer), sendStop));};
+		uint8_t									transfer(int address, void *buffer, uint16_t count, uint8_t sendStop) {return (this->_transferMasterToSlave(address, buffer, count, sendStop));};
 
 	private:
 		ZunoError_t								_begin(int address, uint8_t scl, uint8_t sda, void *buffer, uint16_t len, uint8_t bFree);
 		inline uint8_t							_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress, size_t bType);
-		inline uint8_t							_transferMasterToSlave(int adress, void *b, uint16_t count, uint8_t sendStop);
+		uint8_t									_transferMasterToSlave(int adress, void *b, uint16_t count, uint8_t sendStop);
 		inline size_t							_transferSlaveToMaster(I2C_TypeDef *i2c, const uint8_t *b, size_t count);
 		inline void								_setBusFreq(I2C_TypeDef *i2c, uint32_t freqScl);
 		static void								_I2C0_IRQHandler(size_t flags, size_t value);

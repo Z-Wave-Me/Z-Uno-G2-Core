@@ -238,6 +238,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	usartInit.baudrate = baudrate;
 	USART_InitAsync(usart, &usartInit);
 	usart->FRAME = option;
+	usart->IEN = _USART_IEN_RESETVALUE;
 	pinMode(tx, OUTPUT_UP);
 	pinMode(rx, INPUT_PULLUP);
 	if (this->_bFree == true)

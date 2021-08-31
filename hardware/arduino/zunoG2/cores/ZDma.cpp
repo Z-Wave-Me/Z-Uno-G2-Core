@@ -22,6 +22,7 @@ typedef enum{
     DMAUniqIdInUse,
     DMAInvalidReconfig
 } DMAResul_t;
+/*
 static inline uint8_t _isProcessing(size_t uniqId){
    return (uint8_t)(uint32_t)zunoSysCall(ZUNO_SYSFUNC_DMA_IS_PRC, 1, uniqId);
 }
@@ -47,9 +48,10 @@ static inline ZunoError_t _transfer(size_t uniqId, ZDMA_PeripheralSignal_t perip
 static inline void _stopTransfer(size_t uniqId, uint8_t bForce){
 	zunoSysCall(ZUNO_SYSFUNC_DMA_STOP, 2, uniqId, bForce);
 }
+*/
 // ----------------------------------------------------------------------------------------------------------
 
-/* Public Constructors */
+/*
 ZDMAClass::ZDMAClass(void){
 	// zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_LDMA, (void *)LDMA_IRQHandler);
 }
@@ -88,5 +90,5 @@ ZunoError_t ZDMAClass::toPeripheralMemory(size_t uniqId, ZDMA_PeripheralSignal_t
 	return (_transfer(uniqId, peripheralSignal, dest, src, len, size, lpExt));
 }
 
-/* Preinstantiate Objects */
-ZDMAClass ZDMA;
+
+ZDMAClass ZDMA;*/

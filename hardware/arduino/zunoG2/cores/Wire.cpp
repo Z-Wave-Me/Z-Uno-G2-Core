@@ -280,6 +280,8 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 	uint32_t							state;
 	uint32_t							ms;
 
+
+	i2c->CTRL &= ~(I2C_CTRL_AUTOSE);
 	if ((((state = i2c->STATE) & I2C_STATE_BUSHOLD) == 0x0 && (state & I2C_STATE_BUSY) != 0x0) || this->_address != adress)
 		i2c->CMD = I2C_CMD_ABORT;
 	this->_address = adress;
@@ -290,8 +292,7 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 		I2C_IntClear(i2c, _I2C_IF_MASK);/* Clear all pending interrupts prior to starting a transfer. */
 		i2c->TXDATA = WIRE_ADDRESS_7BIT((uint8_t)adress) | bType;
 		i2c->CMD = I2C_CMD_START;
-		ms = millis() + this->_timout_ms;
-		timeout = 0x0;
+		timeout = 0;
 		while (0xFF) {
 			pending = i2c->IF;
 			if ((pending & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)) != 0x0) {
@@ -302,15 +303,18 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 				return (WIRE_ERORR_TRANSMISSION_NACK_ADDRESS);
 			if ((pending & (I2C_IF_ACK)) != 0x0)
 				break ;
-			if (timeout++ < 0x100)
-				continue ;
-			if (ms < millis()) {
+			timeout++;
+			if (timeout > (I2C_ADDR_TIMEOUT_US / I2C_ADDR_TIMEOUT_US_DIV)){
 				i2c->CMD = I2C_CMD_ABORT;
 				return (WIRE_ERORR_TRANSMISSION_TIMOUT);
 			}
-			delay(0x1);
+			delayMicroseconds(I2C_ADDR_TIMEOUT_US_DIV);
 		}
-	}
+	} 
+	/*else {
+		i2c->CMD = I2C_CMD_ABORT;
+		return (WIRE_ERORR_TRANSMISSION_OTHER);
+	}*/
 	return (WIRE_ERORR_TRANSMISSION_SUCCESS);
 }
 
@@ -325,8 +329,9 @@ inline uint8_t TwoWire::_transferMasterToSlave(int adress, void *b, uint16_t cou
 	size_t								tempos;
 
 	i2c = this->_i2c_config->i2c;
-	if ((out = this->_transferMasterToSlaveInit(i2c, adress, 0x0)) != WIRE_ERORR_TRANSMISSION_SUCCESS)
+	if ((out = this->_transferMasterToSlaveInit(i2c, adress, 0x0)) != WIRE_ERORR_TRANSMISSION_SUCCESS){
 		return (out);
+	}
 	if (count == 0x0)
 		return (WIRE_ERORR_TRANSMISSION_SUCCESS);
 	I2C_IntClear(i2c, _I2C_IF_MASK);/* Clear all pending interrupts prior to starting a transfer. */
@@ -335,17 +340,13 @@ inline uint8_t TwoWire::_transferMasterToSlave(int adress, void *b, uint16_t cou
 	if (sendStop == true)
 		i2c->CTRL |= I2C_CTRL_AUTOSE;
 	dst = 0x0;
-	ms = 0x0;
-	while ((i2c->STATE & _I2C_STATE_STATE_MASK) != I2C_STATE_STATE_IDLE && (i2c->IF & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)) == 0x0) {
-		if ((tempos = LdmaClass::ldmaGetDst(channel)) != dst) {
-			dst = tempos;
-			ms = millis() + this->_timout_ms;
+	ms = millis() + this->_timout_ms;
+	while ((i2c->IF & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR | I2C_IF_TXC)) == 0){
+		if(ms < millis()){
+			ms = 0;
+			break;
 		}
-		if (millis() > ms) {
-			ms = 0x0;
-			break ;
-		}
-		delay(0x1);
+		delay(1);
 	}
 	LdmaClass::transferStop(channel);
 	pending = i2c->IF;

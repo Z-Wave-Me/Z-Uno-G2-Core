@@ -341,7 +341,7 @@ uint8_t aux_read8(uint8_t a) {
   Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
   Wire.write(a); // sends register address to read from
   Wire.endTransmission(); // end transmission
-  Wire.requestFrom(g_myi2c_addr, 1);// send data n-bytes read
+  Wire.requestFrom(g_myi2c_addr, (uint8_t)1);// send data n-bytes read
   ret = Wire.read(); // receive DATA
   return ret;
 }
@@ -352,7 +352,7 @@ void aux_read16(uint8_t a, XBYTE * value) {
   Wire.write(a); // sends register address to read from
   Wire.endTransmission(); // end transmission
   
-  Wire.requestFrom(g_myi2c_addr, 2);// send data n-bytes read
+  Wire.requestFrom(g_myi2c_addr, (uint8_t)2);// send data n-bytes read
   // !!! SDCC specific
   value[0] = Wire.read(); // receive DATA
   value[1] = Wire.read(); // receive DATA
@@ -372,7 +372,7 @@ void aux_read20(uint8_t a, XBYTE * value) {
   Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
   Wire.write(a); // sends register address to read from
   Wire.endTransmission(); // end transmission
-  Wire.requestFrom(g_myi2c_addr, 3);// send data n-bytes read
+  Wire.requestFrom(g_myi2c_addr, (uint8_t)3);// send data n-bytes read
   value[2] = Wire.read(); 
   value[1] = Wire.read();
   value[0] = Wire.read();

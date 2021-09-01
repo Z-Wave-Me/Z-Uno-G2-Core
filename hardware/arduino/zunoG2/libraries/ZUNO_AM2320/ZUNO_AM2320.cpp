@@ -27,53 +27,47 @@ void	AM2320::read(bool force)
 			err_code =  AM2320_OK;
 
 			// don't check it very often
-			if(((millis() - TIM_request) < 500) && (TIM_request != 0) && (!force))
+			if(((millis() - TIM_request) < 500) && 
+				(TIM_request != 0) && 
+				(!force))
 			{
 				return;
 			}
 
 			// Try to wake up the sensor...
 			Wire.beginTransmission(MY_ADDRESS); // We have to send write command here	
-			delayMicroseconds(80);					  // Wait at least 80 uS to wakeup sensor	
-			result=Wire.endTransmission();						
+			result=Wire.endTransmission();
+			delay(5);
 			// Sending request to sensor
 			Wire.beginTransmission(MY_ADDRESS);		// We have to read some registers from sensor 
 			Wire.write(CMD_READ_REGS);				// Command		
 			Wire.write((uint8_t)0x00);						// first reg address		
 			Wire.write((uint8_t)0x04);						// number of regs to read			
 			result=Wire.endTransmission();	
-
 			// Sensor is not responing...
 			if(result != 0)
-			{
+			{	delay(100);
 				err_code =  AM2320_ERROR_NOT_RESPONDING;
 				return;
 			}
 			// We have to wait a little (see datasheet for more details)
-			delayMicroseconds(1800);
-			
+			delay(2);
 			// We read 8 bytes, but we need 4 bytes of data + 2 of CRC16
 			Wire.requestFrom(MY_ADDRESS,0x08);
-			
 			result = 0;
 			while(Wire.available())
 			{
 				g_am2320_data[result++]	= Wire.read();
 			
 			}
-			Serial0.print("AM Data:");
-			Serial0.dumpPrint(g_am2320_data, result);
-			
 			// Checking CRC16 
 			createCRC16_AM2320();
 			g_crc = g_am2320_data[7];
 			g_crc <<= 8;
 			g_crc |= g_am2320_data[6];
-
 			if(g_amcalc_crc != g_crc)
 			{
 				err_code = AM2320_ERROR_CRC;
-				Serial0.println("WRONG CRC!");
 				return;
 			}
 			// Save last request time

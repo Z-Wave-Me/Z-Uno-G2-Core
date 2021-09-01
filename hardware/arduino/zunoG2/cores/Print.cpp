@@ -279,31 +279,15 @@ size_t Print::printFloat(float number, uint8_t digits) {
 }
 
 uint8_t Print::fixPrint(long n, uint8_t precision) {
-	char				buf[4 * sizeof(long) + 1 + 1];//+1 zero byte +1 sign
-	char				*f;
-	char				*b;
+	size_t 				factor = 1;
 	size_t				count;
-
-	f = &buf[sizeof(buf)];
-	b = &buf[0];
-	if (n < 0) {
-		n = -n;
-		b++[0] = '-';
+	while(precision--){
+		factor *= 10;
 	}
-	while (n != 0 && precision != 0) {
-		f--;
-		f[0] = this->_digit2hexchar(n % 10);
-		n = n / 10;
-		precision--;
-	}
-	ultoa((unsigned long)n, b, 10);
-	b = b + strlen(b);
-	if (f != &buf[sizeof(buf) - 1])
-		b++[0] = '.';
-	count = this->write(&buf[0], b - &buf[0]) + precision;
-	while(precision-- != 0)
-		this->write('0');
-	return (count + this->write(f, &buf[sizeof(buf)] - f));
+	count = print((long) n/factor);
+	count += print(".");
+	count += print((long) n%factor);
+	return count;
 }
 
 size_t Print::dumpPrint(uint8_t *b, size_t count, size_t line_size) {

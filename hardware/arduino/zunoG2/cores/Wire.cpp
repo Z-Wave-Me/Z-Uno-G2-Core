@@ -309,6 +309,7 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 				return (WIRE_ERORR_TRANSMISSION_TIMOUT);
 			}
 			delayMicroseconds(I2C_ADDR_TIMEOUT_US_DIV);
+			WDOG_Feed(); // To make dog happy... ) 
 		}
 	} 
 	/*else {
@@ -332,16 +333,26 @@ inline uint8_t TwoWire::_transferMasterToSlave(int adress, void *b, uint16_t cou
 	if ((out = this->_transferMasterToSlaveInit(i2c, adress, 0x0)) != WIRE_ERORR_TRANSMISSION_SUCCESS){
 		return (out);
 	}
-	if (count == 0x0)
+	if (count == 0x0){
+		if (sendStop)
+			i2c->CMD = I2C_CMD_STOP;
 		return (WIRE_ERORR_TRANSMISSION_SUCCESS);
+	}
 	I2C_IntClear(i2c, _I2C_IF_MASK);/* Clear all pending interrupts prior to starting a transfer. */
 	if ((channel = LdmaClass::transferSingle(b, (void *)&i2c->TXDATA, count, this->_i2c_config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) < 0)
 		return (WIRE_ERORR_TRANSMISSION_OTHER);
-	if (sendStop == true)
+	if (sendStop)
 		i2c->CTRL |= I2C_CTRL_AUTOSE;
 	dst = 0x0;
-	ms = millis() + this->_timout_ms;
+	ms = millis();
+	ms += this->_timout_ms;
 	while ((i2c->IF & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR | I2C_IF_TXC)) == 0){
+		// If slave hangs alittle this will increment timeout
+		if ((tempos = LdmaClass::ldmaGetDst(channel)) != dst) {
+      		dst = tempos;
+			if((ms - millis()) < this->_timout_ms)
+      			ms += this->_timout_ms;
+    	}
 		if(ms < millis()){
 			ms = 0;
 			break;
@@ -350,7 +361,7 @@ inline uint8_t TwoWire::_transferMasterToSlave(int adress, void *b, uint16_t cou
 	}
 	LdmaClass::transferStop(channel);
 	pending = i2c->IF;
-	if (sendStop == true)
+	if (sendStop)
 		i2c->CTRL ^= I2C_CTRL_AUTOSE;
 	if (ms == 0x0) {
 		i2c->CMD = I2C_CMD_ABORT;

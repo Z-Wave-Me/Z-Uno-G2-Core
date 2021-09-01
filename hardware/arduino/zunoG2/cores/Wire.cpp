@@ -440,7 +440,7 @@ uint8_t TwoWire::_requestFrom(int address, int quantity, int sendStop) {
 	if (sendStop == true)
 		i2c->CTRL |= I2C_CTRL_AUTOSE;
 	src = 0x0;
-	ms = 0x0;
+	ms = 0x1;
 	while ((i2c->STATE & _I2C_STATE_STATE_MASK) != I2C_STATE_STATE_IDLE && (i2c->IF & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)) == 0x0) {
 		if ((tempos = LdmaClass::ldmaGetSrc(channel)) != src) {
 			src = tempos;

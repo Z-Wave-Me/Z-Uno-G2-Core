@@ -33,7 +33,6 @@
 
 */
 #include "u8g2.h"
-
 /* Clear screen buffer & display reliable for all u8g2 displays. */
 /* This is done with u8g2 picture loop, because we can not use the u8x8 function in all cases */
 void u8g2_ClearDisplay(u8g2_t *u8g2)
@@ -41,6 +40,7 @@ void u8g2_ClearDisplay(u8g2_t *u8g2)
   u8g2_FirstPage(u8g2);
   do {
   } while ( u8g2_NextPage(u8g2) );
+
   /* 
     This function is usually called during startup (u8g2.begin()).
     However the user might want to use full buffer mode with clear and 

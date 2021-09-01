@@ -19,7 +19,6 @@
 #include "HardwareSerial.h"
 #include "Libft.h"
 #include "Custom_decl.h" // 
-#define  ARDUINO_ARCH_ZUNOG2 1 //  To differ ZUNO from another board by means of ifdef
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)
@@ -34,7 +33,6 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define PROGMEM
 // Arduino specific macroses/function
 long map(long x, long in_min, long in_max, long out_min, long out_max);
-#define ARDUINO 		    152	
 #define DEG_TO_RAD 			0.017453292519
 #define RAD_TO_DEG 			57.29577951308
 #define EULER 				2.718281828459

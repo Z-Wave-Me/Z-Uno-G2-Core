@@ -35,6 +35,8 @@
 
 #include "u8g2.h"
 #include <string.h>
+#include <stdint.h>
+
 
 /*============================================*/
 void u8g2_ClearBuffer(u8g2_t *u8g2)

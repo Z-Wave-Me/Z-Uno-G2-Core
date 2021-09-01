@@ -51,6 +51,7 @@
 
 #include "clib/u8g2.h"
 
+
 class U8G2 : public Print
 {
   protected:
@@ -126,9 +127,6 @@ class U8G2 : public Print
       
     void setDisplayRotation(const u8g2_cb_t *u8g2_cb) {
       u8g2_SetDisplayRotation(&u8g2, u8g2_cb); }
-      
-    
-
     
     bool begin(void) {
       /* note: call to u8x8_utf8_init is not required here, this is done in the setup procedures before */

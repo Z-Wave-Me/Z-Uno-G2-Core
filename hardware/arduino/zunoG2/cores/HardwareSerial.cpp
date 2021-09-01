@@ -238,6 +238,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	usartInit.baudrate = baudrate;
 	USART_InitAsync(usart, &usartInit);
 	usart->FRAME = option;
+	usart->IEN = _USART_IEN_RESETVALUE;
 	pinMode(tx, OUTPUT_UP);
 	pinMode(rx, INPUT_PULLUP);
 	if (this->_bFree == true)
@@ -250,10 +251,14 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
-	channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, b, len, config->dmaSignalRead, ldmaCtrlSizeByte, &this->_arrayReceivedCyclical);
-	this->_channel = channel;
+	if (len != 0x0) {
+		channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, b, len, config->dmaSignalRead, ldmaCtrlSizeByte, &this->_arrayReceivedCyclical);
+		this->_channel = channel;
+	}
+	else
+		this->_channel = -1;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
-	if (channel < 0x0) {
+	if (len != 0x0 && channel < 0x0) {
 		this->end();
 		return (ZunoErrorDmaLimitChannel);
 	}

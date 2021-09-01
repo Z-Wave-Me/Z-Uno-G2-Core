@@ -526,5 +526,5 @@ size_t TwoWire::_write(const uint8_t *data, size_t quantity) {
 }
 
 /* Preinstantiate Objects */
-TwoWire Wire = TwoWire(0);
+TwoWire Wire0 = TwoWire(0);
 TwoWire Wire1 = TwoWire(1);

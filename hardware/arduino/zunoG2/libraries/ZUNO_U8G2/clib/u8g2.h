@@ -286,7 +286,6 @@ struct u8g2_cb_struct
 
 typedef u8g2_uint_t (*u8g2_font_calc_vref_fnptr)(u8g2_t *u8g2);
 
-
 struct u8g2_struct
 {
   u8x8_t u8x8;
@@ -360,6 +359,7 @@ struct u8g2_struct
   uint8_t is_auto_page_clear; 		/* set to 0 to disable automatic clear of the buffer in firstPage() and nextPage() */
   
 };
+
 
 #define u8g2_GetU8x8(u8g2) ((u8x8_t *)(u8g2))
 //#define u8g2_GetU8x8(u8g2) (&((u8g2)->u8x8))

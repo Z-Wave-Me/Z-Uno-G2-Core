@@ -33,7 +33,7 @@ void	AM2320::read(bool force)
 			}
 
 			// Try to wake up the sensor...
-			Wire.beginTransmission(MY_ADDRESS, true); // We have to send write command here	
+			Wire.beginTransmission(MY_ADDRESS); // We have to send write command here	
 			delayMicroseconds(80);					  // Wait at least 80 uS to wakeup sensor	
 			result=Wire.endTransmission();						
 			// Sending request to sensor
@@ -61,7 +61,9 @@ void	AM2320::read(bool force)
 				g_am2320_data[result++]	= Wire.read();
 			
 			}
-
+			Serial0.print("AM Data:");
+			Serial0.dumpPrint(g_am2320_data, result);
+			
 			// Checking CRC16 
 			createCRC16_AM2320();
 			g_crc = g_am2320_data[7];
@@ -71,6 +73,7 @@ void	AM2320::read(bool force)
 			if(g_amcalc_crc != g_crc)
 			{
 				err_code = AM2320_ERROR_CRC;
+				Serial0.println("WRONG CRC!");
 				return;
 			}
 			// Save last request time

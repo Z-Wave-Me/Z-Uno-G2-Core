@@ -3,6 +3,8 @@
 
 #include "CrtxI2C.h"
 
+#define Wire				Wire0
+
 #define WIRE_BUFFER_LENGTH				(32)
 
 #define WIRE_ERORR_TRANSMISSION_SUCCESS			0
@@ -103,7 +105,7 @@ class TwoWire : public Stream {
 		uint8_t											_address;
 };
 
-extern TwoWire Wire;
+extern TwoWire Wire0;
 extern TwoWire Wire1;
 
 #endif// WIRE_H

@@ -1,5 +1,4 @@
 #include "Arduino.h"
-#include "ZDma.h"
 #include "SPI.h"
 
 /* Public Constructors */
@@ -12,8 +11,6 @@ SPISettings::SPISettings(void) {
 }
 
 #define SPI_MIN_WRITE_ZDMA			2
-#define SPI_UNIQ_ZDMA_WRITE			((size_t)&this->_baudrate)
-#define SPI_UNIQ_ZDMA_READ			((size_t)&this->_ss_pin)
 
 
 /* Constants */
@@ -21,8 +18,8 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable0 =
 {
 	.usart = USART0,
 	.lpLock = &gSyncUSART0,
-	.dmaSignalWrite = zdmaPeripheralSignal_USART0_TXBL,
-	.dmaSignalRead = zdmaPeripheralSignal_USART0_RXDATAV,
+	.dmaSignalWrite = LdmaClassSignal_USART0_TXBL,
+	.dmaSignalRead = LdmaClassSignal_USART0_RXDATAV,
 	.bus_clock = cmuClock_USART0,
 	.sck = SCK,
 	.miso = MISO,
@@ -34,8 +31,8 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 =
 {
 	.usart = USART1,
 	.lpLock = &gSyncUSART1,
-	.dmaSignalWrite = zdmaPeripheralSignal_USART1_TXBL,
-	.dmaSignalRead = zdmaPeripheralSignal_USART1_RXDATAV,
+	.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
+	.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
 	.bus_clock = cmuClock_USART1,
 	.sck = SCK,
 	.miso = MISO,
@@ -47,8 +44,8 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 =
 {
 	.usart = USART2,
 	.lpLock = &gSyncUSART2,
-	.dmaSignalWrite = zdmaPeripheralSignal_USART2_TXBL,
-	.dmaSignalRead = zdmaPeripheralSignal_USART2_RXDATAV,
+	.dmaSignalWrite = LdmaClassSignal_USART2_TXBL,
+	.dmaSignalRead = LdmaClassSignal_USART2_RXDATAV,
 	.bus_clock = cmuClock_USART2,
 	.sck = SCK2,
 	.miso = MISO2,
@@ -154,27 +151,6 @@ void SPIClass::endTransaction(void) {
 	zunoSyncReleseRead(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
-ZunoError_t SPIClass::transferDup(const void *b, size_t count, size_t repeat) {
-	const ZunoSpiUsartTypeConfig_t		*config;
-	ZunoError_t							ret;
-	ZunoZDmaExt_t						lpExt;
-	USART_TypeDef						*usart;
-
-	config = this->_config;
-	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
-		return (ret);
-	lpExt = ZDMA_EXT_INIT_DEFAULT;
-	lpExt.loop = repeat;
-	usart = config->usart;
-	if ((ret = ZDMA.toMemoryPeripheral(SPI_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), (void *)b, count, zdmaData8, &lpExt)) == ZunoErrorOk) {
-		ZDMA.waitTransfer(SPI_UNIQ_ZDMA_WRITE);
-		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
-			__NOP();
-	}
-	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
-	return (ret);
-}
-
 /* Private Methods */
 size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	size_t								out;
@@ -206,6 +182,10 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	void								*e;
 	ZunoError_t							ret;
 	size_t								out;
+	ssize_t								channel_r;
+	ssize_t								channel_w;
+	LdmaClassTransferSingle_t			array_r;
+	LdmaClassTransferSingle_t			array_w;
 
 	config = this->_config;
 	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
@@ -222,15 +202,21 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 		}
 	}
 	else {
+		channel_r = -1;
 		usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
-		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((ret = ZDMA.toPeripheralMemory(SPI_UNIQ_ZDMA_READ, config->dmaSignalRead, b, (void*)&(usart->RXDATA), count, zdmaData8)) == ZunoErrorOk)) {
-			if ((ret = ZDMA.toMemoryPeripheral(SPI_UNIQ_ZDMA_WRITE, config->dmaSignalWrite, (void*)&(usart->TXDATA), b, count, zdmaData8)) == ZunoErrorOk) {
-				ZDMA.waitTransfer(SPI_UNIQ_ZDMA_WRITE);
+		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((channel_r = LdmaClass::transferSingle((const void *)&usart->RXDATA, b, count, config->dmaSignalRead, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array_r)) >= 0x0)) {
+			if ((channel_w = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
 				while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
-					__NOP();
+					delay(0x1);
+				LdmaClass::transferStop(channel_w);
 			}
-			ZDMA.stopTransfer(SPI_UNIQ_ZDMA_READ, true);
+			else
+				ret = ZunoErrorDmaLimitChannel;
+			if (channel_r >= 0x0)
+				LdmaClass::transferStop(channel_r);
 		}
+		else
+			ret = ZunoErrorDmaLimitChannel;
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ret);
@@ -261,4 +247,6 @@ ZunoError_t SPIClass::_deInit(size_t param) {
 
 
 /* Preinstantiate Objects */
-SPIClass SPI = SPIClass(1);
+SPIClass SPI0 = SPIClass(0);
+SPIClass SPI1 = SPIClass(1);
+SPIClass SPI2 = SPIClass(2);

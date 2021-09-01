@@ -3,6 +3,9 @@
 
 #include "CrtxUSART.h"
 #include "Sync.h"
+#include "LdmaClass.h"
+
+#define SPI				SPI1
 
 #define SPI_MODE0		usartClockMode0
 #define SPI_MODE1		usartClockMode1
@@ -21,8 +24,8 @@ typedef struct								ZunoSpiUsartTypeConfig_s
 {
 	USART_TypeDef							*usart;
 	ZunoSync_t								*lpLock;
-	ZDMA_PeripheralSignal_t					dmaSignalWrite;
-	ZDMA_PeripheralSignal_t					dmaSignalRead;
+	LdmaClassSignal_t						dmaSignalWrite;
+	LdmaClassSignal_t						dmaSignalRead;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
 	uint8_t									miso;
@@ -65,7 +68,6 @@ class SPIClass {
 		inline uint8_t										transfer8(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 		inline uint16_t										transfer16(uint16_t data) {return ((uint16_t)this->_transferDate(data, SPI_FLAGS_16BIT));};
 		inline uint16_t										transfer16(int data) {return ((uint16_t)this->_transferDate(data, SPI_FLAGS_16BIT));};
-		ZunoError_t											transferDup(const void *b, size_t count, size_t repeat);
 
 	private:
 		size_t												_transferDate(size_t data, size_t bFlags);
@@ -83,6 +85,8 @@ class SPIClass {
 		volatile uint8_t									_lpKey;
 };
 
-extern SPIClass SPI;
+extern SPIClass SPI0;
+extern SPIClass SPI1;
+extern SPIClass SPI2;
 
 #endif// SPI_H

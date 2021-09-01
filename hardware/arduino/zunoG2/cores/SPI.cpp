@@ -160,6 +160,7 @@ size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	config = this->_config;
 	if (zunoSyncLockRead(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (0);
+	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if ((bFlags & SPI_FLAGS_16BIT) != 0) {
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
@@ -190,6 +191,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	config = this->_config;
 	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
+	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if (count <= SPI_MIN_WRITE_ZDMA)
 	{

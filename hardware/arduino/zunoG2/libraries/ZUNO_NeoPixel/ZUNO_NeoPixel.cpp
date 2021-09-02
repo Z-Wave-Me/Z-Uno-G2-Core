@@ -1,8 +1,9 @@
 #include "Arduino.h"
 #include "CrtxCmu.h"
 #include "stdlib.h"
-#include "ZDma.h"
+#include "LdmaClass.h"
 #include "ZUNO_NeoPixel.h"
+#include <math.h>
 
 #define NEO_RESET_MICROSECONDS			50
 
@@ -26,8 +27,6 @@
 #define NEO_TYPE_USART					0x1
 #define NEO_TYPE_TIMER					0x2
 
-#define NEO_UNIQ_ZDMA_WRITE				((size_t)&this->_list)
-
 /* Constants */
 const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 {
@@ -35,7 +34,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.usart = USART0},
 		.lpLock = &gSyncUSART0,
 		.dst = (void *)&(USART0->TXDATA),
-		.dmaSignal = zdmaPeripheralSignal_USART0_TXBL,
+		.dmaSignal = LdmaClassSignal_USART0_TXBL,
 		.bus_clock = cmuClock_USART0,
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
@@ -44,7 +43,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.usart = USART1},
 		.lpLock = &gSyncUSART1,
 		.dst = (void *)&(USART1->TXDATA),
-		.dmaSignal = zdmaPeripheralSignal_USART1_TXBL,
+		.dmaSignal = LdmaClassSignal_USART1_TXBL,
 		.bus_clock = cmuClock_USART1,
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
@@ -53,7 +52,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.usart = USART2},
 		.lpLock = &gSyncUSART2,
 		.dst = (void *)&(USART2->TXDATA),
-		.dmaSignal = zdmaPeripheralSignal_USART2_TXBL,
+		.dmaSignal = LdmaClassSignal_USART2_TXBL,
 		.bus_clock = cmuClock_USART2,
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
@@ -62,7 +61,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.timer = TIMER0},
 		.lpLock = &gSyncTIMER0,
 		.dst = (void *)&(TIMER0->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = zdmaPeripheralSignal_TIMER0_CC0,
+		.dmaSignal = LdmaClassSignal_TIMER0_CC0,
 		.bus_clock = cmuClock_TIMER0,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -71,7 +70,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.timer = TIMER1},
 		.lpLock = &gSyncTIMER1,
 		.dst = (void *)&(TIMER1->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = zdmaPeripheralSignal_TIMER1_CC0,
+		.dmaSignal = LdmaClassSignal_TIMER1_CC0,
 		.bus_clock = cmuClock_TIMER1,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -80,7 +79,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 		{.timer = WTIMER0},
 		.lpLock = &gSyncWTIMER0,
 		.dst = (void *)&(WTIMER0->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = zdmaPeripheralSignal_WTIMER0_CC0,
+		.dmaSignal = LdmaClassSignal_WTIMER0_CC0,
 		.bus_clock = cmuClock_WTIMER0,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -197,6 +196,8 @@ void NeoPixel::show(uint8_t neo_pin) {
 	volatile uint8_t				lpKey;
 	const uint8_t					*location_ptr;
 	size_t							location_sz;
+	ssize_t							channel;
+	LdmaClassTransferSingle_t		array;
 
 	lpKey = true;
 	zunoSyncLockWrite(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
@@ -232,8 +233,9 @@ void NeoPixel::show(uint8_t neo_pin) {
 				break;
 		}
 		delayMicroseconds(NEO_RESET_MICROSECONDS);
-		if (ZDMA.toMemoryPeripheral(NEO_UNIQ_ZDMA_WRITE, config->dmaSignal, config->dst, &list->array[0], len, zdmaData8) == ZunoErrorOk)
-			ZDMA.waitTransfer(NEO_UNIQ_ZDMA_WRITE);
+		if ((channel = LdmaClass::transferSingle(&list->array[0], config->dst, len, config->dmaSignal, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0)
+			while (LdmaClass::transferDone(channel) == false)
+				delay(0x1);
 		switch (config->type) {
 			case NEO_TYPE_TIMER:
 				TIMER_Enable(((TIMER_TypeDef *)base), false);

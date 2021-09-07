@@ -10,7 +10,7 @@
 #define MY_SERIAL Serial0
 
 /* LED counter */
-#define LED_COUNT				100
+#define LED_COUNT				150
 
 /* LED pin number */
 #define LED_PIN					9

@@ -7,6 +7,14 @@
 
 #define SPI				SPI1
 
+#define SPI_CLOCK_DIV2				0x2
+#define SPI_CLOCK_DIV4				0x4
+#define SPI_CLOCK_DIV8				0x8
+#define SPI_CLOCK_DIV16				0x10
+#define SPI_CLOCK_DIV32				0x20
+#define SPI_CLOCK_DIV64				0x40
+#define SPI_CLOCK_DIV128			0x80
+
 #define SPI_MODE0		usartClockMode0
 #define SPI_MODE1		usartClockMode1
 #define SPI_MODE2		usartClockMode2
@@ -59,6 +67,8 @@ class SPIClass {
 		void												setBitOrder(uint8_t order);
 		inline void											setDataMode(USART_ClockMode_TypeDef mode) {this->setDataMode(mode, this->_ss_pin);};
 		void												setDataMode(USART_ClockMode_TypeDef mode, uint8_t slaveSelectPin);
+		inline void											setClockDivider(uint8_t divider) {this->setClockDivider(divider, this->_ss_pin);};
+		void												setClockDivider(uint8_t divider, uint8_t slaveSelectPin);
 
 		ZunoError_t											begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
 		inline void											beginTransaction(SPISettings *spi_setings) {this->beginTransaction(spi_setings->clock, spi_setings->bitOrder, spi_setings->dataMode);};

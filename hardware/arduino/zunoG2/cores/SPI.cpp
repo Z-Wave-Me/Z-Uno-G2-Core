@@ -166,6 +166,24 @@ void SPIClass::setDataMode(USART_ClockMode_TypeDef mode, uint8_t slaveSelectPin)
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
+void SPIClass::setClockDivider(uint8_t divider, uint8_t slaveSelectPin) {
+	USART_TypeDef						*usart;
+	const ZunoSpiUsartTypeConfig_t		*config;
+	uint32_t							clock;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	usart = config->usart;
+	clock = CMU_ClockFreqGet(config->bus_clock) / divider;
+	if (clock != this->_baudrate) {
+		this->_baudrate = clock;
+		USART_BaudrateSyncSet(usart, 0, clock);
+	}
+	this->_ss_pin = slaveSelectPin;
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+}
+
 void SPIClass::endTransaction(void) {
 	const ZunoSpiUsartTypeConfig_t		*config;
 

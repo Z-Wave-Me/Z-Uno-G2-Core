@@ -19,6 +19,7 @@
 #include "HardwareSerial.h"
 #include "Libft.h"
 #include "Custom_decl.h" // 
+#include <math.h>
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)
@@ -45,7 +46,7 @@ long map(long x, long in_min, long in_max, long out_min, long out_max);
 #define radians(deg) 			((deg)*DEG_TO_RAD)
 #define degrees(rad) 			((rad)*RAD_TO_DEG)
 #define sq(x) 					((x)*(x))
- 
+#define square(x) 				((x)*(x)) 
 // Bit-wise operations
 #define bitRead(value, bit) (((value) >> (bit)) & 0x01)
 #define bitSet(value, bit) ((value) |= (1UL << (bit)))

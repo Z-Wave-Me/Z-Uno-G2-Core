@@ -1,16 +1,15 @@
 #include "Arduino.h"
 #include "CrtxTimer.h"
 #include "CrtxCmu.h"
-#include "ZDma.h"
 #include "Sync.h"
 #include "ZUNO_DHT.h"
 #include "Libft.h"
+#include "LdmaClass.h"
 
 
 #define DHT_CHANNEL								0
 
 #define DHT_MIN_INTERVAL						2000
-#define DHT_UINIQID_DMA_WRITE					((size_t)&this->_lastreadtime)
 #define DHT_BUFFER_DMA_WRITE_LEN				(56 * 2)
 #define DHT_TOP_FREQ							(200)
 
@@ -29,7 +28,7 @@ typedef struct							ZunoDhtTypeConfig_s
 {
 	TIMER_TypeDef						*timer;
 	ZunoSync_t							*lpLock;
-	ZDMA_PeripheralSignal_t				dmaSignal;
+	LdmaClassSignal_t					dmaSignal;
 	CMU_Clock_TypeDef					bus_clock;
 }										ZunoDhtTypeConfig_t;
 
@@ -45,13 +44,13 @@ const ZunoDhtTypeConfig_t gconfigTable[] = {
 	{
 		.timer = TIMER0,
 		.lpLock = &gSyncTIMER0,
-		.dmaSignal = zdmaPeripheralSignal_TIMER0_CC0,
+		.dmaSignal =  LdmaClassSignal_TIMER0_CC0,
 		.bus_clock = cmuClock_TIMER0
 	},
 	{
 		.timer = TIMER1,
 		.lpLock = &gSyncTIMER1,
-		.dmaSignal = zdmaPeripheralSignal_TIMER1_CC0,
+		.dmaSignal =  LdmaClassSignal_TIMER1_CC0,
 		.bus_clock = cmuClock_TIMER1
 	}
 };
@@ -262,6 +261,8 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	DHT_TYPE_VALUE_t						value;
 	uint32_t								crc;
 	TIMER_TypeDef							*timer;
+	ssize_t									channel;
+	LdmaClassTransferSingle_t				array;
 
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
 	currenttime = millis();
@@ -271,8 +272,8 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 		return (ret);
 	}
 	timer = config->timer;
-	if ((ret = ZDMA.toPeripheralMemory(DHT_UINIQID_DMA_WRITE, config->dmaSignal, &buffWriteDma[0], (void *)&timer->CC[DHT_CHANNEL].CCV, DHT_BUFFER_DMA_WRITE_LEN, zdmaData16)) != ZunoErrorOk)
-		return (ret);
+	if ((channel = LdmaClass::transferSingle(&buffWriteDma[0], (void *)&timer->CC[DHT_CHANNEL].CCV, DHT_BUFFER_DMA_WRITE_LEN, config->dmaSignal, ldmaCtrlSizeHalf, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) < 0x0)
+		return (ZunoErrorDmaLimitChannel);
 	_lastreadtime = currenttime;
 	pinMode(this->_pin, OUTPUT_DOWN);// Send start signal
 	switch (_type) {
@@ -292,7 +293,7 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	delay(6);
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disabled CC
 	TIMER_Enable(timer, false);
-	ZDMA.stopTransfer(DHT_UINIQID_DMA_WRITE, true);
+	LdmaClass::transferStop(channel);
 	b = &buffWriteDma[0];//Let's pass the noise
 	#ifdef DHT_LIB_DEBUG
 	int i;

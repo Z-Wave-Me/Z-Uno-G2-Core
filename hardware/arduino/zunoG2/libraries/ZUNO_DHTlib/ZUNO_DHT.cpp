@@ -272,7 +272,7 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 		return (ret);
 	}
 	timer = config->timer;
-	if ((channel = LdmaClass::transferSingle(&buffWriteDma[0], (void *)&timer->CC[DHT_CHANNEL].CCV, DHT_BUFFER_DMA_WRITE_LEN, config->dmaSignal, ldmaCtrlSizeHalf, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) < 0x0)
+	if ((channel = LdmaClass::transferSingle((void *)&timer->CC[DHT_CHANNEL].CCV, &buffWriteDma[0], DHT_BUFFER_DMA_WRITE_LEN, config->dmaSignal, ldmaCtrlSizeHalf, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array)) < 0x0)
 		return (ZunoErrorDmaLimitChannel);
 	_lastreadtime = currenttime;
 	pinMode(this->_pin, OUTPUT_DOWN);// Send start signal

@@ -28,7 +28,7 @@
 #define NEO_TYPE_TIMER					0x2
 
 /* Constants */
-const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
+const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 {
 	{
 		{.usart = USART0},
@@ -86,7 +86,7 @@ const ZunoNeoBaseConfig_t NeoPixel::_configTable[] =
 	}
 };
 
-const USART_InitSync_TypeDef NeoPixel::_initSpi =
+const USART_InitSync_TypeDef NeoPixelClass::_initSpi =
 {
 	.enable = usartDisable,
 	.refFreq = 0,
@@ -105,16 +105,16 @@ const USART_InitSync_TypeDef NeoPixel::_initSpi =
 
 
 /* Values */
-ZunoNeoList_t *NeoPixel::_list = 0;
+ZunoNeoList_t *NeoPixelClass::_list = 0;
 
-ZunoSync_t NeoPixel::_syncNeo = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterNeoPixel);
+ZunoSync_t NeoPixelClass::_syncNeo = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterNeoPixel);
 
 /* Public Constructors */
-NeoPixel::NeoPixel(void) {
+NeoPixelClass::NeoPixelClass(void) {
 }
 
 /* Public Methods */
-ZunoError_t NeoPixel::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option, ZunoNeoBase_t base) {
+ZunoError_t NeoPixelClass::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option, ZunoNeoBase_t base) {
 	const ZunoNeoBaseConfig_t		*config;
 	ZunoNeoList_t					*list;
 	size_t							len;
@@ -155,7 +155,7 @@ ZunoError_t NeoPixel::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t
 	return (ZunoErrorOk);
 }
 
-void NeoPixel::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness) {
+void NeoPixelClass::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness) {
 	ZunoNeoList_t					*list;
 	volatile uint8_t				lpKey;
 
@@ -164,7 +164,7 @@ void NeoPixel::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountL
 	zunoSyncReleseRead(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color) {
+void NeoPixelClass::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color) {
 	ZunoNeoList_t					*list;
 
 	volatile uint8_t				lpKey;
@@ -174,7 +174,7 @@ void NeoPixel::fill(uint8_t neo_pin, ZunoNeoCountLed first_id_led, ZunoNeoCountL
 	zunoSyncReleseRead(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::clear(uint8_t neo_pin) {
+void NeoPixelClass::clear(uint8_t neo_pin) {
 	ZunoNeoList_t					*list;
 	ZunoNeoColor_t					color;
 
@@ -187,7 +187,7 @@ void NeoPixel::clear(uint8_t neo_pin) {
 	zunoSyncReleseRead(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::show(uint8_t neo_pin) {
+void NeoPixelClass::show(uint8_t neo_pin) {
 	size_t							base;
 	ZunoNeoList_t					*list;
 	const ZunoNeoBaseConfig_t		*config;
@@ -250,7 +250,7 @@ void NeoPixel::show(uint8_t neo_pin) {
 	zunoSyncReleseWrite(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color) {
+void NeoPixelClass::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color) {
 	ZunoNeoList_t					*list;
 	volatile uint8_t				lpKey;
 
@@ -259,7 +259,7 @@ void NeoPixel::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t 
 	zunoSyncReleseRead(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color, uint8_t brightness) {
+void NeoPixelClass::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t color, uint8_t brightness) {
 	ZunoNeoList_t					*list;
 	volatile uint8_t				lpKey;
 
@@ -268,7 +268,7 @@ void NeoPixel::setColor(uint8_t neo_pin, ZunoNeoCountLed id_led, ZunoNeoColor_t 
 	zunoSyncReleseRead(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-void NeoPixel::deleteNeo(uint8_t neo_pin) {
+void NeoPixelClass::deleteNeo(uint8_t neo_pin) {
 	volatile uint8_t				lpKey;
 
 	lpKey = true;
@@ -277,7 +277,7 @@ void NeoPixel::deleteNeo(uint8_t neo_pin) {
 	zunoSyncReleseWrite(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
 }
 
-ZunoNeoColor_t NeoPixel::HSV(uint16_t hue, uint8_t sat, uint8_t val) {
+ZunoNeoColor_t NeoPixelClass::HSV(uint16_t hue, uint8_t sat, uint8_t val) {
 	float					r;
 	float					g;
 	float					b;
@@ -333,13 +333,13 @@ ZunoNeoColor_t NeoPixel::HSV(uint16_t hue, uint8_t sat, uint8_t val) {
 }
 
 /* Private Methods */
-inline ZunoNeoList_t *NeoPixel::_fillPre(uint8_t neo_pin, volatile uint8_t *lpKey) {
+inline ZunoNeoList_t *NeoPixelClass::_fillPre(uint8_t neo_pin, volatile uint8_t *lpKey) {
 	lpKey[0] = true;
 	zunoSyncLockRead(&this->_syncNeo, SyncMasterNeoPixel, lpKey);
 	return (this->_findList(neo_pin));
 }
 
-inline void NeoPixel::_fill(ZunoNeoList_t *list, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness) {
+inline void NeoPixelClass::_fill(ZunoNeoList_t *list, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness) {
 
 	count = count + first_id_led;
 	if (count > list->count_led)
@@ -348,7 +348,7 @@ inline void NeoPixel::_fill(ZunoNeoList_t *list, ZunoNeoCountLed first_id_led, Z
 		this->_setColor(list, first_id_led++, color, brightness);
 }
 
-inline ZunoNeoList_t *NeoPixel::_setColorPre(uint8_t neo_pin, ZunoNeoCountLed id_led, volatile uint8_t *lpKey) {
+inline ZunoNeoList_t *NeoPixelClass::_setColorPre(uint8_t neo_pin, ZunoNeoCountLed id_led, volatile uint8_t *lpKey) {
 	ZunoNeoList_t			*list;
 
 	lpKey[0] = true;
@@ -358,7 +358,7 @@ inline ZunoNeoList_t *NeoPixel::_setColorPre(uint8_t neo_pin, ZunoNeoCountLed id
 	return (list);
 }
 
-inline void NeoPixel::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led, ZunoNeoColor_t color, uint8_t brightness) {
+inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led, ZunoNeoColor_t color, uint8_t brightness) {
 	ZunoNeoOption_t				flag;
 	const ZunoNeoBaseConfig_t	*config;
 	uint8_t						*array;
@@ -410,7 +410,7 @@ inline void NeoPixel::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led, Zun
 	}
 }
 
-inline ZunoNeoList_t *NeoPixel::_findList(uint8_t neo_pin) {
+inline ZunoNeoList_t *NeoPixelClass::_findList(uint8_t neo_pin) {
 	ZunoNeoList_t			*list;
 
 	list = this->_list;
@@ -422,7 +422,7 @@ inline ZunoNeoList_t *NeoPixel::_findList(uint8_t neo_pin) {
 	return (list);
 }
 
-inline void NeoPixel::_cutList(ZunoNeoList_t *list) {
+inline void NeoPixelClass::_cutList(ZunoNeoList_t *list) {
 	ZunoNeoList_t		*list_prev;
 	ZunoNeoList_t		*list_tmp;
 
@@ -436,7 +436,7 @@ inline void NeoPixel::_cutList(ZunoNeoList_t *list) {
 	}
 }
 
-inline void NeoPixel::_addList(ZunoNeoList_t *list) {
+inline void NeoPixelClass::_addList(ZunoNeoList_t *list) {
 	ZunoNeoList_t			*list_next;
 	ZunoNeoList_t			*list_tmp;
 
@@ -449,7 +449,7 @@ inline void NeoPixel::_addList(ZunoNeoList_t *list) {
 		this->_list = list;
 }
 
-inline void NeoPixel::_deleteNeo(uint8_t neo_pin) {
+inline void NeoPixelClass::_deleteNeo(uint8_t neo_pin) {
 	ZunoNeoList_t					*list;
 	volatile uint8_t				lpKey;
 
@@ -461,7 +461,7 @@ inline void NeoPixel::_deleteNeo(uint8_t neo_pin) {
 	}
 }
 
-ZunoError_t NeoPixel::_init(size_t param) {
+ZunoError_t NeoPixelClass::_init(size_t param) {
 	const ZunoNeoBaseConfig_t			*config;
 	USART_TypeDef						*usart;
 	TIMER_Init_TypeDef					timerInit;
@@ -485,14 +485,14 @@ ZunoError_t NeoPixel::_init(size_t param) {
 			break ;
 		default:
 			usart = (USART_TypeDef *)base;
-			USART_InitSync(usart, &NeoPixel::_initSpi);
+			USART_InitSync(usart, &NeoPixelClass::_initSpi);
 			usart->ROUTEPEN = USART_ROUTEPEN_TXPEN;
 			break ;
 	}
 	return (ZunoErrorOk);
 }
 
-inline uint8_t NeoPixel::_getLocationWtimer(uint8_t pin, uint8_t ch) {
+inline uint8_t NeoPixelClass::_getLocationWtimer(uint8_t pin, uint8_t ch) {
 	pin = (getRealPort(pin) << 4) | getRealPin(pin);
 	switch (ch) {
 		case 0:
@@ -575,7 +575,7 @@ inline uint8_t NeoPixel::_getLocationWtimer(uint8_t pin, uint8_t ch) {
 	return (pin << ch);
 }
 
-inline void NeoPixel::_setColorTimerCoder(uint8_t *b, uint8_t color, uint8_t one_hight, uint8_t zero_hight) {
+inline void NeoPixelClass::_setColorTimerCoder(uint8_t *b, uint8_t color, uint8_t one_hight, uint8_t zero_hight) {
 	uint8_t			i;
 	uint8_t			value;
 
@@ -590,7 +590,7 @@ inline void NeoPixel::_setColorTimerCoder(uint8_t *b, uint8_t color, uint8_t one
 	}
 }
 
-inline void NeoPixel::_setColorUsartCoder(uint8_t *b, uint8_t color) {
+inline void NeoPixelClass::_setColorUsartCoder(uint8_t *b, uint8_t color) {
 	uint8_t			i;
 	uint8_t			value;
 
@@ -616,4 +616,4 @@ inline void NeoPixel::_setColorUsartCoder(uint8_t *b, uint8_t color) {
 }
 
 /* Preinstantiate Objects */
-NeoPixel Neo = NeoPixel();
+NeoPixelClass NeoPixel = NeoPixelClass();

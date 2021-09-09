@@ -176,9 +176,9 @@ typedef struct							ZunoNeoList_s
 	uint8_t								array[];
 }										ZunoNeoList_t;
 
-class NeoPixel {
+class NeoPixelClass {
 	public:
-		NeoPixel(void);
+		NeoPixelClass(void);
 		ZunoError_t						addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option, ZunoNeoBase_t base);
 		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option) {return (this->addNeo(neo_pin, count_led, brightness, option, ZunoNeoBaseUsart1));};
 		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness) {return (this->addNeo(neo_pin, count_led, brightness, NEO_GRB | NEO_KHZ800));};
@@ -233,6 +233,6 @@ class NeoPixel {
 };
 
 
-extern NeoPixel Neo;
+extern NeoPixelClass NeoPixel;
 
 #endif //ZUNO_NEOPIXEL_H

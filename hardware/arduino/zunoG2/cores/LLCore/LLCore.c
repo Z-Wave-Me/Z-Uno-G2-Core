@@ -1116,7 +1116,7 @@ long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 long random(long min, long max){
-	long t = ((long)rand()) << 32 + ((long)rand());
+	long t = (long)rand();
 	return min + t % (max-min);
 }
 long random(long max){

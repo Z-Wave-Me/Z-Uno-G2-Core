@@ -34,6 +34,10 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define PROGMEM
 // Arduino specific macroses/function
 long map(long x, long in_min, long in_max, long out_min, long out_max);
+long random(long min, long max);
+long random(long max);
+void randomSeed(long seed);
+
 #define DEG_TO_RAD 			0.017453292519
 #define RAD_TO_DEG 			57.29577951308
 #define EULER 				2.718281828459

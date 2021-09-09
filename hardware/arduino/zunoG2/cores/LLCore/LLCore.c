@@ -1115,6 +1115,16 @@ void zunoLockSleep(void){
 long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+long random(long min, long max){
+	long t = ((long)rand()) << 32 + ((long)rand());
+	return min + t % (max-min);
+}
+long random(long max){
+	return random(0, max);
+}
+void randomSeed(long seed){
+	srand(seed);
+}
 
 extern "C" void __cxa_pure_virtual() { 
 	#ifdef LOGGING_DBG

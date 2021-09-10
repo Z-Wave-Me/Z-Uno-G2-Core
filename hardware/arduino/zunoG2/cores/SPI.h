@@ -62,7 +62,6 @@ class SPIClass {
 		inline void											end(void) {zunoSyncClose(this->_config->lpLock, SyncMasterSpi, this->_deInit, (size_t)this, &this->_lpKey);};
 		void												endTransaction(void);
 		inline uint8_t										transfer(uint8_t data) {return ((uint8_t)this->_transferDate(data, 0));};
-		inline ZunoError_t									transfer(void *buffer) {return(this->transfer((char *)buffer));};
 		inline uint16_t										transfer16(uint16_t data) {return ((uint16_t)this->_transferDate(data, SPI_FLAGS_16BIT));};
 		void												setBitOrder(uint8_t order);
 		inline void											setDataMode(USART_ClockMode_TypeDef mode) {this->setDataMode(mode, this->_ss_pin);};

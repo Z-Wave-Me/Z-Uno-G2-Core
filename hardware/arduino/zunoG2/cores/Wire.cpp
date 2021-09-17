@@ -278,7 +278,6 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 	uint32_t							timeout;
 	uint32_t							pending;
 	uint32_t							state;
-	uint32_t							ms;
 
 
 	i2c->CTRL &= ~(I2C_CTRL_AUTOSE);
@@ -288,34 +287,28 @@ inline uint8_t TwoWire::_transferMasterToSlaveInit(I2C_TypeDef *i2c, int adress,
 	i2c->CMD = I2C_CMD_CLEARPC | I2C_CMD_CLEARTX;
 	while ((i2c->STATUS & I2C_STATUS_RXDATAV) != 0x0)//Empty received data buffer
 		i2c->RXDATA;
-	if ((i2c->STATE & I2C_STATE_BUSHOLD) == 0x0) {
-		I2C_IntClear(i2c, _I2C_IF_MASK);/* Clear all pending interrupts prior to starting a transfer. */
-		i2c->TXDATA = WIRE_ADDRESS_7BIT((uint8_t)adress) | bType;
-		i2c->CMD = I2C_CMD_START;
-		timeout = 0;
-		while (0xFF) {
-			pending = i2c->IF;
-			if ((pending & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)) != 0x0) {
-				i2c->CMD = I2C_CMD_ABORT;
-				return (WIRE_ERORR_TRANSMISSION_OTHER);
-			}
-			if ((pending & (I2C_IF_NACK)) != 0x0)
-				return (WIRE_ERORR_TRANSMISSION_NACK_ADDRESS);
-			if ((pending & (I2C_IF_ACK)) != 0x0)
-				break ;
-			timeout++;
-			if (timeout > (I2C_ADDR_TIMEOUT_US / I2C_ADDR_TIMEOUT_US_DIV)){
-				i2c->CMD = I2C_CMD_ABORT;
-				return (WIRE_ERORR_TRANSMISSION_TIMOUT);
-			}
-			delayMicroseconds(I2C_ADDR_TIMEOUT_US_DIV);
-			WDOG_Feed(); // To make dog happy... ) 
+	I2C_IntClear(i2c, _I2C_IF_MASK);/* Clear all pending interrupts prior to starting a transfer. */
+	i2c->CMD = I2C_CMD_START;
+	i2c->TXDATA = WIRE_ADDRESS_7BIT((uint8_t)adress) | bType;
+	timeout = 0;
+	while (0xFF) {
+		pending = i2c->IF;
+		if ((pending & (I2C_IF_BUSERR | I2C_IF_ARBLOST | I2C_IF_CLERR)) != 0x0) {
+			i2c->CMD = I2C_CMD_ABORT;
+			return (WIRE_ERORR_TRANSMISSION_OTHER);
 		}
-	} 
-	/*else {
-		i2c->CMD = I2C_CMD_ABORT;
-		return (WIRE_ERORR_TRANSMISSION_OTHER);
-	}*/
+		if ((pending & (I2C_IF_NACK)) != 0x0)
+			return (WIRE_ERORR_TRANSMISSION_NACK_ADDRESS);
+		if ((pending & (I2C_IF_ACK)) != 0x0)
+			break ;
+		timeout++;
+		if (timeout > (I2C_ADDR_TIMEOUT_US / I2C_ADDR_TIMEOUT_US_DIV)){
+			i2c->CMD = I2C_CMD_ABORT;
+			return (WIRE_ERORR_TRANSMISSION_TIMOUT);
+		}
+		delayMicroseconds(I2C_ADDR_TIMEOUT_US_DIV);
+		WDOG_Feed(); // To make dog happy... ) 
+	}
 	return (WIRE_ERORR_TRANSMISSION_SUCCESS);
 }
 

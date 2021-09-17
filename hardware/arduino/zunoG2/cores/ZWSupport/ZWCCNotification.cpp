@@ -4,7 +4,7 @@
 #include "Debug.h"
 
 static const byte NOTIFICATION_MAPPER[] = {
-	0,0,
+	0, 0,
 	NOTIFICATION_TYPE_BURGLAR_ALARM, NOTIFICATION_EVENT_INTRUSION_UL,   // SENSOR_BINARY_REPORT_TYPE_GENERAL_PURPOSE       
 	NOTIFICATION_TYPE_SMOKE_ALARM,   NOTIFICATION_EVENT_SMOKE_UL,       // SENSOR_BINARY_REPORT_TYPE_SMOKE                 
 	NOTIFICATION_TYPE_CO_ALARM,      NOTIFICATION_EVENT_CO_UL,          // SENSOR_BINARY_REPORT_TYPE_CO                  
@@ -25,7 +25,9 @@ static const byte NOTIFICATION_MAPPER[] = {
 	NOTIFICATION_TYPE_IRRIGATION,           0x02,
 	NOTIFICATION_TYPE_GAS_ALARM,            NOTIFICATION_EVENT_GAS_COMBUSTIBLE,
 	NOTIFICATION_TYPE_GAS_ALARM,            NOTIFICATION_EVENT_GAS_TOXIC,
-	NOTIFICATION_TYPE_SYSTEM_ALARM,         NOTIFICATION_EVENT_HW_FAIL
+	NOTIFICATION_TYPE_SYSTEM_ALARM,         NOTIFICATION_EVENT_HW_FAIL,
+	NOTIFICATION_TYPE_SYSTEM_ALARM,         NOTIFICATION_EVENT_HW_FAIL_OEM,
+	NOTIFICATION_TYPE_BURGLAR_ALARM,		NOTIFICATION_EVENT_TAMPER_OBJECTMOVED
 };
 
 // static int _not_support(void) {
@@ -49,7 +51,8 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	ZwNotificationGetFrame_t			*cmd_get;
 
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);// Load report mask from EEPROM
-	if(cmd == NULL){// If it's unsolicited report we have to check if it was turned on by user
+	if(cmd == NULL){
+		// If it's unsolicited report we have to check if it was turned on by user
 		if((eeprom_mask & (1UL << channel)) == 0)// Unsolicited => doesn't have incoming package
 			return (ZUNO_COMMAND_BLOCKED); // User don't want this report => don't send it
 		report = (ZwNotificationReportFrame_t *)&CMD_REPORT_CC;
@@ -73,7 +76,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 		report->byte1.notificationStatus = (eeprom_mask & (1UL << channel)) ? NOTIFICATION_ON_VALUE : NOTIFICATION_OFF_VALUE;
 		report->byte1.notificationType = NOTIFICATION_MAPPER[index];
 		uint32_t val = zuno_universalGetter1P(channel);
-		uint8_t  param = val & 0xFF;
+		uint8_t  param = val  & 0xFF;
 
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("*** Notification V:");
@@ -93,13 +96,19 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 			mevent = NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED;
 		} else {
 			mevent = NOTIFICATION_OFF_VALUE;
-			report->byte1.properties1 = 1;
-			report->byte1.eventParameter1 = NOTIFICATION_MAPPER[index + 1];
+			//report->byte1.properties1 = 1;
+			//report->byte1.eventParameter1 = NOTIFICATION_MAPPER[index + 1];
 		}
-		if (cmd != 0x0 && cmd->len >= 0x5) {
+		if (cmd != NULL && cmd->len >= 5) {
 			cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
-			if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1])
-				mevent = 0xFE;
+			if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1]){
+				if(cmd_get->mevent != 0)
+					mevent = 0xFE;
+				else
+					mevent = 0x00;
+			} else {
+				mevent = cmd_get->mevent;
+			}
 		}
 		report->byte1.mevent = mevent;
 	}
@@ -131,9 +140,9 @@ static int _supported_get(size_t channel) {
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = NOTIFICATION_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	report->properties1 = ((NOTIFICATION_TYPE_MAX >> 3) + 1);
-	CMD_REPLY_LEN = sizeof(ZwNotificationSupportedReportFrame_t) + ((NOTIFICATION_TYPE_MAX >> 3) + 1);
+	CMD_REPLY_LEN = sizeof(ZwNotificationSupportedReportFrame_t) + report->properties1;
 	memset(&report->bitMask[0], 0x0, ((NOTIFICATION_TYPE_MAX >> 3) + 1));
-	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[(ZUNO_CFG_CHANNEL(channel).sub_type) << 1], ((NOTIFICATION_TYPE_MAX >> 3) + 1));
+	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[(ZUNO_CFG_CHANNEL(channel).sub_type) << 1], report->properties1);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

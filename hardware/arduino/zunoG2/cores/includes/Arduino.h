@@ -96,6 +96,7 @@ inline void zunoEnableSmartStart(bool en){
 /* time */
 void delay(dword ms);
 dword millis(void);
+dword micros(void);
 void delayMicroseconds(word tdelay);
 inline void yield() { delay(1); }
 

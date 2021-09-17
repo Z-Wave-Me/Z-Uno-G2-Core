@@ -550,6 +550,10 @@ void delay(dword ms){
 dword millis(void){
     return (dword) zunoSysCall(ZUNO_SYSFUNC_MILLIS, 0);
 }
+// JUST A STUB...
+dword micros(void){
+	return (dword) zunoSysCall(ZUNO_SYSFUNC_MILLIS, 0) * 1000UL;
+}
 
 void delayMicroseconds(word tdelay){
     while(tdelay--){

@@ -104,10 +104,6 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 			if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1]){
 				if(cmd_get->mevent != 0)
 					mevent = 0xFE;
-				else
-					mevent = 0x00;
-			} else {
-				mevent = cmd_get->mevent;
 			}
 		}
 		report->byte1.mevent = mevent;

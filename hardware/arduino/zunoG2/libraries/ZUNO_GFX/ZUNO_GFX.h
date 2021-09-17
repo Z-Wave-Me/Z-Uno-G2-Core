@@ -11,7 +11,7 @@ typedef struct GLCDfonts_s
 	uint8_t		*font_buf;
 }				GLCDfonts;
 
-#define max(a, b) (((a) > (b)) ? (a) : (b))
+// #define max(a, b) (((a) > (b)) ? (a) : (b))
 
 class ZUNO_GFX : public Print
 {
@@ -30,7 +30,7 @@ class ZUNO_GFX : public Print
 		uint8_t			bytes_simbol;
 		uint8_t			ranges;
 		font_chunk		*chunks;
-		const uint8_t	*font_buf;
+		uint8_t			*font_buf;
 		
 	}				ZUNO_fonts;
 	protected:
@@ -39,6 +39,7 @@ class ZUNO_GFX : public Print
 		uint16_t	s_width;
 		uint16_t	s_height;
 		uint16_t	_color;
+		uint32_t	_bgcolor;
 		ZUNO_fonts	font;
 		void printChar(const uint8_t *sim_buf, uint8_t w_sim);
 		uint8_t		*buffer;
@@ -56,19 +57,19 @@ class ZUNO_GFX : public Print
 		using	Print::write;
 		virtual size_t write(const uint8_t *buffer, size_t size);
 		uint8_t write(uint32_t unicode);
-		uint8_t write(uint8_t chr)	 {return(write((uint32_t)chr));};
+		size_t write(uint8_t chr)	 {return(write((uint32_t)chr));};
 		uint8_t write(char chr)	 {return(write((uint32_t)chr));};
 		virtual void drawPixel(int16_t x, int16_t y, uint16_t color);
 		virtual void writePixel(int16_t x, int16_t y, uint16_t color);
+		virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+		virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 		void drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 												 uint8_t *pic, uint16_t color);
 		void writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
 		void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, 
 																uint16_t color);
 		void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
-		void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
 		void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-		void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
 		void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
 		void fillScreen(uint16_t color);
 		void drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
@@ -84,8 +85,8 @@ class ZUNO_GFX : public Print
 		void fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 								uint8_t corners, int16_t delta, uint16_t color);
 		void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-		void setFont(const uint8_t *font_name);
-		inline void setFontColor(uint16_t color) {_color = color;};
+		void setFont(uint8_t *font_name);
+		inline void setFontColor(uint16_t color, uint32_t bgcolor = -1) {_color = color; _bgcolor = bgcolor;};
 		void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 									int16_t x2, int16_t y2, uint16_t color);
 		void fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
@@ -97,6 +98,8 @@ class ZUNO_GFX : public Print
 		int16_t	getCursorY(void) const { return cur_y; };
 		void	setCursor(uint16_t x, uint16_t y) {cur_x = x; cur_y = y;};
 		uint8_t *getBuffer() {return buffer;};
+		virtual void drawImage(uint16_t x, uint16_t y, uint16_t *img, uint32_t bg_color = -1);
+		virtual void drawImage_1bpp(uint16_t x, uint16_t y, uint8_t *img,uint16_t color, uint32_t bg_color = -1);
 };
 
 #endif

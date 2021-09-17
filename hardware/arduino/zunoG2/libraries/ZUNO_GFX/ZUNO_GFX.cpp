@@ -86,6 +86,9 @@ void ZUNO_GFX::printChar(const uint8_t *sim_buf, uint8_t w_sim)
 			
 			if (sim_buf[cur_b] & cur_bit)
 				drawPixel(cur_x + col, cur_y + row, _color);
+			else if (_bgcolor != -1)
+				drawPixel(cur_x + col, cur_y + row, _bgcolor);
+
 		}
 	}
 	
@@ -154,7 +157,7 @@ uint8_t ZUNO_GFX::retchunk(uint32_t unicode)
 	return(-1);
 }
 
-void	ZUNO_GFX::setFont(const uint8_t *font_name)
+void	ZUNO_GFX::setFont(uint8_t *font_name)
 {
 
 	if (font.font_buf != NULL)
@@ -296,6 +299,7 @@ void ZUNO_GFX::writeFastVLine(int16_t x, int16_t y, int16_t h,
   drawFastVLine(x, y, h, color);
 }
 void ZUNO_GFX::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) {
+  
   writeLine(x, y, x, y + h - 1, color);
 }
 
@@ -323,8 +327,17 @@ void ZUNO_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 
 void ZUNO_GFX::fillRect(int16_t x, int16_t y, int16_t w,
 													int16_t h, uint16_t color) {
-  for (int16_t i = x; i < x + w; i++) {
-	writeFastVLine(i, y, h, color);
+  if (w > h)
+  {
+	for (int16_t i = y; i < y + h; i++) {
+		writeFastHLine(x, i, w, color);
+  	}
+  }
+  else
+  {
+	for (int16_t i = x; i < x + w; i++) {
+		writeFastHLine(x, i, h, color);
+	}
   }
 }
 
@@ -647,4 +660,41 @@ void ZUNO_GFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       _swap_int16_t(a, b);
     writeFastHLine(a, y, b - a + 1, color);
   }
+}
+
+void ZUNO_GFX::drawImage(uint16_t x, uint16_t y, uint16_t *img, uint32_t bg_color)
+{
+	uint16_t w = img[0];
+	uint16_t h = img[1];
+	uint16_t color;
+	for (int i = 0; i < h; i++ )
+	{
+		for (int j = 0; j < w; j++)
+		{
+			color = img[2 + (i * w + j)];
+			if (color == bg_color)
+				continue;
+			drawPixel(j + x, i + y,color);
+		}
+	}
+}
+
+void ZUNO_GFX::drawImage_1bpp(uint16_t x, uint16_t y, uint8_t *img,uint16_t color, uint32_t bg_color)
+{
+	uint8_t w = img[0];
+	uint8_t h = img[1];
+	uint8_t w_byte = w >> 3 + (w % 8 ? 1 : 0);
+	for (uint8_t i = 0; i < h; i++)
+	{
+		for (uint8_t j = 0; j < w; j++)
+		{
+			if (img[(2 + (w_byte * i) + (j >> 3))] & (0x80 >> (j % 8)))
+			{
+				drawPixel(j + x, i + y,color);
+			}
+			else if (bg_color != -1)
+				drawPixel(j + x, i + y, bg_color);
+		}
+		WDOG_Feed();
+	}
 }

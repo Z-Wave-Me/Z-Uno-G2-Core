@@ -51,15 +51,16 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	ZwNotificationGetFrame_t			*cmd_get;
 
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);// Load report mask from EEPROM
-	CMD_REPLY_LEN = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
+	
 	if(cmd == NULL){
 		// If it's unsolicited report we have to check if it was turned on by user
 		if((eeprom_mask & (1UL << channel)) == 0)// Unsolicited => doesn't have incoming package
 			return (ZUNO_COMMAND_BLOCKED); // User don't want this report => don't send it
 		report = (ZwNotificationReportFrame_t *)&CMD_REPORT_CC;
+		CMD_REPORT_LEN = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	} else {
 		report = (ZwNotificationReportFrame_t *)&CMD_REPLY_CC;
-		
+		CMD_REPLY_LEN = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	}
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
 	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
@@ -89,7 +90,12 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 			if(param == NOTIFICATION_EVENT_PARAM_ADD){
 				report->byte1.properties1 = 1;
 				report->byte1.eventParameter1 = (val >> 8) & 0xFF;
-				CMD_REPLY_LEN++; // Add event parameter to package
+				// Add parameter length to whole packet lenth
+				if(cmd == NULL){
+					CMD_REPORT_LEN++; 
+				} else {
+					CMD_REPLY_LEN++;
+				}
 			}
 			mevent = NOTIFICATION_MAPPER[index + 1];
 		} else if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){

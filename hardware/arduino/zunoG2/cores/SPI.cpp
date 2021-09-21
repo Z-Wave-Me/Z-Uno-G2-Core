@@ -24,7 +24,7 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable0 =
 	.sck = SCK,
 	.miso = MISO,
 	.mosi = MOSI,
-	.ss = SS
+	.ss = UNKNOWN_PIN
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 = 
@@ -37,7 +37,7 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 =
 	.sck = SCK,
 	.miso = MISO,
 	.mosi = MOSI,
-	.ss = SS
+	.ss = UNKNOWN_PIN
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 = 
@@ -50,7 +50,7 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 =
 	.sck = SCK2,
 	.miso = MISO2,
 	.mosi = MOSI2,
-	.ss = SS2
+	.ss = UNKNOWN_PIN
 };
 
 const USART_InitSync_TypeDef SPIClass::_initSpi = SPI_INIT_DEFAULT;//USART_INITSYNC_DEFAULT;
@@ -115,7 +115,8 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 	pinMode(sck, OUTPUT);//_GPIO_P_MODEL_MODE0_PUSHPULL
 	pinMode(miso, INPUT);//_GPIO_P_MODEL_MODE0_INPUT
 	pinMode(mosi, OUTPUT);
-	pinMode(ss, OUTPUT);
+	if(ss != UNKNOWN_PIN)
+		pinMode(ss, OUTPUT);
 	this->_ss_pin = ss;
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	clk_loc = (clk_loc > 1) ? clk_loc - 2 : (clk_loc ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 1);
@@ -137,7 +138,8 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 		this->_baudrate = clock;
 		USART_BaudrateSyncSet(usart, 0, clock);
 	}
-	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
+	if(_ss_pin != UNKNOWN_PIN)
+		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
@@ -190,7 +192,8 @@ void SPIClass::endTransaction(void) {
 	config = this->_config;
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return ;
-	digitalWrite(this->_ss_pin, HIGH);//We inform slave to terminate data acquisition
+	if(_ss_pin != UNKNOWN_PIN)
+		digitalWrite(this->_ss_pin, HIGH);//We inform slave to terminate data acquisition
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
@@ -203,7 +206,8 @@ size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	config = this->_config;
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
+	if(_ss_pin != UNKNOWN_PIN)
+		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if ((bFlags & SPI_FLAGS_16BIT) != 0) {
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
@@ -234,7 +238,8 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	config = this->_config;
 	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
-	digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
+	if(_ss_pin != UNKNOWN_PIN)
+		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if (count <= SPI_MIN_WRITE_ZDMA)
 	{

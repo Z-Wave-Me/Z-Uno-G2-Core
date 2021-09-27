@@ -1,14 +1,77 @@
 #ifndef ZUNO_BUTTONS_H
 #define ZUNO_BUTTONS_H
 
-#include "ZUNO_Buttons_define.h"
+#include "LdmaClass.h"
+
+typedef enum
+{
+	BtnTypeButton,
+	BtnTypeTouch
+} ZunoBtnType_t;
+
+typedef enum
+{
+	BtnButtonModeAuto,
+	BtnButtonModeTimer,
+	BtnButtonModeExtInt
+} ZunoButtonMode_t;
+
+#define BTN_DELAY_DEBOUNCE_MILLIS_DEFAULT				(50)
+#define BTN_DELAY_SINGLECLICK_MILLIS_DEFAULT			(500)
+#define BTN_DELAY_LONGCLICK_MILLIS_DEFAULT				(1000)
+#define BTN_DELAY_FREE_MILLIS_DEFAULT					(1200)
+
+#define BTN_BUTTON_INIT_DEFAULT\
+	{\
+		{\
+			BTN_DELAY_DEBOUNCE_MILLIS_DEFAULT,\
+			BTN_DELAY_SINGLECLICK_MILLIS_DEFAULT,\
+			BTN_DELAY_LONGCLICK_MILLIS_DEFAULT,\
+			BTN_DELAY_FREE_MILLIS_DEFAULT\
+		},\
+		BtnButtonModeAuto,\
+		true\
+	}
+
+typedef struct							ZunoBtnDelayInit_s
+{
+	uint16_t							delayDebounce;
+	uint16_t							delaySingleClick;
+	uint16_t							delayLongClick;
+	uint16_t							delayFree;
+}										ZunoBtnDelayInit_t;
+
+typedef struct							ZunoBtnButtonInit_s
+{
+	ZunoBtnDelayInit_t					delay;//first always must be
+	ZunoButtonMode_t					mode;
+	uint8_t								bInvert;
+}										ZunoBtnButtonInit_t;
+
+
+#define BTN_TOUCH_INIT_DEFAULT\
+	{\
+		{\
+			BTN_DELAY_DEBOUNCE_MILLIS_DEFAULT,\
+			BTN_DELAY_SINGLECLICK_MILLIS_DEFAULT,\
+			BTN_DELAY_LONGCLICK_MILLIS_DEFAULT,\
+			BTN_DELAY_FREE_MILLIS_DEFAULT\
+		},\
+		1\
+	}
+
+typedef struct							ZunoBtnTouchInit_s
+{
+	ZunoBtnDelayInit_t					delay;//first always must be
+	uint8_t								clickPower;//%
+}										ZunoBtnTouchInit_t;
 
 #define BTN_DELAY_DIVIDED					ZUNO_SYSTIMER_PERIOD_MC
 
 #define BTN_TOUCH_UNIQ_DMA_DATA				((size_t)(&PinBtn::_values.toushAutoScanBufferLp))
 #define BTN_TOUCH_UNIQ_DMA_BASELINE			((size_t)(&PinBtn::_values.toushAutoScanBufferBlockMax))
 
-#define BTN_TOUCH_BLOCK_DMA_SIZE	zdmaData16
+#define BTN_TOUCH_BLOCK_DMA_SIZE	ldmaCtrlSizeHalf
 typedef uint16_t btn_touch_value;
 
 #define BTN_TOUCH_BLOCK_MAX				ZUNO_PIN_LAST_INDEX + 1
@@ -74,10 +137,19 @@ typedef struct							ZunoBtnTouch_s
 	uint8_t								index;
 }										ZunoBtnTouch_t;
 
+typedef struct							ZunoBtnValuesDma_s
+{
+	ssize_t								channel_data;
+	ssize_t								channel_baseline;
+	LdmaClassReceivedCyclical_t			array_data;
+	LdmaClassTransferCyclical_t			array_baseline;
+}										ZunoBtnValuesDma_t;
+
 typedef struct							ZunoBtnValues_s
 {
 	ZunoBtnHeader_t						*list;
 	btn_touch_value						*toushAutoScanBufferLp;
+	ZunoBtnValuesDma_t					*dma;
 	btn_touch_value						touchFullClick;
 	uint8_t								bSysTimerInit;
 	uint8_t								touchBlock;

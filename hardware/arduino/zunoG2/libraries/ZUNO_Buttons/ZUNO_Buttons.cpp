@@ -2,7 +2,6 @@
 #include "stdlib.h"
 #include "GpioInterrupt.h"
 #include "CrtxCSEN.h"
-#include "ZDma.h"
 #include "Threading.h"
 #include "Sync.h"
 #include "ZUNO_Buttons.h"
@@ -10,11 +9,11 @@
 /* Constants */
 const ZunoBtnButtonInit_t PinBtn::_initBtnButton = BTN_BUTTON_INIT_DEFAULT;
 const ZunoBtnTouchInit_t PinBtn::_initBtnTouch = BTN_TOUCH_INIT_DEFAULT;
-const btn_touch_value PinBtn::_baseLineTouch[1] = {0};//ZDMA_EXT_FLAGS_SRC_NOT_INC | ZDMA_EXT_FLAGS_DEST_NOT_INC or [ZUNO_PIN_LAST_INDEX + 1]
+const btn_touch_value PinBtn::_baseLineTouch[1] = {0};
 
 
 /* Values */
- ZunoBtnValues_t PinBtn::_values = {0, 0, 0, 0, 0, 0, 0};
+ ZunoBtnValues_t PinBtn::_values = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /* Public Constructors */
 PinBtn::PinBtn() {
@@ -265,11 +264,12 @@ ZunoError_t PinBtn::_deInitCsen(size_t param) {
 	else
 		CSEN->SCANMASK1 ^= (1 << (param - 0x20));
 	if (--PinBtn::_values.touchBlock == 0) {
-		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_DATA, true);
-		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_BASELINE, true);
+		LdmaClass::transferStop(PinBtn::_values.dma->channel_data);
+		LdmaClass::transferStop(PinBtn::_values.dma->channel_baseline);
 		PinBtn::_closeTimer();
 		CSEN_Disable(CSEN);
 		free(PinBtn::_values.toushAutoScanBufferLp);
+		free(PinBtn::_values.dma);
 		return (ZunoErrorOk);
 	}
 	PinBtn::_reconfigTouch();
@@ -299,14 +299,9 @@ inline void PinBtn::_deactive(ZunoBtnHeader_t *list) {
 }
 
 void PinBtn::_reconfigTouch(void) {
-	ZunoZDmaExt_t				lpExt;
 
-	lpExt = ZDMA_EXT_INIT_DEFAULT;
-	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
-	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG;
-	ZDMA.toPeripheralMemory(BTN_TOUCH_UNIQ_DMA_DATA, zdmaPeripheralSignal_CSEN_DATA, (void *)PinBtn::_values.toushAutoScanBufferLp, (void *)&CSEN->DATA, PinBtn::_values.touchBlock, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt);
-	lpExt.flags = ZDMA_EXT_FLAGS_RECONFIG | ZDMA_EXT_FLAGS_SRC_NOT_INC | ZDMA_EXT_FLAGS_DEST_NOT_INC;
-	ZDMA.toMemoryPeripheral(BTN_TOUCH_UNIQ_DMA_BASELINE, zdmaPeripheralSignal_CSEN_BSLN, (void *)&CSEN->DMBASELINE, (void *)&PinBtn::_baseLineTouch[0], PinBtn::_values.touchBlock, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt);
+	LdmaClass::transferStop(PinBtn::_values.dma->channel_data);
+	PinBtn::_values.dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, PinBtn::_values.toushAutoScanBufferLp, PinBtn::_values.touchBlock, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &PinBtn::_values.dma->array_data);
 }
 
 inline ZunoError_t PinBtn::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeader_t *list) {
@@ -372,30 +367,37 @@ ZunoError_t PinBtn::_initCsen(size_t param) {
 	CSEN_Init_TypeDef			csenInit;
 	CSEN_InitMode_TypeDef		csenInitMode;
 	btn_touch_value				*blockBuffer;
-	ZunoZDmaExt_t				lpExt;
+	ZunoBtnValuesDma_t			*dma;
 
-	lpExt = ZDMA_EXT_INIT_DEFAULT;
-	lpExt.loop = ZDMA_EXT_LOOP_INFINITY;
 	initBtn = (ZunoBtnCsenInit_t *)param;
 	if ((blockBuffer = (btn_touch_value *)malloc(BTN_TOUCH_BLOCK_PERIOD * sizeof(btn_touch_value))) == 0)
 		return (ZunoErrorMemory);
-	memset(blockBuffer, 0, BTN_TOUCH_BLOCK_PERIOD * sizeof(btn_touch_value));
-	if ((ret = ZDMA.toPeripheralMemory(BTN_TOUCH_UNIQ_DMA_DATA, zdmaPeripheralSignal_CSEN_DATA, (void *)blockBuffer, (void *)&CSEN->DATA, 1, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt)) != ZunoErrorOk) {
+	if ((dma = (ZunoBtnValuesDma_t *)malloc(sizeof(ZunoBtnValuesDma_t))) == 0) {
 		free(blockBuffer);
-		return (ret);
+		return (ZunoErrorMemory);
 	}
-	lpExt.flags = ZDMA_EXT_FLAGS_SRC_NOT_INC | ZDMA_EXT_FLAGS_DEST_NOT_INC;
-	if ((ret = ZDMA.toMemoryPeripheral(BTN_TOUCH_UNIQ_DMA_BASELINE, zdmaPeripheralSignal_CSEN_BSLN, (void *)&CSEN->DMBASELINE, (void *)&PinBtn::_baseLineTouch[0], 1, BTN_TOUCH_BLOCK_DMA_SIZE, &lpExt)) != ZunoErrorOk) {
-		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_DATA, true);
+	memset(blockBuffer, 0, BTN_TOUCH_BLOCK_PERIOD * sizeof(btn_touch_value));
+	if ((dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, blockBuffer, 0x1, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_data)) == -1)
+	{
+		free(dma);
 		free(blockBuffer);
-		return (ret);
+		return (ZunoErrorDmaLimitChannel);
+	}
+	if ((dma->channel_baseline = LdmaClass::transferCyclical(&PinBtn::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) == -1)
+	{
+		LdmaClass::transferStop(dma->channel_data);
+		free(dma);
+		free(blockBuffer);
+		return (ZunoErrorDmaLimitChannel);
 	}
 	if ((ret = PinBtn::_openTimer()) != ZunoErrorOk) {
-		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_BASELINE, true);
-		ZDMA.stopTransfer(BTN_TOUCH_UNIQ_DMA_DATA, true);
+		LdmaClass::transferStop(dma->channel_data);
+		LdmaClass::transferStop(dma->channel_baseline);
+		free(dma);
 		free(blockBuffer);
 		return (ret);
 	}
+	PinBtn::_values.dma = dma;
 	PinBtn::_values.toushAutoScanBufferLp = blockBuffer;
 	PinBtn::_values.toushAutoScanBufferBlockMax = BTN_TOUCH_BLOCK_PERIOD;
 	CMU_ClockEnable(cmuClock_CSEN_HF, true);

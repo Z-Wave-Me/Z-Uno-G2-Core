@@ -7,20 +7,20 @@
 #include "ZUNO_Buttons.h"
 
 /* Constants */
-const ZunoBtnButtonInit_t PinBtn::_initBtnButton = BTN_BUTTON_INIT_DEFAULT;
-const ZunoBtnTouchInit_t PinBtn::_initBtnTouch = BTN_TOUCH_INIT_DEFAULT;
-const btn_touch_value PinBtn::_baseLineTouch[1] = {0};
+const ZunoBtnButtonInit_t ButtonsClass::_initBtnButton = BTN_BUTTON_INIT_DEFAULT;
+const ZunoBtnTouchInit_t ButtonsClass::_initBtnTouch = BTN_TOUCH_INIT_DEFAULT;
+const btn_touch_value ButtonsClass::_baseLineTouch[1] = {0};
 
 
 /* Values */
- ZunoBtnValues_t PinBtn::_values = {0, 0, 0, 0, 0, 0, 0, 0};
+ ZunoBtnValues_t ButtonsClass::_values = {0, 0, 0, 0, 0, 0, 0, 0};
 
 /* Public Constructors */
-PinBtn::PinBtn() {
+ButtonsClass::ButtonsClass() {
 }
 
 /* Public Methods */
-ZunoError_t PinBtn::addButton(uint8_t pin, ZunoBtnType_t type) {
+ZunoError_t ButtonsClass::addButton(uint8_t pin, ZunoBtnType_t type) {
 	void				*init;
 
 	switch (type) {
@@ -37,7 +37,7 @@ ZunoError_t PinBtn::addButton(uint8_t pin, ZunoBtnType_t type) {
 	return (this->_addButton(pin, type, init));
 }
 
-void PinBtn::deleteButton(uint8_t pin) {
+void ButtonsClass::deleteButton(uint8_t pin) {
 	ZunoBtnHeader_t		*list;
 
 	if (zunoIsIOThread() == true)
@@ -51,7 +51,7 @@ void PinBtn::deleteButton(uint8_t pin) {
 }
 
 /* Private Methods */
-size_t PinBtn::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
+size_t ButtonsClass::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
 	size_t					out;
 	ZunoBtnHeader_t			*list;
 	size_t					event_map;
@@ -158,7 +158,7 @@ size_t PinBtn::_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick) {
 	return (out);
 }
 
-ZunoError_t PinBtn::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
+ZunoError_t ButtonsClass::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
 	ZunoBtnHeader_t			*list;
 	size_t					len;
 	ZunoError_t				ret;
@@ -201,7 +201,7 @@ ZunoError_t PinBtn::_addButton(uint8_t pin, ZunoBtnType_t type, void *init) {
 	return (ret);
 }
 
-inline ZunoError_t PinBtn::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init) {
+inline ZunoError_t ButtonsClass::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init) {
 	ZunoButtonMode_t		mode;
 
 	if (list->type != type)
@@ -220,7 +220,7 @@ inline ZunoError_t PinBtn::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_t type
 	return (ZunoErrorOk);
 }
 
-inline void PinBtn::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init, uint8_t bOld) {
+inline void ButtonsClass::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init, uint8_t bOld) {
 	ZunoButtonMode_t		mode;
 	ZunoBtnDelayInit_t		*delay;
 	uint8_t					clickPower;
@@ -251,32 +251,32 @@ inline void PinBtn::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *i
 	list->delayFree = delay->delayFree / BTN_DELAY_DIVIDED;
 }
 
-void PinBtn::_closeTimer(void) {
+void ButtonsClass::_closeTimer(void) {
 	zunoEnterCritical();
-	if (--PinBtn::_values.bSysTimerInit == 0)
-		zunoDetachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)PinBtn::_updateTimer);
+	if (--ButtonsClass::_values.bSysTimerInit == 0)
+		zunoDetachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer);
 	zunoExitCritical();
 }
 
-ZunoError_t PinBtn::_deInitCsen(size_t param) {
+ZunoError_t ButtonsClass::_deInitCsen(size_t param) {
 	if (param <= 0x1F)
 		CSEN->SCANMASK0 ^= (1 << param);
 	else
 		CSEN->SCANMASK1 ^= (1 << (param - 0x20));
-	if (--PinBtn::_values.touchBlock == 0) {
-		LdmaClass::transferStop(PinBtn::_values.dma->channel_data);
-		LdmaClass::transferStop(PinBtn::_values.dma->channel_baseline);
-		PinBtn::_closeTimer();
+	if (--ButtonsClass::_values.touchBlock == 0) {
+		LdmaClass::transferStop(ButtonsClass::_values.dma->channel_data);
+		LdmaClass::transferStop(ButtonsClass::_values.dma->channel_baseline);
+		ButtonsClass::_closeTimer();
 		CSEN_Disable(CSEN);
-		free(PinBtn::_values.toushAutoScanBufferLp);
-		free(PinBtn::_values.dma);
+		free(ButtonsClass::_values.toushAutoScanBufferLp);
+		free(ButtonsClass::_values.dma);
 		return (ZunoErrorOk);
 	}
-	PinBtn::_reconfigTouch();
+	ButtonsClass::_reconfigTouch();
 	return (ZunoErrorSyncDeInit);
 }
 
-inline void PinBtn::_deactive(ZunoBtnHeader_t *list) {
+inline void ButtonsClass::_deactive(ZunoBtnHeader_t *list) {
 	ZunoBtnButton_t			*list_button;
 
 	switch (list->type) {
@@ -298,13 +298,13 @@ inline void PinBtn::_deactive(ZunoBtnHeader_t *list) {
 	free(list);
 }
 
-void PinBtn::_reconfigTouch(void) {
+void ButtonsClass::_reconfigTouch(void) {
 
-	LdmaClass::transferStop(PinBtn::_values.dma->channel_data);
-	PinBtn::_values.dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, PinBtn::_values.toushAutoScanBufferLp, PinBtn::_values.touchBlock, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &PinBtn::_values.dma->array_data);
+	LdmaClass::transferStop(ButtonsClass::_values.dma->channel_data);
+	ButtonsClass::_values.dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, ButtonsClass::_values.toushAutoScanBufferLp, ButtonsClass::_values.touchBlock, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &ButtonsClass::_values.dma->array_data);
 }
 
-inline ZunoError_t PinBtn::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeader_t *list) {
+inline ZunoError_t ButtonsClass::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeader_t *list) {
 	ZunoError_t				ret;
 	ZunoBtnButton_t			*list_button;
 
@@ -329,14 +329,14 @@ inline ZunoError_t PinBtn::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeade
 	return (ret);
 }
 
-ZunoError_t PinBtn::_openTimer(void) {
+ZunoError_t ButtonsClass::_openTimer(void) {
 	ZunoError_t				ret;
 
 	zunoEnterCritical();
-	if (PinBtn::_values.bSysTimerInit++ != 0)
+	if (ButtonsClass::_values.bSysTimerInit++ != 0)
 		ret = ZunoErrorOk;
-	else if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)PinBtn::_updateTimer)) != ZunoErrorOk) 
-		PinBtn::_values.bSysTimerInit--;
+	else if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer)) != ZunoErrorOk) 
+		ButtonsClass::_values.bSysTimerInit--;
 	zunoExitCritical();
 	return (ret);
 }
@@ -361,7 +361,7 @@ static inline void _setPeriodCsen(CSEN_Init_TypeDef *csenInit, size_t ms) {
 	csenInit->pcPrescale = csenPCPrescaleDiv128;
 }
 
-ZunoError_t PinBtn::_initCsen(size_t param) {
+ZunoError_t ButtonsClass::_initCsen(size_t param) {
 	ZunoBtnCsenInit_t			*initBtn;
 	ZunoError_t					ret;
 	CSEN_Init_TypeDef			csenInit;
@@ -383,23 +383,23 @@ ZunoError_t PinBtn::_initCsen(size_t param) {
 		free(blockBuffer);
 		return (ZunoErrorDmaLimitChannel);
 	}
-	if ((dma->channel_baseline = LdmaClass::transferCyclical(&PinBtn::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) == -1)
+	if ((dma->channel_baseline = LdmaClass::transferCyclical(&ButtonsClass::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) == -1)
 	{
 		LdmaClass::transferStop(dma->channel_data);
 		free(dma);
 		free(blockBuffer);
 		return (ZunoErrorDmaLimitChannel);
 	}
-	if ((ret = PinBtn::_openTimer()) != ZunoErrorOk) {
+	if ((ret = ButtonsClass::_openTimer()) != ZunoErrorOk) {
 		LdmaClass::transferStop(dma->channel_data);
 		LdmaClass::transferStop(dma->channel_baseline);
 		free(dma);
 		free(blockBuffer);
 		return (ret);
 	}
-	PinBtn::_values.dma = dma;
-	PinBtn::_values.toushAutoScanBufferLp = blockBuffer;
-	PinBtn::_values.toushAutoScanBufferBlockMax = BTN_TOUCH_BLOCK_PERIOD;
+	ButtonsClass::_values.dma = dma;
+	ButtonsClass::_values.toushAutoScanBufferLp = blockBuffer;
+	ButtonsClass::_values.toushAutoScanBufferBlockMax = BTN_TOUCH_BLOCK_PERIOD;
 	CMU_ClockEnable(cmuClock_CSEN_HF, true);
 	CMU_ClockEnable(cmuClock_CSEN_LF, true);
 	csenInit =  CSEN_INIT_DEFAULT;
@@ -423,13 +423,13 @@ ZunoError_t PinBtn::_initCsen(size_t param) {
 	pinMode(initBtn->pin, OUTPUT_UP);
 	while (CSEN_IsBusy(CSEN) == true)
 		__NOP();
-	PinBtn::_values.touchFullClick = CSEN_DataGet(CSEN) / BTN_TOUCH_MAX_CLICK_POWER;
+	ButtonsClass::_values.touchFullClick = CSEN_DataGet(CSEN) / BTN_TOUCH_MAX_CLICK_POWER;
 	pinMode(initBtn->pin, INPUT_PULLUP_FILTER);
 	CSEN->CTRL = (CSEN->CTRL ^ (csenTrigSelStart << _CSEN_CTRL_STM_SHIFT)) | (csenTrigSelTimer << _CSEN_CTRL_STM_SHIFT);
 	return (ZunoErrorOk);
 }
 
-inline ZunoError_t PinBtn::_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *list) {
+inline ZunoError_t ButtonsClass::_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *list) {
 	ZunoBtnCsenInit_t			initBtn;
 	ZunoError_t					ret;
 
@@ -442,7 +442,7 @@ inline ZunoError_t PinBtn::_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *list) {
 	return (ret);
 }
 
-inline ZunoError_t PinBtn::_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBtnTouch_t *list) {
+inline ZunoError_t ButtonsClass::_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBtnTouch_t *list) {
 	size_t						aport;
 	size_t						block;
 	size_t						blockMax;
@@ -476,7 +476,7 @@ inline ZunoError_t PinBtn::_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBtnTouch
 	return (ZunoErrorOk);
 }
 
-inline void PinBtn::_addList(ZunoBtnHeader_t *list) {
+inline void ButtonsClass::_addList(ZunoBtnHeader_t *list) {
 	ZunoBtnHeader_t		*list_next;
 	ZunoBtnHeader_t		*list_tmp;
 
@@ -489,7 +489,7 @@ inline void PinBtn::_addList(ZunoBtnHeader_t *list) {
 		this->_values.list = list;
 }
 
-inline void PinBtn::_cutList(ZunoBtnHeader_t *list) {
+inline void ButtonsClass::_cutList(ZunoBtnHeader_t *list) {
 	ZunoBtnHeader_t		*list_prev;
 	ZunoBtnHeader_t		*list_tmp;
 
@@ -503,7 +503,7 @@ inline void PinBtn::_cutList(ZunoBtnHeader_t *list) {
 	}
 }
 
-inline ZunoBtnHeader_t *PinBtn::_findList(uint8_t pin) {
+inline ZunoBtnHeader_t *ButtonsClass::_findList(uint8_t pin) {
 	ZunoBtnHeader_t	*list;
 
 	list = this->_values.list;
@@ -515,7 +515,7 @@ inline ZunoBtnHeader_t *PinBtn::_findList(uint8_t pin) {
 	return (list);
 }
 
-void PinBtn::_updateTimer(void) {
+void ButtonsClass::_updateTimer(void) {
 	ZunoBtnHeader_t			*list;
 	size_t					time_now;
 	size_t					pressed;
@@ -532,7 +532,7 @@ void PinBtn::_updateTimer(void) {
 					pressed = digitalRead(list->pin);
 					if (((ZunoBtnButton_t *)list)->bInvert == true)
 						pressed = !pressed;
-					PinBtn::_updateTimerCommon(time_now, list, pressed);
+					ButtonsClass::_updateTimerCommon(time_now, list, pressed);
 				}
 				break ;
 			case BtnTypeTouch:
@@ -557,15 +557,15 @@ void PinBtn::_updateTimer(void) {
 					index++;
 					input1 = input1 & (input1 - 1);
 				}
-				pressed = (PinBtn::_values.toushAutoScanBufferLp[index] >= PinBtn::_values.touchFullClick * ((ZunoBtnTouch_t *)list)->clickPower)? 1 : 0;
-				PinBtn::_updateTimerCommon(time_now, list, pressed);
+				pressed = (ButtonsClass::_values.toushAutoScanBufferLp[index] >= ButtonsClass::_values.touchFullClick * ((ZunoBtnTouch_t *)list)->clickPower)? 1 : 0;
+				ButtonsClass::_updateTimerCommon(time_now, list, pressed);
 				break ;
 		}
 		list = list->next;
 	}
 }
 
-void PinBtn::_updateTimerCommon(size_t time_now, ZunoBtnHeader_t *list, size_t pressed) {
+void ButtonsClass::_updateTimerCommon(size_t time_now, ZunoBtnHeader_t *list, size_t pressed) {
 	size_t								time_diff;
 	ZunoBtnStateButton_t				state_next;
 
@@ -659,7 +659,7 @@ void PinBtn::_updateTimerCommon(size_t time_now, ZunoBtnHeader_t *list, size_t p
 	list->state = state_next;
 }
 
-void PinBtn::_updateExtIntButton(uint8_t pinExtInt) {
+void ButtonsClass::_updateExtIntButton(uint8_t pinExtInt) {
 	ZunoBtnButton_t						*list;
 	size_t								time_now;
 	size_t								time_diff;
@@ -750,4 +750,4 @@ void PinBtn::_updateExtIntButton(uint8_t pinExtInt) {
 }
 
 /* Preinstantiate Objects */
-PinBtn Btn = PinBtn();
+ButtonsClass Btn = ButtonsClass();

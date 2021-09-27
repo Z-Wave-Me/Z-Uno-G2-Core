@@ -68,8 +68,8 @@ typedef struct							ZunoBtnTouchInit_s
 
 #define BTN_DELAY_DIVIDED					ZUNO_SYSTIMER_PERIOD_MC
 
-#define BTN_TOUCH_UNIQ_DMA_DATA				((size_t)(&PinBtn::_values.toushAutoScanBufferLp))
-#define BTN_TOUCH_UNIQ_DMA_BASELINE			((size_t)(&PinBtn::_values.toushAutoScanBufferBlockMax))
+#define BTN_TOUCH_UNIQ_DMA_DATA				((size_t)(&ButtonsClass::_values.toushAutoScanBufferLp))
+#define BTN_TOUCH_UNIQ_DMA_BASELINE			((size_t)(&ButtonsClass::_values.toushAutoScanBufferBlockMax))
 
 #define BTN_TOUCH_BLOCK_DMA_SIZE	ldmaCtrlSizeHalf
 typedef uint16_t btn_touch_value;
@@ -163,9 +163,9 @@ typedef struct							ZunoBtnCsenInit_s
 	size_t								pin;
 }										ZunoBtnCsenInit_t;
 
-class PinBtn {
+class ButtonsClass {
 	public:
-		PinBtn();
+		ButtonsClass();
 		inline ZunoError_t					addButton(uint8_t pin) {return (this->addButton(pin, BtnTypeButton));};
 		ZunoError_t							addButton(uint8_t pin, ZunoBtnType_t type);
 		inline ZunoError_t					addButton(uint8_t pin, ZunoBtnButtonInit_t *init) {return (this->_addButton(pin, BtnTypeButton, (void *)init));};
@@ -205,6 +205,6 @@ class PinBtn {
 		static ZunoBtnValues_t				_values;
 };
 
-extern PinBtn Btn;
+extern ButtonsClass Btn;
 
 #endif //ZUNO_BUTTONS_H

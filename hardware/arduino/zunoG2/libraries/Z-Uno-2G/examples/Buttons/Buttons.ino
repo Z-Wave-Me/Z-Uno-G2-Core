@@ -27,35 +27,35 @@ void loop() {
 
 void process_buttons() {
 	if(Btn.isSingleClick(BUTTON)) {
-		Serial0.println("isSingleClick");
+		MY_SERIAL.println("isSingleClick");
 		if (dimmerValue == 5)
 			dimmerValue = 100;
 		else
 			dimmerValue = 5;
 	}
 	if(Btn.isTripleClick(BUTTON)) {
-		Serial0.println("isTripleClick");
+		MY_SERIAL.println("isTripleClick");
 		if (dimmerValue == 5)
 			dimmerValue = 100;
 		else
 			dimmerValue = 5;
 	}
 	if(Btn.isLongClick(BUTTON)) {
-		Serial0.println("isLongClick");
+		MY_SERIAL.println("isLongClick");
 		if (dimmerValue == 5)
 			dimmerValue = 100;
 		else
 			dimmerValue = 5;
 	}
 	if(Btn.isDoubleClick(BUTTON)) {
-		Serial0.println("isDoubleClick");
+		MY_SERIAL.println("isDoubleClick");
 		if (dimmerValue == 5)
 			dimmerValue = 100;
 		else
 			dimmerValue = 5;
 	}
 	if(Btn.isSingleClick(2)) {
-		Serial0.println("isSingleClick");
+		MY_SERIAL.println("isSingleClick");
 		Btn.deleteButton(2);
 		if (dimmerValue == 5)
 			dimmerValue = 100;

@@ -274,6 +274,22 @@ static ssize_t _Zprint(FtPrintf_t *array, const char *format, uint8_t *b, uint8_
 	return (out);
 }
 
+ssize_t printf(const char *format, ...) {
+	FtPrintf_t			array;
+	uint8_t				b[ZPRINTF_BUFFER];
+	ssize_t				out;
+	va_list				ap;
+
+	array.buffer = &b[0];
+	array.fd = 0x0;
+	array.buffer_len = ZPRINTF_BUFFER;
+	array.b_in_str = false;
+	va_start (ap, format);
+	out = _Zprint(&array, format, &b[0], &b[ZPRINTF_BUFFER], ap);
+	va_end (ap);
+	return (out);
+}
+
 ssize_t dprintf(ssize_t fd, const char *format, ...) {
 	FtPrintf_t			array;
 	uint8_t				b[ZPRINTF_BUFFER];

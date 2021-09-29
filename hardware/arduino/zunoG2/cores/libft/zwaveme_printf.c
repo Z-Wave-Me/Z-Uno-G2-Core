@@ -682,20 +682,17 @@ static ssize_t _Zprint(FtPrintf_t *array, const char *format, uint8_t *b, uint8_
 	return (out);
 }
 
-int printf_class(ssize_t (*f)(int, const void *, size_t), const char *format, ...) {
+int vdprintf_class(ssize_t (*f)(int, const void *, size_t), int fd, const char *format, va_list ap) {
 	FtPrintf_t			array;
 	uint8_t				b[ZPRINTF_BUFFER];
 	ssize_t				out;
-	va_list				ap;
 
 	array.write = f;
 	array.buffer = &b[0];
-	// array.fd = 0x0;- роли не должно уже играть
+	array.fd = fd;
 	array.buffer_len = ZPRINTF_BUFFER;
 	array.b_in_str = false;
-	va_start (ap, format);
 	out = _Zprint(&array, format, &b[0], &b[ZPRINTF_BUFFER], ap);
-	va_end (ap);
 	return (out);
 }
 
@@ -760,6 +757,20 @@ int snprintf(char *str, size_t len, const char *format, ...) {
 	va_start (ap, format);
 	out = _Zprint(&array, format, (uint8_t *)str, (uint8_t *)&str[len], ap);
 	va_end (ap);
+	return (out);
+}
+
+int vprintf(const char *format, va_list ap) {
+	FtPrintf_t			array;
+	uint8_t				b[ZPRINTF_BUFFER];
+	ssize_t				out;
+
+	array.write = write;
+	array.buffer = &b[0];
+	array.fd = 0x0;
+	array.buffer_len = ZPRINTF_BUFFER;
+	array.b_in_str = false;
+	out = _Zprint(&array, format, &b[0], &b[ZPRINTF_BUFFER], ap);
 	return (out);
 }
 

@@ -152,7 +152,7 @@ RETURN VALUE
 extern "C" {
 #endif
 
-int printf_class(ssize_t (*f)(int, const void *, size_t), const char *format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
+
 
 #ifdef __cplusplus
 }

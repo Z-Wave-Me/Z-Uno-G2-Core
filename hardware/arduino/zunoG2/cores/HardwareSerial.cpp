@@ -110,16 +110,6 @@ int HardwareSerial::read(void) {
 	return (this->_readLock(true));
 }
 
-ssize_t HardwareSerial::printf(const char *format, ...) {
-	va_list				args;
-	ssize_t				out;
-
-	va_start (args, format);
-	out = vdprintf(this->_numberConfig, format, args);
-	va_end (args);
-	return (out);
-}
-
 // V_uart — скорость UART (например: 9600, 115200), бод;
 // d — количество бит данных;
 // D — количество байт всех данных;

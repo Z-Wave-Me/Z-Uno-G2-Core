@@ -24,8 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "Arduino.h"
-
+#include "zwaveme_libft.h"
 #include "Print.h"
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -319,6 +318,25 @@ uint8_t Print::formatPrint(int n, uint8_t format) {
 		this->write(' ');
 	this->write(&buf[0], n);
 	return (count + n);
+}
+
+extern "C" int vdprintf_class(ssize_t (*f)(int, const void *, size_t), int fd, const char *format, va_list ap);
+
+static ssize_t _write(int fd, const void *buf, size_t count) {
+	Print			*print;
+
+	print = (Print *)fd;
+	return (print->write((const uint8_t *)buf, count));
+}
+
+int Print::printf(const char *format, ...) {
+	va_list				args;
+	ssize_t				out;
+
+	va_start (args, format);
+	out = vdprintf_class(&::_write, (int)this, format, args);
+	va_end (args);
+	return (out);
 }
 
 /* Private Methods */

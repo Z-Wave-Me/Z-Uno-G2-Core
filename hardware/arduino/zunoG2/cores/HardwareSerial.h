@@ -54,7 +54,6 @@ class HardwareSerial : public Stream {
 		void									begin(void) {return (this->begin(HARDWARE_SERIAL_SPEED_DEFAULT));};
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);
-		ssize_t									printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
 		virtual size_t							write(const uint8_t *b, size_t count);
 
 	private:

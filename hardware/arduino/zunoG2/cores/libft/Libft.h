@@ -43,4 +43,6 @@ int rand(void);
 
 void *reallocarray(void *ptr, size_t nmemb, size_t size);
 
+void malloc_stats(size_t fd);
+
 #endif//LIBFT_H

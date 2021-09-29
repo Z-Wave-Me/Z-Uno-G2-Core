@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <float.h>
+#include <ctype.h>
 #include "zwaveme_libft.h"
 #include "zwaveme_float_private.h"
 

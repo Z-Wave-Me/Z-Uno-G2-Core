@@ -736,17 +736,23 @@ float strtof(const char *nptr, char **endptr) {
 	}
 	return (_finishFloat(_packFloat(neg, single, lenSingleNull, fraction, lenFraction, lenFractionNull), s, endptr));
 }
-/*
+
+
+static uint64_t _rand_number = 1;
+
+void srand(unsigned int seed) {
+	_rand_number = seed;
+}
+
 int rand(void) {
-	static uint64_t			number = 1;
 	uint64_t				tempos;
 
 	// This multiplier was obtained from Knuth, D.E., "The Art of Computer Programming," Vol 2, Seminumerical Algorithms, Third Edition, Addison-Wesley, 1998, p. 106 (line 26) & p. 108 
-	tempos = number * 6364136223846793005 + 1;
-	number = tempos;
+	tempos = _rand_number * 6364136223846793005 + 1;
+	_rand_number = tempos;
 	return (int)((tempos >> 32) & RAND_MAX);
 }
-*/
+
 typedef struct					ZMallocTop_s
 {
 	uint16_t					alloc_prev;//Если ноль то нечего перед этим листом не выделенно
@@ -950,12 +956,12 @@ void *calloc(size_t nmemb, size_t size) {
 	return (tmp);
 }
 
-void malloc_stats(void) {
+void malloc_stats(size_t fd) {
 	ZMallocFreeList_t					*freeList;
 	size_t								freeBytes;
 	size_t								i;
 
-	dprintf(0, "system bytes     = %10u\n", MALLOC_HEAP_SIZE);
+	dprintf(fd, "system bytes     = %10u\n", MALLOC_HEAP_SIZE);
 	freeList = _malloc_free_list;
 	freeBytes = 0;
 	i = 0;
@@ -966,8 +972,8 @@ void malloc_stats(void) {
 			freeList = (ZMallocFreeList_t *)(MALLOC_OFFSET + freeList->next);
 		}
 	}
-	dprintf(0, "in use bytes     = %10u\n", MALLOC_HEAP_SIZE - freeBytes);
-	dprintf(0, "free blocks      = %10u\n", i);
+	dprintf(fd, "in use bytes     = %10u\n", MALLOC_HEAP_SIZE - freeBytes);
+	dprintf(fd, "free blocks      = %10u\n", i);
 }
 
 typedef struct				ZauxiliaryDiv_s

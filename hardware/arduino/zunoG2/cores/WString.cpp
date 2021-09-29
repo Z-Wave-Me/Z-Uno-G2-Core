@@ -22,6 +22,7 @@
 #include "Arduino.h"
 #include "WString.h"
 #include "float.h"
+#include "ctype.h"
 
 
 /*********************************************/

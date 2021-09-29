@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "stdarg.h"
 #include "HardwareSerial.h"
-#include "Libft.h"
+#include "zwaveme_libft.h"
 
 #define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128

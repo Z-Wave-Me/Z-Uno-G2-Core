@@ -27,6 +27,8 @@
 #include "zwaveme_libft.h"
 #include "Print.h"
 
+#define pgm_read_byte(addr) ((uint8_t*)addr)[0]
+
 // Public Methods //////////////////////////////////////////////////////////////
 
 /* default implementation: may be overridden */
@@ -40,18 +42,18 @@ size_t Print::write(const uint8_t *buffer, size_t size)
   return n;
 }
 
-// size_t Print::print(const __FlashStringHelper *ifsh)
-// {
-//   PGM_P p = reinterpret_cast<PGM_P>(ifsh);
-//   size_t n = 0;
-//   while (1) {
-//     unsigned char c = pgm_read_byte(p++);
-//     if (c == 0) break;
-//     if (write(c)) n++;
-//     else break;
-//   }
-//   return n;
-// }
+size_t Print::print(const __FlashStringHelper *ifsh)
+{
+  PGM_P p = reinterpret_cast<PGM_P>(ifsh);
+  size_t n = 0;
+  while (1) {
+    unsigned char c = pgm_read_byte(p++);
+    if (c == 0) break;
+    if (write(c)) n++;
+    else break;
+  }
+  return n;
+}
 
 size_t Print::print(const String &s)
 {

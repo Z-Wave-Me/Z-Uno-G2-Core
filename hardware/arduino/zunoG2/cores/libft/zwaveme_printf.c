@@ -5,6 +5,9 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "stdbool.h"
+#include <math.h>
+#include <float.h>
+#include "zwaveme_float_private.h"
 #include "zwaveme_libft.h"
 #include "Zauxiliary.h"
 
@@ -40,6 +43,8 @@ extern "C" {
 #define ZPRINTF_FLAGS_CHAR				0x2000//hh
 #define ZPRINTF_FLAGS_MAX_OVER			0x4000// когда max отрицательный влияет ноль или пробел использовать
 #define ZPRINTF_FLAGS_MAX_OVER_STR		0x8000// когда max отрицательный влияет используеться вся строка
+#define ZPRINTF_FLAGS_FLOAT_E			0x10000// научная форма используеться
+#define ZPRINTF_FLAGS_UP				0x20000// буква большая использовалась
 
 typedef struct				FtPrintfOption_s
 {
@@ -419,6 +424,74 @@ static uint8_t *Zprintf_display_u(FtPrintf_t *array, uint8_t *b, uint8_t *e, uin
 	return (_display_number(array, b, e, flags, 0xA, ITOA_LOWER));
 }
 
+static uint8_t *Zprintf_display_f(FtPrintf_t *array, uint8_t *b, uint8_t *e, uint32_t flags) {
+	LibftFloatEngine_t				floatEngine;
+	LibftFloatType_t				type;
+	size_t							width;
+	size_t							prec;
+	size_t							offset;
+	// size_t							e;
+	size_t							lenFractionNull;
+	size_t							lenSingle;
+	size_t							lenSingleNull;
+	uint8_t							buff[6];
+
+	width = array->opt.min;
+	if ((type = zwaveme_floatEngine(va_arg(array->ap_line, double), &floatEngine)) != LibftFloatTypeNumber) {
+		prec = zwaveme_floatEngineNotNumber(floatEngine.neg, type, (uint8_t *)&buff[0], ((flags & ZPRINTF_FLAGS_UP) == 0x0) ? 0x0 : 0x1);
+		width = (width >= prec) ? width - prec : 0;
+		b = _writeDup(array, b, e, array->sp, width);
+		b = _writeStr(array, b, e, &buff[0], prec);
+		return (b);
+	}
+	prec = ((flags & ZPRINTF_FLAGS_MAX) == 0) ? 6 : array->opt.max;//6 - знаков после запитой по умолчанию
+	lenSingle = floatEngine.lenSingle;
+	lenSingleNull = floatEngine.lenSingleNull;
+	// e = 0;
+	// if ((flags & ZPRINTF_FLAGS_FLOAT_E) != 0x0)
+	// {
+	// 	if (lenSingle != 0)
+	// 	{
+	// 		e = lenSingle - 0x1;
+	// 		floatEngine.lenFraction = floatEngine.lenFraction + e;
+	// 		e = e + lenSingleNull;
+	// 		lenSingleNull = 0x0;
+	// 		lenSingle = 0x1;
+	// 	}
+		
+	// }
+	offset = lenSingle + lenSingleNull + floatEngine.neg;
+	if (prec != 0)
+		offset = offset + prec + 1;//+1 '.'
+	width = (width >= offset) ? width - offset : 0;
+	b = _writeDup(array, b, e, array->sp, width);
+	b = _writeStr(array, b, e, &floatEngine.number[0], lenSingle);
+	if (lenSingle == 0)
+		lenSingleNull++;
+	b = _writeDup(array, b, e, '0', lenSingleNull);
+	if (prec != 0) {
+		b++[0] = '.';
+		lenFractionNull = floatEngine.lenFractionNull;
+		if (prec >= lenFractionNull)
+			prec = prec - lenFractionNull;
+		else {
+			lenFractionNull = prec;
+			prec = 0;
+		}
+		b = _writeDup(array, b, e, '0', lenFractionNull);
+		offset = floatEngine.lenFraction;
+		if (prec >= offset)
+			prec = prec - offset;
+		else {
+			offset = prec;
+			prec = 0;
+		}
+		b = _writeStr(array, b, e, &floatEngine.number[floatEngine.lenSingle], offset);
+		b = _writeDup(array, b, e, '0', prec);
+	}
+	return (b);
+}
+
 // static const uint8_t gFormat[] = ZPRINTF_FORMAT;
 // static const uint16_t gFunctionTable[sizeof(ZPRINTF_FORMAT)] = {
 // 	(uint16_t)((uint32_t)(((uint8_t *)Zprintf_display_unknown) - ((uint8_t *)Zprintf_display_unknown))),
@@ -600,6 +673,8 @@ static ssize_t _ZprintWhile(FtPrintf_t *array, const char *format, uint8_t *b, u
 			}
 			#endif
 			array->format = litter;
+			if (litter < 'a')
+				bFlags = bFlags| ZPRINTF_FLAGS_UP;
 			switch (litter) {
 				case 'u':
 					b = Zprintf_display_u(array, b, e, bFlags);
@@ -610,6 +685,14 @@ static ssize_t _ZprintWhile(FtPrintf_t *array, const char *format, uint8_t *b, u
 					break ;
 				case 'o':
 					b = Zprintf_display_o(array, b, e, bFlags);
+					break ;
+				// case 'E':
+				// case 'e':
+				// 	b = Zprintf_display_f(array, b, e, bFlags | ZPRINTF_FLAGS_FLOAT_E);
+				// 	break ;
+				case 'F':
+				case 'f':
+					b = Zprintf_display_f(array, b, e, bFlags);
 					break ;
 				case 'p':
 					b = Zprintf_display_p(array, b, e, bFlags);

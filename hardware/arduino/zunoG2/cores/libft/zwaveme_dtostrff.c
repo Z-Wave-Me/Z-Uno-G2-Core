@@ -11,13 +11,13 @@ extern "C" {
 
 size_t zwaveme_utoa_base(size_t value, void *str, size_t base);
 
-size_t _floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b) {
+size_t zwaveme_floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b, size_t up) {
 	uint8_t							*save;
 
 	save = b;
 	if (type == LibftFloatTypeNan) {
 		b[0] = 'N';
-		b[1] = 'a';
+		b[1] = (up == 0x0) ? 'a' : 'A';
 		b[2] = 'N';
 		b = b + 3;
 	}
@@ -29,11 +29,11 @@ size_t _floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b) {
 		switch ((size_t)type) {
 			case LibftFloatTypeNull:
 				b[1] = 'O';
-				b[2] = 'v';
+				b[2] = (up == 0x0) ? 'v' : 'V';
 				break ;
 			case LibftFloatTypeInf:
 				b[1] = 'I';
-				b[2] = 'n';
+				b[2] = (up == 0x0) ? 'n' : 'N';
 				break ;
 		}
 		b[3] = 'F';
@@ -43,7 +43,7 @@ size_t _floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b) {
 	return (b - save);
 }
 
-static LibftFloatType_t _floatEngine(float value, LibftFloatEngine_t *lp) {
+LibftFloatType_t zwaveme_floatEngine(float value, LibftFloatEngine_t *lp) {
 	static const uint32_t			table[] =
 	{
 		0xF0BDC21A, 0x3DA137D5, 0x9DC5ADA8, 0x2863C1F5, 0x6765C793, 0x1A784379, 0x43C33C19, 0xAD78EBC5,
@@ -135,9 +135,9 @@ char *dtostrff(float value, unsigned long width, unsigned long prec, char *s) {
 	uint8_t							buff[6];
 
 	save = s;
-	if ((type = _floatEngine(value, &floatEngine)) != LibftFloatTypeNumber) {
-		offset = _floatEngineNotNumber(floatEngine.neg, type, (uint8_t *)&buff[0]);
-		width = (width > offset) ? width - offset : 0;
+	if ((type = zwaveme_floatEngine(value, &floatEngine)) != LibftFloatTypeNumber) {
+		offset = zwaveme_floatEngineNotNumber(floatEngine.neg, type, (uint8_t *)&buff[0], 0x0);
+		width = (width >= offset) ? width - offset : 0;
 		s = (char *)((uint8_t *)memcpy(&s[width], &buff[0], offset) + offset);
 	}
 	else {
@@ -146,7 +146,7 @@ char *dtostrff(float value, unsigned long width, unsigned long prec, char *s) {
 		offset = lenSingle + lenSingleNull + floatEngine.neg;
 		if (prec != 0)
 			offset = offset + prec + 1;//+1 '.'
-		width = (width > offset) ? width - offset : 0;
+		width = (width >= offset) ? width - offset : 0;
 		s = (char *)((uint8_t *)memcpy(&s[width], &floatEngine.number[0], lenSingle) + lenSingle);
 		if (lenSingle == 0)
 			lenSingleNull++;

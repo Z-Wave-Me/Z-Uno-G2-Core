@@ -109,7 +109,7 @@ size_t Print::print(unsigned long n, int base)
 
 size_t Print::print(double n, int digits)
 {
-  return printFloat(n, digits);
+  return printFloat((float)n, digits);
 }
 
 size_t Print::println(const __FlashStringHelper *ifsh)

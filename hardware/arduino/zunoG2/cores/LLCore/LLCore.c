@@ -308,6 +308,17 @@ typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
+typedef struct ZUNOSleepData_s{
+	uint32_t timeout;
+	uint32_t wup_timeout;
+	uint32_t em4_map;
+	bool     user_latch:1;
+	bool     inclusion_latch:1;
+	bool     wup_latch:1;
+	bool     fwupd_latch:1;
+
+}ZUNOSleepData_t;
+ZUNOSleepData_t g_sleep_data;
 // prototypes 
 void loop();
 void setup();
@@ -366,25 +377,19 @@ void LLDestroy() {
 void zuno_static_autosetup();
 #endif
 
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+void _zunoSysSleep();
+#endif
 
-
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitSleepingData();
 static void _zunoSleepingUpd();
-#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitDefaultWakeup();
 #endif
 void zunoKickSleepTimeout(uint32_t ms);
 void _zunoSleepOnInclusionStart();
 void _zunoSleepOnInclusionComplete();
-typedef struct ZUNOSleepData_s{
-	uint32_t timeout;
-	uint32_t wup_timeout;
-	bool     user_latch:1;
-	bool     inclusion_latch:1;
-	bool     wup_latch:1;
-	bool     fwupd_latch:1;
 
-}ZUNOSleepData_t;
 
 
 #ifdef LOGGING_DBG
@@ -497,12 +502,17 @@ void * zunoJumpTable(int vec, void * data) {
             }
             break;
         case ZUNO_JUMPTBL_SLEEP:
+			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+			_zunoSysSleep();
+			#endif
             #ifdef LOGGING_DBG
             //LOGGING_UART.println("!SLEEP");
             #endif
             break;
 		case ZUNO_JUMPTBL_WUP:
+			#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 			_zunoInitSleepingData();
+			#endif
 			#if defined(WITH_CC_WAKEUP)
 			zuno_CCWakeup_OnSetup();
 			#endif
@@ -518,9 +528,11 @@ void * zunoJumpTable(int vec, void * data) {
 }
 
 void zunoSetWUPTimer(uint32_t timeout){
-    zunoSysCall(ZUNO_SYSFUNC_WUP_CONTROL, 1, timeout);
+    zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 0,  timeout);
 }
-
+void zunoSetCustomWUPTimer(uint32_t timeout){
+	zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 1,  timeout);
+}
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
 }
@@ -530,17 +542,6 @@ void zunoResetLocally(){
 void zunoSendNIF(){
     zunoSysCall(ZUNO_SYSFUNC_SENDNIF, 0);   
 }
-/* sleep */
-void zunoSetSleepTimeout(uint8_t index, uint32_t timeout){
-	#ifdef LOGGING_DBG
-    LOGGING_UART.print(">>>SleepTimeout:");
-    LOGGING_UART.print(index);
-    LOGGING_UART.print(", ");
-	LOGGING_UART.println(timeout);
-	#endif
-    zunoSysCall(ZUNO_SYSFUNC_SLEEP_CONTROL, 2, index, timeout);
-}
-
 
 /* time */
 void delay(dword ms){
@@ -915,76 +916,82 @@ void _zme_memcpy(byte * dst, byte * src, byte count)
     }
 }
 
-ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
-	size_t							tempos;
-	size_t							real_pin;
-
-	// Устанавливаем пин на INPUT_PULLUP - используется внутренняя подтяжка
-	pinMode(em4_pin, INPUT_PULLUP_FILTER);
-	real_pin = getRealPin(em4_pin);
+uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
+	uint32_t real_pin = getRealPin(em4_pin);
 	switch (getRealPort(em4_pin)) {
 		case 0:// PA3
-			if (real_pin != 3)
-				return (ZunoErrorInvalidPin);
-			tempos = GPIO_EXTILEVEL_EM4WU8;
+			if (real_pin == 3)
+				return GPIO_EXTILEVEL_EM4WU8;
 			break ;
 		case 1://PB13
-			if (real_pin != 13)
-				return (ZunoErrorInvalidPin);
-			tempos = GPIO_EXTILEVEL_EM4WU9;
+			if (real_pin == 13)
+				return GPIO_EXTILEVEL_EM4WU9;
 			break ;
 		case 2://PC10
-			if (real_pin != 10)
-				return (ZunoErrorInvalidPin);
-			tempos = GPIO_EXTILEVEL_EM4WU12;
+			if (real_pin == 10)
+				return GPIO_EXTILEVEL_EM4WU12;
 			break ;
 		case 3://PD14
-			if (real_pin != 14)
-				return (ZunoErrorInvalidPin);
-			tempos = GPIO_EXTILEVEL_EM4WU4;
+			if (real_pin == 14)
+				return GPIO_EXTILEVEL_EM4WU4;
 			break ;
 		case 5:
-			if (real_pin == 2) {//PF2
-				tempos = GPIO_EXTILEVEL_EM4WU0;
-				break ;
-			}
-			if (real_pin == 7) {//PF7
-				tempos = GPIO_EXTILEVEL_EM4WU1;
-				break ;
-			}
-			return (ZunoErrorInvalidPin);
-			break ;
-		default:
-			return (ZunoErrorInvalidPin);
+			if (real_pin == 2) //PF2
+				return GPIO_EXTILEVEL_EM4WU0;
+			if (real_pin == 7) //PF7
+				return GPIO_EXTILEVEL_EM4WU1;
 			break ;
 	}
-	GPIO_EM4EnablePinWakeup(tempos , 0);
-	return (ZunoErrorOk);
+	return 0;
+}
+ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t polarity){
+	size_t							real_pin;
+	pinMode(em4_pin, mode);
+	uint32_t wu_map = zunoMapPin2EM4Bit(em4_pin);
+	if(wu_map == 0){
+		return ZunoErrorInvalidPin;
+	}
+	g_sleep_data.em4_map |= wu_map;
+	GPIO_EM4EnablePinWakeup(wu_map, polarity);
+	return ZunoErrorOk;
+}
+void zunoClearEm4Wakeup(){
+  GPIO->EXTILEVEL = _GPIO_EXTILEVEL_RESETVALUE;
+  GPIO->EM4WUEN  = 0;                /* Disable wakeup. */
+}
+ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
+	return zunoEM4EnablePinWakeup(em4_pin, INPUT_PULLUP_FILTER, 0);
 }
 
 
-ZUNOSleepData_t g_sleep_data;
+
 static void _zunoInitSleepingData(){
 	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
 	g_sleep_data.user_latch = true;
 	g_sleep_data.inclusion_latch = false;
 	g_sleep_data.wup_latch = false;
 	g_sleep_data.wup_timeout = 0;
+	g_sleep_data.em4_map = 0;
 }
 
 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitDefaultWakeup(){
-	pinMode(23, INPUT); 				// Configure button as input
-	pinMode(18, INPUT_PULLUP_FILTER);	// Configure INT1 as input with pullup - for backward compatibility with ZUno S1
-	// to have an ability to wake up from EM2 mode configure interrupt controller
-	attachInterrupt(23, NULL, FALLING);
-	attachInterrupt(18, NULL, FALLING);
 	// EM4 Wakeup using BTN/INT1
-	zunoEM4EnablePinWakeup(23); 
-	zunoEM4EnablePinWakeup(18);
+	#ifndef NO_INT1_WAKEUP
+	zunoEM4EnablePinWakeup(INT1);
+	// to have an ability to wake up from EM2 mode configure interrupt controller
+	attachInterrupt(INT1, NULL, FALLING);
+	#endif
+	#ifndef NO_BTN_WAKEUP
+	zunoEM4EnablePinWakeup(BUTTON_PIN);
+	// to have an ability to wake up from EM2 mode configure interrupt controller
+	attachInterrupt(BUTTON_PIN, NULL, FALLING);
+	#endif 
 	
 }
-#endif
+void _zunoSysSleep(){
+	GPIO_IntClear(g_sleep_data.em4_map);
+}
 
 static void _zunoSleepingUpd(){
 	if(g_sleep_data.user_latch)
@@ -1030,6 +1037,7 @@ static void _zunoSleepingUpd(){
 	zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 	*/
 }
+
 bool _zunoIsWUPLocked(){
 	bool res = false;
 	zunoEnterCritical();
@@ -1089,7 +1097,9 @@ void _zunoSleepOnInclusionComplete(){
 	zunoEnterCritical();
 	g_sleep_data.inclusion_latch = false;
 	zunoExitCritical();
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	_zunoSleepingUpd();
+	#endif
 }
 void zunoKickSleepTimeout(uint32_t ms){
 	uint32_t new_timeout = millis() + ms;
@@ -1101,19 +1111,28 @@ void zunoKickSleepTimeout(uint32_t ms){
 	
 	#endif
 }
-void zunoSendDeviceToSleep(uint8_t mode) {
+#endif
+void zunoMarkDeviceToSleep(uint8_t mode){
 	g_zuno_sys->sleep_highest_mode = mode;
 	#ifdef LOGGING_DBG
     //LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
 	#endif
 	g_sleep_data.user_latch = false;
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	_zunoSleepingUpd();
-	//delay(MAX_SLEEP_DELAY);
+	#endif
 }
 void zunoLockSleep(void){
 	zunoEnterCritical();
 	g_sleep_data.user_latch = true;
 	zunoExitCritical();
+}
+bool zunoIsSleepLocked(){
+	bool res = false;
+	zunoEnterCritical();
+	res = g_sleep_data.user_latch;
+	zunoExitCritical();
+	return res;
 }
 
 long map(long x, long in_min, long in_max, long out_min, long out_max) {

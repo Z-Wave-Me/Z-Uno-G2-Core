@@ -9,7 +9,10 @@
 
 #if !defined(WITH_CUSTOM_BATTERY_HANDLER)
 uint8_t defaultBatteryHandler(){
+    uint8_t old_res  = g_zuno_odhw_cfg.adc_resolution;
+    g_zuno_odhw_cfg.adc_resolution = 12;
     dword res = analogRead(BATTERY);
+    g_zuno_odhw_cfg.adc_resolution = old_res;
     res *= 5000;
     res >>= 12;
     if(res >= BATTERY_HIGH)

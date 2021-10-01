@@ -5,7 +5,7 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
-name=Z-Wave>ME Z-Uno-2G Boards
+name=Z-Wave>ME Z-Uno2 Boards
 
 # ZUNO compile variables
 # ---------------------
@@ -18,7 +18,7 @@ tools.zprog.cmd.libraries={runtime.platform.path}/libraries
 tools.zprog.cmd.cores={runtime.platform.path}/cores
 
 
-tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide" -i
+tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -p "main_pow={build.pow}" -O "arduino_ide" -i
 tools.zprog.erase.pattern="{runtime.tools.zme_make.path}/zme_make" arduino_dummy
 tools.zprog.bootloader.pattern="{runtime.tools.zme_make.path}/zme_make" boot -c {runtime.platform.path}/bootloaders/ -d "{serial.port}" -i
 tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide" -i
@@ -26,7 +26,7 @@ tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{bu
 
 # ZUNO compile patterns
 # ----------------------
-recipe.hooks.sketch.prebuild.1.pattern = "{tools.zprog.cmd.path}" build "{build.path}/{build.project_name}" -S "{tools.zprog.cmd.cores}" -S "{tools.zprog.cmd.libraries}"  -S "{tools.zprog.cmd.include}" -B  "{build.path}" -T "{tools.zprog.cmd.bin}" -O "arduino_ide" -lcl "{tools.zprog.cmd.clang_lib}" -O BO:-DARDUINO=152 -O BO:-DARDUINO_ARCH_ZUNOG2 -O BO:-DZME_ZUNOG2 -O LO:-lm
+recipe.hooks.sketch.prebuild.1.pattern = "{tools.zprog.cmd.path}" build "{build.path}/{build.project_name}" -S "{tools.zprog.cmd.cores}" -S "{tools.zprog.cmd.libraries}"  -S "{tools.zprog.cmd.include}" -B  "{build.path}" -T "{tools.zprog.cmd.bin}" -O "arduino_ide" -lcl "{tools.zprog.cmd.clang_lib}"
 
 recipe.c.o.pattern="{tools.zprog.cmd.path}" arduino_dummy -t "{source_file} {object_file}" -q
 recipe.cpp.o.pattern="{tools.zprog.cmd.path}" arduino_dummy  -t "{source_file} {object_file}" -q

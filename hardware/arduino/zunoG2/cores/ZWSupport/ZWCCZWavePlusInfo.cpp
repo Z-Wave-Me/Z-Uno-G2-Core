@@ -32,6 +32,8 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	report->v2.userIconType1 = userIconType >> 8;
 	report->v2.userIconType2 = userIconType & 0xFF;
 	CMD_REPLY_LEN = sizeof(report->v2);
+	// Use security policy as we were asked. It fixes some controllers S2 problems...
+	g_outgoing_main_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

@@ -113,6 +113,7 @@ typedef union								ZwZwaveWakeUpIntervalSetFrame_u {//For more convenient supp
 void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();
 void zuno_CCWakeup_OnDefault();
+bool zuno_CCWakeup_BeforeSleep();
 int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd);
 void zuno_CCWakeup_OnAnyRx();
 void zuno_sendWUP_NotificationReport();

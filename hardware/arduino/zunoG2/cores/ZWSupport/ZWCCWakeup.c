@@ -22,9 +22,9 @@ static void __zunoSetupWUPTimeout() {
 
 	zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);
 	#ifdef LOGGING_DBG
-	//LOGGING_UART.print("Wakeup timer was set to:");
-	//LOGGING_UART.print(save.wakeUpIntervalStepSeconds);
-	//LOGGING_UART.print("seconds");
+	LOGGING_UART.print("Wakeup timer was set to:");
+	LOGGING_UART.print(save.wakeUpIntervalStepSeconds);
+	LOGGING_UART.print("seconds");
 	#endif
 	zunoSetWUPTimer(save.wakeUpIntervalStepSeconds);
 }
@@ -61,24 +61,31 @@ void zuno_sendWUP_NotificationReport() {
 }
 
 void zunoSendWakeUpNotification(void);
-
 void zuno_CCWakeup_OnSetup(){
-    
-    if ((zunoGetWakeReason() == ZUNO_WAKEUP_REASON_POR) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_PIN) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_SOFTRESET) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WATCH_DOG) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM4) ||
-	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM2) ||
-	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM2) ||
-	  (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM4)
-      ){
-       
-        __zunoSetupWUPTimeout();
+	//pinMode(BUTTON_PIN, INPUT);
+	uint8_t reason = zunoGetWakeReason();
+	bool on_timer = (g_zuno_sys->persistent_timer_map & PERSISTENT_SYSTIMER) &&
+		((reason == ZUNO_WAKEUP_REASON_WUT_EM4) ||
+	     (reason == ZUNO_WAKEUP_REASON_WUT_EM2) );
+	bool on_button = false;
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("GPIOEM4MASK:");
+	LOGGING_UART.println(g_zuno_sys->gpio_em4flags, HEX);
+	#endif
+	#ifndef NO_BTN_WUP_NOTIFICATION
+	on_button = ((g_zuno_sys->gpio_em4flags & zunoMapPin2EM4Bit(BUTTON_PIN)) && ((reason == ZUNO_WAKEUP_REASON_EXT_EM2) ||
+	    (reason == ZUNO_WAKEUP_REASON_EXT_EM4)));
+	#endif
+	if (on_timer || on_button){
+		#ifdef LOGGING_DBG
+		LOGGING_UART.println("APPEND WAKEUP!");
+		#endif
         zunoSendWakeUpNotification();
         return;
-       
-    }    
+    }
+	if((reason == ZUNO_WAKEUP_REASON_SOFTRESET) || (reason == ZUNO_WAKEUP_REASON_BROWNOUT) || (reason == ZUNO_WAKEUP_REASON_WATCH_DOG)){    
+		__zunoSetupWUPTimeout();
+	}
 }
 void zuno_CCWakeup_OnDefault(){
 	ZunoWakeUpSave_t				save;
@@ -87,6 +94,7 @@ void zuno_CCWakeup_OnDefault(){
 	save.wakeUpIntervalStepSeconds = WAKEUP_INTERVAL_DEFAULT;
 	save.nodeId = 0x1;
 	zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);
+	__zunoSetupWUPTimeout();
 }
 
 static int _up_interval_capabilities_report(void) {
@@ -135,14 +143,10 @@ static int _up_interval_set(const ZwZwaveWakeUpIntervalSetFrame_t *cmd) {
 
 	save.wakeUpIntervalStepSeconds = (cmd->v3.seconds1 << 0x10) | (cmd->v3.seconds2 << 0x8) | (cmd->v3.seconds3);
 	save.nodeId = cmd->v3.nodeid;
-	Serial0.print("save.nodeId: ");
-	Serial0.dumpPrint((uint8_t *)&save, EEPROM_WAKEUP_SIZE, EEPROM_WAKEUP_SIZE);
 	zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);
 	zunoSetWUPTimer(save.wakeUpIntervalStepSeconds);
 	memset(&save, 0x0, EEPROM_WAKEUP_SIZE);
 	zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (uint8_t *)&save);
-	Serial0.print("test: ");
-	Serial0.dumpPrint((uint8_t *)&save, EEPROM_WAKEUP_SIZE, EEPROM_WAKEUP_SIZE);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -169,7 +173,6 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
 			}
 			__zunoSetupWUPTimeout();
 			_zunoSleepOnWUPStop();
-			//zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		default:

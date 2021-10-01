@@ -73,9 +73,12 @@ bool zunoIsBatteryRequested();
 
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
-void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
+void zunoMarkDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
+inline void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4) { zunoMarkDeviceToSleep(mode); };
 void zunoLockSleep(void);
+bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);
+void zunoSetCustomWUPTimer(uint32_t timeout);
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();
 #endif
@@ -110,6 +113,7 @@ void digitalWrite(uint8_t pin, uint8_t val);
 uint8_t getPin(uint8_t port, uint8_t pin);
 inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
 inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
+uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin);
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};

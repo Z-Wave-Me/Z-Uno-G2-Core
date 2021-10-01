@@ -66,7 +66,7 @@ ZUNOChannelsData_t g_channels_data;
 
 inline void __setSyncVar(uint32_t * var, uint32_t val){
 	zunoEnterCritical();
-	*var |= val;
+	*var = val;
 	zunoExitCritical();
 }
 inline uint32_t __getSyncVar(uint32_t * var){
@@ -201,6 +201,8 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 	p->src_node  = zunoNID();
 	p->src_zw_channel  = ZUNO_CFG_CHANNEL(ch).zw_channel; //& ~(ZWAVE_CHANNEL_MAPPED_BIT);
 	p->zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
+	p->zw_rx_secure_opts = 0xFF; // Ask system to detect the security level automatically
+								 // In most cases it uses highest avaliable level
 	return res;
 }
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
@@ -211,7 +213,7 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	// Reply as we were asked
 	g_outgoing_main_packet.src_zw_channel    = cmd->dst_zw_channel;
 	g_outgoing_main_packet.dst_zw_channel    = cmd->src_zw_channel;
-	g_outgoing_main_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
+
 }
 void fillOutgoingReportPacket(uint8_t ch) {
 	fillOutgoingRawPacket(&g_outgoing_report_packet, 
@@ -992,7 +994,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
-	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER) | defined(WITH_CC_METER_TBL_MONITOR)
+	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER) || defined(WITH_CC_METER_TBL_MONITOR)
 	switch (ZUNO_CFG_CHANNEL(ch).type) {
 		#ifdef WITH_CC_SENSOR_MULTILEVEL
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
@@ -1002,7 +1004,19 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 		#endif
 			{
 				uint32_t ch_time  = __getSyncVar(&(g_channels_data.last_report_time[ch]));
-				return (ch_time == 0) || ((ticks -  ch_time) > 3000UL); // We can't send too frequent for these CCs
+				bool can_send = (ch_time == 0) || ((ticks -  ch_time) > 3000UL);
+				if(can_send){
+					#ifdef LOGGING_DBG
+					LOGGING_UART.print("Time check ok. channel:");
+					LOGGING_UART.print(ch);
+					LOGGING_UART.print(" last time:");
+					LOGGING_UART.print(ch_time);
+					LOGGING_UART.print(" current time:");
+					LOGGING_UART.print(ticks);
+					#endif
+					
+				}
+				return can_send; // We can't send too frequent for these CCs
 			}
 			break ;
 		default:
@@ -1058,8 +1072,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 	if(zunoNID() == 0)
         return;
 	#ifdef WITH_CC_WAKEUP
-	if(__zunoDispatchPendingWUPReport())
-		zuno_sendWUP_NotificationReport();
+	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
+	if((g_channels_data.report_map == 0) && !zunoIsSleepLocked())
+		if(__zunoDispatchPendingWUPReport()){
+			zuno_sendWUP_NotificationReport();
+		}
 	#endif
 	#ifdef WITH_CC_BATTERY
 	if(__zunoDispatchPendingBatteryReport())
@@ -1082,7 +1099,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
 		fillOutgoingReportPacket(ch);
-		__setSyncVar(&g_channels_data.last_report_time[ch], ticks);
+		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
 		rs = ZUNO_UNKNOWN_CMD;
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY

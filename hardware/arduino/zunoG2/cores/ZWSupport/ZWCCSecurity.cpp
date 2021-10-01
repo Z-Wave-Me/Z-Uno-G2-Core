@@ -12,9 +12,10 @@ static uint8_t *_reportGeneral(uint8_t *commandClass, size_t channel) {
 
 	commandClass = zuno_AddCommonClass(commandClass);
 	if (channel != 0) {
-		channel--;
+		ZUNOChannel_t * zuno_ch = zuno_findChannelByZWChannel(channel);
+		//channel--;
 		i = 0;
-		lp = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(channel).type - 1];
+		lp = &ZUNO_CC_TYPES[zuno_ch->type - 1];
 		max = lp->num_ccs;
 		while (i < max)
 			if ((clss = lp->ccs[i++].cc) != COMMAND_CLASS_BASIC)

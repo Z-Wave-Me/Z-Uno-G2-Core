@@ -7,6 +7,10 @@
 #include "stdbool.h"
 #include "Zauxiliary.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct				ZauxiliaryDiv_s
 {
 	union
@@ -324,3 +328,7 @@ uint8_t itoa_base(char *buffer, uintmax_t value, size_t base, size_t option) {
 	fn_reverse(start, buffer);
 	return (buffer + 1 - str);
 }
+
+#ifdef __cplusplus
+}
+#endif

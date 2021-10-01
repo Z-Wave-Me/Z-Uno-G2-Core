@@ -62,7 +62,7 @@ class Print
     // should be overriden by subclasses with buffering
     virtual int availableForWrite() { return 0; }
 
-    // size_t print(const __FlashStringHelper *);
+    size_t print(const __FlashStringHelper *);
     size_t print(const String &);
     size_t print(const char[]);
     size_t print(char);
@@ -74,7 +74,7 @@ class Print
     size_t print(double, int = 2);
     size_t print(const Printable&);
 
-    // size_t println(const __FlashStringHelper *);
+    size_t println(const __FlashStringHelper *);
     size_t println(const String &s);
     size_t println(const char[]);
     size_t println(char);
@@ -95,6 +95,7 @@ class Print
 		uint8_t						fixPrint(long, uint8_t  = 2);
 		size_t						dumpPrint(uint8_t *b, size_t count, size_t line_size = 10);
 		uint8_t						formatPrint(int n, uint8_t format);
+		int							printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
 	private:
 		inline size_t				_digit2hexchar(size_t d) {return ((d > 9) ? d - 10 + 'A' : d + '0');};
 };

@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "stdarg.h"
 #include "HardwareSerial.h"
-#include "Libft.h"
+#include "zwaveme_libft.h"
 
 #define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
@@ -108,16 +108,6 @@ int HardwareSerial::peek(void) {
 }
 int HardwareSerial::read(void) {
 	return (this->_readLock(true));
-}
-
-ssize_t HardwareSerial::printf(const char *format, ...) {
-	va_list				args;
-	ssize_t				out;
-
-	va_start (args, format);
-	out = vdprintf(this->_numberConfig, format, args);
-	va_end (args);
-	return (out);
 }
 
 // V_uart — скорость UART (например: 9600, 115200), бод;

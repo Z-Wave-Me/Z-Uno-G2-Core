@@ -21,6 +21,10 @@ ssize_t LdmaClass::receivedCyclical(const void *src, void *dst, size_t len, Ldma
 	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_CYCLIC, 0x6, src, dst, len, signal, size, array));
 }
 
+ssize_t LdmaClass::transferCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassTransferCyclical_t *array) {
+	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_XFER_CYCLIC, 0x6, src, dst, len, signal, size, array));
+}
+
 size_t LdmaClass::receivedAvailable(ssize_t channel) {
 	return ((size_t)zunoSysCall(ZUNO_SYSFUNC_DMA_AVAILABLE, 0x1, channel));
 }

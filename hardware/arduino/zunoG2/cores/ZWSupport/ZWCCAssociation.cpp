@@ -133,7 +133,7 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 		group_name = (char *)ASSOCIATION_GROUP_NAME_LIFE_LINE;
 		len = (sizeof(ASSOCIATION_GROUP_NAME_LIFE_LINE) - 1);
 	}
-	else if ((group_name = (char *)zunoAssociationGroupName(groupIndex)) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
+	else if ((group_name = (char *)zunoAssociationGroupName(groupIndex - 1)) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
 		;
 	else {
 		group_name = &group_name_default[0];
@@ -289,6 +289,7 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 	size_t											max_all;
 	size_t											cc;
 	size_t											dst_zw_channel;
+	size_t											zw_channel;
 	const ZUNOChannelCCS_t							*ccs;
 
 	groupIndex = in->groupingIdentifier;
@@ -308,15 +309,19 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 			i_all = 1;
 			max_all = ZUNO_CFG_CHANNEL_COUNT;
 			while (i_all <= max_all) {
-				ccs = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(i_all - 1).type - 1];
-				i_all++;
-				i = 0;
-				max = ccs->num_ccs;
-				while (i < max) {
-					cc = ccs->ccs[i++].cc;
-					if (_testCmdClassReplay(command_save, command, cc) == false)
-						command = _find_report(cc, command);
+				zw_channel = ZUNO_CFG_CHANNEL(i_all - 1).zw_channel;
+				if (zw_channel == 0x0 || (zw_channel & ZWAVE_CHANNEL_MAPPED_BIT) != 0x0)
+				{
+					ccs = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(i_all - 1).type - 1];
+					i = 0;
+					max = ccs->num_ccs;
+					while (i < max) {
+						cc = ccs->ccs[i++].cc;
+						if (_testCmdClassReplay(command_save, command, cc) == false)
+							command = _find_report(cc, command);
+					}
 				}
+				i_all++;
 			}
 		}
 		else {

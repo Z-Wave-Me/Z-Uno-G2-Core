@@ -468,6 +468,11 @@ typedef struct								LdmaClassTransferI2cRequestFromMaster_s
 	LDMA_Descriptor_t						descLinkAdd[0x4];
 }											LdmaClassTransferI2cRequestFromMaster_t;
 
+typedef struct								LdmaClassTransferCyclical_s
+{
+	LdmaClassReceivedCyclical_t				array;
+}											LdmaClassTransferCyclical_t;
+
 typedef union								LdmaClassChannel_u
 {
 	ssize_t									channel;
@@ -488,6 +493,7 @@ class LdmaClass {
 		static size_t								receivedAvailable(ssize_t channel);
 		static ssize_t								receivedReadPeek(ssize_t channel, uint8_t bBool);
 		static ssize_t								receivedCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassReceivedCyclical_t *array);
+		static ssize_t								transferCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassTransferCyclical_t *array);
 		static ssize_t								transferSingle(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LDMA_CtrlSrcInc_t srcInc, LDMA_CtrlDstInc_t dstInc, LdmaClassTransferSingle_t *array);
 		static size_t								transferDone(ssize_t channel);
 		static void									transferStop(ssize_t channel);

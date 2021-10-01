@@ -1,5 +1,5 @@
-#ifndef ZPRINTF_H
-#define ZPRINTF_H
+#ifndef ZWAVEME_PRINTF_H
+#define ZWAVEME_PRINTF_H
 
 /*
    Flag characters
@@ -148,11 +148,14 @@ RETURN VALUE
 	Что бы работал %S(%ls) добавте define ZPRINTF_FUNCTIONAL_S
 */
 
-ssize_t dprintf(ssize_t fd, const char *format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
-ssize_t sprintf(char *str, const char *format, ...) __attribute__ ((__format__ (__printf__, 2, 3)));
-ssize_t snprintf(char *str, size_t len, const char *format, ...) __attribute__ ((__format__ (__printf__, 3, 4)));
-ssize_t vdprintf(ssize_t fd, const char *format, va_list ap) __attribute__ ((__format__ (__printf__, 2, 0)));
-ssize_t vsprintf(char *str, const char *format, va_list ap) __attribute__ ((__format__ (__printf__, 2, 0)));
-ssize_t vsnprintf(char *str, size_t len, const char *format, va_list ap) __attribute__ ((__format__ (__printf__, 3, 0)));
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#endif//ZDPRINTF_H
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif//ZWAVEME_PRINTF_H

@@ -945,7 +945,6 @@ uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
 	return 0;
 }
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t polarity){
-	size_t							real_pin;
 	pinMode(em4_pin, mode);
 	uint32_t wu_map = zunoMapPin2EM4Bit(em4_pin);
 	if(wu_map == 0){
@@ -963,8 +962,7 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
 	return zunoEM4EnablePinWakeup(em4_pin, INPUT_PULLUP_FILTER, 0);
 }
 
-
-
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitSleepingData(){
 	g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
 	g_sleep_data.user_latch = true;
@@ -973,6 +971,7 @@ static void _zunoInitSleepingData(){
 	g_sleep_data.wup_timeout = 0;
 	g_sleep_data.em4_map = 0;
 }
+#endif
 
 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 static void _zunoInitDefaultWakeup(){

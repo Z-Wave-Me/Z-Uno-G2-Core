@@ -11,7 +11,7 @@ String stringOne, stringTwo;
 
 void setup() {
 	// Open serial communications and wait for port to open:
-	MY_SERIAL.begin(9600);
+	MY_SERIAL.begin(115200);
 
 
 	stringOne = String("this");

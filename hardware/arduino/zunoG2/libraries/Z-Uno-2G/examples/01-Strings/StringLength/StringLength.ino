@@ -13,29 +13,29 @@ unsigned int lastStringLength = txtMsg.length();     // previous length of the S
 
 void setup() {
 	// Open serial communications and wait for port to open:
-	Serial.begin(115200);
+	MY_SERIAL.begin(115200);
 
 	// send an intro:
-	Serial.println("\n\nString  length():");
-	Serial.println();
+	MY_SERIAL.println("\n\nString  length():");
+	MY_SERIAL.println();
 }
 
 void loop() {
 	// add any incoming characters to the String:
-	while (Serial.available() > 0) {
-		char inChar = Serial.read();
+	while (MY_SERIAL.available() > 0) {
+		char inChar = MY_SERIAL.read();
 		txtMsg += inChar;
 	}
 
 	// print the message and a notice if it's changed:
 	if (txtMsg.length() != lastStringLength) {
-		Serial.println(txtMsg);
-		Serial.println(txtMsg.length());
+		MY_SERIAL.println(txtMsg);
+		MY_SERIAL.println(txtMsg.length());
 		// if the String's longer than 140 characters, complain:
 		if (txtMsg.length() < 140) {
-		Serial.println("That's a perfectly acceptable text message");
+		MY_SERIAL.println("That's a perfectly acceptable text message");
 		} else {
-		Serial.println("That's too long for a text message.");
+		MY_SERIAL.println("That's too long for a text message.");
 		}
 		// note the length for next time through the loop:
 		lastStringLength = txtMsg.length();

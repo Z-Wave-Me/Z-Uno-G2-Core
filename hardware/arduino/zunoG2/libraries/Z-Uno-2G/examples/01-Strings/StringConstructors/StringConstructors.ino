@@ -9,7 +9,7 @@
 
 void setup() {
 	// Open serial communications and wait for port to open:
-	MY_SERIAL.begin(9600);
+	MY_SERIAL.begin(115200);
 
 	// send an intro:
 	MY_SERIAL.println("\n\nString Constructors:");
@@ -40,7 +40,7 @@ void loop() {
 
 	// using an int and a base:
 	stringOne =  String(analogRead(A0), DEC);
-	// prints "453" or whatever the value of analogRead(A0) is
+	// prints "227" or whatever the value of analogRead(A0) is
 	MY_SERIAL.println(stringOne);
 
 	// using an int and a base (hexadecimal):
@@ -55,7 +55,7 @@ void loop() {
 
 	// using a long and a base:
 	stringOne =  String(millis(), DEC);
-	// prints "123456" or whatever the value of millis() is:
+	// prints "1169" or whatever the value of millis() is:
 	MY_SERIAL.println(stringOne);
 
 	// using a float and the right decimal places:

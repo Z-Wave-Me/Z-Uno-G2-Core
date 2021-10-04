@@ -41,6 +41,7 @@ typedef struct			LibftFloatEngine_s
 #define LIBFT_FLOAT_INF(neg)		(neg << 31 | 0x7F800000)
 
 LibftFloatType_t zwaveme_floatEngine(float value, LibftFloatEngine_t *lp);
+void zwaveme_floatEngineRound(LibftFloatEngine_t *lp, size_t prec);
 size_t zwaveme_floatEngineNotNumber(size_t neg, LibftFloatType_t type, uint8_t *b, size_t up);
 
 #ifdef __cplusplus

@@ -124,6 +124,35 @@ LibftFloatType_t zwaveme_floatEngine(float value, LibftFloatEngine_t *lp) {
 	return (LibftFloatTypeNumber);
 }
 
+void zwaveme_floatEngineRound(LibftFloatEngine_t *lp, size_t prec) {
+	size_t					lenFraction;
+	uint8_t					*b;
+	uint8_t					*e;
+	uint8_t					litter;
+
+	if ((lenFraction = lp->lenFraction) <= prec || lenFraction == 0x0)
+		return ;
+	e = &lp->number[lp->lenSingle + prec];
+	if (e[0x0] <= '5')
+		return ;
+	e[0x0] = '0';
+	b = &lp->number[0x0];
+	while (b <= --e) {
+		if ((litter = e[0x0]) == '9') {
+			e[0x0] = '0';
+			continue ;
+		}
+		e[0x0] = litter + 0x1;
+		break ;
+	}
+	if (b[0x0] != '0')
+		return ;
+	b[0x0] = '1';
+	if (lp->lenSingle == 0x0)
+		return ;
+	lp->lenSingle++;
+}
+
 char *dtostrff(float value, unsigned long width, unsigned long prec, char *s) {
 	char							*save;
 	size_t							offset;
@@ -141,6 +170,7 @@ char *dtostrff(float value, unsigned long width, unsigned long prec, char *s) {
 		s = (char *)((uint8_t *)memcpy(&s[width], &buff[0], offset) + offset);
 	}
 	else {
+		zwaveme_floatEngineRound(&floatEngine, prec);
 		lenSingle = floatEngine.lenSingle;
 		lenSingleNull = floatEngine.lenSingleNull;
 		offset = lenSingle + lenSingleNull + floatEngine.neg;

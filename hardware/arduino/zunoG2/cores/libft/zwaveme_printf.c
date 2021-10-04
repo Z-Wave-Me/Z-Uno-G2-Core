@@ -460,6 +460,7 @@ static uint8_t *Zprintf_display_f(FtPrintf_t *array, uint8_t *b, uint8_t *e, uin
 	// 	}
 		
 	// }
+	zwaveme_floatEngineRound(&floatEngine, prec);
 	offset = lenSingle + lenSingleNull + floatEngine.neg;
 	if (prec != 0)
 		offset = offset + prec + 1;//+1 '.'

@@ -20,6 +20,7 @@
 #include "zwaveme_libft.h"
 #include "Custom_decl.h" // 
 #include <math.h>
+#include "WCharacter.h"
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)

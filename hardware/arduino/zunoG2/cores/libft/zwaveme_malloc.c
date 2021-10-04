@@ -178,7 +178,7 @@ void *realloc(void *ptr, size_t size) {
 		return (ptr);
 	if ((ptrNew = malloc(sizeNew)) == 0)
 		return (0);
-	memcpy(ptrNew, ptr, size);
+	memcpy(ptrNew, ptr, (sizeOld - sizeof(ZMallocTop_t)));
 	free(ptr);
 	return (ptrNew);
 }

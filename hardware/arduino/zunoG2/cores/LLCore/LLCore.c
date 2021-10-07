@@ -413,16 +413,16 @@ void * zunoJumpTable(int vec, void * data) {
     static uint32_t pl = 0;
     pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
+    delayMicroseconds(50000);
     //delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    delay(100);
+    //delay(100);
     digitalWrite(LED_BUILTIN, LOW);
+    delayMicroseconds(50000);
     //delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    delay(100);
+    //delay(100);
     pl++;
     return (void*)pl; // 
-    */
+	*/
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit();

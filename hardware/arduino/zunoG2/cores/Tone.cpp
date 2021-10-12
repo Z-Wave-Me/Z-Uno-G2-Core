@@ -40,6 +40,8 @@ static ZunoSync_t gSyncTonePwm = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterTone);
 static ZunoTonePwm_t gTonePwm = {0, 0, 0, 0};
 static volatile uint8_t glpKey = true;
 
+static uint32_t _analog_freq = PWM_HGZ;
+
 static void _noTone(uint8_t pin);
 
 static uint8_t _findPWMChannelBusy(uint8_t location) {
@@ -126,8 +128,12 @@ static ZunoError_t _initPwm(size_t param) {
 
 	CMU_ClockEnable(PWM_TIMER_CLOCK, true);
 	timerInit = TIMER_INIT_DEFAULT;
-	timerInit.prescale = timerPrescale2;
-	freq = CMU_ClockFreqGet(PWM_TIMER_CLOCK) / (1 << timerInit.prescale) / PWM_HGZ;// PWM_HGZ - required frequency //0x25317C0
+	freq = CMU_ClockFreqGet(TONE_TIMER_CLOCK);
+	if (freq / _analog_freq > 0xFFFF)
+		timerInit.prescale = timerPrescale2;
+	else
+		timerInit.prescale = timerPrescale1;
+	freq = freq / (1 << timerInit.prescale) / _analog_freq;//0x25317C0
 	timer = PWM_TIMER;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);
@@ -282,4 +288,9 @@ void analogWriteResolution(uint8_t bits){
 	if (bits > 0x10)
 		bits = 0x10;
 	g_zuno_odhw_cfg.analog_write_resolution = bits;
+}
+
+void analogWriteFrequency(uint32_t freq){
+	if (freq >= 488 && freq <= 8000000)
+		_analog_freq = freq;
 }

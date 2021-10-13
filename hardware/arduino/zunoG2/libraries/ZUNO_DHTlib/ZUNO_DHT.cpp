@@ -100,46 +100,78 @@ int16_t DHT::readTemperatureC10(uint8_t bForce) {
 	value = this->_value;
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
-		case DHT11:
-			return (value.byte2 * 10 + value.byte3);
-			break ;
-		default:
-			out = ((value.byte2 & 0x7F) << 8) | value.byte3;
-			if ((value.byte2 & 0x80) != 0)
-				out = -out;
-			return (out);
-			break ;
+			case DHT11:
+				out = value.byte2 * 10 + value.byte3;
+				break ;
+			case DHT12:
+				out = value.byte2 * 10 + (value.byte3 & 0x7F);
+				if ((value.byte3 & 0x80) != 0)
+					out = -out;
+				break ;
+			case DHT22:
+			case DHT21:
+				out = ((value.byte2 & 0x7F) << 8) | value.byte3;
+				if ((value.byte2 & 0x80) != 0)
+					out = -out;
+				break ;
+			default:
+				out = BAD_DHT_VALUE;
+				break ;
 		}
 	}
-	return (BAD_DHT_VALUE);
+	else
+		out = BAD_DHT_VALUE;
+	return (out);
 }
 
 int16_t DHT::readHumidityH10(uint8_t bForce) {
 	ZunoError_t								ret;
 	DHT_TYPE_VALUE_t						value;
+	int16_t									out;
 
 	ret = this->_read(bForce);
 	value = this->_value;
 	if (ret == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous) {
 		switch (this->_type) {
-		case DHT11:
-			return (value.byte0 * 10 + value.byte1);
-			break ;
-		default:
-			return ((value.byte0 << 8) | value.byte1);
-			break ;
+			case DHT11:
+			case DHT12:
+				out = (value.byte0 * 10 + value.byte1);
+				break ;
+			case DHT21:
+			case DHT22:
+				out = ((value.byte0 << 8) | value.byte1);
+				break ;
+			default:
+				out = BAD_DHT_VALUE;
+				break ;
 		}
 	}
-	return (BAD_DHT_VALUE);
+	else
+		out = BAD_DHT_VALUE;
+	return (out);
 }
 
-float DHT::readTemperature(uint8_t bForce) {
+/*!
+ *  @brief  Read temperature
+ *  @param  S
+ *          Scale. Boolean value:
+ *					- true = Fahrenheit
+ *					- false = Celcius
+ *  @param  force
+ *          true if in force mode
+ *	@return Temperature value in selected scale
+ */
+float DHT::readTemperature(bool S, bool bforce) {
 	int16_t				value;
+	float				f;
 
-	value = this->readTemperatureC10(bForce);
+	value = this->readTemperatureC10(bforce);
 	if ((uint16_t)value == BAD_DHT_VALUE)
 		return (0 / (float)0);
-	return (value / (float)10.0);
+	f = value / (float)10.0;
+	if (S == false)
+		return (f);
+	return (this->convertCtoF(f));
 }
 
 float DHT::readHumidity(uint8_t bForce) {
@@ -213,22 +245,22 @@ ZunoError_t DHT::_init(size_t param) {
 }
 
 
- bool     DHT::_find_startmarker(uint16_t * &b, uint8_t max_size){
-	while(max_size) {
+bool DHT::_find_startmarker(uint16_t * &b, uint8_t max_size){
+	while(true) {
 		uint16_t t1 = *b/_freq;
 		uint16_t t2 = *(b+1)/_freq;
+		uint16_t t3 = *(b+2)/_freq;
 		if((DHT_START_IMPULSE_MIN <= t1)  && ( t1 <= DHT_START_IMPULSE_MAX) &&
-		   (DHT_START_IMPULSE_MIN <= t2)  && ( t2 <= DHT_START_IMPULSE_MAX)){
-			   if(max_size >= DHT_TIMER_MINIMUM_PACKAGE_LEN){
-				   b += 2;
-				   return true;
-			   }
-			   return false; // The package is too short
-		   }
+		(DHT_START_IMPULSE_MIN <= t2)  && ( t2 <= DHT_START_IMPULSE_MAX) &&
+		(t3 >= 47) && ( t3 <= 65)){
+			b += 2;
+			return true;
+		}
 		b++;
 		max_size--;
+		if (max_size < DHT_TIMER_MINIMUM_PACKAGE_LEN)
+			return (false); // The package is too short
 	}
-
 	return false;
 }
 bool  DHT::_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits){
@@ -238,15 +270,9 @@ bool  DHT::_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits){
 		b++;
 		uint16_t l = *b/_freq;
 		b++;
-		if((DHT_MARK_IMPULSE_MIN > m) || ( m > DHT_MARK_IMPULSE_MAX))
-			return false;
 		value <<= 1;
-		if((l >= DHT_LOGIC_IMPULSE_POS_MIN) &&  (l <= DHT_LOGIC_IMPULSE_POS_MAX)){
+		if(l > m)
 			value |= 1;
-		}
-		else if((l < DHT_LOGIC_IMPULSE_NEG_MIN) &&  (l > DHT_LOGIC_IMPULSE_NEG_MAX)){
-			return false;
-		}
 	}
 	return true;
 }
@@ -277,11 +303,12 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	_lastreadtime = currenttime;
 	pinMode(this->_pin, OUTPUT_DOWN);// Send start signal
 	switch (_type) {
-		case DHT11:// Датчик долго думает
-			currenttime = 20;
-			break ;
-		default:// Гораздо быстрее откликается
+		case DHT21:
+		case DHT22:// Гораздо быстрее откликается 
 			currenttime = 2;
+			break ;
+		default:// Датчик долго думает
+			currenttime = 20;
 			break ;
 	}
 	delay(currenttime);

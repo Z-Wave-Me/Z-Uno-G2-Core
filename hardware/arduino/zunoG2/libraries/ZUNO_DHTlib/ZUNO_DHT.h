@@ -13,6 +13,7 @@
 typedef enum			DHT_TYPE_SENSORS_e
 {
 	DHT11,
+	DHT12,
 	DHT21,
 	DHT22,
 	AM2301 = DHT21
@@ -38,8 +39,10 @@ class DHT {
 		inline ZunoError_t						read(uint8_t bForce=false) {return (this->_read(bForce));};
 		int16_t									readTemperatureC10(uint8_t bForce=false);// returns temperature in 10 th of Celsius
 		int16_t									readHumidityH10(uint8_t bForce=false);// returns humidity in 10 th of percent
-		float									readTemperature(uint8_t bForce=false);// Returns temperature as float in Celsius
+		float									readTemperature(bool S = false, bool bforce = false);
 		float									readHumidity(uint8_t bForce=false);// Returns humidity as float in pecents
+		inline float							convertCtoF(float c) { return c * 1.8f + 32; }
+		inline float							convertFtoC(float f) { return (f - 32) * 0.55555f; }
 		inline void								getRawData(uint8_t *ptr) {
 			ptr[0] = _value.byte0;
 			ptr[1] = _value.byte1;

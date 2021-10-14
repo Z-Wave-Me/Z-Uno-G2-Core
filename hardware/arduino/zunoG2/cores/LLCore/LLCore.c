@@ -76,6 +76,9 @@ extern unsigned long __HeapLimit;
 #ifndef ZUNO_EXT_FIRMWARES_DESCR_PTR
 #define ZUNO_EXT_FIRMWARES_DESCR_PTR ((ZUNOOTAFWDescr_t*)NULL)
 #endif
+#ifndef ZUNO_OTA_PIN
+#define ZUNO_OTA_PIN 0UL
+#endif
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {
                                                                                     {'Z','M','E','Z','U','N','O','C'}, 
@@ -88,7 +91,8 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     DBG_CONSOLE_PIN,
 																					SKETCH_VERSION,
 																					ZUNO_EXT_FIRMWARES_COUNT,
-																					ZUNO_EXT_FIRMWARES_DESCR_PTR};
+																					ZUNO_EXT_FIRMWARES_DESCR_PTR,
+																					ZUNO_OTA_PIN};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 

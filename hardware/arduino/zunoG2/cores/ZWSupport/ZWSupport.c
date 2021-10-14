@@ -1004,7 +1004,13 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 		#endif
 			{
 				uint32_t ch_time  = __getSyncVar(&(g_channels_data.last_report_time[ch]));
-				bool can_send = (ch_time == 0) || ((ticks -  ch_time) > 3000UL);
+				uint32_t dtime = NEXT_ML_REPORTDELAY; // Z-Wave specification requires 30second silence interval between SensorMultilevel/Meter reports 
+				if(g_zuno_sys->cfg_flags & ZUNO_CFGFILE_FLAG_DBG){ // Set param #1 (DBG) first
+					// We can dynamically modify report interval using parameter #11 for test pusposes
+					dtime = g_zuno_sys->cfg_mlinterval;
+					dtime *= 100; // We use seconds for param #11, so we have to convert it to sytem timer intervals 
+				}
+				bool can_send = (ch_time == 0) || ((ticks -  ch_time) > dtime);
 				if(can_send){
 					#ifdef LOGGING_DBG
 					LOGGING_UART.print("Time check ok. channel:");

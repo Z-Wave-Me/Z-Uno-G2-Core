@@ -75,6 +75,8 @@ typedef struct ZUNOSetupSysState_s {
 	uint8_t sleep_latches;
 	uint8_t sleep_highest_mode;
 	uint8_t	persistent_timer_map;
+	uint8_t cfg_flags;
+	uint8_t cfg_mlinterval;
 }ZUNOSetupSysState_t;
 
 // Handlers

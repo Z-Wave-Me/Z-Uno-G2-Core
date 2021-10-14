@@ -25,7 +25,9 @@ static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
 
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+	if (param < CONFIGPARAM_MIN_PARAM)
+		return ZUNO_UNKNOWN_CMD; // Forward this parameter to main firmware
+	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_COMMAND_BLOCKED);
 	if (zunoCFGParameter(param) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		param = CONFIGPARAM_MIN_PARAM;
@@ -60,7 +62,9 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+	if (param < CONFIGPARAM_MIN_PARAM)
+		return ZUNO_UNKNOWN_CMD; // Forward this parameter to main firmware
+	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_COMMAND_BLOCKED);
 	if (((size = lp->byte1.level) & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
 		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)

@@ -491,6 +491,9 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ICON_TYPE_SPECIFIC_ENTRY_CONTROL_KEYPAD_0_9                          0x2001   //Entry Control Keypad 0-9
 #define ICON_TYPE_SPECIFIC_ENTRY_CONTROL_RFID_TAG_READER_NO_BUTTON           0x2002   //Entry Control RFID tag reader, no button
 
+#ifndef NEXT_ML_REPORTDELAY 
+#define NEXT_ML_REPORTDELAY 3000UL
+#endif
 
 typedef struct ZUnoDevTypeDef_s{
 	byte gen_type;

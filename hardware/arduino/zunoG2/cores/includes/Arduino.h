@@ -79,7 +79,8 @@ inline void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4) { zunoMarkDevic
 void zunoLockSleep(void);
 bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);
-void zunoSetCustomWUPTimer(uint32_t timeout);
+
+
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();
 #endif
@@ -97,6 +98,9 @@ inline void zunoEnableSmartStart(bool en){
 		g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
 	else
 		g_zuno_sys->zwave_cfg->flags |= (DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
+}
+inline void zunoSetProductID(uint16_t product_id){
+	g_zuno_sys->zwave_cfg->product_id = product_id;
 }
 
 /* time */
@@ -157,6 +161,16 @@ byte zunoAddChannel(byte type, byte subtype, byte options);
 void zunoSendReport(byte ch);
 void zunoResetLocally();
 void zunoSendNIF();
+bool zunoStartDeviceConfiguration();
+inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
+void zunoStartLearn(byte timeout, bool secured);
+// Backward compatibility macro
+#define ZUNO_START_CONFIG() 						zunoStartDeviceConfiguration()
+#define ZUNO_ADD_CHANNEL(TYPE, SUBTYPE, OPTIONS)  	zunoAddChannel(TYPE, SUBTYPE, OPTIONS)
+#define ZUNO_ADD_ASSOCIATION(TYPE, OPTIONS)			zunoAddAssociation(TYPE, OPTIONS)
+#define ZUNO_COMMIT_CONFIG() 						zunoCommitCfg()
+
+
 
 /* CFG */
 #include "ZWCCConfiguration_define.h"
@@ -172,14 +186,14 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 /* Misc */
 void WDOG_Feed();
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
-bool zunoStartDeviceConfiguration();
-inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
-void zunoStartLearn(byte timeout, bool secured);
 void _zme_memcpy(byte *dst, byte *src, byte count);
-void zunoSetWUPTimer(uint32_t timeout);
+
+
 /* Sleep & PowerDown mode */
 void zuno_sendWUP_Notification();
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin);
+void zunoSetWUPTimer(uint32_t timeout);
+void zunoSetCustomWUPTimer(uint32_t timeout);
 
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"

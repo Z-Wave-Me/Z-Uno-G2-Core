@@ -121,7 +121,7 @@ sample code bearing this copyright.
 #include "Arduino.h"
 #include "ZUNO_OneWire.h"
 
-#define ONEWARE_INPUT()			this->_digitalWriteFast(LOW); this->_pinModeFast(INPUT & 0xFF);
+#define ONEWARE_INPUT()			this->_pinModeFast(INPUT & 0xFF);
 #define ONEWARE_OUTPUT()		this->_digitalWriteFast(LOW); this->_pinModeFast(OUTPUT & 0xFF);
 
 /* Public Constructors */
@@ -218,11 +218,11 @@ byte OneWire::read() {
 	for (bitMask = 0x01; bitMask; bitMask <<= 1) {
 		ONEWARE_OUTPUT();
 		this->_digitalWriteFast(0);
-		delayMicroseconds(7);
+		delayMicroseconds(2);
 		ONEWARE_INPUT(); // let pin float, pull up will raise
-		delayMicroseconds(15);
+		delayMicroseconds(10);
 		r = this->_digitalReadFast();
-		delayMicroseconds(94);
+		delayMicroseconds(53);
 		if (r)
 			res |= bitMask;
 	}
@@ -341,8 +341,8 @@ bool OneWire::search(uint8_t * newAddr) {
 		}
 		this->write(0xF0);// issue the search command
 		do {// loop to do the search serial number search direction write bit read a bit and its complement
-			ows_id_bit = this->_read_bit();
-			ows_cmp_id_bit = this->_read_bit();
+			ows_id_bit = this->read_bit();
+			ows_cmp_id_bit = this->read_bit();
 			if ((ows_id_bit == 1) && (ows_cmp_id_bit == 1))// check for no devices on 1-wire
 				break;
 			if (ows_id_bit != ows_cmp_id_bit) {// all devices coupled have 0 or 1
@@ -364,7 +364,7 @@ bool OneWire::search(uint8_t * newAddr) {
 				this->_date.ows_ROM_NO[ows_rom_byte_number] |= ows_rom_byte_mask;
 			else
 				this->_date.ows_ROM_NO[ows_rom_byte_number] &= ~(ows_rom_byte_mask);
-			this->_write_bit(ows_search_direction);// serial number search direction write bit
+			this->write_bit(ows_search_direction);// serial number search direction write bit
 			ows_id_bit_number++;// increment the byte counter id_bit_number and shift the mask rom_byte_mask
 			ows_rom_byte_mask <<= 1;
 			if (ows_rom_byte_mask == 0) {// if the mask is 0 then go to new SerialNum byte rom_byte_number and reset mask
@@ -392,6 +392,34 @@ bool OneWire::search(uint8_t * newAddr) {
 	return (ows_search_result);
 }
 
+bool OneWire::read_bit() {
+	bool			r;
+
+	noInterrupts();
+	ONEWARE_OUTPUT();
+	delayMicroseconds(3);
+	ONEWARE_INPUT(); // let pin float, pull up will raise
+	delayMicroseconds(15);
+	r = this->_digitalReadFast();
+	delayMicroseconds(73);
+	interrupts();
+	return r != 0;
+}
+
+void OneWire::write_bit(bool bit) {
+	noInterrupts();
+	ONEWARE_OUTPUT();
+	if (bit) {
+		delayMicroseconds(10);
+		this->_digitalWriteFast(1);
+		delayMicroseconds(55);
+	} else {
+		delayMicroseconds(65);
+		this->_digitalWriteFast(1);
+		delayMicroseconds(5);
+	}
+	interrupts();
+}
 
 /* Private Methods */
 inline void OneWire::_digitalWriteFast(uint8_t val) {//Digital write with some cached values for better perfomance
@@ -411,33 +439,4 @@ inline void OneWire::_pinModeFast(uint8_t mode) {//pinMode with some cached valu
 		GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin))) | (mode << (real_pin << 2 ));
 	else 
 		GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2))) | (mode << ((real_pin - 8) << 2));
-}
-
-inline bool OneWire::_read_bit() {
-	bool			r;
-
-	noInterrupts();
-	ONEWARE_OUTPUT();
-	delayMicroseconds(3);
-	ONEWARE_INPUT(); // let pin float, pull up will raise
-	delayMicroseconds(15);
-	r = this->_digitalReadFast();
-	delayMicroseconds(73);
-	interrupts();
-	return r != 0;
-}
-
-inline void OneWire::_write_bit(bool bit) {
-	noInterrupts();
-	ONEWARE_OUTPUT();
-	if (bit) {
-		delayMicroseconds(10);
-		this->_digitalWriteFast(1);
-		delayMicroseconds(55);
-	} else {
-		delayMicroseconds(65);
-		this->_digitalWriteFast(1);
-		delayMicroseconds(5);
-	}
-	interrupts();
 }

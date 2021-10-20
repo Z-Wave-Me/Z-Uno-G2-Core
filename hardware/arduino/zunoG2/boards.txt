@@ -4,6 +4,7 @@ menu.cpu=Processor
 menu.Frequency=Frequency
 menu.Security=Security
 menu.TXPower=TXPower
+menu.RFLogging=RFLogging
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno2
 
@@ -70,6 +71,7 @@ zuno2.menu.TXPower.Normal.build.pow       = 0
 zuno2.menu.TXPower.Magnified.build.pow    = 50
 zuno2.menu.TXPower.Ultra.build.pow        = 100
 
-
+zuno2.menu.RFLogging.Off.build.rflog = 0
+zuno2.menu.RFLogging.On.build.rflog = 1
 
 

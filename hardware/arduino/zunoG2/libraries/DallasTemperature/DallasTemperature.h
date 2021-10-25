@@ -41,6 +41,7 @@
 // For readPowerSupply on oneWire bus
 // definition of nullptr for C++ < 11, using official workaround:
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2431.pdf
+/*
 #if __cplusplus < 201103L
 const class
 {
@@ -60,7 +61,7 @@ private:
 	void operator&() const;
 } nullptr = {};
 #endif
-
+*/
 typedef uint8_t DeviceAddress[8];
 
 class DallasTemperature {
@@ -106,7 +107,7 @@ public:
 	void writeScratchPad(const uint8_t*, const uint8_t*);
 
 	// read device's power requirements
-	bool readPowerSupply(const uint8_t* deviceAddress = nullptr);
+	bool readPowerSupply(const uint8_t* deviceAddress);
 
 	// get global resolution
 	uint8_t getResolution();
@@ -167,7 +168,7 @@ public:
   
   // Sends command to one or more devices to save values from scratchpad to EEPROM
   // Returns true if no errors were encountered, false indicates failure
-  bool saveScratchPad(const uint8_t* = nullptr);
+  bool saveScratchPad(const uint8_t* p= NULL);
   
   // Sends command to one device to recall values from EEPROM to scratchpad by index
   // Returns true if no errors were encountered, false indicates failure
@@ -175,7 +176,7 @@ public:
   
   // Sends command to one or more devices to recall values from EEPROM to scratchpad
   // Returns true if no errors were encountered, false indicates failure
-  bool recallScratchPad(const uint8_t* = nullptr);
+  bool recallScratchPad(const uint8_t* p = NULL);
   
   // Sets the autoSaveScratchPad flag
   void setAutoSaveScratchPad(bool);

@@ -190,7 +190,7 @@
             "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
             "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_BINARY_VERSION"}
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
             ],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",

@@ -185,7 +185,7 @@ void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
 
 /* Misc */
 void WDOG_Feed();
-unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
+unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout=20000);
 void _zme_memcpy(byte *dst, byte *src, byte count);
 
 

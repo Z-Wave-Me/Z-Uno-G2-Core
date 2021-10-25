@@ -117,12 +117,15 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 	cmd_class = cmd_bytes[0];
 	switch(channel->type) {
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+		case ZUNO_FLOWSTOP_CHANNEL_NUMBER:
+		case ZUNO_SIREN_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_BINARY)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+		case ZUNO_BLINDS_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
@@ -146,6 +149,7 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;
 			break;
+
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
 				return true;

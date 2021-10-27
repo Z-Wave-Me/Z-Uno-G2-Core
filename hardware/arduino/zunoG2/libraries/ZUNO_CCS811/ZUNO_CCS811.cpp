@@ -8,14 +8,14 @@
 		@returns True if device is set up, false on any failure
 */
 /**************************************************************************/
-bool ZUNO_CCS811::begin(uint8_t addr) {
+bool ZUNO_CCS811::begin(uint8_t addr, TwoWire *wire, uint8_t scl, uint8_t sda) {
 	_i2caddr = addr;
-
-	_i2c_init();
+	this->_wire = wire;
+	if (wire->begin(0x0, scl, sda) != ZunoErrorOk)
+		return (false);
 
 	SWReset();
 	delay(100);
-		uint8_t ret = 0x66;
 
 	// check that the HW id is correct
 	if (this->read8(CCS811_HW_ID) != CCS811_HW_ID_CODE)
@@ -227,7 +227,7 @@ void ZUNO_CCS811::setThresholds(uint16_t low_med, uint16_t med_high,
 void ZUNO_CCS811::SWReset() {
 	// reset sequence from the datasheet
 	uint8_t seq[] = {0x11, 0xE5, 0x72, 0x8A};
-	// Wire.transfer(_i2caddr, seq, 4);
+	// this->_wire->transfer(_i2caddr, seq, 4);
 	this->write(CCS811_SW_RESET, seq, 4);
 }
 
@@ -266,27 +266,22 @@ uint8_t ZUNO_CCS811::read8(byte reg) {
 	return ret;
 }
 
-void ZUNO_CCS811::_i2c_init() {
-	Wire.begin();
-}
-
 void ZUNO_CCS811::read(uint8_t reg, uint8_t *buf, uint8_t num) {
-	uint8_t pos = 0;
-		Wire.beginTransmission(_i2caddr);
-		Wire.write(reg);
-		Wire.endTransmission();
-		Wire.requestFrom(_i2caddr, num);
+		this->_wire->beginTransmission(_i2caddr);
+		this->_wire->write(reg);
+		this->_wire->endTransmission();
+		this->_wire->requestFrom(_i2caddr, num);
 		uint8_t i = 0;
 		while (i < num)
 		{
-				buf[i] = Wire.read();
+				buf[i] = this->_wire->read();
 				i++;
 		}
 }
 
 void ZUNO_CCS811::write(uint8_t reg, uint8_t *buf, uint8_t num) {
-	Wire.beginTransmission((uint8_t)_i2caddr);
-	Wire.write((uint8_t)reg);
-	Wire.write((uint8_t *)buf, num);
-	Wire.endTransmission();
+	this->_wire->beginTransmission((uint8_t)_i2caddr);
+	this->_wire->write((uint8_t)reg);
+	this->_wire->write((uint8_t *)buf, num);
+	this->_wire->endTransmission();
 }

@@ -33,7 +33,7 @@ typedef struct			LibftFloatEngine_s
 	size_t				lenFraction;
 	size_t				lenFractionNull;
 	size_t				neg;
-	uint8_t				number[LIBFT_FLOAT_ENGINE_PRESC + 1];//+1 - null
+	uint8_t				number[LIBFT_FLOAT_ENGINE_PRESC + 1 + 0x8];//+1 - null
 }						LibftFloatEngine_t;
 
 #define LIBFT_FLOAT_NAN				(0x7F820000)

@@ -100,7 +100,7 @@ static uint8_t *_writeDup(FtPrintf_t *array, uint8_t *b, uint8_t *e, uint8_t dup
 	return (b + count);
 }
 
-static uint8_t *_writeStr(FtPrintf_t *array, uint8_t *b, uint8_t *e, void *d, size_t count) {
+static uint8_t *_writeStr(FtPrintf_t *array, uint8_t *b, uint8_t *e, const void *d, size_t count) {
 	uint8_t					*date;
 	size_t					len;
 	ssize_t					fd;
@@ -461,6 +461,8 @@ static uint8_t *Zprintf_display_f(FtPrintf_t *array, uint8_t *b, uint8_t *e, uin
 		
 	// }
 	zwaveme_floatEngineRound(&floatEngine, prec);
+	if (floatEngine.neg != 0x0)
+		b = _writeStr(array, b, e, "-", 0x1);
 	offset = lenSingle + lenSingleNull + floatEngine.neg;
 	if (prec != 0)
 		offset = offset + prec + 1;//+1 '.'

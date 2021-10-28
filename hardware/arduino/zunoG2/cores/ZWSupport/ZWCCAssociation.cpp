@@ -19,13 +19,17 @@
 #define ASSOCIATION_GROUP_NAME_MAX			42
 
 static int _group_id_rm(uint8_t groupIndex) {
-	if (groupIndex > ZUNO_CFG_ASSOCIATION_COUNT)
+	if (groupIndex > (ZUNO_CFG_ASSOCIATION_COUNT+1)) // 
 		return (ZUNO_COMMAND_BLOCKED);// drop the package
 	// 0 is the right index for remove command
 	return (ZUNO_UNKNOWN_CMD); //We throw off the parsing of the package
 }
 static int _group_id(uint8_t groupIndex) {
-	if (--groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
+	if( groupIndex == 0){
+		return (ZUNO_COMMAND_BLOCKED);
+	}
+	groupIndex--;
+	if (groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
 		return (ZUNO_UNKNOWN_CMD);//We throw off the parsing of the package
 	return (ZUNO_COMMAND_BLOCKED);//drop the package
 }

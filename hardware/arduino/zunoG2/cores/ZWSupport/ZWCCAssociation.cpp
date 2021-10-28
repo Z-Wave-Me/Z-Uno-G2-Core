@@ -18,6 +18,12 @@
 #define ASSOCIATION_GROUP_NAME_DEFAULT		"User group 00"
 #define ASSOCIATION_GROUP_NAME_MAX			42
 
+static int _group_id_rm(uint8_t groupIndex) {
+	if (groupIndex > ZUNO_CFG_ASSOCIATION_COUNT)
+		return (ZUNO_COMMAND_BLOCKED);// drop the package
+	// 0 is the right index for remove command
+	return (ZUNO_UNKNOWN_CMD); //We throw off the parsing of the package
+}
 static int _group_id(uint8_t groupIndex) {
 	if (--groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
 		return (ZUNO_UNKNOWN_CMD);//We throw off the parsing of the package
@@ -73,8 +79,10 @@ int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
 
 	switch(ZW_CMD) {
 		case ASSOCIATION_SET:
-		case ASSOCIATION_REMOVE:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
+			break;
+		case ASSOCIATION_REMOVE:
+			rs = _group_id_rm(ASSOCIATION_GROUP_ID);
 			break ;
 		case ASSOCIATION_GET:
 			rs = _assotiation_get(cmd);
@@ -97,8 +105,10 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 
 	switch(ZW_CMD) {
 		case MULTI_CHANNEL_ASSOCIATION_SET:
-		case MULTI_CHANNEL_ASSOCIATION_REMOVE:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
+			break ;
+		case MULTI_CHANNEL_ASSOCIATION_REMOVE:
+			rs = _group_id_rm(ASSOCIATION_GROUP_ID);
 			break ;
 		case MULTI_CHANNEL_ASSOCIATION_GET:
 			rs = _assotiation_get(cmd);

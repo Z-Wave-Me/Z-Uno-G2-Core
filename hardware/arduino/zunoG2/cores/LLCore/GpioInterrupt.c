@@ -3,7 +3,6 @@
 #include "CrtxGPIO.h"
 #include "GpioInterrupt.h"
 
-#define INT_SLEEPING			24// FIXME пин указать реальный для пробуждения
 
 static uint8_t _getPort(uint8_t pin) {
 	uint8_t				port;
@@ -51,8 +50,6 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 	uint8_t						port;
 	uint8_t						pin;
 
-	if (interruptPin == INT_SLEEPING)
-		return (ZunoErrorExtInt);
 	if (g_zuno_odhw_cfg.bExtInit == false) {
 		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) != ZunoErrorOk) {
 			return (ret);
@@ -120,8 +117,6 @@ void zunoExtIntMode(uint8_t interruptPin, uint8_t mode) {
 void detachInterrupt(uint8_t interruptPin) {
 	uint8_t						pin;
 
-	if (interruptPin == INT_SLEEPING)
-		return ;
 	pin = getRealPin(interruptPin);
 	zunoEnterCritical();
 	GPIO_IntDisable(pin);

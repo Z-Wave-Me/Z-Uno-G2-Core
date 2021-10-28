@@ -68,7 +68,7 @@ class ZUNO_CCS811
 	public:
 			ZUNO_CCS811(/* args */) {};
 			~ZUNO_CCS811(){};
-		bool begin(uint8_t addr = CCS811_ADDRESS);
+		bool begin(uint8_t addr = CCS811_ADDRESS, TwoWire *wire = &Wire, uint8_t scl = SCL, uint8_t sda = SDA);
 
 		void setEnvironmentalData(float humidity, float temperature);
 
@@ -139,8 +139,9 @@ class ZUNO_CCS811
 		bool checkError();
 
 	private:
-		uint8_t _i2caddr;
+		TwoWire *_wire;
 		float _tempOffset;
+		uint8_t _i2caddr;
 
 		uint16_t _TVOC;
 		uint16_t _eCO2;
@@ -154,7 +155,6 @@ class ZUNO_CCS811
 
 		void read(uint8_t reg, uint8_t *buf, uint8_t num);
 		void write(uint8_t reg, uint8_t *buf, uint8_t num);
-		void _i2c_init();
 
 		/*=========================================================================
 						REGISTER BITFIELDS

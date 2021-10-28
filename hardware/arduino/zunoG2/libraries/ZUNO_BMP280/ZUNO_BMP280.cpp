@@ -15,367 +15,570 @@
   Slightly adoptated for fix-point i8051 math and Z-Uno stack behaviour.
  ****************************************************/
 
+#include "Arduino.h"
 #include "ZUNO_BMP280.h"
-#include "Wire.h"
 
 
-#define BMP180_DEBUG 0
-
-
-#define DEBUG_SERIAL Serial0
-
-
-#define _delay_ms(d) delay(d)
-
-#define BME280_S32_t int32_t
-#define BME280_U32_t uint32_t
-
-extern byte g_myi2c_addr;
-
-void aux_swap16LE(XBYTE * value);
-uint8_t aux_read8(uint8_t a);
-void aux_read16(uint8_t a, XBYTE * value);
-void aux_read20(uint8_t a, XBYTE * value);
-void aux_write8(uint8_t a, uint8_t d);
-
-ZUNO_BMP280::ZUNO_BMP280() {
+/*!
+ *   @brief  Initialise sensor with given parameters / settings
+ *   @param addr the I2C address the device can be found on
+ *   @param theWire the I2C object to use, defaults to &Wire
+ *   @returns true on success, false otherwise
+ */
+bool ZUNO_BMP280::begin(uint8_t addr, TwoWire *theWire, uint8_t scl, uint8_t sda) {
+	this->_wire = theWire;
+	this->_wire_addr = addr;
+	if (theWire->begin(0x0, scl, sda) != ZunoErrorOk)
+		return (false);
+	return (this->init());
 }
 
-
-boolean ZUNO_BMP280::begin(uint8_t addr) {
-
-  byte tmp;
-  Wire.begin();
-
-  this->addr = addr;
-  g_myi2c_addr = addr;
-
-  chip_id =  aux_read8(BME280_REGISTER_CHIPID);
-  if ((chip_id != CHIPID_BMP280) &&
-      (chip_id != CHIPID_BME280)) 
-    return false;
-  aux_write8(BME280_REGISTER_SOFTRESET, 0xB6);
-  // wait for chip to wake up.
-  delay(300);
-  // waiting for calibration
-  while(aux_read8(BME280_REGISTER_STATUS) & 0x01)
-    delay(100);
-
-  aux_read16(BME280_REGISTER_DIG_T1, (XBYTE*)&dig_T1);
-  aux_read16(BME280_REGISTER_DIG_T2, (XBYTE*)&dig_T2);
-  aux_read16(BME280_REGISTER_DIG_T3, (XBYTE*)&dig_T3);
-  aux_read16(BME280_REGISTER_DIG_P1, (XBYTE*)&dig_P1);
-  aux_read16(BME280_REGISTER_DIG_P2, (XBYTE*)&dig_P2);
-  aux_read16(BME280_REGISTER_DIG_P3, (XBYTE*)&dig_P3);
-  aux_read16(BME280_REGISTER_DIG_P4, (XBYTE*)&dig_P4);
-  aux_read16(BME280_REGISTER_DIG_P5, (XBYTE*)&dig_P5);
-  aux_read16(BME280_REGISTER_DIG_P6, (XBYTE*)&dig_P6);
-  aux_read16(BME280_REGISTER_DIG_P7, (XBYTE*)&dig_P7);
-  aux_read16(BME280_REGISTER_DIG_P8, (XBYTE*)&dig_P8);
-  aux_read16(BME280_REGISTER_DIG_P9, (XBYTE*)&dig_P9);
-
-  if(chip_id == CHIPID_BME280) {
-    dig_H1 = aux_read8(BME280_REGISTER_DIG_H1);
-    aux_read16(BME280_REGISTER_DIG_H2, (XBYTE*)&dig_H2);
-    dig_H3 = aux_read8(BME280_REGISTER_DIG_H3);
-    dig_H4 = (aux_read8(BME280_REGISTER_DIG_H4) << 4) | (aux_read8(BME280_REGISTER_DIG_H4+1) & 0xF);
-    dig_H5 = (aux_read8(BME280_REGISTER_DIG_H5+1) << 4) | (aux_read8(BME280_REGISTER_DIG_H5) >> 4);
-    dig_H6 = aux_read8(BME280_REGISTER_DIG_H6);
-  }
-  // Defaults
-  aux_write8(BME280_REGISTER_CONTROL, 0x24);
-  delay(20);
-  aux_write8(BME280_REGISTER_CONFIG, 0x05<<5);
-  delay(20);
-  aux_write8(BME280_REGISTER_CONTROLHUMID, 0x01);
-  aux_write8(BME280_REGISTER_CONTROL, (0x7 << 5) | (7<<2) | 0x03);
-  
-  return true;
-  
-
+bool ZUNO_BMP280::begin(SPIClass *spi, uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
+	this->_spi = spi;
+	this->_wire_addr = 0x0;
+	if (spi->begin(sck, miso, mosi, ss) != ZunoErrorOk)
+		return (false);
+	return (this->init());
 }
 
-dword adc_V;
-word adc_H;
-// --------------------------------------------------------------
-// auxilary variables for calculations
-uint32_t p;
-int32_t t_fine;
-int32_t v3, v1, v2; 
-// --------------------------------------------------------------
+/*!
+ *   @brief  Initialise sensor with given parameters / settings
+ *   @returns true on success, false otherwise
+ */
+bool ZUNO_BMP280::init() {
+	size_t					sensorID;
 
+	sensorID = this->read8(BME280_REGISTER_CHIPID);
+	this->_sensorID = sensorID;
+	// check if sensor, i.e. the chip ID is correct
+	if (sensorID != CHIPID_BMP280_1 && sensorID != CHIPID_BMP280_2 && sensorID != CHIPID_BMP280_3 && sensorID != CHIPID_BME280)
+		return (false);
+	if (sensorID == CHIPID_BME280)
+	{
+		// reset the device using soft-reset
+		// this makes sure the IIR is off, etc.
+		this->write8(BME280_REGISTER_SOFTRESET, 0xB6);
+		// wait for chip to wake up.
+		delay(10);
+		// if chip is still reading calibration, delay
+		while (isReadingCalibration())
+			delay(10);
+	}
 
+	this->readCoefficients(); // read trimming parameters, see DS 4.2.2
+	// write8(BMP280_REGISTER_CONTROL, 0x3F); /* needed? */
+	this->setSampling(); // use defaults
+	delay(100);
+	return (true);
+}
 
-int32_t ZUNO_BMP280::readPressurePa(void) {
-  
-  readTemperatureC100(); // must be done first to get t_fine
-  aux_read20(BME280_REGISTER_PRESSUREDATA, (XBYTE*)&adc_V);
-  if (adc_V == 0x80000) // value in case pressure measurement was disabled
-        return BAD_BMP280_32BVALUE;
+/*!
+ *   @brief  setup sensor with given parameters / settings
+ *
+ *   This is simply a overload to the normal begin()-function, so SPI users
+ *   don't get confused about the library requiring an address.
+ *   @param mode the power mode to use for the sensor
+ *   @param tempSampling the temp samping rate to use
+ *   @param pressSampling the pressure sampling rate to use
+ *   @param humSampling the humidity sampling rate to use
+ *   @param filter the filter mode to use
+ *   @param duration the standby duration to use
+ */
+void ZUNO_BMP280::setSampling(sensor_mode mode,
+                                  sensor_sampling tempSampling,
+                                  sensor_sampling pressSampling,
+                                  sensor_sampling humSampling,
+                                  sensor_filter filter,
+                                  standby_duration duration) {
+	/**************************************************************************/
+	/*!
+		@brief  config register
+	*/
+	/**************************************************************************/
+	struct config {
+		// inactive duration (standby time) in normal mode
+		// 000 = 0.5 ms
+		// 001 = 62.5 ms
+		// 010 = 125 ms
+		// 011 = 250 ms
+		// 100 = 500 ms
+		// 101 = 1000 ms
+		// 110 = 10 ms
+		// 111 = 20 ms
+		unsigned int t_sb : 3; ///< inactive duration (standby time) in normal mode
 
-  /*
-  var1 = (((BME280_S32_t)t_fine)>>1)-(BME280_S32_t)64000;
-  var2 = (((var1>>2) * (var1>>2)) >> 11 ) * ((BME280_S32_t)dig_P6);
-  */
+		// filter settings
+		// 000 = filter off
+		// 001 = 2x filter
+		// 010 = 4x filter
+		// 011 = 8x filter
+		// 100 and above = 16x filter
+		unsigned int filter : 3; ///< filter settings
 
-  v1 = t_fine;
-  v1 >>= 1;
-  v1 -= 64000;
-  v2 = v1;
-  v2 >>= 2;
-  v2 *= v2;
-  v2 >>= 11;
-  v2 *= dig_P6;
-  /*
-  var2 = var2 + ((var1*((BME280_S32_t)dig_P5))<<1);
-  var2 = (var2>>2)+(((BME280_S32_t)dig_P4)<<16);
-  */
-  v3 = v1;
-  v3 *= dig_P5;
-  v3 <<= 1;
-  v3 += v2;
-  v3 >>= 2;
-  v2 = dig_P4;
-  v2 <<= 16;
-  v2 += v3;
-  /*
-  var1 = (((dig_P3 * (((var1>>2) * (var1>>2)) >> 13 )) >> 3) + ((((BME280_S32_t)dig_P2) * var1)>>1))>>18; 
-  */
-  v3 = v1;
-  v3 >>= 2;
-  v3 *= v3;
-  v3 >>= 13;
-  v3 *= dig_P3;
-  v1 *= dig_P2;
-  v1 >>= 1;
-  v1 += v3;
-  v1 >>= 18;
-  /*
-  var1 = ((((32768+var1))*((BME280_S32_t)dig_P1))>>15);
-  */
-  v1 += 32768;
-  v1 *= dig_P1;
-  v1 >>= 15;
-  if (v1 == 0)
-    return 0; // avoid exception caused by division by zero 
-  /*
-  p = (((BME280_U32_t)(((BME280_S32_t)1048576)-adc_P)-(var2>>12)))*3125; 
-  */
-  p = 1048576;
-  p -= adc_V;
-  v2 >>= 12;
-  p -= v2;
-  p *= 3125;
-  if (p < 0x80000000) {
-      /*
-      p = (p << 1) / ((BME280_U32_t)var1); 
-      */
-      p <<= 1;
-      p /= v1;
+		// unused - don't set
+		unsigned int none : 1;     ///< unused - don't set
+		unsigned int spi3w_en : 1; ///< unused - don't set
+
+		/// @return combined config register
+		unsigned int get() { return (t_sb << 5) | (filter << 2) | spi3w_en; }
+	};
+	config				configReg; //!< config register object
+
+	/**************************************************************************/
+	/*!
+		@brief  ctrl_hum register
+	*/
+	/**************************************************************************/
+	struct ctrl_hum {
+		/// unused - don't set
+		unsigned int none : 5;
+
+		// pressure oversampling
+		// 000 = skipped
+		// 001 = x1
+		// 010 = x2
+		// 011 = x4
+		// 100 = x8
+		// 101 and above = x16
+		unsigned int osrs_h : 3; ///< pressure oversampling
+
+		/// @return combined ctrl hum register
+		unsigned int get() { return (osrs_h); }
+	};
+	ctrl_hum				humReg; //!< hum register object
+
+	this->_measReg.mode = mode;
+	this->_measReg.osrs_t = tempSampling;
+	this->_measReg.osrs_p = pressSampling;
+
+	configReg.filter = filter;
+	configReg.t_sb = duration;
+	configReg.spi3w_en = 0;
+
+	if (this->_sensorID == CHIPID_BME280)
+	{
+		// making sure sensor is in sleep mode before setting configuration
+		// as it otherwise may be ignored
+		this->write8(BME280_REGISTER_CONTROL, MODE_SLEEP);
+
+		// you must make sure to also set REGISTER_CONTROL after setting the
+		// CONTROLHUMID register, otherwise the values won't be applied (see
+		// DS 5.4.3)
+		humReg.osrs_h = humSampling;
+		this->write8(BME280_REGISTER_CONTROLHUMID, humReg.get());
+	}
+	this->write8(BME280_REGISTER_CONFIG, configReg.get());
+	this->write8(BME280_REGISTER_CONTROL, this->_measReg.get());
+}
+
+/*!
+ *   @brief  Writes an 8 bit value over I2C or SPI
+ *   @param reg the register address to write to
+ *   @param value the value to write to the register
+ */
+void ZUNO_BMP280::write8(byte reg, byte value) {
+  byte buffer[2];
+  buffer[1] = value;
+  if (this->_wire_addr != 0x0) {
+    buffer[0] = reg;
+    this->_wire->transfer(this->_wire_addr, &buffer[0x0], 0x2);
   } else {
-      /*
-      p = (p / (BME280_U32_t)var1) * 2;
-      */
-      p /= v1;
-      p <<= 1;
-      
+    buffer[0] = reg & ~0x80;
+    // spi_dev->write(buffer, 2);
   }
-  /*
-  var1 = (((BME280_S32_t)dig_P9) * ((BME280_S32_t)(((p>>3) * (p>>3))>>13)))>>12; 
-  */
-  v1 = p;
-  v1 >>= 3;
-  v1 *= v1;
-  v1 >>= 13;
-  v1 *= dig_P9;
-  v1 >>= 12;
-  /*
-  var2 = (((BME280_S32_t)(p>>2)) * ((BME280_S32_t)dig_P8))>>13;
-  */
-  v2 = p;
-  v2 >>= 2;
-  v2 *= dig_P8;
-  v2 >>= 13;
-  /*
-  p = (BME280_U32_t)((BME280_S32_t)p + ((var1 + var2 + dig_P7) >> 4));
-  */
-  v2 += v1;
-  v2 += dig_P7;
-  v2 >>= 4;
-  p += v2;
-  return p;
-  
 }
-int32_t ZUNO_BMP280::readPressureHgMM10(void){
-  readPressurePa();
-  p *= 1000;
-  p /= 13333;
-  return p;
+
+/*!
+ *   @brief  Reads an 8 bit value over I2C or SPI
+ *   @param reg the register address to read from
+ *   @returns the data byte read from the device
+ */
+uint8_t ZUNO_BMP280::read8(byte reg) {
+  uint8_t buffer[1];
+  if (this->_wire_addr != 0x0) {
+    buffer[0] = uint8_t(reg);
+    // i2c_dev->write_then_read(buffer, 1, buffer, 1);
+  } else {
+    buffer[0] = uint8_t(reg | 0x80);
+    // spi_dev->write_then_read(buffer, 1, buffer, 1);
+  }
+  this->_read(buffer, 1, buffer, 1);
+  return buffer[0];
+}
+
+/*!
+ *   @brief  Reads a 16 bit value over I2C or SPI
+ *   @param reg the register address to read from
+ *   @returns the 16 bit data value read from the device
+ */
+uint16_t ZUNO_BMP280::read16(byte reg) {
+  uint8_t buffer[2];
+
+  if (this->_wire_addr != 0x0) {
+    buffer[0] = uint8_t(reg);
+    // i2c_dev->write_then_read(buffer, 1, buffer, 2);
+  } else {
+    buffer[0] = uint8_t(reg | 0x80);
+    // spi_dev->write_then_read(buffer, 1, buffer, 2);
+  }
+  this->_read(buffer, 1, buffer, 2);
+  return uint16_t(buffer[0]) << 8 | uint16_t(buffer[1]);
+}
+
+/*!
+ *   @brief  Reads a signed 16 bit little endian value over I2C or SPI
+ *   @param reg the register address to read from
+ *   @returns the 16 bit data value read from the device
+ */
+uint16_t ZUNO_BMP280::read16_LE(byte reg) {
+  uint16_t temp = read16(reg);
+  return (temp >> 8) | (temp << 8);
+}
+
+/*!
+ *   @brief  Reads a signed 16 bit value over I2C or SPI
+ *   @param reg the register address to read from
+ *   @returns the 16 bit data value read from the device
+ */
+int16_t ZUNO_BMP280::readS16(byte reg) { return (int16_t)read16(reg); }
+
+/*!
+ *   @brief  Reads a signed little endian 16 bit value over I2C or SPI
+ *   @param reg the register address to read from
+ *   @returns the 16 bit data value read from the device
+ */
+int16_t ZUNO_BMP280::readS16_LE(byte reg) {
+  return (int16_t)read16_LE(reg);
+}
+
+/*!
+ *   @brief  Reads a 24 bit value over I2C
+ *   @param reg the register address to read from
+ *   @returns the 24 bit data value read from the device
+ */
+uint32_t ZUNO_BMP280::read24(byte reg) {
+  uint8_t buffer[3];
+
+  if (this->_wire_addr != 0x0) {
+    buffer[0] = uint8_t(reg);
+    // i2c_dev->write_then_read(buffer, 1, buffer, 3);
+  } else {
+    buffer[0] = uint8_t(reg | 0x80);
+    // spi_dev->write_then_read(buffer, 1, buffer, 3);
+  }
+  this->_read(buffer, 1, buffer, 3);
+  return uint32_t(buffer[0]) << 16 | uint32_t(buffer[1]) << 8 |
+         uint32_t(buffer[2]);
+}
+
+/*!
+ *  @brief  Take a new measurement (only possible in forced mode)
+    @returns true in case of success else false
+ */
+bool ZUNO_BMP280::takeForcedMeasurement(void) {
+  bool return_value = false;
+  // If we are in forced mode, the BME sensor goes back to sleep after each
+  // measurement and we need to set it to forced mode once at this point, so
+  // it will take the next measurement and then return to sleep again.
+  // In normal mode simply does new measurements periodically.
+  if (_measReg.mode == MODE_FORCED) {
+    return_value = true;
+    // set to forced mode, i.e. "take next measurement"
+    write8(BME280_REGISTER_CONTROL, _measReg.get());
+    // Store current time to measure the timeout
+    uint32_t timeout_start = millis();
+    // wait until measurement has been completed, otherwise we would read the
+    // the values from the last measurement or the timeout occurred after 2 sec.
+    while (read8(BME280_REGISTER_STATUS) & 0x08) {
+      // In case of a timeout, stop the while loop
+      if ((millis() - timeout_start) > 2000) {
+        return_value = false;
+        break;
+      }
+      delay(1);
+    }
+  }
+  return return_value;
+}
+
+/*!
+ *   @brief  Reads the factory-set coefficients
+ */
+void ZUNO_BMP280::readCoefficients(void) {
+	_bme280_calib.dig_T1 = read16_LE(BME280_REGISTER_DIG_T1);
+	_bme280_calib.dig_T2 = readS16_LE(BME280_REGISTER_DIG_T2);
+	_bme280_calib.dig_T3 = readS16_LE(BME280_REGISTER_DIG_T3);
+
+	_bme280_calib.dig_P1 = read16_LE(BME280_REGISTER_DIG_P1);
+	_bme280_calib.dig_P2 = readS16_LE(BME280_REGISTER_DIG_P2);
+	_bme280_calib.dig_P3 = readS16_LE(BME280_REGISTER_DIG_P3);
+	_bme280_calib.dig_P4 = readS16_LE(BME280_REGISTER_DIG_P4);
+	_bme280_calib.dig_P5 = readS16_LE(BME280_REGISTER_DIG_P5);
+	_bme280_calib.dig_P6 = readS16_LE(BME280_REGISTER_DIG_P6);
+	_bme280_calib.dig_P7 = readS16_LE(BME280_REGISTER_DIG_P7);
+	_bme280_calib.dig_P8 = readS16_LE(BME280_REGISTER_DIG_P8);
+	_bme280_calib.dig_P9 = readS16_LE(BME280_REGISTER_DIG_P9);
+
+	if (this->_sensorID == CHIPID_BME280)
+	{
+		_bme280_calib.dig_H1 = read8(BME280_REGISTER_DIG_H1);
+		_bme280_calib.dig_H2 = readS16_LE(BME280_REGISTER_DIG_H2);
+		_bme280_calib.dig_H3 = read8(BME280_REGISTER_DIG_H3);
+		_bme280_calib.dig_H4 = ((int8_t)read8(BME280_REGISTER_DIG_H4) << 4) |
+								(read8(BME280_REGISTER_DIG_H4 + 1) & 0xF);
+		_bme280_calib.dig_H5 = ((int8_t)read8(BME280_REGISTER_DIG_H5 + 1) << 4) |
+								(read8(BME280_REGISTER_DIG_H5) >> 4);
+		_bme280_calib.dig_H6 = (int8_t)read8(BME280_REGISTER_DIG_H6);
+	}
+}
+
+/*!
+ *   @brief return true if chip is busy reading cal data
+ *   @returns true if reading calibration, false otherwise
+ */
+bool ZUNO_BMP280::isReadingCalibration(void) {
+  uint8_t const rStatus = read8(BME280_REGISTER_STATUS);
+
+  return (rStatus & (1 << 0)) != 0;
 }
 
 int16_t ZUNO_BMP280::readTemperatureC100(void) {
-  g_myi2c_addr = addr;
-  aux_read20(BME280_REGISTER_TEMPDATA, (XBYTE*) &adc_V);
-  if (adc_V == 0x80000) // value in case temp measurement was disabled
-        return BAD_BMP280_16BVALUE;
- /*
- // Code from the Bosch datasheet
- // It's not good for 8051
- var1 = ((((adc_T>>3) - ((BME280_S32_t)dig_T1<<1))) * ((BME280_S32_t)dig_T2)) >> 11;
- var2 = (((((adc_T>>4) - ((BME280_S32_t)dig_T1)) * ((adc_T>>4) - ((BME280_S32_t)dig_T1))) >> 12) *((BME280_S32_t)dig_T3)) >> 14; 
- t_fine = var1 + var2; 
- Lets do it in RISC style :)
+  int32_t var1, var2;
+
+  int32_t adc_T = read24(BME280_REGISTER_TEMPDATA);
+  if (adc_T == 0x800000) // value in case temp measurement was disabled
+    return -1;
+  adc_T >>= 4;
+
+  var1 = (int32_t)((adc_T / 8) - ((int32_t)_bme280_calib.dig_T1 * 2));
+  var1 = (var1 * ((int32_t)_bme280_calib.dig_T2)) / 2048;
+  var2 = (int32_t)((adc_T / 16) - ((int32_t)_bme280_calib.dig_T1));
+  var2 = (((var2 * var2) / 4096) * ((int32_t)_bme280_calib.dig_T3)) / 16384;
+
+  t_fine = var1 + var2 + t_fine_adjust;
+
+  int32_t T = (t_fine * 5 + 128) / 256;
+
+  return T;
+}
+
+/*!
+ *   @brief  Returns the temperature from the sensor
+ *   @returns the temperature read from the device
  */
- 
- // ~var1, see^
- v1 = adc_V;
- v1 >>= 3;
- v2 = dig_T1;
- v2 <<= 1;
- v1 -= v2;
- v1 *= dig_T2;
- v1 >>= 11; 
- t_fine = v1;
- // ~var2, see^
- v1 = adc_V;
- v1 >>= 4;
- v1 -= dig_T1;
- v1 *= v1;
- v1 >>= 12;
- v1 *= dig_T3;
- v1 >>= 14;
- // t_fine = var1 + var2;
- t_fine += v1;
- // conver t_fine to fixed point temperature
- v1 = t_fine;
- v1 *= 5;
- v1 += 128;
- v1 >>= 8;
- return int16_t(v1);
+float ZUNO_BMP280::readTemperature(void) {
+	int16_t			t;
+
+	t = this->readTemperatureC100();
+	if (t == -1)
+		return (NAN);
+	return (float)(t / 100.0f);
 }
+
+int32_t ZUNO_BMP280::_readPressurePa(void) {
+  int64_t var1, var2, var3, var4;
+
+  readTemperatureC100(); // must be done first to get t_fine
+
+  int32_t adc_P = read24(BME280_REGISTER_PRESSUREDATA);
+  if (adc_P == 0x800000) // value in case pressure measurement was disabled
+    return -1;
+  adc_P >>= 4;
+
+  var1 = ((int64_t)t_fine) - 128000;
+  var2 = var1 * var1 * (int64_t)_bme280_calib.dig_P6;
+  var2 = var2 + ((var1 * (int64_t)_bme280_calib.dig_P5) * 131072);
+  var2 = var2 + (((int64_t)_bme280_calib.dig_P4) * 34359738368);
+  var1 = ((var1 * var1 * (int64_t)_bme280_calib.dig_P3) / 256) +
+         ((var1 * ((int64_t)_bme280_calib.dig_P2) * 4096));
+  var3 = ((int64_t)1) * 140737488355328;
+  var1 = (var3 + var1) * ((int64_t)_bme280_calib.dig_P1) / 8589934592;
+
+  if (var1 == 0) {
+    return 0; // avoid exception caused by division by zero
+  }
+
+  var4 = 1048576 - adc_P;
+  var4 = (((var4 * 2147483648) - var2) * 3125) / var1;
+  var1 = (((int64_t)_bme280_calib.dig_P9) * (var4 / 8192) * (var4 / 8192)) /
+         33554432;
+  var2 = (((int64_t)_bme280_calib.dig_P8) * var4) / 524288;
+  var4 = ((var4 + var1 + var2) / 256) + (((int64_t)_bme280_calib.dig_P7) * 16);
+
+  return var4;
+}
+
+int32_t ZUNO_BMP280::readPressurePa(void) {
+  int32_t  var4;
+
+  var4 = this->_readPressurePa();
+  if (var4 == -1)
+    return (-1);
+  return var4 / 256;
+}
+
+float ZUNO_BMP280::readPressureHgMM(void) {
+  int32_t  var4;
+
+  var4 = this->_readPressurePa();
+  if (var4 == -1)
+    return (-1);
+  return (var4 / 256 / 133.322f);
+}
+
+int32_t ZUNO_BMP280::readPressureHgMM10(void) {
+  int32_t  var4;
+
+  var4 = this->_readPressurePa();
+  if (var4 == -1)
+    return (-1);
+  return (var4 / 256 * 1000 / 13333);
+}
+
+/*!
+ *   @brief  Returns the pressure from the sensor
+ *   @returns the pressure value (in Pascal) read from the device
+ */
+float ZUNO_BMP280::readPressure(void) {
+  int32_t  var4;
+
+  var4 = this->_readPressurePa();
+  if (var4 == -1)
+    return (NAN);
+  float P = var4 / 256.0f;
+  return P;
+}
+
+int32_t ZUNO_BMP280::_readHumidity(void) {
+  int32_t var1, var2, var3, var4, var5;
+
+	if (this->_sensorID != CHIPID_BME280)
+		return (-1);
+
+  readTemperatureC100(); // must be done first to get t_fine
+
+  int32_t adc_H = read16(BME280_REGISTER_HUMIDDATA);
+  if (adc_H == 0x8000) // value in case humidity measurement was disabled
+    return -1;
+
+  var1 = t_fine - ((int32_t)76800);
+  var2 = (int32_t)(adc_H * 16384);
+  var3 = (int32_t)(((int32_t)_bme280_calib.dig_H4) * 1048576);
+  var4 = ((int32_t)_bme280_calib.dig_H5) * var1;
+  var5 = (((var2 - var3) - var4) + (int32_t)16384) / 32768;
+  var2 = (var1 * ((int32_t)_bme280_calib.dig_H6)) / 1024;
+  var3 = (var1 * ((int32_t)_bme280_calib.dig_H3)) / 2048;
+  var4 = ((var2 * (var3 + (int32_t)32768)) / 1024) + (int32_t)2097152;
+  var2 = ((var4 * ((int32_t)_bme280_calib.dig_H2)) + 8192) / 16384;
+  var3 = var5 * var2;
+  var4 = ((var3 / 32768) * (var3 / 32768)) / 128;
+  var5 = var3 - ((var4 * ((int32_t)_bme280_calib.dig_H1)) / 16);
+  var5 = (var5 < 0 ? 0 : var5);
+  var5 = (var5 > 419430400 ? 419430400 : var5);
+  return (var5 / 4096);
+}
+
 int16_t ZUNO_BMP280::readHumidityH10(void) {
-    if(chip_id != CHIPID_BME280)
-      return 0;
-    readTemperatureC100(); // must be done first to get t_fine
-    aux_read16(BME280_REGISTER_HUMIDDATA, (XBYTE*)&adc_H);
-    aux_swap16LE((XBYTE*)&adc_H);
-    if (adc_H == 0x8000) // value in case humidity measurement was disabled
-        return BAD_BMP280_16BVALUE;
-    v1 = t_fine;
-    v1 -= 76800; 
-    /*
-    v_x1_u32r = (t_fine - ((int32_t)76800));
+  int32_t H;
 
-    v_x1_u32r = (((((adc_H << 14) - (((int32_t)_bme280_calib.dig_H4) << 20) -
-                    (((int32_t)_bme280_calib.dig_H5) * v_x1_u32r)) + ((int32_t)16384)) >> 15) *
-                 (((((((v_x1_u32r * ((int32_t)_bme280_calib.dig_H6)) >> 10) *
-                      (((v_x1_u32r * ((int32_t)_bme280_calib.dig_H3)) >> 11) + ((int32_t)32768))) >> 10) +
-                    ((int32_t)2097152)) * ((int32_t)_bme280_calib.dig_H2) + 8192) >> 14));
-    
-    
-    */
-    v2 = v1;
-    v2 *= dig_H6;
-    v2 >>= 10;
-    v3 = v2;
-    // ((v_x1_u32r * ((int32_t)dig_H3)) >> 11)
-    v2 = v1;
-    v2 *= dig_H3;
-    v2 >>= 11;
-    // + ((int32_t)32768)
-    v2 += 32768;
-    v3 *= v2;
-    v3 >>= 10;
-    v3 += 2097152;
-    v3 *= dig_H2;
-    v3 += 8192;
-    v3 >>= 14;
-    v1 *= dig_H5; 
-    v2 =  dig_H4;
-    v2 <<= 20;
-    v1 += v2;
-    v2 = adc_H;
-    v2 <<= 14;
-    v1 = v2 - v1;
-    v1 += 16384;
-    v1 >>= 15;
-    v3 *= v1;
-    /*
-
-    v_x1_u32r = (v_x1_u32r - (((((v_x1_u32r >> 15) * (v_x1_u32r >> 15)) >> 7) *
-                               ((int32_t)dig_H1)) >> 4));
-    */
-    v1 =  v3;
-    v1 >>= 15;
-    v1 *= v1;
-    v1 >>= 7;
-    v1 *= dig_H1;
-    v1 >>= 4;
-    v3 -= v1;
-    v3 = (v3 < 0) ? 0 : v3;
-    v3 = (v3 > 419430400) ? 419430400 : v3;
-    v3 >>= 12;
-    v3 *= 10;
-    v3 >>= 10;
-    return  int16_t(v3);
-
-}
-float  ZUNO_BMP280::readTemperature(void)
-{
-    return readTemperatureC100() / 100.0;
+  H = this->_readHumidity();
+  if (H == -1)
+    return (-1);
+  return ((H * 10) >> 10);
 }
 
+/*!
+ *  @brief  Returns the humidity from the sensor
+ *  @returns the humidity value read from the device
+ */
+float ZUNO_BMP280::readHumidity(void) {
+  int32_t H;
 
-
-/*********************************************************************/
-
-byte g_myi2c_addr = BME280_ADDRESS;
-void aux_swap16LE(XBYTE * value) {
-  byte tmp = value[0];
-  value[0] = value[1];
-  value[1] = tmp;
-}
-uint8_t aux_read8(uint8_t a) {
-  uint8_t ret;
-
-  Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
-  Wire.write(a); // sends register address to read from
-  Wire.endTransmission(); // end transmission
-  Wire.requestFrom(g_myi2c_addr, (uint8_t)1);// send data n-bytes read
-  ret = Wire.read(); // receive DATA
-  return ret;
+  H = this->_readHumidity();
+  if (H == -1)
+    return (NAN);
+  return (float)H / 1024.0;
 }
 
-void aux_read16(uint8_t a, XBYTE * value) {
+/*!
+ *   Calculates the altitude (in meters) from the specified atmospheric
+ *   pressure (in hPa), and sea-level pressure (in hPa).
+ *   @param  seaLevel      Sea-level pressure in hPa
+ *   @returns the altitude value read from the device
+ */
+float ZUNO_BMP280::readAltitude(float seaLevel) {
+  // Equation taken from BMP180 datasheet (page 16):
+  //  http://www.adafruit.com/datasheets/BST-BMP180-DS000-09.pdf
 
-  Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
-  Wire.write(a); // sends register address to read from
-  Wire.endTransmission(); // end transmission
-  
-  Wire.requestFrom(g_myi2c_addr, (uint8_t)2);// send data n-bytes read
-  // !!! SDCC specific
-  value[0] = Wire.read(); // receive DATA
-  value[1] = Wire.read(); // receive DATA
+  // Note that using the equation from wikipedia can give bad results
+  // at high altitude. See this thread for more information:
+  //  http://forums.adafruit.com/viewtopic.php?f=22&t=58064
 
+  float atmospheric = readPressure() / 100.0F;
+  return 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
 }
 
-void aux_write8(uint8_t a, uint8_t d) {
-  Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
-  Wire.write(a); // sends register address to read from
-  Wire.write(d);  // write data
-  Wire.endTransmission(); // end transmission
+/*!
+ *   Calculates the pressure at sea level (in hPa) from the specified
+ * altitude (in meters), and atmospheric pressure (in hPa).
+ *   @param  altitude      Altitude in meters
+ *   @param  atmospheric   Atmospheric pressure in hPa
+ *   @returns the pressure at sea level (in hPa) from the specified altitude
+ */
+float ZUNO_BMP280::seaLevelForAltitude(float altitude, float atmospheric) {
+  // Equation taken from BMP180 datasheet (page 17):
+  //  http://www.adafruit.com/datasheets/BST-BMP180-DS000-09.pdf
+
+  // Note that using the equation from wikipedia can give bad results
+  // at high altitude. See this thread for more information:
+  //  http://forums.adafruit.com/viewtopic.php?f=22&t=58064
+
+  return atmospheric / pow(1.0 - (altitude / 44330.0), 5.255);
 }
-void aux_read20(uint8_t a, XBYTE * value) {
-  // USING SDCC DWORD representaion
-  // This code is not portable
-  value[3] = 0;
-  Wire.beginTransmission(g_myi2c_addr); // start transmission to device 
-  Wire.write(a); // sends register address to read from
-  Wire.endTransmission(); // end transmission
-  Wire.requestFrom(g_myi2c_addr, (uint8_t)3);// send data n-bytes read
-  value[2] = Wire.read(); 
-  value[1] = Wire.read();
-  value[0] = Wire.read();
-  // make 20 bit value
-  *((dword*)value) >>= 4;
+
+/*!
+ *   Returns Sensor ID found by init() for diagnostics
+ *   @returns Sensor ID 0x60 for BME280, 0x56, 0x57, 0x58 BMP280
+ */
+uint32_t ZUNO_BMP280::sensorID(void) { return _sensorID; }
+
+/*!
+ *   Returns the current temperature compensation value in degrees Celcius
+ *   @returns the current temperature compensation value in degrees Celcius
+ */
+float ZUNO_BMP280::getTemperatureCompensation(void) {
+  return float((t_fine_adjust * 5) >> 8) / 100.0;
+};
+
+/*!
+ *  Sets a value to be added to each temperature reading. This adjusted
+ *  temperature is used in pressure and humidity readings.
+ *  @param  adjustment  Value to be added to each tempature reading in Celcius
+ */
+void ZUNO_BMP280::setTemperatureCompensation(float adjustment) {
+  // convert the value in C into and adjustment to t_fine
+  t_fine_adjust = ((int32_t(adjustment * 100) << 8)) / 5;
+};
+
+
+void ZUNO_BMP280::_read(uint8_t *in, size_t in_count, uint8_t *out, size_t out_count) {
+	SPIClass						*spi;
+	TwoWire							*wire;
+
+	if (this->_wire_addr != 0x0) {
+		wire = this->_wire;
+		wire->transfer(this->_wire_addr, in, in_count);
+		wire->requestFrom(this->_wire_addr, out_count);// send data n-bytes read
+		while (out_count-- != 0x0)
+			out++[0x0] = wire->read();
+		return ;
+	}
+	spi = this->_spi;
+	spi->beginTransaction();
+	out_count = out_count - in_count;
+	while (in_count-- != 0x0)
+		out++[0x0] = spi->transfer(in++[0x0]);
+	while (out_count-- != 0x0)
+		out++[0x0] = spi->transfer(0xFF);
+	spi->endTransaction();
 }

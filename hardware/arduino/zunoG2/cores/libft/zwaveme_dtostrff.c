@@ -60,7 +60,6 @@ LibftFloatType_t zwaveme_floatEngine(float value, LibftFloatEngine_t *lp) {
 	uint32_t						t;
 	size_t							number;
 	size_t							lenNumber;
-	size_t							tempos;
 	uint8_t							*e;
 	size_t							lenSingleNull;
 	size_t							lenSingle;
@@ -89,14 +88,12 @@ LibftFloatType_t zwaveme_floatEngine(float value, LibftFloatEngine_t *lp) {
 	i = LIBFT_FLOAT_ENGINE_PRESC + 1;
 	while ( i > 0) {
 		digit = (uint8_t)(t >> 28);
+		if (digit > 0x9)
+			exp10++;
 		number = number * 10 + digit;
 		t = (t & 0xFFFFFFF) * 10;
 		i--;
 	}
-	tempos = number % 10;
-	number = number / 10;
-	if (tempos > 5)
-		number++;
 	e = &lp->number[0];
 	e = e + zwaveme_utoa_base(number, e, 10);
 	while (e[-1] <= '0')
@@ -173,6 +170,8 @@ char *dtostrff(float value, unsigned long width, unsigned long prec, char *s) {
 		zwaveme_floatEngineRound(&floatEngine, prec);
 		lenSingle = floatEngine.lenSingle;
 		lenSingleNull = floatEngine.lenSingleNull;
+		if (floatEngine.neg != 0x0)
+			s++[0x0] = '-';
 		offset = lenSingle + lenSingleNull + floatEngine.neg;
 		if (prec != 0)
 			offset = offset + prec + 1;//+1 '.'

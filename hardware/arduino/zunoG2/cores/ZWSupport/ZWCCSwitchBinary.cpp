@@ -44,7 +44,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 	size_t							currentValue;
 
 	if ((value = cmd->v2.targetValue) > 0x63 && value < 0xFF)
-		return (ZUNO_COMMAND_BLOCKED);
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	value = value ? 0xFF : 0x00;// Map the value right way
 	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
 	if (currentValue != value) {

@@ -463,10 +463,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			zuno_dbgdumpZWPacakge(cmd);
 			#endif
 			fillOutgoingPacket(cmd);
-			result = zuno_CCSupervisionUnpack(cmd);
 		}
 	}
 	#endif
+	if (ZW_CMD_CLASS == COMMAND_CLASS_SUPERVISION && ZW_CMD == SUPERVISION_GET)
+		result = zuno_CCSupervisionUnpack(cmd);
 	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 		return (ZUNO_COMMAND_BLOCKED);
 	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {

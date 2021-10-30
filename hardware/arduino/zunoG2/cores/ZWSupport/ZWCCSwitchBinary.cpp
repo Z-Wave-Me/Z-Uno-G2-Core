@@ -84,7 +84,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel);
 			break;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

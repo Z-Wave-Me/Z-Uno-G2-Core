@@ -95,7 +95,7 @@ int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t * cmd) {
 			rs = _basic_set(channel, (const ZwBasicSetFrame_t *)cmd->cmd);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return rs;

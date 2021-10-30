@@ -121,7 +121,7 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _assotiation_groupings_report(cmd);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

@@ -466,11 +466,10 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 		}
 	}
 	#endif
-	if (ZW_CMD_CLASS == COMMAND_CLASS_SUPERVISION && ZW_CMD == SUPERVISION_GET)
-		result = zuno_CCSupervisionUnpack(cmd);
-	if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
-		return (ZUNO_COMMAND_BLOCKED);
-	if(result != ZUNO_COMMAND_ANSWERED && (result != ZUNO_COMMAND_PROCESSED)) {
+	result = zuno_CCSupervisionUnpack(result, cmd);
+	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
+		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
+			return (ZUNO_COMMAND_BLOCKED);
 		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 		zunoReportHandler(cmd);
 		#endif
@@ -481,7 +480,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef LOGGING_DBG
 				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
 				#endif
-				return (zuno_CCSupervisionReport(result)); // Command doesn't fit => forward it to firmware CommandHandler
+				return (zuno_CCSupervisionReport(result, cmd)); // Command doesn't fit => forward it to firmware CommandHandler
 			}
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
@@ -546,7 +545,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			}
 		}
 	}
-	result = zuno_CCSupervisionReport(result);
+	result = zuno_CCSupervisionReport(result, cmd);
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
 		zunoSendZWPackage(&g_outgoing_main_packet);

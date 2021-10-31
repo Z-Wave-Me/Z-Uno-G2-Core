@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "ZWCCConfiguration.h"
+#include "ZWCCSuperVision.h"
 
 typedef uint32_t CONFIGPARAM_MAX_SIZE;
 
@@ -24,38 +25,50 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
+	const ZunoCFGParameter_t				*cfg;
 
 	if (param < CONFIGPARAM_MIN_PARAM)
-		return ZUNO_UNKNOWN_CMD; // Forward this parameter to main firmware
-	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_COMMAND_BLOCKED);
-	if (zunoCFGParameter(param) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
+	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		param = CONFIGPARAM_MIN_PARAM;
 		while (param <= CONFIGPARAM_MAX_PARAM) {
-			if (zunoCFGParameter(param) != ZUNO_CFG_PARAMETER_UNKNOWN)
+			if ((cfg = zunoCFGParameter(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
 				break ;
 			param++;
 		}
 		if (param > CONFIGPARAM_MAX_PARAM)
-			return (ZUNO_COMMAND_BLOCKED);
+			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
 	// lp->byte4.cmd = CONFIGURATION_REPORT; set in - fillOutgoingPacket
 	lp->byte4.parameterNumber = param;
-	lp->byte4.level = sizeof(uint32_t);
-	lp->byte4.configurationValue1 = (uint8_t)(value >> 24);
-	lp->byte4.configurationValue2 = (uint8_t)(value >> 16);
-	lp->byte4.configurationValue3 = (uint8_t)(value >> 8);
-	lp->byte4.configurationValue4 = (uint8_t)(value);
-	CMD_REPLY_LEN = sizeof(lp->byte4);
+	lp->byte4.level = cfg->size;
+	switch (cfg->size){
+		case 2:
+			CMD_REPLY_LEN = sizeof(lp->byte2);
+			lp->byte2.configurationValue1 = (uint8_t)(value >> 8);
+			lp->byte2.configurationValue2 = (uint8_t)(value);
+			break;
+		case 1:
+			CMD_REPLY_LEN = sizeof(lp->byte1);
+			lp->byte1.configurationValue1 = (uint8_t)(value);
+			break ;
+		default:
+			CMD_REPLY_LEN = sizeof(lp->byte4);
+			lp->byte4.configurationValue1 = (uint8_t)(value >> 24);
+			lp->byte4.configurationValue2 = (uint8_t)(value >> 16);
+			lp->byte4.configurationValue3 = (uint8_t)(value >> 8);
+			lp->byte4.configurationValue4 = (uint8_t)(value);
+			break ;
+	}
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 	ZwConfigurationSetFrame_t			*lp;
-	uint8_t								size;
+	uint8_t								level;
 	uint8_t								param;
 	uint32_t							value;
 	const ZunoCFGParameter_t			*cfg;
@@ -65,29 +78,41 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 	if (param < CONFIGPARAM_MIN_PARAM)
 		return ZUNO_UNKNOWN_CMD; // Forward this parameter to main firmware
 	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_COMMAND_BLOCKED);
-	if (((size = lp->byte1.level) & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
-		if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-			return (ZUNO_COMMAND_BLOCKED);
-		else
-			value = (uint32_t)cfg->defaultValue;
-	}
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	level = lp->byte1.level;
+	if ((level & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0)// Check whether you want to restore the default value
+		value = (uint32_t)cfg->defaultValue;
 	else {
-		value = lp->byte4.configurationValue1 << 24;
-		value = value | (lp->byte4.configurationValue2 << 16);
-		value = value | (lp->byte4.configurationValue3 << 8);
-		value = value | lp->byte4.configurationValue4;
-	}
-	size = size & 0x7;
-	switch (size) {
-		case 2:
-			value = value & 0xFFFF;
-			break;
-		case 1:
-			value = value & 0xFF;
-			break ;
-		default:
-			break ;
+		level = (level & CONFIGURATION_SET_LEVEL_SIZE_MASK);
+		if (level != cfg->size)
+			return (ZUNO_COMMAND_BLOCKED_FAILL);
+		switch (level) {
+			case 2:
+				value = lp->byte4.configurationValue1 << 8;
+				value = value | lp->byte4.configurationValue2;
+				if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED)
+					value = (int16_t)value;
+				break;
+			case 1:
+				value = lp->byte4.configurationValue1;
+				if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED)
+					value = (int8_t)value;
+				break ;
+			default:
+				value = lp->byte4.configurationValue1 << 24;
+				value = value | (lp->byte4.configurationValue2 << 16);
+				value = value | (lp->byte4.configurationValue3 << 8);
+				value = value | lp->byte4.configurationValue4;
+				break ;
+		}
+		if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED) {
+			if ((ssize_t)value < cfg->minValue || (ssize_t)value > cfg->maxValue)
+				return (ZUNO_COMMAND_BLOCKED_FAILL);
+		}
+		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
+			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
 	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
 	zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
@@ -156,7 +181,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	report->parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
 	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-		return (ZUNO_COMMAND_BLOCKED);
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	else {
 		report->reportsToFollow = 1;
 		str = (type == ZunoCFGTypeHandlerInfo) ? cfg->info : cfg->name;
@@ -201,6 +226,8 @@ static int _configuration_default_reset(void) {
 static int _builk_not_support(void) {
 	ZwApplicationRejectedRequestFrame_t						*report;
 
+	if (zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_NO_SUPPORT, 0x0) != ZUNO_COMMAND_BLOCKED_NO_SUPPORT)
+		return (ZUNO_COMMAND_PROCESSED);
 	report = (ZwApplicationRejectedRequestFrame_t *)&CMD_REPLY_CC;
 	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
 	report->cmd = APPLICATION_REJECTED_REQUEST;
@@ -237,7 +264,7 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _configuration_info_get((ZwConfigurationInfoGetFrame_t *)cmd->cmd);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

@@ -3,12 +3,9 @@
 #include "Debug.h"
 #include "ZWCCSuperVision.h"
 
-typedef struct zuno_cc_supervision_data_s{
-	uint8_t _prev_id;
-	bool    _unpacked;
-} zuno_cc_supervision_data_t;
+
 uint8_t _previously_receive_session_id = 0xFF;
-static zuno_cc_supervision_data_t __cc_supervision = {0xFF, false};
+zuno_cc_supervision_data_t __cc_supervision = {0xFF, false};
 
 #ifdef LOGGING_DBG
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
@@ -87,7 +84,7 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	return (ZUNO_UNKNOWN_CMD);
 }
 
-uint8_t zuno_CCSupervisionReport(uint8_t process_result, ZUNOCommandPacket_t *cmd){
+uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration){
 	if(!__cc_supervision._unpacked)
 		return process_result;
 	ZwCSuperVisionReportFrame_t	* report = (ZwCSuperVisionReportFrame_t *)&CMD_REPLY_CC;
@@ -101,16 +98,20 @@ uint8_t zuno_CCSupervisionReport(uint8_t process_result, ZUNOCommandPacket_t *cm
 		case ZUNO_COMMAND_BLOCKED_FAILL:
 			process_result = SUPERVISION_REPORT_FAIL;
 			break;
+		case ZUNO_COMMAND_BLOCKED_WORKING:
+			process_result = SUPERVISION_REPORT_WORKING;
+			break;
 		case ZUNO_COMMAND_BLOCKED_NO_SUPPORT:
 		default:
 			process_result = SUPERVISION_REPORT_NO_SUPPORT;
 			break;
 	}
 	report->status = process_result;
-	report->duration = 0x0;
+	report->duration = duration;
+	if (duration != 0x0)
+		report->properties1 = report->properties1| SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK;
 	CMD_REPLY_LEN = sizeof(ZwCSuperVisionReportFrame_t);
 	__cc_supervision._unpacked = false;
-	g_outgoing_main_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	zunoSendZWPackage(&g_outgoing_main_packet);
 	return (ZUNO_COMMAND_PROCESSED);
 }

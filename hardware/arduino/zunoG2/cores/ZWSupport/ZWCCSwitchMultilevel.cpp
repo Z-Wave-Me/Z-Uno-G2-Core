@@ -136,7 +136,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 	size_t							currentValue;
 
 	if ((value = cmd->v4.value) > ZUNO_TIMER_SWITCH_MAX_VALUE && value < 0xFF)
-		return (ZUNO_COMMAND_BLOCKED);
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (value == 0xFF) {
 		if ((tempos = ZWCC_BASIC_SAVE_LAST(channel)) != 0)
 			value = tempos;
@@ -151,8 +151,10 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 	if (currentValue != value) {
 		switch (len) {
 			case sizeof(cmd->v4):
-				if ((duration = zuno_CCTimerTicksTable7(cmd->v4.dimmingDuration)) == 0x0)
+				if ((duration = zuno_CCTimerTicksTable7(cmd->v4.dimmingDuration)) == 0x0) {
+					zuno_CCTimerBasicFindStop(channel);
 					break ;
+				}
 				zunoEnterCritical();
 				if ((lp = zuno_CCTimerBasicFind(channel)) == 0x0) {
 					zunoExitCritical();
@@ -179,6 +181,8 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 				break ;
 		}
 	}
+	else
+		zuno_CCTimerBasicFindStop(channel);
 	ZWCC_BASIC_SETTER_1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -228,7 +232,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 			rs = _supported();
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return rs;

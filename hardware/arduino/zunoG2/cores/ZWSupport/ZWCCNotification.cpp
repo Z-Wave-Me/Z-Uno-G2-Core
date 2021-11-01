@@ -2,6 +2,7 @@
 #include "ZWSupport.h"
 #include "Arduino.h"
 #include "Debug.h"
+#include "ZWCCSuperVision.h"
 
 static const byte NOTIFICATION_MAPPER[] = {
 	0, 0,
@@ -121,10 +122,10 @@ static int _set(size_t channel, ZwNotificationSetFrame_t *cmd) {
 	size_t						notificationStatus;
 
 	if(cmd->notificationType != NOTIFICATION_MAPPER[(ZUNO_CFG_CHANNEL(channel).sub_type) << 1])
-		return (ZUNO_COMMAND_BLOCKED);
+		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL));
 	notificationStatus = cmd->notificationStatus;
 	if((notificationStatus != NOTIFICATION_OFF_VALUE) && (notificationStatus != NOTIFICATION_ON_VALUE))
-		return (ZUNO_COMMAND_BLOCKED);
+		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL));
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);
 	if(notificationStatus)
 		eeprom_mask |= 1UL << channel;
@@ -195,7 +196,7 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd){
 			rs = _supported_get_even(channel, (ZwEventSupportedGetFrame_t *)cmd->cmd);
 			break;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

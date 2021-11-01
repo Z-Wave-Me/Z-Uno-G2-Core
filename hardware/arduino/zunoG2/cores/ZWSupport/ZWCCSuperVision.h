@@ -1,6 +1,13 @@
 #ifndef ZWCC_SUPER_VISION_H
 #define ZWCC_SUPER_VISION_H
 
+typedef struct zuno_cc_supervision_data_s{
+	uint8_t _prev_id;
+	bool    _unpacked;
+} zuno_cc_supervision_data_t;
+
+extern zuno_cc_supervision_data_t __cc_supervision;
+
 /* Supervision command class commands */
 #define SUPERVISION_VERSION                                                             0x02
 #define SUPERVISION_GET                                                                 0x01
@@ -43,7 +50,7 @@ typedef struct								ZwCSuperVisionReportFrame_s
 	uint8_t									duration;/**/
 }											ZwCSuperVisionReportFrame_t;
 
-uint8_t zuno_CCSupervisionUnpack(ZUNOCommandPacket_t *cmd);
-uint8_t zuno_CCSupervisionReport(uint8_t process_result);
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd);
+uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration);
 
 #endif//ZWCC_SUPER_VISION_H

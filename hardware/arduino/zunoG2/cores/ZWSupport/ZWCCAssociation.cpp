@@ -20,18 +20,18 @@
 
 static int _group_id_rm(uint8_t groupIndex) {
 	if (groupIndex > (ZUNO_CFG_ASSOCIATION_COUNT+1)) // 
-		return (ZUNO_COMMAND_BLOCKED);// drop the package
+		return (ZUNO_COMMAND_BLOCKED_FAILL);// drop the package
 	// 0 is the right index for remove command
 	return (ZUNO_UNKNOWN_CMD); //We throw off the parsing of the package
 }
 static int _group_id(uint8_t groupIndex) {
 	if( groupIndex == 0){
-		return (ZUNO_COMMAND_BLOCKED);
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
 	groupIndex--;
 	if (groupIndex <= ZUNO_CFG_ASSOCIATION_COUNT)
 		return (ZUNO_UNKNOWN_CMD);//We throw off the parsing of the package
-	return (ZUNO_COMMAND_BLOCKED);//drop the package
+	return (ZUNO_COMMAND_BLOCKED_FAILL);//drop the package
 }
 
 static int _assotiation_groupings_report(ZUNOCommandPacket_t *packet) {
@@ -98,7 +98,7 @@ int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _assotiation_specific_group_report();
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);
@@ -121,7 +121,7 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _assotiation_groupings_report(cmd);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

@@ -136,7 +136,7 @@ class ZUNO_CCS811
 		bool available();
 		uint8_t readData();
 
-		bool checkError();
+		uint8_t checkError();
 
 	private:
 		TwoWire *_wire;

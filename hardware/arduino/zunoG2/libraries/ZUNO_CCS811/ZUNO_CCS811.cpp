@@ -237,7 +237,7 @@ void ZUNO_CCS811::SWReset() {
 		@returns the error bits from the status register of the device.
 */
 /**************************************************************************/
-bool ZUNO_CCS811::checkError() {
+uint8_t ZUNO_CCS811::checkError() {
 	_status.set(read8(CCS811_STATUS));
 	return _status.ERROR;
 }

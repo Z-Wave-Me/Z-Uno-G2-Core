@@ -160,4 +160,15 @@ typedef struct									ZwAssociationReportFrameFake_s
 	uint8_t										reportsToFollow;/**/
 }												ZwAssociationReportFrameFake_t;
 
+/************************************************************/
+/* Association Set  command class structs */        
+/************************************************************/
+typedef struct									ZwAssociationSetFrame_s
+{
+	uint8_t										cmdClass;/* The command class */
+	uint8_t										cmd;/* The command */
+	uint8_t										groupingIdentifier;/**/
+	uint8_t										nodeId[];
+}												ZwAssociationSetFrame_t;
+
 #endif // ZWCC_ASSOCIATION_H

@@ -7,6 +7,7 @@
 
 #define ZUNO_TIMER_SWITCH_INC					0x1//Indicates what should be up
 #define ZUNO_TIMER_SWITCH_DEC					0x2//Indicates what should be down
+#define ZUNO_TIMER_SWITCH_SUPERVISION			0x40
 #define ZUNO_TIMER_SWITCH_NO_BASIC				0x80
 
 #define ZUNO_TIMER_ALING_STEP(step)				(step / ZUNO_SYSTIMER_PERIOD_MC + (step % ZUNO_SYSTIMER_PERIOD_MC >= 0x5 ? 0x1 : 0x0))
@@ -35,5 +36,6 @@ void zuno_CCTimer(uint32_t ticks);
 size_t zuno_CCTimerTicksTable7(size_t duration);
 ZunoTimerBasic_t *zuno_CCTimerBasicFind(size_t channel);
 uint8_t zuno_CCTimerTable8(size_t ticks);
+void zuno_CCTimerBasicFindStop(size_t channel);
 
 #endif// ZW_SUPPORT_TIMER_H

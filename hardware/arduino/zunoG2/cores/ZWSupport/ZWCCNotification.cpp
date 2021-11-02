@@ -48,7 +48,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	size_t								notificationType;
 	size_t								mevent;
 	ZwNotificationReportFrame_t			*report;
-	ZwNotificationGetFrame_t			*cmd_get;
+	ZwNotificationGetFrame_t			*cmd_get = NULL;
 
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);// Load report mask from EEPROM
 	
@@ -85,30 +85,46 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 		LOGGING_UART.print(" T:");
 		LOGGING_UART.println(param, HEX);
 		#endif
-
-		if(param){
-			if(param == NOTIFICATION_EVENT_PARAM_ADD){
-				report->byte1.properties1 = 1;
-				report->byte1.eventParameter1 = (val >> 8) & 0xFF;
-				// Add parameter length to whole packet lenth
-				if(cmd == NULL){
-					CMD_REPORT_LEN++; 
-				} else {
-					CMD_REPLY_LEN++;
+		// For window/door sensor we have special values => process this case
+		if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
+			if(cmd_get != NULL) {
+				// It's not an unsolicited report
+				// check what they do want to known...
+				if(cmd->len >= 5){
+				  if(cmd_get->mevent == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
+					  mevent = param ? NOTIFICATION_EVENT_WINDOW_DOOR_OPENED : 0;
+				  } else if (cmd_get->mevent == NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED) {
+					  mevent = param ? 0: NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED;
+				  } else if(cmd_get->mevent != 0) {
+					  mevent = 0xFE;
+				  }
 				}
+			} else {
+				
+				mevent = param ?  NOTIFICATION_EVENT_WINDOW_DOOR_OPENED : NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED;
 			}
-			mevent = NOTIFICATION_MAPPER[index + 1];
-		} else if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
-			// For window/door sensor we have special values => process this case
-			mevent = NOTIFICATION_EVENT_WINDOW_DOOR_CLOSED;
 		} else {
-			mevent = NOTIFICATION_OFF_VALUE;
-		}
-		if (cmd != NULL && cmd->len >= 5) {
-			cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
-			if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1]){
-				if(cmd_get->mevent != 0)
-					mevent = 0xFE;
+			if(param){
+				if(param == NOTIFICATION_EVENT_PARAM_ADD){
+					report->byte1.properties1 = 1;
+					report->byte1.eventParameter1 = (val >> 8) & 0xFF;
+					// Add parameter length to whole packet lenth
+					if(cmd == NULL){
+						CMD_REPORT_LEN++; 
+					} else {
+						CMD_REPLY_LEN++;
+					}
+				}
+				mevent = NOTIFICATION_MAPPER[index + 1];
+			} else {
+				mevent = NOTIFICATION_OFF_VALUE;
+			}
+			if (cmd != NULL && cmd->len >= 5) {
+				cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
+				if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1]){
+					if(cmd_get->mevent != 0)
+						mevent = 0xFE;
+				}
 			}
 		}
 		report->byte1.mevent = mevent;

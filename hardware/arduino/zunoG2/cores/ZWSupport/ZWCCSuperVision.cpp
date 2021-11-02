@@ -115,3 +115,17 @@ uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration){
 	zunoSendZWPackage(&g_outgoing_main_packet);
 	return (ZUNO_COMMAND_PROCESSED);
 }
+
+int zuno_CCSupervisionApp(int result) {
+	ZwApplicationRejectedRequestFrame_t						*report;
+
+	if (zuno_CCSupervisionReport(result, 0x0) != result)
+		return (ZUNO_COMMAND_PROCESSED);
+	report = (ZwApplicationRejectedRequestFrame_t *)&CMD_REPLY_CC;
+	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
+	report->cmd = APPLICATION_REJECTED_REQUEST;
+	report->status = 0x0;
+	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
+	zunoSendZWPackage(&g_outgoing_main_packet);
+	return (ZUNO_COMMAND_PROCESSED);
+}

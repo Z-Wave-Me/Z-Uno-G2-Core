@@ -223,20 +223,6 @@ static int _configuration_default_reset(void) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _builk_not_support(void) {
-	ZwApplicationRejectedRequestFrame_t						*report;
-
-	if (zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_NO_SUPPORT, 0x0) != ZUNO_COMMAND_BLOCKED_NO_SUPPORT)
-		return (ZUNO_COMMAND_PROCESSED);
-	report = (ZwApplicationRejectedRequestFrame_t *)&CMD_REPLY_CC;
-	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
-	report->cmd = APPLICATION_REJECTED_REQUEST;
-	report->status = 0x0;
-	CMD_REPLY_LEN = sizeof(ZwApplicationRejectedRequestFrame_t);
-	zunoSendZWPackage(&g_outgoing_main_packet);
-	return (ZUNO_COMMAND_PROCESSED);
-}
-
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
@@ -246,7 +232,7 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 			break ;
 		case CONFIGURATION_BULK_SET:
 		case CONFIGURATION_BULK_GET:
-			rs = _builk_not_support();
+			rs = zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 			break ;
 		case CONFIGURATION_GET:
 			rs = _configuration_get(((ZwConfigurationGetFrame_t *)cmd->cmd)->parameterNumber);

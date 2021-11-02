@@ -52,5 +52,6 @@ typedef struct								ZwCSuperVisionReportFrame_s
 
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd);
 uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration);
+int zuno_CCSupervisionApp(int result);
 
 #endif//ZWCC_SUPER_VISION_H

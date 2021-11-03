@@ -31,6 +31,7 @@ static int _supported_scale(ZwSensorMultilevelSupportedGetScaleFrame_t *cmd, siz
 	size_t														i;
 
 	report = (ZwSensorMultilevelSupportedScaleReportFrame_t *)&CMD_REPLY_CC;
+	report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT;
 	sensorType = cmd->sensorType;
 	// report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL; set in - fillOutgoingPacket
 	// report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT; set in - fillOutgoingPacket

@@ -114,7 +114,7 @@
             "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
-            "cluster_rule":"${type}_${sub_type}"
+            "cluster_rule":"${type}"
         },
         {   
             "type_name":"ZUNO_METER_CHANNEL_NUMBER", "type_val":5,

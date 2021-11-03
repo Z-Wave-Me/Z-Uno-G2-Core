@@ -58,9 +58,9 @@ typedef struct ZUNOChannelsData_s{
 	uint32_t update_map;
 	uint32_t request_map;
 	uint32_t report_map;
-	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 	uint32_t sys_reports;
 	uint32_t sys_requests;
+	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 }ZUNOChannelsData_t;
 ZUNOChannelsData_t g_channels_data;
 
@@ -998,6 +998,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
+
 	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER) || defined(WITH_CC_METER_TBL_MONITOR)
 	switch (ZUNO_CFG_CHANNEL(ch).type) {
 		#ifdef WITH_CC_SENSOR_MULTILEVEL
@@ -1041,9 +1042,7 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 bool _zunoHasPendingReports(){
 	if (zunoInNetwork() == false)
 		return (false);
-	if(__isSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_BATTERY_BIT))
-		return true;
-	if(__isSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT))
+	if(__getSyncVar(&g_channels_data.sys_reports) != 0)
 		return true;
 	if(__getSyncVar(&g_channels_data.report_map) != 0)
 		return true;	
@@ -1078,19 +1077,33 @@ void zunoSendBatteryReport() {
 void zunoSendWakeUpNotification(){
 	__setSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT);
 }
+bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
+	// Check if device is included to network
 	if(zunoNID() == 0)
-        return;
-	#ifdef WITH_CC_WAKEUP
-	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
-	if((g_channels_data.report_map == 0) && !zunoIsSleepLocked())
-		if(__zunoDispatchPendingWUPReport()){
-			zuno_sendWUP_NotificationReport();
-		}
-	#endif
+        return; // it doesn't => go away
 	#ifdef WITH_CC_BATTERY
 	if(__zunoDispatchPendingBatteryReport())
 		zunoSendBatteryReportHandler();
+	#endif
+	#ifdef WITH_CC_WAKEUP
+	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
+	if(!zunoIsSleepLocked()){
+		uint32_t sys_reports = __getSyncVar(&g_channels_data.sys_reports);
+		uint32_t usr_reports = __getSyncVar(&g_channels_data.report_map);
+		if((usr_reports == 0) && 
+	    	((sys_reports & (~(1 << SYSREPORT_MAP_WAKEUP_BIT))) == 0)){
+				if(__zunoDispatchPendingWUPReport()){
+					zuno_sendWUP_NotificationReport();
+					return;
+			}
+		}
+	}
+	// If Wakeup Notification has been sent and controller haven't unblocked wakeup => we don't send anything else unsolicited
+	// All the traffic is from the controller side only!
+	if(_zunoIsWUPLocked()){
+		return;
+	}
 	#endif
 	if(__getSyncVar(&g_channels_data.report_map) == 0)
 		return;

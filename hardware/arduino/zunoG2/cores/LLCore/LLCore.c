@@ -997,28 +997,41 @@ void _zunoSysSleep(){
 }
 
 static void _zunoSleepingUpd(){
-	if(g_sleep_data.user_latch)
+	if(g_sleep_data.user_latch){
+		#ifdef LOGGING_DBG
+    	//LOGGING_UART.println("CAN'T SLEEP: ULATCH");
+		#endif
 		return;
+	}
 	if(g_sleep_data.inclusion_latch){
+		#ifdef LOGGING_DBG
+    	//LOGGING_UART.println("CAN'T SLEEP: INCLUSION IN PROCESS");
+		#endif
 		return;
 	}
 	if(g_sleep_data.fwupd_latch){
+		#ifdef LOGGING_DBG
+    	//LOGGING_UART.println("CAN'T SLEEP: FWU IN PROCESS");
+		#endif
 		return;
 	}
 	if(_zunoHasPendingReports()){
 		#ifdef LOGGING_DBG
-    	//LOGGING_UART.println("PENDING REPORTS");
+    	//LOGGING_UART.println("CAN'T SLEEP: PENDING REPORTS");
 		#endif
 		return;
 	}
 	if(g_sleep_data.wup_latch){
 		if(millis() > g_sleep_data.wup_timeout){
 			#ifdef LOGGING_DBG
-    		LOGGING_UART.println("***WUP LOCK RELEASED (TIMEOUT)!");
+    		//LOGGING_UART.println("***WUP LOCK RELEASED (TIMEOUT)!");
     		#endif
 			g_sleep_data.wup_latch = false;
 		}
 		else{
+			#ifdef LOGGING_DBG
+    		//LOGGING_UART.println("CAN'T SLEEP: WAITING SLEEP AGREEMENT FROM COMTROLLER");
+			#endif
 			return;
 		}
 	}
@@ -1028,11 +1041,14 @@ static void _zunoSleepingUpd(){
 	zunoExitCritical();
 	
 	if(timeout >= millis()){
+		#ifdef LOGGING_DBG
+    	//LOGGING_UART.println("CAN'T SLEEP: USER SIDE TIMEOUT!");
+    	#endif
 		return;
 	}
 	
 	#ifdef LOGGING_DBG
-    LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
+    //LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
 	#endif
 	g_zuno_sys->sleep_latches = SLEEP_UNLOCKED;
 	/*
@@ -1117,15 +1133,18 @@ void zunoKickSleepTimeout(uint32_t ms){
 #endif
 void zunoMarkDeviceToSleep(uint8_t mode){
 	g_zuno_sys->sleep_highest_mode = mode;
-	#ifdef LOGGING_DBG
-    //LOGGING_UART.println("SKETCH CODE: GO SLEEP>>>");
-	#endif
 	g_sleep_data.user_latch = false;
+	#ifdef LOGGING_DBG
+    //LOGGING_UART.println("UNBLOCK ULATCH");
+	#endif
 	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	_zunoSleepingUpd();
 	#endif
 }
 void zunoLockSleep(void){
+	#ifdef LOGGING_DBG
+    LOGGING_UART.println("***BLOCK SLEEP!");
+	#endif
 	zunoEnterCritical();
 	g_sleep_data.user_latch = true;
 	zunoExitCritical();

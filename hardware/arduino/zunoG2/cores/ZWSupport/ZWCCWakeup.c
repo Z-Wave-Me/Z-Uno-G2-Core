@@ -61,6 +61,7 @@ void zuno_sendWUP_NotificationReport() {
 }
 
 void zunoSendWakeUpNotification(void);
+void _dbgSysReports();
 void zuno_CCWakeup_OnSetup(){
 	//pinMode(BUTTON_PIN, INPUT);
 	uint8_t reason = zunoGetWakeReason();
@@ -80,8 +81,8 @@ void zuno_CCWakeup_OnSetup(){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("APPEND WAKEUP!");
 		#endif
-        zunoSendWakeUpNotification();
-        return;
+		zunoSendWakeUpNotification();
+		return;
     }
 	if((reason == ZUNO_WAKEUP_REASON_SOFTRESET) || (reason == ZUNO_WAKEUP_REASON_BROWNOUT) || (reason == ZUNO_WAKEUP_REASON_WATCH_DOG)){    
 		__zunoSetupWUPTimeout();

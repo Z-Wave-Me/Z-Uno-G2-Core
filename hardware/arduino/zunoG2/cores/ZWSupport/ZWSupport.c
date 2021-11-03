@@ -1083,8 +1083,10 @@ void zunoSendReportHandler(uint32_t ticks) {
 	if(zunoNID() == 0)
         return; // it doesn't => go away
 	#ifdef WITH_CC_BATTERY
-	if(__zunoDispatchPendingBatteryReport())
+	if(__zunoDispatchPendingBatteryReport()){
 		zunoSendBatteryReportHandler();
+		return;
+	}
 	#endif
 	#ifdef WITH_CC_WAKEUP
 	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
@@ -1105,16 +1107,20 @@ void zunoSendReportHandler(uint32_t ticks) {
 		return;
 	}
 	#endif
-	if(__getSyncVar(&g_channels_data.report_map) == 0)
-		return;
+	//
 	int rs = ZUNO_UNKNOWN_CMD;
 	for(uint8_t ch = 0; ch < ZUNO_MAX_MULTI_CHANNEL_NUMBER; ch++) {
 		if(__getSyncVar(&g_channels_data.report_map) == 0)
 			break;
 		if(!__isSyncMapChannel(&g_channels_data.report_map, ch))
 			continue;
-		if(!aux_check_last_reporttime(ch, ticks))
+		if(!aux_check_last_reporttime(ch, ticks)){
+			#ifdef LOGGING_DBG
+			//LOGGING_UART.print("Report timeout for channel: ");
+			//LOGGING_UART.println(ch);
+			#endif
 			continue;
+		}
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);

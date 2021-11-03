@@ -5,7 +5,7 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
-name=Z-Wave>ME Z-Uno2 Boards
+name=Z-Wave>ME Z-Uno2 Boards Beta
 
 # ZUNO compile variables
 # ---------------------

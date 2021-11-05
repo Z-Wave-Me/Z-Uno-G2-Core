@@ -22,6 +22,113 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	return (ZUNO_CFG_PARAMETER_UNKNOWN);
 }
 
+// System side parameters information
+const ZunoCFGParameter_t SYSCFGPARAM1 =
+{
+	.name = "Debug mode",
+	.info = "Enables Z-Uno debug mode",
+	.minValue = 0x0,
+	.maxValue = 0x1,
+	.defaultValue = 0x0,
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM2 =
+{
+	.name = "ActivityLED",
+	.info = "Turns on/off activity led of Z-Uno",
+	.minValue = 0x0,
+	.maxValue = 0x1,
+	.defaultValue = 0x1,
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM7 =
+{
+	.name = "Security",
+	.info = "Turns on/off security mode",
+	.minValue = 0x0,
+	.maxValue = 0x1,
+	.defaultValue = 0x1,
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM8 =
+{
+	.name = "RFLogging",
+	.info = "Turns on/off exception logging via radio channel.",
+	.minValue = 0x0,
+	.maxValue = 0x1,
+	.defaultValue = 0x1,
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM9 =
+{
+	.name = "RFFrequency",
+	.info = "Changes Z-Wave region of Z-Uno",
+	.minValue = 0x0,
+	.maxValue = 0xFFFF,
+	.defaultValue = 0x00FF,
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM11 =
+{
+	.name = "MultilevelReportInterval",
+	.info = "Changes minimal report interval of SensorMultilevel/Meter. It's ONLY for tests, enable debug first.",
+	.minValue = 0x0,
+	.maxValue = 255,
+	.defaultValue = 0x1,
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t SYSCFGPARAM20 =
+{
+	.name = "OTAConfirmation",
+	.info = "Accepts firmware update process. If sketch has pin-code for upgrade you have to apply it here.",
+	.minValue = 0x0,
+	.maxValue = 0x7FFFFFFF,
+	.defaultValue = 0x0,
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false
+}; 
+const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
+
+	switch(param){
+		case 1:
+			return &SYSCFGPARAM1;
+		case 2:
+			return &SYSCFGPARAM2;
+		case 7:
+			return &SYSCFGPARAM7;
+		case 8:
+			return &SYSCFGPARAM8;
+		case 9:
+			return &SYSCFGPARAM9;
+		case 11:
+			return &SYSCFGPARAM11;
+		case 20:
+			return &SYSCFGPARAM20;
+	}
+
+	// Return user-defined callback result for user-defined parameters
+	return  zunoCFGParameter(param);
+}
 static int _configuration_get(uint8_t param) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
@@ -137,7 +244,7 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 	report->v4.byte4.parameterNumber1 = parameterNumber1;
 	report->v4.byte4.parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
-	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+	if ((cfg = zunoCFGParameterProxy(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		properties1 = 0;
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)&report->v4.byte4.minValue1;
 	}
@@ -154,7 +261,7 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 		parameter = CONFIGPARAM_MIN_PARAM;
 	else
 		parameter++;
-	if (zunoCFGParameter(parameter) == ZUNO_CFG_PARAMETER_UNKNOWN)
+	if (zunoCFGParameterProxy(parameter) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		parameter = 0;
 	end->nextParameterNumber1 = 0;
 	end->nextParameterNumber2 = parameter;
@@ -180,7 +287,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	report->parameterNumber1 = parameterNumber1;
 	report->parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
-	if ((cfg = zunoCFGParameter(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
+	if ((cfg = zunoCFGParameterProxy(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	else {
 		report->reportsToFollow = 1;

@@ -19,10 +19,9 @@
 #include "ZWCCSecurity.h"
 #include "ZWCCTimerParametrs.h"
 #include "ZWCCMeterTbl.h"
+#include "ZWCCVersion.h"
 #include "Debug.h"
 #include "ZWCCSuperVision.h"
-
-#define UNKNOWN_CHANNEL       0xFF 
 
 #include "ZUNO_AutoChannels.h"
 
@@ -463,6 +462,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			zuno_dbgdumpZWPacakge(cmd);
 			#endif
 			fillOutgoingPacket(cmd);
+			if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
+				return (zuno_CCVersionHandler(cmd));
+			}
 		}
 	}
 	#endif

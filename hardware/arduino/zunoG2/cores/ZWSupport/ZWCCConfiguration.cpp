@@ -137,7 +137,7 @@ static int _configuration_get(ZwConfigurationGetFrame_t *cmd) {
 
 	param = cmd->parameterNumber;
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
-		param = 0x1;
+		param = CONFIGPARAM_MIN_PARAM;
 		while (param <= CONFIGPARAM_MAX_PARAM) {
 			if ((cfg = zunoCFGParameterProxy(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
 				break ;
@@ -146,10 +146,8 @@ static int _configuration_get(ZwConfigurationGetFrame_t *cmd) {
 		if (param > CONFIGPARAM_MAX_PARAM)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	if (param < CONFIGPARAM_MIN_PARAM) {
-		cmd->parameterNumber = param;
+	if (param < CONFIGPARAM_MIN_PARAM)
 		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
-	}
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket

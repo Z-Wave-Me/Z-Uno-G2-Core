@@ -129,23 +129,25 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 	// Return user-defined callback result for user-defined parameters
 	return  zunoCFGParameter(param);
 }
-static int _configuration_get(uint8_t param) {
+static int _configuration_get(ZwConfigurationGetFrame_t *cmd) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
 	const ZunoCFGParameter_t				*cfg;
+	size_t									param;
 
-	if (param < CONFIGPARAM_MIN_PARAM)
-		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
-	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+	param = cmd->parameterNumber;
+	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		param = CONFIGPARAM_MIN_PARAM;
 		while (param <= CONFIGPARAM_MAX_PARAM) {
-			if ((cfg = zunoCFGParameter(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
+			if ((cfg = zunoCFGParameterProxy(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
 				break ;
 			param++;
 		}
 		if (param > CONFIGPARAM_MAX_PARAM)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
+	if (param < CONFIGPARAM_MIN_PARAM)
+		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
 	value = zunoLoadCFGParam(param);
 	lp = (ZwConfigurationReportFrame_t *)&CMD_REPLY_CC;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
@@ -182,12 +184,14 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
-	if (param < CONFIGPARAM_MIN_PARAM)
-		return ZUNO_UNKNOWN_CMD; // Forward this parameter to main firmware
 	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
+	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	if (cfg->readOnly == true)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	if (param < CONFIGPARAM_MIN_PARAM)
+		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmwar
 	level = lp->byte1.level;
 	if ((level & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0)// Check whether you want to restore the default value
 		value = (uint32_t)cfg->defaultValue;
@@ -327,7 +331,7 @@ static int _configuration_default_reset(void) {
 		}
 		param++;
 	}
-	return (ZUNO_COMMAND_PROCESSED);
+	return (ZUNO_UNKNOWN_CMD);
 }
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
@@ -342,7 +346,7 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 			rs = zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 			break ;
 		case CONFIGURATION_GET:
-			rs = _configuration_get(((ZwConfigurationGetFrame_t *)cmd->cmd)->parameterNumber);
+			rs = _configuration_get((ZwConfigurationGetFrame_t *)cmd->cmd);
 			break ;
 		case CONFIGURATION_SET:
 			rs = _configuration_set(cmd);

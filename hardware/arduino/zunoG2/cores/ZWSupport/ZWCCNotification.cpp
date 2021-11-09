@@ -72,6 +72,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 		if(cmd_get->v1AlarmType == 0xFF)// Fix the "wildcard" param
 			report->byte1.mevent = 0xFE;
 	}
+	mevent = 0x0;
 	report->byte1.cmdClass = COMMAND_CLASS_NOTIFICATION;
 	report->byte1.cmd = NOTIFICATION_REPORT;
 	if(report->byte1.mevent != 0xFE) {

@@ -3,6 +3,8 @@
 #define MAX_ZW_PACKAGE 56
 #define ZUNO_LIFELINE_GRP 1
 
+#define UNKNOWN_CHANNEL       0xFF 
+
 /* Application Status command class commands */
 #define APPLICATION_STATUS_VERSION                                                       0x01
 #define APPLICATION_BUSY                                                                 0x01
@@ -48,6 +50,7 @@ enum
 	COMMAND_CLASS_BATTERY = 0x80,
 	COMMAND_CLASS_WAKE_UP = 0x84,
 	COMMAND_CLASS_ASSOCIATION = 0x85,
+	COMMAND_CLASS_VERSION = 0x86,
 	COMMAND_CLASS_TIME_PARAMETERS = 0x8B,
 	COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION = 0x8E,
 	COMMAND_CLASS_SECURITY = 0x98,

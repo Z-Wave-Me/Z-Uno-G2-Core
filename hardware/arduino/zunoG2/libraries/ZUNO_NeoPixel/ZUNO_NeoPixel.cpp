@@ -133,6 +133,7 @@ ZunoError_t NeoPixelClass::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, ui
 	if ((list = (ZunoNeoList_t *)malloc(sizeof(ZunoNeoList_t) + len)) == 0) {
 		return (ZunoErrorMemory);
 	}
+	list->array[len - 0x1] = 0x0;// + 1 LOW
 	list->next = 0;
 	list->count_led = count_led;
 	list->neo_pin = neo_pin;
@@ -206,17 +207,18 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 	if ((list = this->_findList(neo_pin)) != 0 && (len = list->count_led) != 0) {
 		flag = list->flag;
 		config = &this->_configTable[list->base];
-		len = len * (flag.redOffset == flag.whiteOffset ? 3 : 4) * config->coder + 1;//+1 LOW
+		len = len * (flag.redOffset == flag.whiteOffset ? 3 : 4) * config->coder;
 		base = config->base;
 		switch (config->type) {
 			case NEO_TYPE_TIMER:
+				len++;// + 1 LOW
 				TIMER_TopSet(((TIMER_TypeDef *)base), list->freq_timer);
 				if (((TIMER_TypeDef *)base) == WTIMER0) {
 					((TIMER_TypeDef *)base)->ROUTELOC0 = _getLocationWtimer(neo_pin, NEO_TIMER_CHANNEL);
 				}
 				else
 					((TIMER_TypeDef *)base)->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(neo_pin, NEO_TIMER_CHANNEL);
-				TIMER_CompareBufSet(((TIMER_TypeDef *)base), NEO_TIMER_CHANNEL, 0);//+1 LOW
+				TIMER_CompareBufSet(((TIMER_TypeDef *)base), NEO_TIMER_CHANNEL, 0);// + 1 LOW
 				TIMER_Enable(((TIMER_TypeDef *)base), true);
 				break;
 			case NEO_TYPE_USART:
@@ -231,7 +233,6 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 				((USART_TypeDef *)base)->ROUTELOC0 = getLocation(location_ptr, location_sz, neo_pin) << _USART_ROUTELOC0_TXLOC_SHIFT;
 				USART_BaudrateSyncSet(((USART_TypeDef *)base), 0, (((flag.option & NEO_KHZ400) != 0)? NEO_USART_HZ400 : NEO_USART_HZ800));
 				USART_Enable(((USART_TypeDef *)base), usartEnableTx);
-				USART_SpiTransfer(((USART_TypeDef *)base), 0);//LOW pin
 				break;
 		}
 		delayMicroseconds(NEO_RESET_MICROSECONDS);
@@ -405,9 +406,10 @@ ZunoNeoColor_t NeoPixelClass::ColorHSV(uint16_t hue, uint8_t sat, uint8_t val) {
 	uint32_t v1 =   1 + val; // 1 to 256; allows >>8 instead of /255
 	uint16_t s1 =   1 + sat; // 1 to 256; same reason
 	uint8_t  s2 = 255 - sat; // 255 to 0
-	color.color = ((((((r * s1) >> 8) + s2) * v1) & 0xff00) << 8) |
-			(((((g * s1) >> 8) + s2) * v1) & 0xff00)       |
-			( ((((b * s1) >> 8) + s2) * v1)           >> 8);
+	color.red = ((((r * s1) >> 8) + s2) * v1) >> 8;
+	color.green = ((((g * s1) >> 8) + s2) * v1) >> 8;
+	color.blue = ((((b * s1) >> 8) + s2) * v1) >> 8;
+	color.white = 0x0;
 	return (color);
 }
 

@@ -261,11 +261,13 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)((size_t)&report->v4.byte4.minValue1 + size * 3);
 	}
 	report->v4.byte4.properties1 = properties1;
-	if (parameter < CONFIGPARAM_MIN_PARAM)
-		parameter = CONFIGPARAM_MIN_PARAM;
-	else
+	parameter++;
+	while (parameter <= CONFIGPARAM_MAX_PARAM) {
+		if ((cfg = zunoCFGParameterProxy(parameter)) != ZUNO_CFG_PARAMETER_UNKNOWN)
+			break ;
 		parameter++;
-	if (zunoCFGParameterProxy(parameter) == ZUNO_CFG_PARAMETER_UNKNOWN)
+	}
+	if (parameter > CONFIGPARAM_MAX_PARAM)
 		parameter = 0;
 	end->nextParameterNumber1 = 0;
 	end->nextParameterNumber2 = parameter;

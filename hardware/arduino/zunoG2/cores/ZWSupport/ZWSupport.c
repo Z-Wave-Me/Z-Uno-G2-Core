@@ -610,7 +610,7 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 				((zuno_multisetter4ub_t*)handler)(ch, value);
 				break;
 			}
-			((zuno_singlesetter2ub_t*)handler)(value);
+			((zuno_singlesetter4ub_t*)handler)(value);
 			break;
 	}
 }

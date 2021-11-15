@@ -125,9 +125,10 @@ static void _default_cfg(void)
 
 	if (zunoNID() == 0x0) {
 		i = MIN_CFG_PARAM;
-		while (i <= MAX_CFG_PARAM)
+		while (i <= MAX_CFG_PARAM) {
 			zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
 			i++;
+		}
 		return ;
 	}
 	i = MIN_CFG_PARAM;

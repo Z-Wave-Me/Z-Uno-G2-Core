@@ -6,6 +6,7 @@ typedef enum							SyncMaster_e
 	SyncMasterFree,// do not use !!!
 	SyncMasterOpenClose,// do not use !!!
 	SyncMasterHadwareSerial,
+	SyncMasterLeUart,
 	SyncMasterGPT,
 	SyncMasterTone,
 	SyncMasterI2c,
@@ -57,5 +58,6 @@ extern ZunoSync_t gSyncWTIMER0;
 extern ZunoSync_t gSyncIC0;
 extern ZunoSync_t gSyncIC1;
 extern ZunoSync_t gSyncCSEN;
+extern ZunoSync_t gSyncLeUart;
 
 #endif // SYNC_H

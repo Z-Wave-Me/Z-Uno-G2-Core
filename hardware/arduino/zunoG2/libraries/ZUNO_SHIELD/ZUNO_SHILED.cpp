@@ -3,10 +3,12 @@
 #define DAC1_0_10V_CS 22
 #define DAC2_0_10V_CS 21
 
-#define ADC_MAIN_RES 10000
-#define ADC_5V_RES   10000
-#define ADC_12V_RES  36000
+#define ADC_MAIN_RES 10
+#define ADC_5V_RES   10
+#define ADC_12V_RES  36
 #define ADC_VREF     5000
+#define ADC_SAMPLING 10
+#define ADC_RESOLUTION 12
 
 ZUNOShield::ZUNOShield(ShieldPowerMode_t pm){
     _power_mode = pm;
@@ -32,9 +34,14 @@ uint16_t ZUNOShield::readADCMillivolts(uint8_t channel){
     channel--;
     if(channel > 3)
         return 0;
-    analogReadResolution(16);
-    uint32_t tmp = analogRead(adc_pins[channel]);
+    analogReadResolution(ADC_RESOLUTION);
+    uint32_t tmp = 0;
+    for(int i=0; i<ADC_SAMPLING; i++)
+        tmp += analogRead(adc_pins[channel]);
+    tmp /= ADC_SAMPLING;
+    //Serial.printf("ADC RAW:%d", tmp);
     tmp *= ADC_VREF;
+    tmp >>= ADC_RESOLUTION;
     switch(_adc_jumpers[channel]){
         case SHIELD_ADC_JUMPER_IO3V:
             return tmp;

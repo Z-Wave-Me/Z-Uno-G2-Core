@@ -36,10 +36,11 @@ void DAC102S085::writeValue(DACChannel_t channel, uint16_t value){
     value &= 0x3FF;
     value <<= 2; // first 2 bits are empty
     raw |= value;
+    /*
     Serial.print("RAW ch:");
     Serial.print(channel);
     Serial.print(" raw:");
-    Serial.println(raw, HEX);
+    Serial.println(raw, HEX);*/
     
     writeRaw(raw);
 }

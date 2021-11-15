@@ -5,6 +5,8 @@ typedef enum {
     SHIELD_POWER_24V,
     SHIELD_POWER_3V_BATTERY
 } ShieldPowerMode_t;
+
+#define SHIELD_BASE_VREF 16500
 typedef enum {
     SHIELD_ADC_JUMPER_IO3V,
     SHIELD_ADC_JUMPER_I5V,
@@ -18,8 +20,9 @@ class ZUNOShield{
         uint16_t readADCMillivolts(uint8_t channel);
         float    readADCVoltage(uint8_t channel);
         void     init0_10V(uint16_t ref_millivolts, SPIClass * spi_interface);
-        void     init0_10V(uint16_t ref_millivolts);
+        void     init0_10V(uint16_t ref_millivolts = SHIELD_BASE_VREF);
         void     upfdate0_10VRef(uint16_t ref_millivolts){_ref_voltage = ref_millivolts;};
+        void     setUpperVoltage(uint16_t ref_millivolts) {_ref_upper = ref_millivolts; };
         void     deinit_0_10V();
         void     initPWM(uint8_t mask);
         void     writePWMPercentage(uint8_t channel, uint8_t percents);
@@ -32,6 +35,8 @@ class ZUNOShield{
         ShieldADCJumper_t _adc_jumpers[4];
         DAC102S085     *  _dacs[2];
         uint16_t          _ref_voltage;
+        uint16_t          _ref_upper;
+        
 
         
 

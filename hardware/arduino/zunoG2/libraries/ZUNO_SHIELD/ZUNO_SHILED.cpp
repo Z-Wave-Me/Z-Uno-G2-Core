@@ -57,6 +57,7 @@ void     ZUNOShield::init0_10V(uint16_t ref_millivolts, SPIClass * spi_interface
     if(_power_mode == SHIELD_POWER_3V_BATTERY)
         return; // We have no reference voltage for 0_10V
     _ref_voltage =  ref_millivolts;
+    _ref_upper   =  10000; // 10V is an upper limit
     _dacs[0] = new DAC102S085(spi_interface, DAC1_0_10V_CS);
     _dacs[1] = new DAC102S085(spi_interface, DAC2_0_10V_CS);
     _dacs[0]->begin();
@@ -100,7 +101,7 @@ void    ZUNOShield::writePWMPercentage(uint8_t channel, uint8_t percents){
 bool    ZUNOShield::write0_10V(uint8_t channel, uint8_t percentage){
     if(percentage > 99)
         percentage = 99;
-    uint32_t tmp = (percentage * _ref_voltage) / 99;
+    uint32_t tmp = (percentage * _ref_upper) / 99;
     return write0_10V(channel, (uint16_t)(tmp));
 }
 bool    ZUNOShield::write0_10V(uint8_t channel, uint16_t millivolts){
@@ -111,17 +112,17 @@ bool    ZUNOShield::write0_10V(uint8_t channel, uint16_t millivolts){
     channel--;
     if(channel > 3)
         return false;
-    if(millivolts > _ref_voltage)
-        millivolts = _ref_voltage;
+    if(millivolts > _ref_upper)
+        millivolts = _ref_upper;
     uint32_t dac_value = (1023 * millivolts) / _ref_voltage;
     Serial.print("DAC value:");
     Serial.println(dac_value);
     switch(channel){
         case 0:
-            _dacs[0]->writeValue(DAC_CHANNEL_A, dac_value);
+            _dacs[0]->writeValue(DAC_CHANNEL_B, dac_value);
             break;
         case 1:
-            _dacs[0]->writeValue(DAC_CHANNEL_B, dac_value);
+            _dacs[0]->writeValue(DAC_CHANNEL_A, dac_value);
             break;
         case 2:
             _dacs[1]->writeValue(DAC_CHANNEL_A, dac_value);

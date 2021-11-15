@@ -114,6 +114,8 @@ bool    ZUNOShield::write0_10V(uint8_t channel, uint16_t millivolts){
     if(millivolts > _ref_voltage)
         millivolts = _ref_voltage;
     uint32_t dac_value = (1023 * millivolts) / _ref_voltage;
+    Serial.print("DAC value:");
+    Serial.println(dac_value);
     switch(channel){
         case 0:
             _dacs[0]->writeValue(DAC_CHANNEL_A, dac_value);

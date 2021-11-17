@@ -5,37 +5,37 @@
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
 // and minimize distance between Arduino and first pixel.  Avoid connecting
 // on a live circuit...if you must, connect GND first.
-
+ZUNO_ENABLE(SKETCH_FLAGS_LOOP_DELAY=10); 
 
 // Which pin on the Zuno is connected to the NeoPixels?
-#define LED_PIN    6
+#define LED_PIN    9
 
 // How many NeoPixels are attached to the Zuno?
-#define LED_COUNT 60
+#define LED_COUNT 1
 
 
 // setup() function -- runs once at startup --------------------------------
 void setup() {
-	NeoPixel.addNeo(LED_PIN, LED_COUNT, 50, NEO_GRB | NEO_KHZ800); // Set BRIGHTNESS to about 1/5 (max = 255)
+	Serial.begin();
+	NeoPixel.addNeo(LED_PIN, LED_COUNT, 20, NEO_GRB | NEO_KHZ800);//, ZunoNeoBaseTimer0); // Set BRIGHTNESS to about 1/5 (max = 255)
 	NeoPixel.show(LED_PIN);            // Turn OFF all pixels ASAP
+	int i;
+	for(i=0;i<50;i++){
+		Serial.print(" TRY ");
+		Serial.print(i);
+		Serial.print(" ");
+		NeoPixel.setColor(LED_PIN, 0, NeoPixel.RGB(255, 128, 128)); 
+		NeoPixel.show(LED_PIN); 
+	}
 }
 
 
 // loop() function -- runs repeatedly as long as board is on ---------------
 void loop() {
-	// Some example procedures showing how to display to the pixels:
-	colorWipe(NeoPixel.RGB(255, 0, 0), 50); // Red
-	colorWipe(NeoPixel.RGB(0, 255, 0), 50); // Green
-	colorWipe(NeoPixel.RGB(0, 0, 255), 50); // Blue
-	//colorWipe(NeoPixel.RGB(0, 0, 0, 255), 50); // White RGBW
-	// Send a theater pixel chase in...
-	theaterChase(NeoPixel.RGB(127, 127, 127), 50); // White
-	theaterChase(NeoPixel.RGB(127, 0, 0), 50); // Red
-	theaterChase(NeoPixel.RGB(0, 0, 127), 50); // Blue
 
-	rainbow(20);
-	rainbowCycle(20);
-	theaterChaseRainbow(50);
+
+	
+
 }
 
 // Fill the dots one after the other with a color
@@ -66,20 +66,22 @@ void theaterChase(ZunoNeoColor_t c, uint8_t wait) {
 	}
 }
 
-void rainbow(uint8_t wait) {
+void rainbow(uint16_t wait) {
 	uint16_t i, j;
 
 	for(j=0; j<256; j++) {
 		for(i=0; i<LED_COUNT; i++) {
 			NeoPixel.setColor(LED_PIN, i, Wheel((i+j) & 255));
 		}
+		Serial.print("R:");
+		Serial.println(j);
 		NeoPixel.show(LED_PIN);
 		delay(wait);
 	}
 }
 
 // Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
+void rainbowCycle(uint16_t wait) {
 	uint16_t i, j;
 
 	for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel

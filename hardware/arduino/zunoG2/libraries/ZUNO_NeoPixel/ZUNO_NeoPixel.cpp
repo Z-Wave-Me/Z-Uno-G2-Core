@@ -7,15 +7,15 @@
 
 #define NEO_RESET_MICROSECONDS			50
 
-#define NEO_FULL_PERIOD					100
-#define NEO_ZERO_HIGH_PERIOD_HZ800		32
-#define NEO_ONE_HIGH_PERIOD_HZ800		64
-#define NEO_ZERO_HIGH_PERIOD_HZ400		20
-#define NEO_ONE_HIGH_PERIOD_HZ400		50
+//#define NEO_FULL_PERIOD					100
+#define NEO_ZERO_HIGH_PERIOD_HZ800		16
+//#define NEO_ONE_HIGH_PERIOD_HZ800		50
+#define NEO_ZERO_HIGH_PERIOD_HZ400		8
+//#define NEO_ONE_HIGH_PERIOD_HZ400		50
 #define NEO_MAX_TIMER_COUNT_LED			85
 
-#define NEO_TIMER_HZ800					800000
-#define NEO_TIMER_HZ400					400000
+#define NEO_TIMER_HZ800					49//800000
+#define NEO_TIMER_HZ400					25//400000
 #define NEO_TIMER_CHANNEL				0
 
 #define NEO_USART_HZ800					3840000
@@ -129,10 +129,11 @@ ZunoError_t NeoPixelClass::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, ui
 		return (ZunoErrorNeo);
 	config = &this->_configTable[base];
 	flag.option = option;
-	len = count_led * ((flag.redOffset == flag.whiteOffset) ? 3 : 4) * config->coder + 1;// + 1 LOW
+	len = count_led * ((flag.redOffset == flag.whiteOffset) ? 3 : 4) * config->coder + 2;// + 1 LOW
 	if ((list = (ZunoNeoList_t *)malloc(sizeof(ZunoNeoList_t) + len)) == 0) {
 		return (ZunoErrorMemory);
 	}
+	list->array[0] = 0;
 	list->array[len - 0x1] = 0x0;// + 1 LOW
 	list->next = 0;
 	list->count_led = count_led;
@@ -145,8 +146,20 @@ ZunoError_t NeoPixelClass::addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, ui
 		free(list);
 		return (ret);
 	}
-	if (config->type == NEO_TYPE_TIMER)
-		list->freq_timer = CMU_ClockFreqGet(config->bus_clock) / (((flag.option & NEO_KHZ400) != 0)? NEO_TIMER_HZ400 : NEO_TIMER_HZ800);//0x25317C0
+	if (config->type == NEO_TYPE_TIMER){
+		//uint32_t divider = (flag.option & NEO_KHZ400) != 0 ? NEO_TIMER_HZ400 : NEO_TIMER_HZ800;
+		list->freq_timer = (flag.option & NEO_KHZ400) != 0 ? NEO_TIMER_HZ400 : NEO_TIMER_HZ800;//(CMU_ClockFreqGet(config->bus_clock) / divider);
+		/*
+		one_hight = (freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ONE_HIGH_PERIOD_HZ400 : NEO_ONE_HIGH_PERIOD_HZ800)) / NEO_FULL_PERIOD;
+			zero_hight = (freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ZERO_HIGH_PERIOD_HZ400 : NEO_ZERO_HIGH_PERIOD_HZ800)) / NEO_FULL_PERIOD;
+		*/
+		_one_high_period = (flag.option & NEO_KHZ400) != 0 ? NEO_TIMER_HZ400 - NEO_ZERO_HIGH_PERIOD_HZ400 : NEO_TIMER_HZ800 - NEO_ZERO_HIGH_PERIOD_HZ800;
+		//_one_high_period *= list->freq_timer;
+		//_one_high_period /= NEO_FULL_PERIOD;
+		_zero_high_period = (flag.option & NEO_KHZ400) != 0 ? NEO_ZERO_HIGH_PERIOD_HZ400 : NEO_ZERO_HIGH_PERIOD_HZ800;
+		//_zero_high_period *= list->freq_timer;
+		//_zero_high_period /= NEO_FULL_PERIOD;
+	}
 	pinMode(neo_pin, OUTPUT);
 	zunoSyncReleseWrite(config->lpLock, SyncMasterNeoPixel, &lpKey);
 	zunoSyncLockWrite(&this->_syncNeo, SyncMasterNeoPixel, &lpKey);
@@ -211,7 +224,7 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 		base = config->base;
 		switch (config->type) {
 			case NEO_TYPE_TIMER:
-				len++;// + 1 LOW
+				len += 2;// + 2 LOW
 				TIMER_TopSet(((TIMER_TypeDef *)base), list->freq_timer);
 				if (((TIMER_TypeDef *)base) == WTIMER0) {
 					((TIMER_TypeDef *)base)->ROUTELOC0 = _getLocationWtimer(neo_pin, NEO_TIMER_CHANNEL);
@@ -236,9 +249,13 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 				break;
 		}
 		delayMicroseconds(NEO_RESET_MICROSECONDS);
+		//delay(1);
+		Serial.print("DATA: ");
+		Serial.dumpPrint(list->array, len, 100);
+		Serial.println();
 		if ((channel = LdmaClass::transferSingle(&list->array[0], config->dst, len, config->dmaSignal, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0)
 			while (LdmaClass::transferDone(channel) == false)
-				delay(0x1);
+				delay(1);
 		switch (config->type) {
 			case NEO_TYPE_TIMER:
 				TIMER_Enable(((TIMER_TypeDef *)base), false);
@@ -473,7 +490,11 @@ inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led
 	whiteOffset = flag.whiteOffset;
 	config = &this->_configTable[list->base];
 	coder = config->coder;
+	
 	array = &list->array[id_led * coder * ((redOffset == whiteOffset)? 3: 4)];
+
+	if(config->type ==  NEO_TYPE_TIMER)
+		array++; // start 0
 	lpRed = &array[redOffset * coder];
 	lpWite = &array[whiteOffset * coder];
 	lpGreen = &array[flag.greenOffset * coder];
@@ -481,13 +502,13 @@ inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led
 	switch (config->type) {
 		case NEO_TYPE_TIMER:
 			freq = list->freq_timer;
-			one_hight = freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ONE_HIGH_PERIOD_HZ400 : NEO_ONE_HIGH_PERIOD_HZ800) / NEO_FULL_PERIOD;
-			zero_hight = freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ZERO_HIGH_PERIOD_HZ400 : NEO_ZERO_HIGH_PERIOD_HZ800) / NEO_FULL_PERIOD;
+			//one_hight = (freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ONE_HIGH_PERIOD_HZ400 : NEO_ONE_HIGH_PERIOD_HZ800)) / NEO_FULL_PERIOD;
+			//zero_hight = (freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ZERO_HIGH_PERIOD_HZ400 : NEO_ZERO_HIGH_PERIOD_HZ800)) / NEO_FULL_PERIOD;
 			if (lpWite != lpRed)
-				this->_setColorTimerCoder(lpWite, color.white, one_hight, zero_hight);
-			this->_setColorTimerCoder(lpRed, color.red , one_hight, zero_hight);
-			this->_setColorTimerCoder(lpGreen, color.green , one_hight, zero_hight);
-			this->_setColorTimerCoder(lpBlue, color.blue , one_hight, zero_hight);
+				this->_setColorTimerCoder(lpWite, color.white);
+			this->_setColorTimerCoder(lpRed, color.red);
+			this->_setColorTimerCoder(lpGreen, color.green);
+			this->_setColorTimerCoder(lpBlue, color.blue);
 			break;
 		case NEO_TYPE_USART:
 			if (lpWite != lpRed)
@@ -664,16 +685,16 @@ inline uint8_t NeoPixelClass::_getLocationWtimer(uint8_t pin, uint8_t ch) {
 	return (pin << ch);
 }
 
-inline void NeoPixelClass::_setColorTimerCoder(uint8_t *b, uint8_t color, uint8_t one_hight, uint8_t zero_hight) {
+inline void NeoPixelClass::_setColorTimerCoder(uint8_t *b, uint8_t color) {
 	uint8_t			i;
 	uint8_t			value;
 
 	i = NEO_CODER_1TO8;
 	while (i-- != 0) {
 		if ((color & 0x80) != 0)
-			value = one_hight;
+			value = _one_high_period;
 		else
-			value = zero_hight;
+			value = _zero_high_period;
 		color = color << 1;
 		b++[0] = value;
 	}

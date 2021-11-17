@@ -255,8 +255,8 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 	else {
 		size = cfg->size;
 		_zme_memcpy(&report->v4.byte4.minValue1, (uint8_t *)&cfg->minValue, size);
-		_zme_memcpy(&report->v4.byte4.maxValue1, (uint8_t *)&cfg->maxValue, size);
-		_zme_memcpy(&report->v4.byte4.defaultValue1, (uint8_t *)&cfg->defaultValue, size);
+		_zme_memcpy(&report->v4.byte4.minValue1 + size, (uint8_t *)&cfg->maxValue, size);
+		_zme_memcpy(&report->v4.byte4.minValue1 + size *2, (uint8_t *)&cfg->defaultValue, size);
 		properties1 = ((uint8_t *)((uint8_t *)&cfg->defaultValue + sizeof(cfg->defaultValue)))[0];
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)((size_t)&report->v4.byte4.minValue1 + size * 3);
 	}

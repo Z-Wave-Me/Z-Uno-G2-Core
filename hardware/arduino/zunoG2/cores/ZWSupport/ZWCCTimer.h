@@ -36,6 +36,6 @@ void zuno_CCTimer(uint32_t ticks);
 size_t zuno_CCTimerTicksTable7(size_t duration);
 ZunoTimerBasic_t *zuno_CCTimerBasicFind(size_t channel);
 uint8_t zuno_CCTimerTable8(size_t ticks);
-void zuno_CCTimerBasicFindStop(size_t channel);
+size_t zuno_CCTimerBasicFindStop(size_t channel);
 
 #endif// ZW_SUPPORT_TIMER_H

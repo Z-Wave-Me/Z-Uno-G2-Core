@@ -207,6 +207,7 @@ class NeoPixelClass {
 		};
 		inline ZunoNeoColor_t			RGBW(uint8_t red, uint8_t green, uint8_t blue, uint8_t white) {
 			ZunoNeoColor_t				color;
+
 			color.red = red;
 			color.green = green;
 			color.blue = blue;
@@ -218,7 +219,7 @@ class NeoPixelClass {
 		inline ZunoNeoList_t						*_fillPre(uint8_t neo_pin, volatile uint8_t *lpKey);
 		inline ZunoNeoList_t						*_setColorPre(uint8_t neo_pin, ZunoNeoCountLed id_led, volatile uint8_t *lpKey);
 		inline uint8_t								_getLocationWtimer(uint8_t pin, uint8_t ch);
-		inline void									_setColorTimerCoder(uint8_t *b, uint8_t color);
+		inline void									_setColorTimerCoder(uint8_t *b, uint8_t color, uint8_t one_hight, uint8_t zero_hight);
 		inline void									_setColorUsartCoder(uint8_t *b, uint8_t color);
 		inline void									_deleteNeo(uint8_t neo_pin);
 		inline void									_fill(ZunoNeoList_t *list, ZunoNeoCountLed first_id_led, ZunoNeoCountLed count, ZunoNeoColor_t color, uint8_t brightness);
@@ -232,9 +233,6 @@ class NeoPixelClass {
 		static const USART_InitSync_TypeDef			_initSpi;
 		static ZunoNeoList_t						*_list;
 		static ZunoSync_t							_syncNeo;
-		uint32_t 									_one_high_period;
-		uint32_t 									_zero_high_period;
-
 };
 
 

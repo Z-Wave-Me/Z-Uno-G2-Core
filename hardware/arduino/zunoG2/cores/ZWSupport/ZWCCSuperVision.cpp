@@ -5,7 +5,7 @@
 
 
 uint8_t _previously_receive_session_id = 0xFF;
-zuno_cc_supervision_data_t __cc_supervision = {0xFF, false};
+zuno_cc_supervision_data_t __cc_supervision = {0xFF, 0x00, false};
 
 #ifdef LOGGING_DBG
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);

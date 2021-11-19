@@ -63,6 +63,11 @@ typedef struct ZUNOChannelsData_s{
 	uint8_t  sync_nodes[ZUNO_MAX_MULTI_CHANNEL_NUMBER]; // Supervision sync nodes
 }ZUNOChannelsData_t;
 ZUNOChannelsData_t g_channels_data;
+typedef struct ZUnoRcvContext_s {
+	bool 	bMulticast;
+	uint8_t source_node_id;
+}ZUnoRcvContext_t;
+ZUnoRcvContext_t g_rcv_context;
 
 inline void __setSyncVar8(uint8_t * var, uint8_t val){
 	zunoEnterCritical();
@@ -445,10 +450,18 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 	return (false);
 }
 
+
 // Main command handler for incoming z-wave commands
+int __zuno_CommandHandler_Out(int rs){
+	g_rcv_context.source_node_id = 0;
+	return rs;
+}
 int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	int result = ZUNO_UNKNOWN_CMD;
 	
+	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;
+	g_rcv_context.source_node_id = cmd->src_node;
+
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print("INCOMING  "); 
@@ -460,7 +473,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
  	//zuno_CCWakeup_OnAnyRx();
 	#endif
 	if ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
-		return (ZUNO_COMMAND_BLOCKED);
+		return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 	// prepare packet for report
 	fillOutgoingPacket(cmd);
 	// If we have multichannel support enabled.
@@ -469,7 +482,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTI_CHANNEL){
 		result = zuno_CCMultichannel(cmd);
 		if(result == ZUNO_COMMAND_BLOCKED){
-			return result;
+			return __zuno_CommandHandler_Out(result);
 		}
 		if(result == ZUNO_COMMAND_UNPACKED){
 			#ifdef LOGGING_DBG
@@ -479,7 +492,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			#endif
 			fillOutgoingPacket(cmd);
 			if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
-				return (zuno_CCVersionHandler(cmd));
+				return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd));
 			}
 		}
 	}
@@ -487,7 +500,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	result = zuno_CCSupervisionUnpack(result, cmd);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
-			return (ZUNO_COMMAND_BLOCKED);
+			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
 		zunoReportHandler(cmd);
 		#endif
@@ -498,7 +511,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef LOGGING_DBG
 				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
 				#endif
-				return (zuno_CCSupervisionReport(result, 0x0)); // Command doesn't fit => forward it to firmware CommandHandler
+				return __zuno_CommandHandler_Out(zuno_CCSupervisionReport(result, 0x0)); // Command doesn't fit => forward it to firmware CommandHandler
 			}
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
@@ -568,7 +581,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if(result == ZUNO_COMMAND_ANSWERED){
 		zunoSendZWPackage(&g_outgoing_main_packet);
 	}
-	return result;
+	return __zuno_CommandHandler_Out(result);
 }
 
 // Universal staff for CC support
@@ -1205,8 +1218,14 @@ void zunoSendReportHandler(uint32_t ticks) {
 void zunoSendReport(byte ch){
 	if((ch < 1) || (ch > (ZUNO_CFG_CHANNEL_COUNT)))
 		return;
+	
 	ch--;
+	// Supervision context
 	uint8_t node_id = zunoGetSupervisionHost();
+	// If it's Multicast do not report value to sender
+	if((g_rcv_context.source_node_id != 0) && g_rcv_context.bMulticast){
+		node_id = g_rcv_context.source_node_id;
+	}
 	// We have to store supervision context if we have it
 	// Z-Wave protocol requires to exclude supervision host's node when device is reporting
 	__setSyncVar8(g_channels_data.sync_nodes+ch, node_id);

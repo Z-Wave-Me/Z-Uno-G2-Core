@@ -133,9 +133,6 @@ static ZunoError_t _initPwm(size_t param) {
 		timerInit.prescale = timerPrescale2;
 	freq /=  (1 << timerInit.prescale);
 	freq /= g_zuno_odhw_cfg.pwm_freq;
-	
-	Serial0.printf("*** PWM_INIT af:%d divider:%d", g_zuno_odhw_cfg.pwm_freq, freq);
-
 	timer = PWM_TIMER;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);

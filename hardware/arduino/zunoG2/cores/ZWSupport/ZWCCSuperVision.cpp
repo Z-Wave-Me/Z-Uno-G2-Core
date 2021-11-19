@@ -74,6 +74,8 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 		case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
 			if ((ZW_CMD == 0x1 || ZW_CMD == 0x4) && zuno_CCAssociationHandler(cmd) == ZUNO_UNKNOWN_CMD)
 				break ;
+			__unpackSV(cmd);
+			break ;
 		default:
 			__unpackSV(cmd);
 			return (ZUNO_COMMAND_UNPACKED);

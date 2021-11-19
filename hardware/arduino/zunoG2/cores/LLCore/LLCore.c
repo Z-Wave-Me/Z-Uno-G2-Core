@@ -370,7 +370,9 @@ void LLInit() {
     g_zuno_odhw_cfg.adc_reference  = adcRef5V;
     g_zuno_odhw_cfg.adc_resolution = 10; // 
     g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
-    g_zuno_odhw_cfg.analog_write_resolution = 0x8;
+    g_zuno_odhw_cfg.pwm_resolution = 8;
+    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_MIN;
+
 }
 
 void LLDestroy() {

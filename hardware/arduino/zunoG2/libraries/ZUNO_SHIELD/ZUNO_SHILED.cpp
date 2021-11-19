@@ -27,7 +27,7 @@ void ZUNOShield::initADCChannel(uint8_t channel, ShieldADCJumper_t type){
 }
 void ZUNOShield::initADCAll(ShieldADCJumper_t * types){
     for(int i=1;i<=4;i++)
-        initADCChannel(i, types[i]);
+        initADCChannel(i, types[i-1]);
 }
 uint16_t ZUNOShield::readADCMillivolts(uint8_t channel){
     const uint8_t adc_pins[] = {A0, A1, A2, A3};
@@ -82,8 +82,10 @@ void     ZUNOShield::deinit_0_10V(){
 void     ZUNOShield::init0_10V(uint16_t ref_millivolts){
     init0_10V(ref_millivolts, &SPI);
 }
-void     ZUNOShield::initPWM(uint8_t mask){
+void     ZUNOShield::initPWM(uint8_t mask,  uint32_t freq){
     const uint8_t pwm_pins[] = {PWM1, PWM2, PWM3, PWM4};
+    _pwm_freq = freq;
+    analogWriteFrequency(freq);
     for(uint8_t i=0;i<4;i++){
         if(mask & (1<<i)){
             pinMode(pwm_pins[i], OUTPUT);
@@ -91,6 +93,8 @@ void     ZUNOShield::initPWM(uint8_t mask){
         }
     }
     _pwm_map = mask;
+    
+    
 }
 void    ZUNOShield::writePWMPercentage(uint8_t channel, uint8_t percents){
     const uint8_t pwm_pins[] = {PWM1, PWM2, PWM3, PWM4};
@@ -122,8 +126,6 @@ bool    ZUNOShield::write0_10V(uint8_t channel, uint16_t millivolts){
     if(millivolts > _ref_upper)
         millivolts = _ref_upper;
     uint32_t dac_value = (1023 * millivolts) / _ref_voltage;
-    //Serial.print("DAC value:");
-    //Serial.println(dac_value);
     switch(channel){
         case 0:
             _dacs[0]->writeValue(DAC_CHANNEL_B, dac_value);

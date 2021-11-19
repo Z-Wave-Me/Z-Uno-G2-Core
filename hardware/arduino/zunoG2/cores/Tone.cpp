@@ -4,7 +4,8 @@
 
 #define PWM_TIMER						TIMER1
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1
-#define PWM_HGZ							0x1EA
+
+#define PWM_HGZ							PWM_FREQ_MIN
 #define PWM_DISABLED					0x0
 #define PWM_PIN_DISABLED				0x0
 #define PWM_PIN_ENABLED					0x1
@@ -39,8 +40,6 @@ typedef struct						ZunoTonePwm_s
 static ZunoSync_t gSyncTonePwm = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterTone);
 static ZunoTonePwm_t gTonePwm = {0, 0, 0, 0};
 static volatile uint8_t glpKey = true;
-
-static uint32_t _analog_freq = PWM_HGZ;
 
 static void _noTone(uint8_t pin);
 
@@ -94,7 +93,7 @@ static uint8_t _analogWrite(uint8_t pin, uint16_t value) {
 	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin) + 32;
 	channel = _findPWMChannelBusy(location);
 	timer = PWM_TIMER;
-	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - g_zuno_odhw_cfg.analog_write_resolution);
+	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - g_zuno_odhw_cfg.pwm_resolution);
 	if (value == PWM_DISABLED) {
 		_noTone(pin);
 		return (PWM_OUT_CLOSE);
@@ -129,11 +128,14 @@ static ZunoError_t _initPwm(size_t param) {
 	CMU_ClockEnable(PWM_TIMER_CLOCK, true);
 	timerInit = TIMER_INIT_DEFAULT;
 	freq = CMU_ClockFreqGet(TONE_TIMER_CLOCK);
-	if (freq / _analog_freq > 0xFFFF)
+	timerInit.prescale = timerPrescale1;
+	if ((freq / g_zuno_odhw_cfg.pwm_freq) > 0xFFFF)
 		timerInit.prescale = timerPrescale2;
-	else
-		timerInit.prescale = timerPrescale1;
-	freq = freq / (1 << timerInit.prescale) / _analog_freq;//0x25317C0
+	freq /=  (1 << timerInit.prescale);
+	freq /= g_zuno_odhw_cfg.pwm_freq;
+	
+	Serial0.printf("*** PWM_INIT af:%d divider:%d", g_zuno_odhw_cfg.pwm_freq, freq);
+
 	timer = PWM_TIMER;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);
@@ -142,6 +144,7 @@ static ZunoError_t _initPwm(size_t param) {
 	timerCCInit.mode = timerCCModePWM;
 	timerCCInit.cmoa = timerOutputActionToggle;
 	channel = 0;
+
 	while (channel < PWM_TIMER_CC_COUNT)
 		TIMER_InitCC(timer, channel++, &timerCCInit);
 	return (ZunoErrorOk);
@@ -285,12 +288,12 @@ ZunoError_t toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration) {
 }
 
 void analogWriteResolution(uint8_t bits){
-	if (bits > 0x10)
-		bits = 0x10;
-	g_zuno_odhw_cfg.analog_write_resolution = bits;
+	if (bits > 16)
+		bits = 16;
+	g_zuno_odhw_cfg.pwm_resolution = bits;
 }
 
 void analogWriteFrequency(uint32_t freq){
-	if (freq >= 488 && freq <= 8000000)
-		_analog_freq = freq;
+	if ((freq >= PWM_FREQ_MIN) && (freq <= PWM_FREQ_MAX))
+		g_zuno_odhw_cfg.pwm_freq = freq;
 }

@@ -57,47 +57,58 @@ static int _report_configuration(uint8_t channel) {
 static int _set_operation(size_t channel, const ZwDoorLockOperationSet_t *cmd) {
 	ZwDoorLockPropertiesSave_t					properties_save;
 	size_t										doorLockMode;
-	size_t										operationType;
 	size_t										duration;
+	size_t										lockTimeoutMinutes;
+	size_t										lockTimeoutSeconds;
 	ZunoTimerBasic_t							*lp;
 
 	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
 	doorLockMode = cmd->doorLockMode;
-	if ((operationType = properties_save.operationType) == DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4) {
-		switch (doorLockMode) {
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4:
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4:
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4:
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4:
-				break ;
-			default:
-				return (ZUNO_COMMAND_BLOCKED);
-				break ;
-		}
-	}
-	if (operationType == DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4) {
-		switch (doorLockMode) {
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4:
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
-			case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
-				if ((duration = (DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel) * 60 + DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel)) * (1000 / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0) {
-					doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
-					zuno_CCTimerBasicFindStop(channel);
+	switch (properties_save.operationType) {
+		case DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4:
+			switch (doorLockMode) {
+				case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4:
+				case DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4:
+				case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_V4:
+				case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_V4:
 					break ;
+				default:
+					return (ZUNO_COMMAND_BLOCKED);
+					break ;
+			}
+			break ;
+		case DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4:
+			lockTimeoutMinutes = DOOR_LOCK_TIMEOUT_MINUTES_SAVE(channel);
+			lockTimeoutSeconds = DOOR_LOCK_TIMEOUT_SECONDS_SAVE(channel);
+			if (lockTimeoutMinutes != DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4 && lockTimeoutSeconds != DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4) {
+				switch (doorLockMode) {
+					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4:
+					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
+						if ((duration = (lockTimeoutMinutes * 60 + lockTimeoutSeconds) * (1000 / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0) {
+							doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
+							zuno_CCTimerBasicFindStop(channel);
+							break ;
+						}
+						zunoEnterCritical();
+						if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
+							lp->channel = channel + 0x1;
+							lp->ticksEnd = g_zuno_timer.ticks + duration;
+						}
+						zunoExitCritical();
+						break ;
+					default:
+						zuno_CCTimerBasicFindStop(channel);
+						break ;
 				}
-				zunoEnterCritical();
-				if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
-					lp->channel = channel + 0x1;
-					lp->ticksEnd = g_zuno_timer.ticks + duration;
-				}
-				zunoExitCritical();
-				break ;
-			default:
-				break ;
-		}
+			}
+			else
+				zuno_CCTimerBasicFindStop(channel);
+			break ;
+		default:
+			return (ZUNO_COMMAND_BLOCKED);
+			break ;
 	}
-	else
-		zuno_CCTimerBasicFindStop(channel);
 	zuno_universalSetter1P(channel, doorLockMode);
 	zunoSendReport(channel + 0x1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -171,6 +182,8 @@ static int _configuration_set(size_t channel, const ZwDoorLockConfigurationSetFr
 				return (ZUNO_COMMAND_BLOCKED_FAILL);
 			break ;
 		case DOOR_LOCK_CONFIGURATION_REPORT_TIMED_OPERATION_V4:
+			if (lockTimeoutMinutes == 0xFE && lockTimeoutSeconds == 0xFE)
+				break ;
 			if (lockTimeoutMinutes > 0xFD || lockTimeoutSeconds > 0x3B)
 				return (ZUNO_COMMAND_BLOCKED_FAILL);
 			break ;

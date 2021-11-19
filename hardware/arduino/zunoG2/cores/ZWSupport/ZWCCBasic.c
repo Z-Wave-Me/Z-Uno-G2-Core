@@ -5,13 +5,9 @@
 #include "ZWCCSwitchMultilevel.h"
 
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
-	ZunoTimerBasic_t				*lp;
 	size_t							value;
 
-	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0)
-		lp->channel = 0x0;
-	zunoExitCritical();
+	zuno_CCTimerBasicFindStop(channel);
 	value = paket->value;
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
 		#ifdef WITH_CC_SWITCH_BINARY
@@ -59,8 +55,13 @@ static int _basic_get(byte channel) {
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
 	currentValue = ZWCC_BASIC_GETTER_1P(channel);
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
-		#ifdef WITH_CC_SWITCH_BINARY
+		#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK)
+		#if defined(WITH_CC_SWITCH_BINARY)
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+		#endif
+		#if defined(WITH_CC_DOORLOCK)
+		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+		#endif
 			currentValue = currentValue ? 0xFF : 0x00;
 			break;
 		#endif

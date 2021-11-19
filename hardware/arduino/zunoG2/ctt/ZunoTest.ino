@@ -11,10 +11,9 @@
  */
 
 #include "Arduino.h"
-#include "ZWCCTimerParametrs.h"
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 
-ZUNO_ENABLE(LOGGING_UART=Serial0 ZUNO_PIN_V=4 WITH_CC_TIME_PARAMETERS WITH_CC_WAKEUP WITH_CC_BATTERY);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
+ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0 MODERN_MULTICHANNEL WITH_CC_MULTICHANNEL WITH_CC_TIME_PARAMETERS WITH_CC_WAKEUP WITH_CC_BATTERY);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
 #define MY_SERIAL Serial0
 
 // Pins definitions 
@@ -30,9 +29,12 @@ ZUNO_ENABLE(LOGGING_UART=Serial0 ZUNO_PIN_V=4 WITH_CC_TIME_PARAMETERS WITH_CC_WA
 #define SWITCH_ON       0xff
 #define SWITCH_OFF      0
 
-#define TEMP_HYST 5 //0.5 *C
-#define HUMIDITY_HYST 5 // 0.5%
-#define MOTION_RETRIGGER_TIME 5000 // 5 seconds
+#define TEMP_HYST_PARAM 64 //0.5 *C
+#define HUMIDITY_HYST_PARAM 65 // 0.5%
+#define MOTION_RETRIGGER_TIME_PARAM 66 // 5 seconds
+
+#define MIN_CFG_PARAM		64
+#define MAX_CFG_PARAM		68
 
 // Global variables to store data reported via getters
 byte switchValue1 = 0;
@@ -47,15 +49,6 @@ int16_t lastTemperatureValue = 0;
 byte lastDoorValue = 0;
 uint32_t motionTrigTime;
 
-uint32_t  currentValueMeter;
-uint8_t currentValueDoor= 0;
-uint8_t _color[10] = {0};
-
-BYTE g_therm_mode = THERMOSTAT_MODE_OFF;
-int g_therm_point;//[] = {250,250,250,250, 250,250,250,250}; // 25.0
-BYTE g_update = FALSE;
-dword last_report_time = 0;
-
 enum{ 
 	SENSOR_MOTION_CHANNEL = 7,
 	SENSOR_DOOR_CHANNEL,
@@ -67,7 +60,6 @@ DHT dht22_sensor(DHTPin, DHT22);
 ZUNO_SETUP_SLEEPING_MODE(ZUNO_SLEEPING_MODE_ALWAYS_AWAKE); 
 ZUNO_SETUP_ASSOCIATIONS(ZUNO_ASSOCIATION_GROUP_SET_VALUE); // Send Basic Set to association group
 ZUNO_SETUP_S2ACCESS(SKETCH_FLAG_S2_AUTHENTICATED_BIT | SKETCH_FLAG_S2_ACCESS_BIT | SKETCH_FLAG_S2_UNAUTHENTICATED_BIT | SKETCH_FLAG_S0_BIT);
-ZUNO_DISABLE(ZW_CHANNEL_CLUSTERISATION); 
 // Setup 10 channels
 ZUNO_SETUP_CHANNELS(
 	ZUNO_SWITCH_BINARY(switchValue1, NULL),
@@ -85,6 +77,16 @@ ZUNO_SETUP_CHANNELS(
 	ZUNO_METER(ZUNO_METER_TYPE_WATER, METER_RESET_ENABLE, ZUNO_METER_WATER_SCALE_METERS3, METER_SIZE_FOUR_BYTES, METER_PRECISION_THREE_DECIMALS, getterFunctionMeter, resetterFunction),
 	ZUNO_DOORLOCK(getterFunctionDoor, setterFunctionDoor)
 );
+
+
+uint32_t  currentValueMeter;
+uint8_t currentValueDoor= 0;
+uint8_t _color[10] = {0};
+
+BYTE g_therm_mode = THERMOSTAT_MODE_OFF;
+int g_therm_point;//[] = {250,250,250,250, 250,250,250,250}; // 25.0
+BYTE g_update = FALSE;
+dword last_report_time = 0;
 
 BYTE getterFunctionDoor() {
     return currentValueDoor;
@@ -128,72 +130,112 @@ void thermPointSetterC(BYTE mode,WORD point){
 	(void)mode;
 }
 
-const ZunoCFGParameter_t param64 =
+static const ZunoCFGParameter_t lp_param[] =
 {
-	.name = "Temperature hysteresis",
-	.info = "Defines hysteresis of temperature reports in 10th of *C",
-	.minValue = 0x1,
-	.maxValue = 0x14,
-	.defaultValue = 0x5,
-	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
-	.readOnly = false,
-	.altering = false
-};
-
-const ZunoCFGParameter_t param65 =
-{
-	.name = "Humidity hysteresis",
-	.info = "Defines hysteresis of temperature reports in 10th of %",
-	.minValue = 0x1,
-	.maxValue = 0x14,
-	.defaultValue = 0x5,
-	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
-	.readOnly = false,
-	.altering = false
-};
-
-const ZunoCFGParameter_t param66 =
-{
-	.name = "Motion trigger time",
-	.info = "Minimal time interval of the next motion sensor trigger",
-	.minValue = 0x0,
-	.maxValue = 0x5000,
-	.defaultValue = 0x1000,
-	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
-	.readOnly = false,
-	.altering = false
+	{
+		.name = "Temperature hysteresis",
+		.info = "Defines hysteresis of temperature reports in 10th of *C",
+		.minValue = 0x1,
+		.maxValue = 0x14,
+		.defaultValue = 0x5,
+		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+		.readOnly = false,
+		.altering = false
+	},
+	{
+		.name = "Humidity hysteresis",
+		.info = "Defines hysteresis of temperature reports in 10th of %",
+		.minValue = 0x1,
+		.maxValue = 0x14,
+		.defaultValue = 0x5,
+		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+		.readOnly = false,
+		.altering = false
+	},
+	{
+		.name = "Motion trigger time",
+		.info = "Minimal time interval of the next motion sensor trigger",
+		.minValue = 0x0,
+		.maxValue = 0x5000,
+		.defaultValue = 0x1000,
+		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+		.readOnly = false,
+		.altering = false
+	},
+	{
+		.name = "param67",
+		.info = "param67",
+		.minValue = 0xAB,
+		.maxValue = 0x37,
+		.defaultValue = 0x20,
+		.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
+		.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,
+		.readOnly = false,
+		.altering = false
+	},
+	{
+		.name = "param68",
+		.info = "param68",
+		.minValue = 0xFFAB,
+		.maxValue = 0x3FAB,
+		.defaultValue = 0x20,
+		.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,
+		.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,
+		.readOnly = true,
+		.altering = false
+	}
 };
 
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
-	const ZunoCFGParameter_t			*cfg;
 
-	switch (param) {
-		case 64:
-			cfg = &param64;
-			break;
-		case 65:
-			cfg = &param65;
-			break;
-		case 66:
-			cfg = &param66;
-			break;
-		default:
-			cfg = ZUNO_CFG_PARAMETER_UNKNOWN;
-			break;
-	}
-	return (cfg);
+	if (param < MIN_CFG_PARAM || param > MAX_CFG_PARAM)
+		return (ZUNO_CFG_PARAMETER_UNKNOWN);
+	return (&lp_param[param - MIN_CFG_PARAM]);
 }
 
+static void _default_cfg(void)
+{
+	uint32_t					value;
+	uint32_t					i;
+
+	if (zunoNID() == 0x0) {
+		i = MIN_CFG_PARAM;
+		while (i <= MAX_CFG_PARAM) {
+			zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
+			i++;
+		}
+		return ;
+	}
+	i = MIN_CFG_PARAM;
+	while (i <= MAX_CFG_PARAM) {
+		value = zunoLoadCFGParam(i);
+		if (lp_param[i - MIN_CFG_PARAM].format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED)
+		{
+			if ((ssize_t)value < lp_param[i - MIN_CFG_PARAM].minValue || (ssize_t)value > lp_param[i - MIN_CFG_PARAM].maxValue)
+				zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
+		}
+		else {
+			if (value < (uint32_t)lp_param[i - MIN_CFG_PARAM].minValue || value > (uint32_t)lp_param[i - MIN_CFG_PARAM].maxValue)
+				zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
+		}
+		i++;
+	}
+	return ;
+	
+}
 bool zunoAddBaseCCS(byte ccs, byte version);
 
 void setup() {
 	// if(zunoStartDeviceConfiguration()) {
-	// 	zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION);
+		// zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, 0x1);
+		// zunoAddBaseCCS(COMMAND_CLASS_BATTERY, 0x1);
+		// zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP, 0x3);
 	// 	zunoCommitCfg();
 	// }
+	_default_cfg();
 	MY_SERIAL.begin(115200);
 	// Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
 	pinMode(LedPin1, OUTPUT);
@@ -222,7 +264,7 @@ void loop() {
 	// Trigger motion and wait for relax (about 5 sec) before report idle
 	byte currentMotionValue = !digitalRead(MotionPin);
 	if (currentMotionValue) {
-		if ((millis() - motionTrigTime) < MOTION_RETRIGGER_TIME) {
+		if ((millis() - motionTrigTime) < zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM)) {
 		lastMotionValue = 1;
 		zunoSendReport(SENSOR_MOTION_CHANNEL);
 		zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);
@@ -230,7 +272,7 @@ void loop() {
 		motionTrigTime = millis();
 	}
 	if (lastMotionValue && 
-		((millis() - motionTrigTime) > MOTION_RETRIGGER_TIME)) {
+		((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
 		lastMotionValue = 0; 
 		zunoSendReport(SENSOR_MOTION_CHANNEL);
 		zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_OFF);
@@ -244,20 +286,15 @@ void loop() {
 	
 	// Temperature sensor (based on DHT22 digital sensor)
 	int16_t currentTemperatureValue = dht22_sensor.readTemperatureC10();
-	if(abs(lastTemperatureValue - currentTemperatureValue) > TEMP_HYST){
+	if(abs(lastTemperatureValue - currentTemperatureValue) > zunoLoadCFGParam(TEMP_HYST_PARAM)){
 		lastTemperatureValue = currentTemperatureValue;
 		zunoSendReport(SENSOR_TEMPERATURE_CHANNEL);
 	}
 	// Humidity sensor (based on DHT22 digital sensor)
 	uint16_t currentHumidityValue = dht22_sensor.readHumidityH10();
-	if(abs(lastHumidityValue - currentHumidityValue) > HUMIDITY_HYST){
+	if(abs(lastHumidityValue - currentHumidityValue) > zunoLoadCFGParam(HUMIDITY_HYST_PARAM)){
 		lastHumidityValue = currentHumidityValue;
 		zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
-	}
-	if((millis()-last_report_time)>10000UL){
-		last_report_time = millis();
-		 currentValueMeter++;
-		zunoSendReport(1);
 	}
 	delay(50);
 }

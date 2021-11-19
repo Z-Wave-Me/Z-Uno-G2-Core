@@ -144,11 +144,14 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		#endif
+		#ifdef WITH_CC_DOORLOCK
 		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
 				return true;
+			if(cmd_class == COMMAND_CLASS_BASIC)
+				return true;
 			break;
-
+		#endif
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
 				return true;

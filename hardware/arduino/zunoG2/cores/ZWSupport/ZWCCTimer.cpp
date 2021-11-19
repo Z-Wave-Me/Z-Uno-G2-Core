@@ -5,13 +5,19 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSwitchBinary.h"
 
-void zuno_CCTimerBasicFindStop(size_t channel) {
+size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
+	size_t							out;
 
 	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0)
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
 		lp->channel = 0x0;
+		out = true;
+	}
+	else
+		out = false;
 	zunoExitCritical();
+	return (out);
 }
 
 ZunoTimerBasic_t *zuno_CCTimerBasicFind(size_t channel) {

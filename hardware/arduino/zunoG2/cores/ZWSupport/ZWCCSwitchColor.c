@@ -22,8 +22,8 @@ static int _supported_report(uint8_t channel) {//Processed to get the value of t
 	ZwSwitchColorSupportedReporFrame_t		*lp;
 
 	lp = (ZwSwitchColorSupportedReporFrame_t *)&CMD_REPLY_CC;
-	lp->cmdClass = COMMAND_CLASS_SWITCH_COLOR;
-	lp->cmd = SWITCH_COLOR_SUPPORTED_REPORT;
+	// lp->cmdClass = COMMAND_CLASS_SWITCH_COLOR; set in - fillOutgoingPacket
+	// lp->cmd = SWITCH_COLOR_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	lp->colorComponentMask1 = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of colors
 	lp->colorComponentMask2 = 0;
 	CMD_REPLY_LEN = sizeof(ZwSwitchColorSupportedReporFrame_t);
@@ -69,7 +69,7 @@ static void _start_level_set(size_t channel, size_t current_level, size_t target
 	zunoExitCritical();
 }
 
-static void	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_t len) {
+static int	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_t len) {
 	const VgSwitchColorSetVg_t		*vg;
 	size_t							count;
 	size_t							step;
@@ -78,17 +78,37 @@ static void	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_
 	size_t							currentValue;
 	size_t							targetValue;
 	size_t							colorComponentId;
+	ZunoColorDuration_t				*lpDur_b;
+	ZunoColorDuration_t				*lpDur_e;
+	size_t							tempos;
 
-
+	colorComponentId = ZUNO_CFG_CHANNEL(channel).sub_type;
+	count = cmd->properties1 & 0x1F;//Color Component Count (5 bits)
+	vg = &cmd->variantgroup[0];
+	while (count-- != 0) {
+		if ((colorComponentId & (0x1 << vg->colorComponentId)) == 0x0)
+			return (ZUNO_COMMAND_BLOCKED_FAILL);
+		vg++;
+	}
 	count = cmd->properties1 & 0x1F;//Color Component Count (5 bits)
 	vg = &cmd->variantgroup[0];
 	if (len == (sizeof(ZwSwitchColorSetFrame_t) + (count * sizeof(VgSwitchColorSetVg_t))) || (duration = zuno_CCTimerTicksTable7(((uint8_t *)cmd + len - 0x1)[0x0]))== 0x0) {
+		if (zuno_CCTimerBasicFindStop(channel) == true) {
+			lpDur_b = &_duration[0];
+			lpDur_e = &_duration[(sizeof(_duration) / sizeof(ZunoColorDuration_t))];
+			tempos = channel + 0x1;
+			while (lpDur_b < lpDur_e) {
+				if (lpDur_b->channel == tempos)
+					lpDur_b->channel = 0x0;
+				lpDur_b++;
+		}
+		}
 		while (count-- != 0) {
 			zuno_universalSetter2P(channel, vg->colorComponentId, vg->value);
 			vg++;
 		}
 		zunoSendReport(channel + 1);
-		return ;
+		return (ZUNO_COMMAND_PROCESSED);
 	}
 	while (count-- != 0) {
 		colorComponentId = vg->colorComponentId;
@@ -107,9 +127,10 @@ static void	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_
 		}
 		vg++;
 	}
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare the structure for dimming
+static int _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare the structure for dimming
 	ZwSwitchColorStartLevelChange_FRAME_u			*pk;
 	size_t											current_level;
 	size_t											targetValue;
@@ -120,6 +141,8 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 
 	pk = (ZwSwitchColorStartLevelChange_FRAME_u *)cmd->cmd;
 	colorComponentId = pk->v2.colorComponentId;
+	if ((ZUNO_CFG_CHANNEL(channel).sub_type & (0x1 << colorComponentId)) == 0x0)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if ((pk->v2.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
 		current_level = pk->v2.startLevel;
 		zuno_universalSetter2P(channel, colorComponentId, current_level);
@@ -141,10 +164,13 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 		step = zuno_CCTimerTicksTable7(pk->v3.duration) / ZUNO_TIMER_COLOR_MAX_VALUE;
 	step = ZUNO_TIMER_ALING_STEP(step);
 	if (current_level == targetValue)
-		return ;
-	if (step == 0x0)
-		return (zuno_universalSetter2P(channel, colorComponentId, targetValue));
+		return (ZUNO_COMMAND_PROCESSED);
+	if (step == 0x0) {
+		zuno_universalSetter2P(channel, colorComponentId, targetValue);
+		return (ZUNO_COMMAND_PROCESSED);
+	}
 	_start_level_set(channel, current_level, targetValue, colorComponentId, step, diming);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 static void _stop_level(uint8_t channel, uint8_t colorComponentId) {// Stop Dimming
@@ -188,7 +214,7 @@ static void _stop_level(uint8_t channel, uint8_t colorComponentId) {// Stop Dimm
 
 int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	int				rs;
-	rs = ZUNO_UNKNOWN_CMD;
+
 	switch(ZW_CMD)
 	{
 		case SWITCH_COLOR_SUPPORTED_GET:
@@ -199,16 +225,17 @@ int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = zuno_CCSwitchColorReport(channel, cmd);
 			break ;
 		case SWITCH_COLOR_SET:
-			_set_color(channel, (const ZwSwitchColorSetFrame_t *)cmd->cmd, cmd->len);
-			rs = ZUNO_COMMAND_PROCESSED;
+			rs = _set_color(channel, (const ZwSwitchColorSetFrame_t *)cmd->cmd, cmd->len);
 			break ;
 		case SWITCH_COLOR_START_LEVEL_CHANGE:
-			_start_level(channel, cmd);
-			rs = ZUNO_COMMAND_PROCESSED;
+			rs = _start_level(channel, cmd);
 			break ;
 		case SWITCH_COLOR_STOP_LEVEL_CHANGE:
 			_stop_level(channel, ((ZwSwitchColorStopLevelChange_t *)cmd->cmd)->colorComponentId);
 			rs = ZUNO_COMMAND_PROCESSED;
+			break ;
+		default:
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

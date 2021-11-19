@@ -60,9 +60,15 @@ typedef struct ZUNOChannelsData_s{
 	uint32_t sys_reports;
 	uint32_t sys_requests;
 	uint32_t last_report_time[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
+	uint8_t  sync_nodes[ZUNO_MAX_MULTI_CHANNEL_NUMBER]; // Supervision sync nodes
 }ZUNOChannelsData_t;
 ZUNOChannelsData_t g_channels_data;
 
+inline void __setSyncVar8(uint8_t * var, uint8_t val){
+	zunoEnterCritical();
+	*var = val;
+	zunoExitCritical();
+}
 inline void __setSyncVar(uint32_t * var, uint32_t val){
 	zunoEnterCritical();
 	*var = val;
@@ -70,6 +76,13 @@ inline void __setSyncVar(uint32_t * var, uint32_t val){
 }
 inline uint32_t __getSyncVar(uint32_t * var){
 	uint32_t res = 0;
+	zunoEnterCritical();
+	res = *var;
+	zunoExitCritical();
+	return res;
+}
+inline uint8_t __getSyncVar8(uint8_t * var){
+	uint8_t res = 0;
 	zunoEnterCritical();
 	res = *var;
 	zunoExitCritical();
@@ -1180,6 +1193,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 				break;
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
+			g_outgoing_report_packet.aux_data[0] = __getSyncVar8(g_channels_data.sync_nodes+ch);
 			zunoSendZWPackage(&g_outgoing_report_packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
@@ -1188,11 +1202,15 @@ void zunoSendReportHandler(uint32_t ticks) {
 		}
 	}
 }
-
 void zunoSendReport(byte ch){
 	if((ch < 1) || (ch > (ZUNO_CFG_CHANNEL_COUNT)))
 		return;
 	ch--;
+	uint8_t node_id = zunoGetSupervisionHost();
+	// We have to store supervision context if we have it
+	// Z-Wave protocol requires to exclude supervision host's node when device is reporting
+	__setSyncVar8(g_channels_data.sync_nodes+ch, node_id);
+	// Set needed bit field of report
 	__setSyncMapChannel(&g_channels_data.report_map, ch);
 }
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz){

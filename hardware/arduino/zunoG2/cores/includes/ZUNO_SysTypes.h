@@ -49,6 +49,7 @@ typedef struct ZUNOOTAFWDescr_s{
 // Z-Wave packet
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN						300
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						46//scientific poke method ))
+#define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 						4
 typedef struct ZUNOCommandPacket_s{
 	uint8_t * cmd;   // 4B
 	uint8_t   flags; // 5B
@@ -59,6 +60,7 @@ typedef struct ZUNOCommandPacket_s{
 	uint8_t   dst_node;// 10
 	uint8_t   zw_rx_opts;// 11
 	uint8_t   zw_rx_secure_opts;//12
+	uint8_t	  aux_data[ZUNO_COMMAND_PACKET_MAX_AUX_DATA];
 } __attribute__((aligned(1),packed)) ZUNOCommandPacket_t;
 // System variables mapping
 typedef struct ZUNOSetupSysState_s {

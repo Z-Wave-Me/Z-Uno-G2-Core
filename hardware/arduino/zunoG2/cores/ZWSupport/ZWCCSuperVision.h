@@ -3,6 +3,7 @@
 
 typedef struct zuno_cc_supervision_data_s{
 	uint8_t _prev_id;
+	uint8_t _node_id;
 	bool    _unpacked;
 } zuno_cc_supervision_data_t;
 
@@ -53,5 +54,6 @@ typedef struct								ZwCSuperVisionReportFrame_s
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd);
 uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration);
 int zuno_CCSupervisionApp(int result);
+uint8_t zunoGetSupervisionHost();
 
 #endif//ZWCC_SUPER_VISION_H

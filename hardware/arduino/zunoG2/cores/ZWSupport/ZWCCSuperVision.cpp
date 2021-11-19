@@ -29,7 +29,21 @@ static int _secyrity(uint8_t sec) {
 }
 
 int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd);
-
+static void __unpackSV(ZUNOCommandPacket_t *cmd){
+	cmd->len -= 4;
+	__cc_supervision._unpacked = true;
+	__cc_supervision._node_id = cmd->src_node;
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print(millis());
+	LOGGING_UART.print("SV UNPACK:  "); 
+	zuno_dbgdumpZWPacakge(cmd);
+	#endif
+}
+uint8_t zunoGetSupervisionHost(){
+	if(!__cc_supervision._unpacked)
+		return 0;
+	return __cc_supervision._node_id;
+}
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd){
 	ZwCSuperVisionGetFrame_t								*frame;
 	uint8_t													id;
@@ -60,27 +74,12 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 		case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
 			if ((ZW_CMD == 0x1 || ZW_CMD == 0x4) && zuno_CCAssociationHandler(cmd) == ZUNO_UNKNOWN_CMD)
 				break ;
-			cmd->len -= 4;
-			__cc_supervision._unpacked = true;
-			#ifdef LOGGING_DBG
-			LOGGING_UART.print(millis());
-			LOGGING_UART.print("SV UNPACK:  "); 
-			zuno_dbgdumpZWPacakge(cmd);
-			#endif
-			return (ZUNO_COMMAND_UNPACKED);
-			break ;
 		default:
-			cmd->len -= 4;
-			__cc_supervision._unpacked = true;
-			#ifdef LOGGING_DBG
-			LOGGING_UART.print(millis());
-			LOGGING_UART.print("SV UNPACK:  "); 
-			zuno_dbgdumpZWPacakge(cmd);
-			#endif
+			__unpackSV(cmd);
 			return (ZUNO_COMMAND_UNPACKED);
 			break ;
 	}
-	cmd->cmd -= 0x4;
+	cmd->cmd -= 4;
 	return (ZUNO_UNKNOWN_CMD);
 }
 

@@ -65,7 +65,7 @@ static int _reset(size_t channel, const ZwMeterResetFrame_t *cmd, size_t len) {
 			params = ZUNO_CFG_CHANNEL(channel).params[0];
 			if (cmd->v6.properties1 != (GET_SCALE2(params) | (METER_GET_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | (ZUNO_CFG_CHANNEL(channel).sub_type & METER_REPORT_PROPERTIES1_METER_TYPE_MASK)))
 				return (ZUNO_COMMAND_BLOCKED);
-			if ((cmd->v6.properties2 & ((uint8_t)~METER_REPORT_PROPERTIES2_PRECISION_MASK)) != (COMBINE_PARAMS(params) & ((uint8_t)~METER_REPORT_PROPERTIES2_PRECISION_MASK)))
+			if (((cmd->v6.properties2 & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK) >> METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) != GET_SCALE1(params))
 				return (ZUNO_COMMAND_BLOCKED);
 			_zme_memcpy((uint8_t *)&value, (uint8_t *)&cmd->v6.meterValue[0], GET_SIZE(params));
 			precision_new = cmd->v6.properties2 >> METER_REPORT_PROPERTIES2_PRECISION_SHIFT;
@@ -106,7 +106,7 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 			rs = _reset(channel, (const ZwMeterResetFrame_t *)cmd->cmd, cmd->len);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

@@ -4,12 +4,19 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchMultilevel.h"
 
+size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
+
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	size_t							value;
 
 	zuno_CCTimerBasicFindStop(channel);
 	value = paket->value;
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
+		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+			value = zuno_CCThermostatModeTobasic(channel, value);
+			break;
+		#endif
 		#ifdef WITH_CC_SWITCH_BINARY
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 			if (value > 0x63 && value < 0xFF)
@@ -55,7 +62,10 @@ static int _basic_get(byte channel) {
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
 	currentValue = ZWCC_BASIC_GETTER_1P(channel);
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
-		#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK)
+		#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+		#endif
 		#if defined(WITH_CC_SWITCH_BINARY)
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 		#endif

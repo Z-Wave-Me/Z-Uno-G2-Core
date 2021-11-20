@@ -58,12 +58,24 @@ static size_t _bitTestComponentId(size_t channel, size_t componentId) {
 	return (false);
 }
 
+size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value) {
+	if (value == 0x0)
+		return (0x0);
+	value = THERMOSTAT_MODE_HEAT;
+	while (value <= THERMOSTAT_MODE_FULL_POWER) {
+		if (_bitTestComponentId(channel, value) == true)
+			return (value);
+		value++;
+	}
+	return (0x0);
+}
+
 static int _set_mode(size_t channel, const ZwThermostatModeSetFrame_t *cmd) {
 	size_t										componentId;
 
 	componentId = cmd->v2.level & THERMOSTAT_MASK_4_BIT;
 	if (_bitTestComponentId(channel, componentId) == false)
-		return (ZUNO_COMMAND_BLOCKED);
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	zuno_universalSetter1P(channel, componentId);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -101,7 +113,7 @@ int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = _supported_report_mode(channel);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);
@@ -189,14 +201,22 @@ static int  _setpoint_get(size_t channel, const ZwThermostatSetpointGetFrame_t *
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static void _set_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+static int _set_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	ZwThermostatSetpointSetFrame_t				*lp;
+	size_t										sub_type;
 	uint16_t									value;
-	
+
 	lp = (ZwThermostatSetpointSetFrame_t *)cmd->cmd;
+	sub_type = ZUNO_CFG_CHANNEL(channel).sub_type;//It contains a bitmask of thermostat
+	sub_type = (sub_type & 0x7E) | ((sub_type >> 7) << 3);//This field MUST be encoded according to Table 142, interpretation A:
+	if ((sub_type & (0x1 << (lp->byte1.level & THERMOSTAT_SETPOINT_SET_LEVEL_SETPOINT_TYPE_MASK))) == 0x0)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	if ((lp->byte1.level2 & (THERMOSTAT_SETPOINT_SET_LEVEL2_SIZE_MASK | THERMOSTAT_SETPOINT_SET_LEVEL2_SCALE_MASK)) != (THERMOSTAT_SETPOINT_SIZE | (THERMOSTAT_SETPOINT_SCALE(channel) << THERMOSTAT_SETPOINT_SET_LEVEL2_SCALE_SHIFT)))
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	value = lp->byte2.value2 | (lp->byte2.value1 << (sizeof(value) * 8 / 2));
 	value =_limit_setpoint(ZUNO_CFG_CHANNEL(channel).params[0], value);
 	zuno_universalSetter2P(channel, lp->byte2.level & THERMOSTAT_MASK_4_BIT, value);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 static int _setpoint_capabilities_get(size_t channel, const ZwThermostatSetpointCapabilitiesGetFrame_t *cmd) {
@@ -237,9 +257,8 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 
 	switch(ZW_CMD) {
 		case THERMOSTAT_SETPOINT_SET:
-			_set_setpoint(channel, cmd);
+			rs = _set_setpoint(channel, cmd);
 			zunoSendReport(channel + 1);
-			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case THERMOSTAT_SETPOINT_GET:
 			_zunoMarkChannelRequested(channel);
@@ -252,7 +271,7 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 			rs = _setpoint_capabilities_get(channel, (const ZwThermostatSetpointCapabilitiesGetFrame_t *)cmd->cmd);
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return (rs);

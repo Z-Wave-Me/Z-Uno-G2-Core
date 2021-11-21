@@ -229,6 +229,43 @@ static void _default_cfg(void)
 bool zunoAddBaseCCS(byte ccs, byte version);
 
 void setup() {
+	if(zunoStartDeviceConfiguration()) {
+		zunoAddChannel(1,0,0);
+		zunoSetZWChannel( 0, 0x01 | ZWAVE_CHANNEL_MAPPED_BIT);
+		zunoAddChannel(1,0,0);
+		zunoSetZWChannel( 1, 0x02);
+		zunoAddChannel(1,0,0);
+		zunoSetZWChannel( 2, 0x03);
+		zunoAddChannel(2,0,0);
+		zunoSetZWChannel( 3, 0x04);
+		zunoAddChannel(2,0,0);
+		zunoSetZWChannel( 4, 0x05);
+		zunoAddChannel(2,0,0);
+		zunoSetZWChannel( 5, 0x06);
+		zunoAddChannel(3,12,0);
+		zunoSetZWChannel( 6, 0x07);
+		zunoAddChannel(3,10,0);
+		zunoSetZWChannel( 7, 0x08);
+		zunoAddChannel(4,1,34);
+		zunoSetZWChannel( 8, 0x09);
+		zunoAddChannel(4,5,34);
+		zunoSetZWChannel( 9, 0x0a);
+		zunoAddChannel(12,28,0);
+		zunoSetZWChannel(10, 0x0b);
+		zunoAddChannel(11,5,99);
+		zunoSetZWChannel(11, 0x0c);
+		zunoAddChannel(5,131,216);
+		zunoSetZWChannel(12, 0x0d);
+		zunoAddChannel(6,0,1);
+		zunoSetZWChannel(13, 0x0e);
+		zunoAddAssociation(1, 0);
+		zunoSetSleepingMode(0x00);
+		zunoSetS2Keys(0x87);
+		zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, 0x1);
+		zunoAddBaseCCS(COMMAND_CLASS_BATTERY, 0x1);
+		zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP, 0x3);
+		zunoCommitCfg();
+	}
 	// if(zunoStartDeviceConfiguration()) {
 		// zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, 0x1);
 		// zunoAddBaseCCS(COMMAND_CLASS_BATTERY, 0x1);
@@ -251,6 +288,8 @@ void setup() {
 	dht22_sensor.begin();
 	dht22_sensor.readTemperatureC10(true);
 }
+
+size_t count = 0;
 
 void loop() {
 	// Switches
@@ -297,4 +336,7 @@ void loop() {
 		zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
 	}
 	delay(50);
+	count++;
+	if (count % 100 == 0)
+		currentValueMeter++;
 }

@@ -3,6 +3,7 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCBasic.h"
+#include "ZWCCSuperVision.h"
 
 void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
 	switch (ZUNO_CFG_CHANNEL(zuno_ch).type) {
@@ -40,6 +41,7 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 	size_t												current_level;
 	size_t												targetValue;
 	size_t												b_mode;
+	size_t												duration;
 
 	pk = (ZwSwitchMultilevelStartLevelChangeFrame_t *)cmd->cmd;
 	if ((pk->v1.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
@@ -53,10 +55,14 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 		if ((current_level = ZWCC_BASIC_GETTER_1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	}
-	if (cmd->len == sizeof(ZwSwitchMultilevelStartLevelChangeV1Frame_t))
+	if (cmd->len == sizeof(ZwSwitchMultilevelStartLevelChangeV1Frame_t)) {
 		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * (1000 / ZUNO_SYSTIMER_PERIOD_MC);// Depending on the version, set the default step to increase or from the command we will
-	else
+		duration = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;
+	}
+	else {
+		duration = pk->v2.dimmingDuration;
 		step =zuno_CCTimerTicksTable7(pk->v2.dimmingDuration);
+	}
 	if ((pk->v1.properties1 & (1 << 6)) == 0) {// Dimming to up
 		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)// Check it may not need to dim
 			return ;
@@ -80,7 +86,7 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 		return ;
 	zunoEnterCritical();
 	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
-		lp->step = ZUNO_TIMER_ALING_STEP(step / ZUNO_TIMER_SWITCH_MAX_VALUE);
+		lp->step = ZUNO_TIMER_ALING_STEP(step / (ZUNO_TIMER_SWITCH_MAX_VALUE + 0x1));
 		lp->ticksEnd = g_zuno_timer.ticks + (step / ZUNO_SYSTIMER_PERIOD_MC);
 		lp->currentValue = current_level;
 		lp->targetValue = targetValue;
@@ -89,6 +95,7 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 		lp->channel = channel + 1;
 	}
 	zunoExitCritical();
+	zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp);
 }
 
 int zuno_CCSwitchMultilevelReport(byte channel, bool reply) {
@@ -175,9 +182,11 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 				lp->ticks = g_zuno_timer.ticks;
 				lp->targetValue = value;
 				zunoExitCritical();
+				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v4.dimmingDuration, lp);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
+				zuno_CCTimerBasicFindStop(channel);
 				break ;
 		}
 	}
@@ -263,8 +272,13 @@ void zuno_CCSwitchMultilevelTimer(size_t ticks, ZunoTimerBasic_t *lp) {
 		else
 			value -= ticks;
 		lp->currentValue = value;
-		if (value == ZUNO_TIMER_SWITCH_MAX_VALUE || value == ZUNO_TIMER_SWITCH_MIN_VALUE)
+		if (value >= ZUNO_TIMER_SWITCH_MAX_VALUE || value == ZUNO_TIMER_SWITCH_MIN_VALUE) {
 			lp->channel = 0x0;
+			if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
+				__cc_supervision._unpacked = true;
+				zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
+			}
+		}
 	}
 	ZWCC_BASIC_SETTER_1P(channel - 1, value);
 	zunoSendReport(channel);

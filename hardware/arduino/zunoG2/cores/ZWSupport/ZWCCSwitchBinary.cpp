@@ -60,12 +60,12 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 					zunoExitCritical();
 					break ;
 				}
+				lp->bMode = 0x0;
 				lp->channel = channel + 0x1;
 				lp->ticksEnd = g_zuno_timer.ticks + duration;
 				lp->targetValue = value;
 				zunoExitCritical();
-				if (zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration) != ZUNO_COMMAND_BLOCKED_WORKING)
-					lp->bMode = ZUNO_TIMER_SWITCH_SUPERVISION;
+				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration, lp);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
@@ -108,6 +108,6 @@ void zuno_CCSwitchBinaryTimer(size_t ticks, ZunoTimerBasic_t *lp) {
 	lp->channel = 0x0;
 	if (lp->bMode == ZUNO_TIMER_SWITCH_SUPERVISION) {
 		__cc_supervision._unpacked = true;
-		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0);
+		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
 	}
 }

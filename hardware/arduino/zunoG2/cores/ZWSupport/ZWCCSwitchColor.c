@@ -2,6 +2,7 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
+#include "ZWCCSuperVision.h"
 
 typedef struct					ZunoColorDuration_s {
 	uint8_t						targetValue;
@@ -30,7 +31,7 @@ static int _supported_report(uint8_t channel) {//Processed to get the value of t
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static void _start_level_set(size_t channel, size_t current_level, size_t targetValue, size_t colorComponentId, size_t step, size_t diming) {
+static void _start_level_set(size_t channel, size_t current_level, size_t targetValue, size_t colorComponentId, size_t step, size_t diming, size_t duration) {
 	ZunoTimerBasic_t								*lp;
 	ZunoColorDuration_t								*lpDur_b;
 	ZunoColorDuration_t								*lpDur_e;
@@ -64,6 +65,9 @@ static void _start_level_set(size_t channel, size_t current_level, size_t target
 			lpDur_b->colorComponentId = colorComponentId;
 			lpDur_b->currentValue = current_level;
 			lpDur_b->targetValue = targetValue;
+			zunoExitCritical();
+			zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp);
+			zunoEnterCritical();
 		}
 	}
 	zunoExitCritical();
@@ -123,7 +127,7 @@ static int	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_t
 				step = duration  / (currentValue - targetValue);
 				diming = 0x1;
 			}
-			_start_level_set(channel, currentValue, targetValue, colorComponentId, ZUNO_TIMER_ALING_STEP(step), diming);
+			_start_level_set(channel, currentValue, targetValue, colorComponentId, ZUNO_TIMER_ALING_STEP(step), diming, duration);
 		}
 		vg++;
 	}
@@ -137,6 +141,7 @@ static int _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare th
 	size_t											colorComponentId;
 	size_t											step;
 	size_t											diming;
+	size_t											duration;
 
 
 	pk = (ZwSwitchColorStartLevelChange_FRAME_u *)cmd->cmd;
@@ -158,10 +163,14 @@ static int _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare th
 		targetValue = ZUNO_TIMER_COLOR_MIN_VALUE;
 		diming = 0x1;
 	}
-	if (cmd->len == sizeof(ZwSwitchColorStartLevelChangeV2Frame_t))
+	if (cmd->len == sizeof(ZwSwitchColorStartLevelChangeV2Frame_t)) {
 		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * (1000) / ZUNO_TIMER_COLOR_MAX_VALUE;// Depending on the version, set the default step to increase or from the command we will
-	else
+		duration = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;
+	}
+	else {
 		step = zuno_CCTimerTicksTable7(pk->v3.duration) / ZUNO_TIMER_COLOR_MAX_VALUE;
+		duration = pk->v3.duration;
+	}
 	step = ZUNO_TIMER_ALING_STEP(step);
 	if (current_level == targetValue)
 		return (ZUNO_COMMAND_PROCESSED);
@@ -169,7 +178,7 @@ static int _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare th
 		zuno_universalSetter2P(channel, colorComponentId, targetValue);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	_start_level_set(channel, current_level, targetValue, colorComponentId, step, diming);
+	_start_level_set(channel, current_level, targetValue, colorComponentId, step, diming, duration);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -341,6 +350,10 @@ void zuno_CCSwitchColorTimer(size_t ticks, ZunoTimerBasic_t *lp) {
 				if (value == lpDur_b->targetValue) {
 					lpDur_b->channel = 0x0;
 					count--;
+				}
+				if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
+					__cc_supervision._unpacked = true;
+					zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
 				}
 				zuno_universalSetter2P(channel - 1, lpDur_b->colorComponentId, value);
 				zunoSendReport(channel);

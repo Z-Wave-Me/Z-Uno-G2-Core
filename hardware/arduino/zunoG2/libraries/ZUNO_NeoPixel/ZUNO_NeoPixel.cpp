@@ -61,7 +61,7 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		{.timer = TIMER0},
 		.lpLock = &gSyncTIMER0,
 		.dst = (void *)&(TIMER0->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = LdmaClassSignal_TIMER0_CC0,
+		.dmaSignal = LdmaClassSignal_TIMER0_UFOF,
 		.bus_clock = cmuClock_TIMER0,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -70,7 +70,7 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		{.timer = TIMER1},
 		.lpLock = &gSyncTIMER1,
 		.dst = (void *)&(TIMER1->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = LdmaClassSignal_TIMER1_CC0,
+		.dmaSignal = LdmaClassSignal_TIMER1_UFOF,
 		.bus_clock = cmuClock_TIMER1,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -79,7 +79,7 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		{.timer = WTIMER0},
 		.lpLock = &gSyncWTIMER0,
 		.dst = (void *)&(WTIMER0->CC[NEO_TIMER_CHANNEL].CCVB),
-		.dmaSignal = LdmaClassSignal_WTIMER0_CC0,
+		.dmaSignal = LdmaClassSignal_WTIMER0_UFOF,
 		.bus_clock = cmuClock_WTIMER0,
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
@@ -569,6 +569,7 @@ ZunoError_t NeoPixelClass::_init(size_t param) {
 			TIMER_InitCC(timer, NEO_TIMER_CHANNEL, &timerCCInit);
 			timerInit = TIMER_INIT_DEFAULT;
 			timerInit.enable = false;
+			timerInit.dmaClrAct = true;
 			TIMER_Init(timer, &timerInit);
 			timer->ROUTEPEN = (1UL << NEO_TIMER_CHANNEL);//enabled CC
 			break ;

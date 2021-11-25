@@ -51,6 +51,11 @@ enum {
 	CCS811_DRIVE_MODE_250MS = 0x04,
 };
 
+struct CCS811_Environment{
+    word humidity;
+    int  temperature;
+};
+
 /*=========================================================================*/
 
 #define CCS811_HW_ID_CODE 0x81
@@ -69,6 +74,8 @@ class ZUNO_CCS811
 			ZUNO_CCS811(/* args */) {};
 			~ZUNO_CCS811(){};
 		bool begin(uint8_t addr = CCS811_ADDRESS, TwoWire *wire = &Wire, uint8_t scl = SCL, uint8_t sda = SDA);
+
+		void setEnvironmentalData(CCS811_Environment * env);
 
 		void setEnvironmentalData(float humidity, float temperature);
 

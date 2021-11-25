@@ -5,7 +5,7 @@
 #include "ZUNO_NeoPixel.h"
 #include <math.h>
 
-#define NEO_RESET_MICROSECONDS			50
+#define NEO_RESET_MICROSECONDS			60
 
 #define NEO_FULL_PERIOD					100
 #define NEO_ZERO_HIGH_PERIOD_HZ800		32

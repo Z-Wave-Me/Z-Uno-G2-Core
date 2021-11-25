@@ -10,8 +10,6 @@
 #define ZUNO_TIMER_SWITCH_SUPERVISION			0x40
 #define ZUNO_TIMER_SWITCH_NO_BASIC				0x80
 
-#define ZUNO_TIMER_ALING_STEP(step)				(step / ZUNO_SYSTIMER_PERIOD_MC + (step % ZUNO_SYSTIMER_PERIOD_MC >= 0x5 ? 0x1 : 0x0))
-
 typedef struct					ZunoTimerBasic_s
 {
 	uint8_t						channel;//Tracked Channel Number + 1
@@ -26,7 +24,6 @@ typedef struct					ZunoTimerBasic_s
 
 typedef struct							ZunoTimer_s
 {
-	uint32_t							ticks;//The number of milliseconds since starting the current program divided by 10
 	ZunoTimerBasic_t					s_basic[0x4];
 }										ZunoTimer_t;
 

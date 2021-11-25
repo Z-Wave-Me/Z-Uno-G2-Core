@@ -21,8 +21,13 @@ int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
 	zunoEnterCritical();
 	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
+		duration = millis();
+		if (lp->ticksEnd > duration)
+			duration = lp->ticksEnd - duration;
+		else
+			duration = 0x0;
+		duration = zuno_CCTimerTable8(duration);
 		targetValue = lp->targetValue;
-		duration = zuno_CCTimerTable8(lp->ticksEnd - g_zuno_timer.ticks);
 	}
 	else {
 		targetValue = currentValue;
@@ -51,7 +56,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 	if (currentValue != value) {
 		switch (len) {
 			case sizeof(cmd->v2):
-				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration) / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0) {
+				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0) {
 					zuno_CCTimerBasicFindStop(channel);
 					break ;
 				}
@@ -62,7 +67,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 				}
 				lp->bMode = 0x0;
 				lp->channel = channel + 0x1;
-				lp->ticksEnd = g_zuno_timer.ticks + duration;
+				lp->ticksEnd = millis() + duration;
 				lp->targetValue = value;
 				zunoExitCritical();
 				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration, lp);
@@ -97,9 +102,11 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 	return (rs);
 }
 
-void zuno_CCSwitchBinaryTimer(size_t ticks, ZunoTimerBasic_t *lp) {
+void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp) {
 	size_t									channel;
+	size_t									ticks;
 
+	ticks = millis();
 	if (ticks < lp->ticksEnd)
 		return ;
 	channel = lp->channel;

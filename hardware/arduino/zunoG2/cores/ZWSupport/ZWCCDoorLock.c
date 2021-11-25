@@ -85,7 +85,7 @@ static int _set_operation(size_t channel, const ZwDoorLockOperationSet_t *cmd) {
 					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4:
 					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_INSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
 					case DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_FOR_OUTSIDE_DOOR_HANDLES_WITH_TIMEOUT_V4:
-						if ((duration = (lockTimeoutMinutes * 60 + lockTimeoutSeconds) * (1000 / ZUNO_SYSTIMER_PERIOD_MC)) == 0x0) {
+						if ((duration = (lockTimeoutMinutes * 60 + lockTimeoutSeconds) * (1000)) == 0x0) {
 							doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
 							zuno_CCTimerBasicFindStop(channel);
 							break ;
@@ -93,7 +93,7 @@ static int _set_operation(size_t channel, const ZwDoorLockOperationSet_t *cmd) {
 						zunoEnterCritical();
 						if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
 							lp->channel = channel + 0x1;
-							lp->ticksEnd = g_zuno_timer.ticks + duration;
+							lp->ticksEnd = millis() + duration;
 						}
 						zunoExitCritical();
 						break ;
@@ -257,8 +257,12 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	zunoEnterCritical();
 	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
 	if (properties_save.operationType == DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4 && (lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
-		ticks = lp->ticksEnd - g_zuno_timer.ticks;
-		tempos = ticks * ZUNO_SYSTIMER_PERIOD_MC / 1000;
+		ticks = millis();
+		if (lp->ticksEnd > ticks)
+			ticks = lp->ticksEnd - ticks;
+		else
+			ticks = 0x0;
+		tempos = ticks / 1000;
 		lockTimeoutMinutes = tempos / 60;
 		lockTimeoutSeconds = tempos % 60;
 		if (lockTimeoutSeconds == 0x0 && lockTimeoutMinutes == 0x0 && ticks != 0)
@@ -281,9 +285,11 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-void zuno_CCDoorLockTimer(size_t ticks, ZunoTimerBasic_t *lp) {
+void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp) {
 	size_t									channel;
+	size_t									ticks;
 
+	ticks = millis();
 	if (ticks < lp->ticksEnd)
 		return ;
 	channel = lp->channel;

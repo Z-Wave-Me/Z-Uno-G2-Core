@@ -110,6 +110,28 @@ uint8_t ZUNO_CCS811::readData() {
 	}
 }
 
+void ZUNO_CCS811::setEnvironmentalData(CCS811_Environment *env){
+	uint8_t						buf[0x4];
+	dword						ccs811_calctemp;
+
+	ccs811_calctemp = env->humidity;
+	ccs811_calctemp <<= 9;
+	ccs811_calctemp /= 10;
+
+	buf[0] = (ccs811_calctemp >> 8) & 0xFF;
+	buf[1] = (ccs811_calctemp) & 0xFF; 
+
+	ccs811_calctemp = env->temperature;
+	ccs811_calctemp += 2500; // SHIFT -25C == 0
+	ccs811_calctemp <<= 9;
+	ccs811_calctemp /= 100;
+
+	buf[2] = (ccs811_calctemp >> 8) & 0xFF;
+	buf[3] = (ccs811_calctemp) & 0xFF; 
+
+	this->write(CCS811_ENV_DATA, buf, 4);
+}
+
 /**************************************************************************/
 /*!
 		@brief  set the humidity and temperature compensation for the sensor.

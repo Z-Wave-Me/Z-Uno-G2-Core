@@ -61,7 +61,7 @@ static void _start_level_set(size_t channel, size_t current_level, size_t target
 			lpDur_b->channel = tempos;
 			lpDur_b->diming = diming;
 			lpDur_b->step = step;
-			lpDur_b->ticks = g_zuno_timer.ticks;
+			lpDur_b->ticks = millis();
 			lpDur_b->colorComponentId = colorComponentId;
 			lpDur_b->currentValue = current_level;
 			lpDur_b->targetValue = targetValue;
@@ -127,7 +127,7 @@ static int	_set_color(size_t channel, const ZwSwitchColorSetFrame_t *cmd, size_t
 				step = duration  / (currentValue - targetValue);
 				diming = 0x1;
 			}
-			_start_level_set(channel, currentValue, targetValue, colorComponentId, ZUNO_TIMER_ALING_STEP(step), diming, duration);
+			_start_level_set(channel, currentValue, targetValue, colorComponentId, step, diming, duration);
 		}
 		vg++;
 	}
@@ -164,14 +164,13 @@ static int _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare th
 		diming = 0x1;
 	}
 	if (cmd->len == sizeof(ZwSwitchColorStartLevelChangeV2Frame_t)) {
-		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * (1000) / ZUNO_TIMER_COLOR_MAX_VALUE;// Depending on the version, set the default step to increase or from the command we will
+		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * (1000) / (ZUNO_TIMER_COLOR_MAX_VALUE + 1);// Depending on the version, set the default step to increase or from the command we will
 		duration = ZUNO_TIMER_SWITCH_DEFAULT_DURATION;
 	}
 	else {
-		step = zuno_CCTimerTicksTable7(pk->v3.duration) / ZUNO_TIMER_COLOR_MAX_VALUE;
+		step = zuno_CCTimerTicksTable7(pk->v3.duration) / (ZUNO_TIMER_COLOR_MAX_VALUE + 1);
 		duration = pk->v3.duration;
 	}
-	step = ZUNO_TIMER_ALING_STEP(step);
 	if (current_level == targetValue)
 		return (ZUNO_COMMAND_PROCESSED);
 	if (step == 0x0) {
@@ -314,27 +313,29 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void zuno_CCSwitchMultilevelTimer(size_t ticks, ZunoTimerBasic_t *lp);
-void zuno_CCSwitchColorTimer(size_t ticks, ZunoTimerBasic_t *lp) {
+void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp);
+void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp) {
 	size_t									bMode;
 	size_t									channel;
-	size_t									value;
+	ssize_t									value;
 	size_t									count;
 	size_t									tempos;
 	size_t									step;
 	ZunoColorDuration_t						*lpDur_b;
 	ZunoColorDuration_t						*lpDur_e;
+	size_t									ticks;
 
 	if ((bMode = lp->bMode) == 0x0)
 		return ;
 	if ((bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0)
-		return (zuno_CCSwitchMultilevelTimer(ticks, lp));
+		return (zuno_CCSwitchMultilevelTimer(lp));
 	channel = lp->channel;
 	lpDur_b = &_duration[0];
 	lpDur_e = &_duration[(sizeof(_duration) / sizeof(ZunoColorDuration_t))];
 	count = 0x0;
 	while (lpDur_b < lpDur_e) {
 		if (lpDur_b->channel == channel) {
+			ticks = millis();
 			count++;
 			step = lpDur_b->step;
 			if ((tempos = lpDur_b->ticks + step) <= ticks) {
@@ -342,25 +343,32 @@ void zuno_CCSwitchColorTimer(size_t ticks, ZunoTimerBasic_t *lp) {
 				lpDur_b->ticks = tempos + (ticks % step);
 				ticks = ticks / step + 0x1;
 				value = lpDur_b->currentValue;
-				if (lpDur_b->diming == 0x0)
+				if (lpDur_b->diming == 0x0) {
 					value += ticks;
-				else
+					if (value >= lpDur_b->targetValue) {
+						lpDur_b->channel = 0x0;
+						count--;
+					}
+				}
+				else {
 					value -= ticks;
+					if (value <= lpDur_b->targetValue) {
+						lpDur_b->channel = 0x0;
+						count--;
+					}
+				}
 				lpDur_b->currentValue = value;
-				if (value == lpDur_b->targetValue) {
-					lpDur_b->channel = 0x0;
-					count--;
-				}
-				if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
-					__cc_supervision._unpacked = true;
-					zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
-				}
 				zuno_universalSetter2P(channel - 1, lpDur_b->colorComponentId, value);
 				zunoSendReport(channel);
 			}
 		}
 		lpDur_b++;
 	}
-	if (count == 0x0)
+	if (count == 0x0) {
 		lp->channel = 0x0;
+		if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
+			__cc_supervision._unpacked = true;
+			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
+		}
+	}
 }

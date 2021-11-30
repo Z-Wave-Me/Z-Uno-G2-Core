@@ -141,8 +141,12 @@ static int _up_interval_get(void) {
 
 static int _up_interval_set(const ZwZwaveWakeUpIntervalSetFrame_t *cmd) {
 	ZunoWakeUpSave_t						save;
+	size_t									interval;
 
-	save.wakeUpIntervalStepSeconds = (cmd->v3.seconds1 << 0x10) | (cmd->v3.seconds2 << 0x8) | (cmd->v3.seconds3);
+	interval = (cmd->v3.seconds1 << 0x10) | (cmd->v3.seconds2 << 0x8) | (cmd->v3.seconds3);
+	if (interval > WAKEUP_INTERVAL_MAX || interval < WAKEUP_INTERVAL_MIN)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	save.wakeUpIntervalStepSeconds = interval;
 	save.nodeId = cmd->v3.nodeid;
 	zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);
 	zunoSetWUPTimer(save.wakeUpIntervalStepSeconds);
@@ -177,7 +181,7 @@ int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
 			break ;
 	}
 	return rs;

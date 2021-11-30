@@ -27,6 +27,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoSecurityStatus()    	(g_zuno_sys->highest_security_level)
 #define zunoGrantedSecurityKeys()   (g_zuno_sys->granted_keys)
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
+#define zunoIsDbgModeOn()       ((g_zuno_sys->flags & ZUNO_CFGFILE_FLAG_DBG) != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->wakeup_reason)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 

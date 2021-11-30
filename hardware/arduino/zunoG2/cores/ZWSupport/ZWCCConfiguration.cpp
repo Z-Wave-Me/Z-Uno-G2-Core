@@ -2,11 +2,11 @@
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
 
-typedef uint32_t CONFIGPARAM_MAX_SIZE;
+typedef uint32_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
 
 #define CONFIGPARAM_MIN_PARAM			0x40
 #define CONFIGPARAM_MAX_PARAM			0x60
-#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(CONFIGPARAM_MAX_SIZE)) + EEPROM_CONFIGURATION_ADDR)
+#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(zunoCfgParamValue_t)) + EEPROM_CONFIGURATION_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
@@ -225,7 +225,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	zunoSaveCFGParam(param, (CONFIGPARAM_MAX_SIZE)value);
+	zunoSaveCFGParam(param, (zunoCfgParamValue_t)value);
 	zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -370,18 +370,29 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 }
 
 
-CONFIGPARAM_MAX_SIZE zunoLoadCFGParam(uint8_t param)
+zunoCfgParamValue_t zunoLoadCFGParam(uint8_t param)
 {
-	CONFIGPARAM_MAX_SIZE		out;
+	zunoCfgParamValue_t		out;
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
-	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&out);
+	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(zunoCfgParamValue_t), (uint8_t *)&out);
 	return (out);
 }
 
-void zunoSaveCFGParam(uint8_t param, CONFIGPARAM_MAX_SIZE value)
+void zunoSaveCFGParam(uint8_t param, zunoCfgParamValue_t value)
 {
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return ;
-	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(CONFIGPARAM_MAX_SIZE), (uint8_t *)&value);
+	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(zunoCfgParamValue_t), (uint8_t *)&value);
+}
+
+void zuno_CCConfiguration_OnDefault(){
+	int i;
+	const ZunoCFGParameter_t * param_data;
+	for(i=CONFIGPARAM_MIN_PARAM; i<=CONFIGPARAM_MAX_PARAM; i++){
+		param_data = zunoCFGParameter(i);
+		if(param_data != ZUNO_CFG_PARAMETER_UNKNOWN){
+			zunoSaveCFGParam(i, param_data->defaultValue);
+		}
+	}
 }

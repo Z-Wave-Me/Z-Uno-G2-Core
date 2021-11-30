@@ -411,6 +411,7 @@ void zuno_CCWakeup_OnSetup();
 void _zunoSleepOnFWUpgradeStop();
 void _zunoSleepOnFWUpgradeStart();
 #endif
+void initCCSDataDefault();
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -481,6 +482,12 @@ void * zunoJumpTable(int vec, void * data) {
                     }
                 }
                 #endif
+                // Clean when device was excluded
+                if( (evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS) && 
+                    (evnt->params[0] == INCLUSION_STATUS_SUCESS) && 
+                    (evnt->params[1] == 0)){
+                    initCCSDataDefault();
+                }
                 #ifdef LOGGING_DBG
                 LOGGING_UART.print("[");
                 LOGGING_UART.print(millis());

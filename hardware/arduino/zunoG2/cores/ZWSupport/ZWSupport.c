@@ -905,7 +905,7 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 
 // Channels fill routines
 bool zunoStartDeviceConfiguration() {
-	if(zunoInNetwork())
+	if(zunoInNetwork() && !zunoIsDbgModeOn())
 		return false;
 	memset(g_zuno_sys->zwave_cfg, 0, sizeof(ZUNODeviceConfiguation_t));
 	g_zuno_sys->flags = DEFAULT_CONFIG_FLAGS;
@@ -955,7 +955,9 @@ void dbgCCTypes() {
 	LOGGING_UART.println("\n-------------------------");
 }
 #endif
-static void initCCSData() {
+// 
+void zuno_CCConfiguration_OnDefault();
+void initCCSDataDefault() {
 	static bool inited = false;
 	if(inited)
 		return;
@@ -965,6 +967,9 @@ static void initCCSData() {
 	#ifdef WITH_CC_WAKEUP
 	zuno_CCWakeup_OnDefault();
 	#endif
+	//#ifdef WITH_CC_CONFIGURATION
+	zuno_CCConfiguration_OnDefault();
+	//#endif
 
 }
 // Adds user-defined command class support to main end-point NIF and Secure NIF. Be careful with that! 
@@ -980,7 +985,7 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 	#ifdef LOGGING_DBG
 	// dbgCCTypes();
 	#endif
-	initCCSData();
+	//initCCSData();
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;

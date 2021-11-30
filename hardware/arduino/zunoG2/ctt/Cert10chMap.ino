@@ -9,8 +9,6 @@
  * 1 humidity sensor
  * 
  */
-
-#include "Arduino.h"
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 
 ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0 MODERN_MULTICHANNEL WITH_CC_MULTICHANNEL);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
@@ -89,7 +87,7 @@ static const ZunoCFGParameter_t lp_param[] =
 	},
 	{
 		.name = "Humidity hysteresis",
-		.info = "Defines hysteresis of temperature reports in 10th of %",
+		.info = "Defines hysteresis of humidity reports in 10th of %",
 		.minValue = 0x1,
 		.maxValue = 0x14,
 		.defaultValue = 0x5,
@@ -118,39 +116,7 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	return (&lp_param[param - MIN_CFG_PARAM]);
 }
 
-static void _default_cfg(void)
-{
-	uint32_t					value;
-	uint32_t					i;
-
-	if (zunoNID() == 0x0) {
-		i = MIN_CFG_PARAM;
-		while (i <= MAX_CFG_PARAM) {
-			zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
-			i++;
-		}
-		return ;
-	}
-	i = MIN_CFG_PARAM;
-	while (i <= MAX_CFG_PARAM) {
-		value = zunoLoadCFGParam(i);
-		if (lp_param[i - MIN_CFG_PARAM].format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED)
-		{
-			if ((ssize_t)value < lp_param[i - MIN_CFG_PARAM].minValue || (ssize_t)value > lp_param[i - MIN_CFG_PARAM].maxValue)
-				zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
-		}
-		else {
-			if (value < (uint32_t)lp_param[i - MIN_CFG_PARAM].minValue || value > (uint32_t)lp_param[i - MIN_CFG_PARAM].maxValue)
-				zunoSaveCFGParam(i, (uint32_t)lp_param[i - MIN_CFG_PARAM].defaultValue);
-		}
-		i++;
-	}
-	return ;
-	
-}
-
 void setup() {
-	_default_cfg();
 	MY_SERIAL.begin(115200);
 	// Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
 	pinMode(LedPin1, OUTPUT);
@@ -165,6 +131,7 @@ void setup() {
 	// Start dht sensor
 	dht22_sensor.begin();
 	dht22_sensor.readTemperatureC10(true);
+
 }
 
 void loop() {
@@ -179,15 +146,13 @@ void loop() {
 	// Trigger motion and wait for relax (about 5 sec) before report idle
 	byte currentMotionValue = !digitalRead(MotionPin);
 	if (currentMotionValue) {
-		if ((millis() - motionTrigTime) < zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM)) {
-		lastMotionValue = 1;
-		zunoSendReport(SENSOR_MOTION_CHANNEL);
-		zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);
+		if ((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM)) {
+			lastMotionValue = 1;
+			zunoSendReport(SENSOR_MOTION_CHANNEL);
+			zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);
+			motionTrigTime = millis();
 		}
-		motionTrigTime = millis();
-	}
-	if (lastMotionValue && 
-		((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
+	} else if (lastMotionValue) {
 		lastMotionValue = 0; 
 		zunoSendReport(SENSOR_MOTION_CHANNEL);
 		zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_OFF);
@@ -198,7 +163,6 @@ void loop() {
 		lastDoorValue = currentDoorValue;
 		zunoSendReport(SENSOR_DOOR_CHANNEL);
 	}
-	
 	// Temperature sensor (based on DHT22 digital sensor)
 	int16_t currentTemperatureValue = dht22_sensor.readTemperatureC10();
 	if(abs(lastTemperatureValue - currentTemperatureValue) > zunoLoadCFGParam(TEMP_HYST_PARAM)){

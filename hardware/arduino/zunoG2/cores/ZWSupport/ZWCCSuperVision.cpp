@@ -3,6 +3,7 @@
 #include "Debug.h"
 #include "ZWCCSuperVision.h"
 #include "ZWCCTimer.h"
+#include "ZWCCAssociation.h"
 
 
 uint8_t _previously_receive_session_id = 0xFF;
@@ -74,9 +75,12 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 			break ;
 		case COMMAND_CLASS_ASSOCIATION:
 		case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
-			if ((ZW_CMD == 0x1 || ZW_CMD == 0x4) && zuno_CCAssociationHandler(cmd) == ZUNO_UNKNOWN_CMD)
-				break ;
+			if(cmd->dst_zw_channel == 0)
+				return ZUNO_UNKNOWN_CMD;
+			//if (ZW_CMD == ASSOCIATION_SET || ZW_CMD == ASSOCIATION_REMOVE) //&& zuno_CCAssociationHandler(cmd) == ZUNO_UNKNOWN_CMD)
+			//	break ;
 			__unpackSV(cmd, frame);
+			return (ZUNO_COMMAND_UNPACKED);
 			break ;
 		default:
 			__unpackSV(cmd, frame);

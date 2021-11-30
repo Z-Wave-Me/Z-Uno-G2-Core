@@ -79,8 +79,10 @@ static int _assotiation_get(ZUNOCommandPacket_t *packet) {
 }
 
 int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
-	int				rs;
+	int				rs = ZUNO_UNKNOWN_CMD;
 
+	if(cmd->dst_zw_channel == 0)
+		return rs;
 	switch(ZW_CMD) {
 		case ASSOCIATION_SET:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
@@ -99,18 +101,19 @@ int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd) {
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
-			break ;
+			break;
 	}
 	return (rs);
 }
 
 int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
-	int				rs;
-
+	int			rs = ZUNO_UNKNOWN_CMD;
+	if(cmd->dst_zw_channel == 0)
+		return rs;
 	switch(ZW_CMD) {
+		
 		case MULTI_CHANNEL_ASSOCIATION_SET:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
-			break ;
 		case MULTI_CHANNEL_ASSOCIATION_REMOVE:
 			rs = _group_id_rm(ASSOCIATION_GROUP_ID);
 			break ;

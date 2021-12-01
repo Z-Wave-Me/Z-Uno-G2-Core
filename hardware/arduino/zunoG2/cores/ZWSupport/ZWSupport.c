@@ -1030,9 +1030,15 @@ void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handle
 }
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
-		byte naked_channel = ZUNO_CFG_CHANNEL(i).zw_channel & (~ZWAVE_CHANNEL_MAPPED_BIT);
-		if(naked_channel == zw_ch)
-			return &(ZUNO_CFG_CHANNEL(i));
+		if(zw_ch == 0) {
+			if(ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT)
+				return &(ZUNO_CFG_CHANNEL(i));
+		} else {
+			uint8_t naked_channel = ZUNO_CFG_CHANNEL(i).zw_channel & (~ZWAVE_CHANNEL_MAPPED_BIT);
+			if(naked_channel == zw_ch)
+				return &(ZUNO_CFG_CHANNEL(i));
+		}
+		
 	}
 	return NULL;
 }

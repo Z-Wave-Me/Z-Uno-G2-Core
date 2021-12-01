@@ -9,7 +9,7 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	size_t								userIconType;
 	size_t								roleType;
 
-	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(zw_channel);
+	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(cmd->dst_zw_channel);
 	uint8_t type_index = ch_data->type -1;
 	report = (ZwZwavePlusInfoReportFrame_t *)&CMD_REPLY_CC;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;

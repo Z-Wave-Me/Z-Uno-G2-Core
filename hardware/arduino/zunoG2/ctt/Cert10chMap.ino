@@ -11,8 +11,9 @@
  */
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 
-ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0 MODERN_MULTICHANNEL WITH_CC_MULTICHANNEL);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
+ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0 MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);//LOGGING_DBG LOGGING_UART=Serial0 SKETCH_FLAGS=HEADER_FLAGS_DBG
 #define MY_SERIAL Serial0
+
 
 // Pins definitions 
 #define LedPin1         9
@@ -23,7 +24,7 @@ ZUNO_ENABLE(LOGGING_DBG LOGGING_UART=Serial0 MODERN_MULTICHANNEL WITH_CC_MULTICH
 #define LedPin6         PWM4
 #define MotionPin       12
 #define DoorPin         19
-#define DHTPin          8
+#define DHTPin          8 
 #define SWITCH_ON       0xff
 #define SWITCH_OFF      0
 
@@ -77,9 +78,9 @@ static const ZunoCFGParameter_t lp_param[] =
 	{
 		.name = "Temperature hysteresis",
 		.info = "Defines hysteresis of temperature reports in 10th of *C",
-		.minValue = 0x1,
-		.maxValue = 0x14,
-		.defaultValue = 0x5,
+		.minValue = 1,
+		.maxValue = 20,
+		.defaultValue = 5,
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
@@ -88,9 +89,9 @@ static const ZunoCFGParameter_t lp_param[] =
 	{
 		.name = "Humidity hysteresis",
 		.info = "Defines hysteresis of humidity reports in 10th of %",
-		.minValue = 0x1,
-		.maxValue = 0x14,
-		.defaultValue = 0x5,
+		.minValue = 1,
+		.maxValue = 20,
+		.defaultValue = 5,
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
@@ -99,9 +100,9 @@ static const ZunoCFGParameter_t lp_param[] =
 	{
 		.name = "Motion trigger time",
 		.info = "Minimal time interval of the next motion sensor trigger",
-		.minValue = 0x0,
-		.maxValue = 0x5000,
-		.defaultValue = 0x1000,
+		.minValue = 0,
+		.maxValue = 5000,
+		.defaultValue = 100000,
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
@@ -115,9 +116,10 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 		return (ZUNO_CFG_PARAMETER_UNKNOWN);
 	return (&lp_param[param - MIN_CFG_PARAM]);
 }
-
+ 
 void setup() {
 	MY_SERIAL.begin(115200);
+	
 	// Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
 	pinMode(LedPin1, OUTPUT);
 	pinMode(LedPin2, OUTPUT);
@@ -146,7 +148,7 @@ void loop() {
 	// Trigger motion and wait for relax (about 5 sec) before report idle
 	byte currentMotionValue = !digitalRead(MotionPin);
 	if (currentMotionValue) {
-		if ((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM)) {
+		if (!lastMotionValue && ((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
 			lastMotionValue = 1;
 			zunoSendReport(SENSOR_MOTION_CHANNEL);
 			zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);

@@ -22,6 +22,8 @@ typedef struct						ZunoCFGParameter_s
 	uint8_t							format: 3;
 	uint8_t							readOnly: 1;
 	uint8_t							altering: 1;
+	uint8_t							advanced: 1;
+	
 }									ZunoCFGParameter_t;
 
 #define ZUNO_CFG_PARAMETER_UNKNOWN			((const ZunoCFGParameter_t *)0)

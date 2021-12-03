@@ -433,5 +433,13 @@ typedef struct										ZwConfigurationBuilkReportFrame_s
 }													ZwConfigurationBuilkReportFrame_t;
 
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd);
+typedef enum{
+	PARAM_SV_SYSTEM_OK,
+	PARAM_SV_USER_OK,
+	PARAM_SV_UNKNOWN_PARAM,
+	PARAM_SV_WRONG_VALUE,
+	PARAM_SV_WRONG_PARAM_SIZE
+} PARAM_SV_STATUS;
+uint8_t checkConfigurationParameterSVSet(uint8_t * cmd);
 
 #endif // ZWCC_CONFIGURATION_H

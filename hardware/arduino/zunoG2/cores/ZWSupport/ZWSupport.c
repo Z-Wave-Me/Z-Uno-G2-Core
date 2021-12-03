@@ -1285,3 +1285,13 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
     zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, pkg); // DBG
 	pkg->src_zw_channel = last_ch; // Bring it back!
 }	
+uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
+	uint32_t res = 0;
+	while(sz){
+		res <<= 8;
+		res |= *packet;
+		packet++;
+		sz--;
+	}
+	return  res;
+}

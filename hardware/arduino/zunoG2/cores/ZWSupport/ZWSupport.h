@@ -508,5 +508,6 @@ typedef struct ZUnoDevTypeDef_s{
 
 extern  const ZUNOChannelCCS_t ZUNO_CC_TYPES[];
 extern  const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[];
+uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz);
 #define MAX(A, B) (A>B ? A : B)
 #endif // ZW_COMMAND_CLASS_SUPPORT

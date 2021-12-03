@@ -77,7 +77,7 @@ static const ZunoCFGParameter_t lp_param[] =
 {
 	{
 		.name = "Temperature hysteresis",
-		.info = "Defines hysteresis of temperature reports in 10th of *C",
+		.info = "Defines hysteresis of temperature",
 		.minValue = 1,
 		.maxValue = 20,
 		.defaultValue = 5,
@@ -88,7 +88,7 @@ static const ZunoCFGParameter_t lp_param[] =
 	},
 	{
 		.name = "Humidity hysteresis",
-		.info = "Defines hysteresis of humidity reports in 10th of %",
+		.info = "Defines hysteresis of humidity",
 		.minValue = 1,
 		.maxValue = 20,
 		.defaultValue = 5,
@@ -99,10 +99,10 @@ static const ZunoCFGParameter_t lp_param[] =
 	},
 	{
 		.name = "Motion trigger time",
-		.info = "Minimal time interval of the next motion sensor trigger",
+		.info = "Minimal trigger interval in ms",
 		.minValue = 0,
-		.maxValue = 5000,
-		.defaultValue = 100000,
+		.maxValue = 100000,
+		.defaultValue = 5000,
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,

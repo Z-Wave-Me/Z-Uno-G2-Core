@@ -114,6 +114,7 @@ int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd) {
 		
 		case MULTI_CHANNEL_ASSOCIATION_SET:
 			rs = _group_id(ASSOCIATION_GROUP_ID);
+			break ;
 		case MULTI_CHANNEL_ASSOCIATION_REMOVE:
 			rs = _group_id_rm(ASSOCIATION_GROUP_ID);
 			break ;

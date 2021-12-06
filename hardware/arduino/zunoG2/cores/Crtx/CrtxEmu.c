@@ -3093,3 +3093,49 @@ void EMU_SetBiasMode(EMU_BiasMode_TypeDef mode)
 }
 #endif
 #endif//#if ZUNO_ASSEMBLY_TYPE == ZUNO_BOOTLOADER
+
+
+#if defined(_EMU_TEMP_TEMP_MASK)
+
+/** As we do not know what energy mode a temperature measurement was taken at,
+ * we choose a constant for the TEMPCO calculation that is midway between the
+ * EM0/EM1 constant and the EM2/EM3/EM4 constant.
+ */
+#define EMU_TEMPCO_CONST (0.273f)
+
+/***************************************************************************//**
+ * @brief
+ *   Get temperature in degrees Celcius
+ *
+ * @return
+ *   Temperature in degrees Celcius
+ ******************************************************************************/
+float EMU_TemperatureGet(void)
+{
+#if defined(_EMU_TEMP_TEMPLSB_MASK)
+  return ((float) ((EMU->TEMP & (_EMU_TEMP_TEMP_MASK | _EMU_TEMP_TEMPLSB_MASK) )
+                   >> _EMU_TEMP_TEMPLSB_SHIFT)
+          ) / 4.0f - EMU_TEMP_ZERO_C_IN_KELVIN;
+#else
+  uint32_t val1;
+  uint32_t val2;
+  float tempCo;
+  uint32_t diTemp, diEmu;
+
+  // Calculate calibration temp based on DI page values
+  diTemp = ((DEVINFO->CAL & _DEVINFO_CAL_TEMP_MASK) >> _DEVINFO_CAL_TEMP_SHIFT);
+  diEmu = ((DEVINFO->EMUTEMP & _DEVINFO_EMUTEMP_EMUTEMPROOM_MASK) >> _DEVINFO_EMUTEMP_EMUTEMPROOM_SHIFT);
+  tempCo = EMU_TEMPCO_CONST + (diEmu / 100.0f);
+
+  // Read temperature twice to ensure a stable value
+  do {
+    val1 = (EMU->TEMP & _EMU_TEMP_TEMP_MASK)
+           >> _EMU_TEMP_TEMP_SHIFT;
+    val2 = (EMU->TEMP & _EMU_TEMP_TEMP_MASK)
+           >> _EMU_TEMP_TEMP_SHIFT;
+  } while (val1 != val2);
+
+  return diTemp + tempCo * ((int) diEmu - (int) val1);
+#endif
+}
+#endif //defined(_EMU_TEMP_TEMP_MASK)

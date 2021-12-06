@@ -84,7 +84,8 @@ static const ZunoCFGParameter_t lp_param[] =
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
-		.altering = false
+		.altering = false,
+		.advanced = false
 	},
 	{
 		.name = "Humidity hysteresis",
@@ -95,7 +96,8 @@ static const ZunoCFGParameter_t lp_param[] =
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
-		.altering = false
+		.altering = false,
+		.advanced = false
 	},
 	{
 		.name = "Motion trigger time",
@@ -106,7 +108,8 @@ static const ZunoCFGParameter_t lp_param[] =
 		.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 		.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 		.readOnly = false,
-		.altering = false
+		.altering = false,
+		.advanced = false
 	}
 };
 

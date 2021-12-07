@@ -20,6 +20,7 @@ typedef struct ZUNOCodeHeader_s{
 	uint8_t     ota_firmwares_count;
 	ZUNOOTAFWDescr_t * ota_firmwares_descriptions;
 	uint32_t    ota_pincode;
+	uint32_t    ota_custom_offset;
 } ZUNOCodeHeader_t;
 
 // Universal apport index

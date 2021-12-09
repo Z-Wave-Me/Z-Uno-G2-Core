@@ -4,8 +4,6 @@
 
 typedef uint32_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
 
-#define CONFIGPARAM_MIN_PARAM			0x40
-#define CONFIGPARAM_MAX_PARAM			0x60
 #define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(zunoCfgParamValue_t)) + EEPROM_CONFIGURATION_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "

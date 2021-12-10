@@ -253,7 +253,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\
-}\		
+}\
 
 #define ZUNO_CONFIG_PARAMETER_2B(NAME, MN, MX, DEF)	\
 {\
@@ -281,7 +281,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\
-}\		
+}\
 
 #define ZUNO_CONFIG_PARAMETER_2B_INFO(NAME, INFO,  MN, MX, DEF)	\
 {\

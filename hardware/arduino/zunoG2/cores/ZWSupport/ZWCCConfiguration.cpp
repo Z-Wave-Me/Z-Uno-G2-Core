@@ -4,8 +4,6 @@
 
 typedef uint32_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
 
-#define CONFIGPARAM_MIN_PARAM			0x40
-#define CONFIGPARAM_MAX_PARAM			0x60
 #define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(zunoCfgParamValue_t)) + EEPROM_CONFIGURATION_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
@@ -17,9 +15,30 @@ typedef enum				ZunoCFGTypeHandler_e
 }							ZunoCFGTypeHandler_t;
 
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
+// DEFAULT metada for configuration parameters
+const ZunoCFGParameter_t CFGPARAM_DEFAULT =
+{
+	.name = "Parameter NN",
+	.info = "Custom configuration parameter",
+	.minValue = 0x0,
+	.maxValue = 0x7FFFFFFF,
+	.defaultValue = 0x7FFFFFFF,
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false,
+	.advanced = false
+}; 
+// Default method for zuno configuration parameter's metadata
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
-	(void)param;
-	return (ZUNO_CFG_PARAMETER_UNKNOWN);
+	static ZunoCFGParameter_t param_data;
+	memcpy(&param_data, &CFGPARAM_DEFAULT, sizeof(ZunoCFGParameter_t));
+	if(param > CONFIGPARAM_MAX_PARAM)
+		return (ZUNO_CFG_PARAMETER_UNKNOWN);
+	char* p_nn  = strstr(param_data.name, "NN");
+	p_nn[0] = '0' + (param / 10) % 10;
+	p_nn[1] = '0' + (param % 10);
+	return (const ZunoCFGParameter_t *)&param_data;
 }
 
 // System side parameters information

@@ -1040,7 +1040,7 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 		}
 		
 	}
-	return NULL;
+	return &(ZUNO_CFG_CHANNEL(0));
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {

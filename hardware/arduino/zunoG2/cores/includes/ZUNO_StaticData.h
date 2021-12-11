@@ -201,4 +201,100 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_SETUP_ISR_1MSTIMER(H) 
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
+
+#define ZUNO_SETUP_CONFIGPARAMETERS(...) 	\
+							    static const ZunoCFGParameter_t __g_zuno_lp_param[]= \
+								{ \
+									__VA_ARGS__, \
+								};\
+								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
+								if (param < 0x40 || param > (0x40-1 + (sizeof(__g_zuno_lp_param)/sizeof(ZunoCFGParameter_t)))) \
+									return (ZUNO_CFG_PARAMETER_UNKNOWN); \
+									return (&__g_zuno_lp_param[param - 0x40]); \
+							}\
+
+#define ZUNO_CONFIG_PARAMETER_INFO(NAME, INFO, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_1B(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_2B(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_1B_INFO(NAME, INFO, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_2B_INFO(NAME, INFO,  MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
 #endif // ZUNO_STATIC_DATA_H

@@ -5,6 +5,8 @@
 #include "Sync.h"
 #include "LdmaClass.h"
 
+#define SPI_BUFFER_LENGTH				(64)
+
 #define SPI				SPI1
 
 #define SPI_CLOCK_DIV2				0x2
@@ -38,8 +40,18 @@ typedef struct								ZunoSpiUsartTypeConfig_s
 	uint8_t									sck;
 	uint8_t									miso;
 	uint8_t									mosi;
-	uint8_t									ss;
 }											ZunoSpiUsartTypeConfig_t;
+
+typedef struct								ZunoSpiSlave_s
+{
+	LdmaClassReceivedCyclical_t				arrayReceivedCyclical;
+	LdmaClassTransferSingle_t				array_w;
+	ssize_t									channel;
+	ssize_t									channel_w;
+	uint16_t								len;
+	uint16_t								count;
+	uint8_t									buffer[];
+}											ZunoSpiSlave_t;
 
 class SPISettings {
 	public:
@@ -69,6 +81,15 @@ class SPIClass {
 		inline void											setClockDivider(uint8_t divider) {this->setClockDivider(divider, this->_ss_pin);};
 		void												setClockDivider(uint8_t divider, uint8_t slaveSelectPin);
 
+		size_t												write(uint8_t data) { return (this->write((const uint8_t *)&data, 0x1));};
+		size_t												write(const uint8_t *data, size_t quantity);
+		ZunoError_t											setSlave(uint8_t mode) {return (this->setSlave(mode, SPI_BUFFER_LENGTH));};
+		ZunoError_t											setSlave(uint8_t mode, uint16_t len);
+		void												beginTransmissionSlave(void);
+		uint16_t												endTransmissionSlave(void);
+		int													available(void);
+		int													peek(void);
+		int													read(void);
 		ZunoError_t											begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
 		inline void											beginTransaction(SPISettings *spi_setings) {this->beginTransaction(spi_setings->clock, spi_setings->bitOrder, spi_setings->dataMode);};
 		inline void											beginTransaction(void) {this->beginTransaction(1000000, MSBFIRST, SPI_MODE0);};
@@ -84,6 +105,7 @@ class SPIClass {
 		inline uint8_t										transfer(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 
 	private:
+		inline int											_readLock(uint8_t bOffset);
 		size_t												_transferDate(size_t data, size_t bFlags);
 		ZunoError_t											_transferStrlen(void *b, size_t bFlags);
 		ZunoError_t											_transfer(void *b, size_t count, size_t bFlags);
@@ -95,7 +117,12 @@ class SPIClass {
 		static const USART_InitSync_TypeDef					_initSpi;
 		const ZunoSpiUsartTypeConfig_t						*_config;
 		size_t												_baudrate;
+		ZunoSpiSlave_t										*_slave;
 		uint8_t												_ss_pin;
+		uint8_t												_ss_loc;
+		uint8_t												_sck_pin;
+		uint8_t												_mosi_pin;
+		uint8_t												_miso_pin;
 		volatile uint8_t									_lpKey;
 };
 

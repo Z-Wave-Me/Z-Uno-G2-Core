@@ -34,7 +34,6 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	size_t										type_index;
 	ZwMultiChannelCapabilityReportFrame_t		*report;
 	uint8_t										*commandClass;
-	size_t										security_mask;
 
 	endpoint = cmd->properties1 & 0x7F;
 	// Get the info about selected endpoint
@@ -49,10 +48,7 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	report->specificDeviceClass = ZUNO_DEV_TYPES[type_index].spec_type;
 	commandClass = &report->commandClass[0];
 	commandClass = zuno_AddCommonClass(commandClass);
-	security_mask = zunoGrantedSecurityKeys();
-	//if ((security_mask & SECURITY_KEY_S0_BIT) != 0)
 	commandClass++[0] =  COMMAND_CLASS_SECURITY;
-	//if ((security_mask & (SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S2_AUTHENTICATED_BIT | SECURITY_KEY_S2_ACCESS_BIT)) != 0)
 	commandClass++[0] =  COMMAND_CLASS_SECURITY_2;
 	commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
 	if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))

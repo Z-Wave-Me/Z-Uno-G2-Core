@@ -81,16 +81,20 @@ size_t LeUartClass::write(const uint8_t *b, size_t count) {
 	if (zunoSyncLockWrite(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
 		return (0);
 	usart = LEUART0;
+	ctrl = usart->CTRL;
+	ms = 1000 * 0x8 * count * ((((ctrl & _LEUART_CTRL_DATABITS_MASK) >> _LEUART_CTRL_DATABITS_SHIFT) + 0x8) + 0x1 + ((ctrl & _LEUART_CTRL_STOPBITS_MASK) == LEUART_CTRL_STOPBITS_TWO ? 0x2 : 0x1) + ((ctrl & _LEUART_CTRL_PARITY_MASK) == LEUART_CTRL_PARITY_EVEN ? 0x1 : 0x0)) / ((((ctrl & _LEUART_CTRL_DATABITS_MASK) >> _LEUART_CTRL_DATABITS_SHIFT) + 0x8) * this->_baudrate);
+	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
 	if (count <= LE_UART_MIN_WRITE_ZDMA) {
 		e = b + count;
-		while (b < e)
+		ms = ms / count;
+		while (b < e) {
 			LEUART_Tx(usart, b++[0]);
+			delay(ms);
+		}
 		while (!(usart->STATUS & LEUART_STATUS_TXBL))/* Check that transmit buffer is empty */
 			__NOP();
 	}
 	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, LdmaClassSignal_LEUART0_TXBL, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0) {
-		ctrl = usart->CTRL;
-		ms = 1000 * 0x8 * count * ((((ctrl & _LEUART_CTRL_DATABITS_MASK) >> _LEUART_CTRL_DATABITS_SHIFT) + 0x3) + 0x1 + ((ctrl & _LEUART_CTRL_STOPBITS_MASK) == LEUART_CTRL_STOPBITS_TWO ? 0x2 : 0x1) + ((ctrl & _LEUART_CTRL_PARITY_MASK) == LEUART_CTRL_PARITY_EVEN ? 0x1 : 0x0)) / ((((ctrl & _LEUART_CTRL_DATABITS_MASK) >> _LEUART_CTRL_DATABITS_SHIFT) + 0x8) * this->_baudrate);
 		delay(ms);
 		while (!(usart->STATUS & LEUART_STATUS_TXBL))/* Check that transmit buffer is empty */
 			__NOP();
@@ -155,7 +159,12 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 		return (this->_beginFaill(ZunoErrorInvalidPin, bFree, b));// wrong index or pin combination // The pin is valid, but it doesn't support by this USART interface
 	if ((ret = zunoSyncOpen(&gSyncLeUart, SyncMasterLeUart, 0x0, 0x0, &this->_lpKey)) != ZunoErrorOk)
 		return (this->_beginFaill(ret, bFree, b));
+	// Enable LE (low energy) clocks
+	CMU_ClockEnable(cmuClock_HFLE, true); // Necessary for accessing LE modules
+	CMU->CTRL|=CMU_CTRL_CLKOUTSEL0_LFRCO;// CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFRCO); // Set a reference clock
+	// Enable clocks for LEUART0
 	CMU_ClockEnable(cmuClock_LEUART0, true);
+	CMU->LFBPRESC0 = (CMU->LFBPRESC0 & ~_CMU_LFBPRESC0_LEUART0_MASK)  | CMU_LFBPRESC0_LEUART0_DIV1;// CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_1); // Don't prescale LEUART clock
 	usartInit = LEUART_INIT_DEFAULT;
 	this->_baudrate = baudrate;
 	usartInit.baudrate = baudrate;
@@ -163,8 +172,8 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	usartInit.parity = (LEUART_Parity_TypeDef)(option & _LEUART_CTRL_PARITY_MASK);
 	usartInit.stopbits = (LEUART_Stopbits_TypeDef)(option & _LEUART_CTRL_STOPBITS_MASK);
 	LEUART_Init(usart, &usartInit);
-	LEUART_TxDmaInEM2Enable(usart, true);
 	LEUART_RxDmaInEM2Enable(usart, true);
+	LEUART_TxDmaInEM2Enable(usart, true);
 	pinMode(tx, OUTPUT_UP);
 	pinMode(rx, INPUT_PULLUP);
 	if (this->_bFree == true)

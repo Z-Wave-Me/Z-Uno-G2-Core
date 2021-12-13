@@ -184,9 +184,6 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	usart->ROUTELOC0 = tx_loc << _LEUART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _LEUART_ROUTELOC0_RXLOC_SHIFT;
 	usart->ROUTEPEN = LEUART_ROUTEPEN_TXPEN | LEUART_ROUTEPEN_RXPEN;
-	// Enable LEUART0 RX/TX interrupts
-	LEUART_IntEnable(LEUART0, LEUART_IEN_RXDATAV | LEUART_IEN_TXC);
-	NVIC_EnableIRQ(LEUART0_IRQn);
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
 	if (len != 0x0) {

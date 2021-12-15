@@ -131,6 +131,7 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	usart = config->usart;
 	frame = usart->FRAME;
 	ms = 1000 * 0x8 * count * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
+	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
 	if (count <= HARDWARE_SERIAL_MIN_WRITE_ZDMA) {
 		e = b + count;
 		ms = ms / count;

@@ -23,8 +23,7 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable0 =
 	.bus_clock = cmuClock_USART0,
 	.sck = SCK,
 	.miso = MISO,
-	.mosi = MOSI,
-	.ss = UNKNOWN_PIN
+	.mosi = MOSI
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 = 
@@ -36,8 +35,7 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 =
 	.bus_clock = cmuClock_USART1,
 	.sck = SCK,
 	.miso = MISO,
-	.mosi = MOSI,
-	.ss = UNKNOWN_PIN
+	.mosi = MOSI
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 = 
@@ -49,15 +47,14 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 =
 	.bus_clock = cmuClock_USART2,
 	.sck = SCK2,
 	.miso = MISO2,
-	.mosi = MOSI2,
-	.ss = UNKNOWN_PIN
+	.mosi = MOSI2
 };
 
 const USART_InitSync_TypeDef SPIClass::_initSpi = SPI_INIT_DEFAULT;//USART_INITSYNC_DEFAULT;
 
 
 /* Public Constructors */
-SPIClass::SPIClass(uint8_t numberConfig): _baudrate(0), _lpKey(false) {
+SPIClass::SPIClass(uint8_t numberConfig): _baudrate(0), _slave(0x0), _lpKey(false) {
 	const ZunoSpiUsartTypeConfig_t				*config;
 
 	switch (numberConfig) {
@@ -79,7 +76,131 @@ void SPIClass::begin(void) {
 	const ZunoSpiUsartTypeConfig_t				*config;
 
 	config = this->_config;
-	this->begin(config->sck, config->miso, config->mosi, config->ss);
+	this->begin(config->sck, config->miso, config->mosi, UNKNOWN_PIN);
+}
+
+size_t SPIClass::write(const uint8_t *data, size_t quantity) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoSpiSlave_t						*slave;
+	size_t								len;
+	uint8_t								*b;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return (0x0);
+	if ((slave = this->_slave)!= 0x0) {
+		if ((len = slave->count) + quantity > slave->len) {
+			quantity = 0x0;
+		}
+		else {
+			slave->count = len + quantity;
+			b = &slave->buffer[len];
+			len = 0;
+			while (len < quantity) {
+				b[len] = data[len];
+				len++;
+			}
+		}
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (quantity);
+}
+
+
+void SPIClass::beginTransmissionSlave(void) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoSpiSlave_t						*slave;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	if ((slave = this->_slave)!= 0x0) {
+		LdmaClass::transferStop(slave->channel_w);
+		slave->channel_w = -1;
+		slave->count = 0x0;
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+}
+
+uint16_t SPIClass::endTransmissionSlave(void) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoSpiSlave_t						*slave;
+	size_t								len;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return (0x0);
+	if ((slave = this->_slave)!= 0x0) {
+		len = slave->count;
+		if ((slave->channel_w = LdmaClass::transferSingle(&slave->buffer[0x0], (void*)&(config->usart->TXDATA), len, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &slave->array_w)) > 0x0) {
+			;
+		}
+		else
+			len = 0x0;
+	}
+	else
+		len = 0x0;
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (len);
+}
+
+ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
+	ZunoError_t							ret;
+	USART_TypeDef						*usart;
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoSpiSlave_t						*slave;
+
+	if (len < SPI_BUFFER_LENGTH)
+		len = SPI_BUFFER_LENGTH;
+	config = this->_config;
+	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
+		return (ret);
+	usart = config->usart;
+	if (mode == true) {
+		if (this->_slave == 0x0) {
+			if ((slave = (ZunoSpiSlave_t *)malloc(sizeof(ZunoSpiSlave_t) + len)) == 0)
+				ret = ZunoErrorMemory;
+			else {
+				USART_Enable(usart, usartDisable);
+				slave->len = len / 0x2;
+				if ((slave->channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, &slave->buffer[len / 0x2], len / 0x2, config->dmaSignalRead, ldmaCtrlSizeByte, &slave->arrayReceivedCyclical)) >= 0x0) {
+					slave->channel_w = -1;
+					slave->count = 0x0;
+					this->_slave = slave;
+					usart->CMD = USART_CMD_MASTERDIS;
+					pinMode(this->_sck_pin, INPUT_UP);
+					pinMode((this->_ss_pin == UNKNOWN_PIN) ? SS : this->_ss_pin, INPUT_UP);
+					pinMode(this->_mosi_pin, INPUT_UP);
+					pinMode(this->_miso_pin, OUTPUT_UP);
+					usart->ROUTELOC0 = usart->ROUTELOC0 | (this->_ss_loc << _USART_ROUTELOC0_CSLOC_SHIFT);// Set USART pin locations
+					usart->ROUTEPEN = USART_ROUTEPEN_CLKPEN | USART_ROUTEPEN_CSPEN | USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;// Enable USART pins
+				}
+				else {
+					free(slave);
+					ret = ZunoErrorDmaLimitChannel;
+				}
+				USART_Enable(usart, usartEnable);
+			}
+		}
+	}
+	else if ((slave = this->_slave) != 0x0) {
+		USART_Enable(usart, usartDisable);
+		LdmaClass::transferStop(slave->channel);
+		LdmaClass::transferStop(slave->channel_w);
+		free(slave);
+		pinMode(this->_sck_pin, OUTPUT_UP);//_GPIO_P_MODEL_MODE0_PUSHPULL
+		pinMode(this->_miso_pin, INPUT_UP);//_GPIO_P_MODEL_MODE0_INPUT
+		pinMode(this->_mosi_pin, OUTPUT_UP);
+		if(this->_ss_pin != UNKNOWN_PIN)
+			pinMode(this->_ss_pin, OUTPUT_UP);
+		this->_slave = 0x0;
+		usart->CMD = USART_CMD_MASTEREN;
+		usart->ROUTELOC0 = usart->ROUTELOC0 & (~_USART_ROUTELOC0_CSLOC_MASK);
+		usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
+		USART_Enable(usart, usartEnable);
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (ret);
 }
 
 ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
@@ -112,15 +233,22 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 		return (ZunoErrorInvalidPin);
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterSpi, this->_init, (size_t)this, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
-	pinMode(sck, OUTPUT);//_GPIO_P_MODEL_MODE0_PUSHPULL
-	pinMode(miso, INPUT);//_GPIO_P_MODEL_MODE0_INPUT
-	pinMode(mosi, OUTPUT);
-	if(ss != UNKNOWN_PIN)
-		pinMode(ss, OUTPUT);
+	pinMode(sck, OUTPUT_UP);//_GPIO_P_MODEL_MODE0_PUSHPULL
+	pinMode(miso, INPUT_UP);//_GPIO_P_MODEL_MODE0_INPUT
+	pinMode(mosi, OUTPUT_UP);
 	this->_ss_pin = ss;
+	this->_sck_pin = sck;
+	this->_miso_pin = miso;
+	this->_mosi_pin = mosi;
+	if(ss != UNKNOWN_PIN)
+		pinMode(ss, OUTPUT_UP);
+	else
+		ss = SS;
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	clk_loc = (clk_loc > 1) ? clk_loc - 2 : (clk_loc ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 1);
 	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT | clk_loc << _USART_ROUTELOC0_CLKLOC_SHIFT;
+	ss = getLocation(location_ptr, location_sz, ss);
+	this->_ss_loc = (ss > 2) ? ss - 3 : (ss ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 2);
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ZunoErrorOk);
 }
@@ -197,7 +325,44 @@ void SPIClass::endTransaction(void) {
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
+int SPIClass::available(void) {
+	const ZunoSpiUsartTypeConfig_t				*config;
+	int											out;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return (0);
+	if (this->_slave == 0x0)
+		out = 0x0;
+	else
+		out = LdmaClass::receivedAvailable(this->_slave->channel);
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (out);
+}
+
+int SPIClass::peek(void) {
+	return (this->_readLock(false));
+}
+int SPIClass::read(void) {
+	return (this->_readLock(true));
+}
+
 /* Private Methods */
+inline int SPIClass::_readLock(uint8_t bOffset) {
+	const ZunoSpiUsartTypeConfig_t				*config;
+	int											out;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return (-1);
+	if (this->_slave == 0x0)
+		out = -1;
+	else
+		out = LdmaClass::receivedReadPeek(this->_slave->channel, bOffset);
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (out);
+}
+
 size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	size_t								out;
 	const ZunoSpiUsartTypeConfig_t		*config;
@@ -289,9 +454,14 @@ ZunoError_t SPIClass::_init(size_t param) {
 
 ZunoError_t SPIClass::_deInit(size_t param) {
 	SPIClass							*spi;
-	
+	ZunoSpiSlave_t						*slave;
+
 	spi = (SPIClass *)param;
 	USART_Reset(spi->_config->usart);
+	if ((slave = spi->_slave) != 0x0) {
+		LdmaClass::transferStop(slave->channel);
+		free(slave);
+	}
 	return (ZunoErrorOk);
 }
 

@@ -34,7 +34,6 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	size_t										type_index;
 	ZwMultiChannelCapabilityReportFrame_t		*report;
 	uint8_t										*commandClass;
-	size_t										security_mask;
 
 	endpoint = cmd->properties1 & 0x7F;
 	// Get the info about selected endpoint

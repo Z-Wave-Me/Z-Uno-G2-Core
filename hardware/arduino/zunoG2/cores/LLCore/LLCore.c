@@ -347,8 +347,8 @@ void LLInit() {
     uint32_t			*e;
 
     i = 0;
-    //while (i <= ZUNO_PIN_LAST_INDEX)
-    //    pinMode(i++, INPUT);//set default state
+    while (i <= ZUNO_PIN_LAST_INDEX)
+       pinMode(i++, INPUT);//set default state
     // Constructors....
     // Global values initialization
     uint32_t * cd = &__etext;

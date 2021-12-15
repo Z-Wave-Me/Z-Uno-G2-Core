@@ -44,9 +44,15 @@ class LeUartClass : public Stream {
 		void									begin(void) {return (this->begin(LE_UART_SPEED_DEFAULT));};
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len) {return (this->_begin(speed, config, rx, tx, buffer, len, false));};
+		void									wakeUp(uint16_t value) {return (this->_wakeUp(value));};
+		void									wakeUp(void) {return (this->_wakeUp((size_t)-1));};
+		void									wakeUpDisabled(void);
+		void									startFrame(uint16_t value);
+		void									startFrameDisabled(void);
 		virtual size_t							write(const uint8_t *b, size_t count);
 
 	private:
+		void									_wakeUp(size_t value);
 		inline int								_readLock(uint8_t bOffset);
 		ZunoError_t								_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree);
 		inline ZunoError_t						_beginFaill(ZunoError_t ret, uint8_t bFree, void *b);

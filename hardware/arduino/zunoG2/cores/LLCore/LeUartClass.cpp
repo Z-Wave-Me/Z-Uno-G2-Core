@@ -7,6 +7,20 @@
 #define LE_UART_MIN_WRITE_ZDMA			2
 #define LE_UART_BUFFER_LENGTH			128
 
+static void LEUART_Sync(LEUART_TypeDef *leuart, uint32_t mask)
+{
+  /* Avoid deadlock if modifying the same register twice when freeze mode is */
+  /* activated. */
+  if (leuart->FREEZE & LEUART_FREEZE_REGFREEZE) {
+    return;
+  }
+
+  /* Wait for any pending previous write operation to have been completed */
+  /* in the low-frequency domai. */
+  while ((leuart->SYNCBUSY & mask) != 0U) {
+  }
+}
+
 /* Public Constructors */
 LeUartClass::LeUartClass(void): _channel(-1), _lpKey(false), _bFree(false) {
 }
@@ -24,28 +38,6 @@ ZunoError_t LeUartClass::begin(size_t speed, uint32_t config, uint8_t rx, uint8_
 void LeUartClass::end() {
 	zunoSyncClose(&gSyncLeUart, SyncMasterLeUart, LeUartClass::_deInit, (size_t)this, &this->_lpKey);
 }
-
-void LEUART_Sync(LEUART_TypeDef *leuart, uint32_t mask)
-{
-  /* Avoid deadlock if modifying the same register twice when freeze mode is */
-  /* activated. */
-  if (leuart->FREEZE & LEUART_FREEZE_REGFREEZE) {
-    return;
-  }
-
-  /* Wait for any pending previous write operation to have been completed */
-  /* in the low-frequency domai. */
-  while ((leuart->SYNCBUSY & mask) != 0U) {
-  }
-}
-
-// void LeUartClass::startFrame(uint8_t value) {
-// 	if (zunoSyncLockRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
-// 		return ;
-// 	LEUART_Sync(LEUART0, )
-// 	zunoSyncReleseRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
-// }
-
 
 int LeUartClass::available(void) {
 	int											out;
@@ -104,8 +96,48 @@ size_t LeUartClass::write(const uint8_t *b, size_t count) {
 	return (count);
 }
 
+void LeUartClass::wakeUpDisabled(void) {
+	if (zunoSyncLockRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	LEUART_Sync(LEUART0, LEUART_SYNCBUSY_SIGFRAME | LEUART_SYNCBUSY_CMD);
+	LEUART0->IEN = _LEUART_IEN_RESETVALUE;
+	zunoSyncReleseRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
+}
+
+void LeUartClass::startFrame(uint16_t value) {
+	if (zunoSyncLockRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	LEUART_Sync(LEUART0, LEUART_SYNCBUSY_STARTFRAME | LEUART_SYNCBUSY_CTRL | LEUART_SYNCBUSY_CMD);
+	LEUART0->STARTFRAME = value & _LEUART_STARTFRAME_MASK;
+	LEUART0->CTRL = LEUART0->CTRL | LEUART_CTRL_SFUBRX;
+	LEUART0->CMD = LEUART_CMD_RXBLOCKEN;
+	zunoSyncReleseRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
+}
+
+void LeUartClass::startFrameDisabled(void) {
+	if (zunoSyncLockRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	LEUART_Sync(LEUART0,LEUART_SYNCBUSY_CTRL | LEUART_SYNCBUSY_CMD);
+	LEUART0->CTRL = LEUART0->CTRL & (~LEUART_CTRL_SFUBRX);
+	LEUART0->CMD = LEUART_CMD_RXBLOCKDIS;
+	zunoSyncReleseRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
+}
+
 
 /* Private Methods */
+void LeUartClass::_wakeUp(size_t value) {
+	if (zunoSyncLockRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	LEUART_Sync(LEUART0, LEUART_SYNCBUSY_SIGFRAME | LEUART_SYNCBUSY_CMD);
+	if (value == (size_t)-1)
+		LEUART0->IEN = LEUART_IEN_RXDATAV;
+	else {
+		LEUART0->SIGFRAME = value & _LEUART_SIGFRAME_MASK;
+		LEUART0->IEN = LEUART_IEN_SIGF;
+	}
+	zunoSyncReleseRead(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
+}
+
 inline int LeUartClass::_readLock(uint8_t bOffset) {
 	int											out;
 
@@ -184,6 +216,8 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	usart->ROUTELOC0 = tx_loc << _LEUART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _LEUART_ROUTELOC0_RXLOC_SHIFT;
 	usart->ROUTEPEN = LEUART_ROUTEPEN_TXPEN | LEUART_ROUTEPEN_RXPEN;
+	NVIC_ClearPendingIRQ(LEUART0_IRQn);
+	NVIC_EnableIRQ(LEUART0_IRQn);
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
 	if (len != 0x0) {

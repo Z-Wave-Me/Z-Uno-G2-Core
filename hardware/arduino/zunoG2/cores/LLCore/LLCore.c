@@ -20,6 +20,10 @@
 #define ZUNO_BUTTON_NONSLEEP_TIMEOUT         5000
 #endif
 
+#ifndef ZUNO_DEFAULT_PIN_STATE
+#define ZUNO_DEFAULT_PIN_STATE INPUT
+#endif
+
 #ifdef LOGGING_DBG
     #pragma message "LOGGING_DBG: ON"
 #endif
@@ -347,8 +351,10 @@ void LLInit() {
     uint32_t			*e;
 
     i = 0;
-    //while (i <= ZUNO_PIN_LAST_INDEX)
-    //    pinMode(i++, INPUT);//set default state
+    #ifndef NO_DEFAULT_PIN_SETUP
+    while (i <= ZUNO_PIN_LAST_INDEX)
+        pinMode(i++, ZUNO_DEFAULT_PIN_STATE);//set default state
+    #endif
     // Constructors....
     // Global values initialization
     uint32_t * cd = &__etext;

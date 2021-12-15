@@ -39,6 +39,8 @@ static int _report2(size_t channel) {
 int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd) {
 	int								rs;
 
+	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE)
+		return ZUNO_COMMAND_BLOCKED;
 	switch (ZW_CMD) {
 		case SECURITY_2_COMMANDS_SUPPORTED_GET:
 			rs = _report2(cmd->dst_zw_channel);
@@ -66,6 +68,8 @@ static int _report(size_t channel) {
 int zuno_CCSecurity(ZUNOCommandPacket_t *cmd) {
 	int								rs;
 
+	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE)
+		return ZUNO_COMMAND_BLOCKED;
 	switch (ZW_CMD) {
 		case SECURITY_COMMANDS_SUPPORTED_GET:
 			rs = _report(cmd->dst_zw_channel);

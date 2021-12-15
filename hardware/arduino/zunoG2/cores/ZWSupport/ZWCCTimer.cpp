@@ -117,6 +117,6 @@ void zuno_CCTimer(uint32_t ticks) {
 	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR)
 	_exe();
 	#endif
-	if((ticks & 0x1F) == 0) // Once in ~320ms 
+	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0) // Once in ~320ms 
 		zunoSendReportHandler(ticks);
 }

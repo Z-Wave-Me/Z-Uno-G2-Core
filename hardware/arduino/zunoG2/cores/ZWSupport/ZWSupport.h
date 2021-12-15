@@ -2,7 +2,12 @@
 #define ZW_COMMAND_CLASS_SUPPORT
 #define MAX_ZW_PACKAGE 56
 #define ZUNO_LIFELINE_GRP 1
-
+#ifndef ZUNO_REPORTTIME_DIVIDER
+#define ZUNO_REPORTTIME_DIVIDER  7
+#endif
+#ifndef ZUNO_MAX_REPORTCOUNT_PER_MOMENT 
+#define ZUNO_MAX_REPORTCOUNT_PER_MOMENT 2
+#endif
 #define UNKNOWN_CHANNEL       0xFF 
 
 /* Application Status command class commands */

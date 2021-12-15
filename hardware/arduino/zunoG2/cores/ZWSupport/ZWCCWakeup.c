@@ -1,6 +1,8 @@
 #include "ZWCCWakeup.h"
 #include "Debug.h"
 
+
+
 extern uint8_t     g_outgoing_data[];
 
 static uint8_t    g_wup_sended_notify = 0;
@@ -73,18 +75,25 @@ void zuno_CCWakeup_OnSetup(){
 	LOGGING_UART.print("GPIOEM4MASK:");
 	LOGGING_UART.println(g_zuno_sys->gpio_em4flags, HEX);
 	#endif
-	#ifndef NO_BTN_WUP_NOTIFICATION
-	on_button = ((g_zuno_sys->gpio_em4flags & zunoMapPin2EM4Bit(BUTTON_PIN)) && ((reason == ZUNO_WAKEUP_REASON_EXT_EM2) ||
+	#ifndef NO_BTN_WAKEUP
+	on_button = ((g_zuno_sys->gpio_em4flags & zunoMapPin2EM4Int(BUTTON_PIN)) && ((reason == ZUNO_WAKEUP_REASON_EXT_EM2) ||
 	    (reason == ZUNO_WAKEUP_REASON_EXT_EM4)));
 	#endif
-	if (on_timer || on_button){
+	if (on_timer || 
+		#ifndef NO_BTN_WUP_NOTIFICATION
+		on_button ||
+		#endif
+		0 ){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("APPEND WAKEUP!");
 		#endif
 		zunoSendWakeUpNotification();
 		return;
     }
-	if((reason == ZUNO_WAKEUP_REASON_SOFTRESET) || (reason == ZUNO_WAKEUP_REASON_BROWNOUT) || (reason == ZUNO_WAKEUP_REASON_WATCH_DOG)){    
+	if(on_timer || 
+	   (reason == ZUNO_WAKEUP_REASON_SOFTRESET) || 
+	   (reason == ZUNO_WAKEUP_REASON_BROWNOUT) || 
+	   (reason == ZUNO_WAKEUP_REASON_WATCH_DOG)){    
 		__zunoSetupWUPTimeout();
 	}
 }

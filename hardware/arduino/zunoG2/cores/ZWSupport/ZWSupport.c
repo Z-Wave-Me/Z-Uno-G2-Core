@@ -1125,13 +1125,15 @@ void zunoSendWakeUpNotification(){
 }
 bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
+	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	// Check if device is included to network
 	if(zunoNID() == 0)
         return; // it doesn't => go away
 	#ifdef WITH_CC_BATTERY
 	if(__zunoDispatchPendingBatteryReport()){
 		zunoSendBatteryReportHandler();
-		return;
+		if((--max_report_count) == 0)
+			return;
 	}
 	#endif
 	#ifdef WITH_CC_WAKEUP
@@ -1147,7 +1149,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			}
 		}
 	}
-	// If Wakeup Notification has been sent and controller haven't unblocked wakeup => we don't send anything else unsolicited
+	// If Wakeup Notification was sent and controller haven't unblocked wakeup => we don't send anything else unsolicited
 	// All the traffic is from the controller side only!
 	if(_zunoIsWUPLocked()){
 		return;
@@ -1226,7 +1228,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);
-			break; // Only one report per 1 pass
+			if((--max_report_count) == 0)
+				return; // Limit number of reports 
 		}
 	}
 }

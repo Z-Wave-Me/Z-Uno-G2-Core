@@ -120,6 +120,7 @@ uint8_t getPin(uint8_t port, uint8_t pin);
 inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
 inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
 uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin);
+uint32_t zunoMapPin2EM4Int(uint8_t em4_pin);
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};

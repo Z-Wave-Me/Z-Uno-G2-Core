@@ -346,9 +346,6 @@ extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
 
 void LLInit() {  
-    uint32_t			*b;
-    uint32_t			*e;
-
     #ifndef NO_DEFAULT_PIN_SETUP
     for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++)
         pinMode(i, ZUNO_DEFAULT_PIN_STATE);//set default state

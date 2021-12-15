@@ -345,40 +345,32 @@ extern void (*__init_array_end []) (void) __attribute__((weak));
 extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
 
-void LLInit() { 
-    size_t				i; 
+void LLInit() {  
     uint32_t			*b;
     uint32_t			*e;
 
-    i = 0;
     #ifndef NO_DEFAULT_PIN_SETUP
-    while (i <= ZUNO_PIN_LAST_INDEX)
-        pinMode(i++, ZUNO_DEFAULT_PIN_STATE);//set default state
+    for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++)
+        pinMode(i, ZUNO_DEFAULT_PIN_STATE);//set default state
     #endif
     // Constructors....
     // Global values initialization
-    uint32_t * cd = &__etext;
-    for(uint32_t * p=&__data_start__; p<&__data_end__; p++, cd++){
+    
+    for(uint32_t *p=&__data_start__, *cd = (uint32_t *)&__etext; p<((uint32_t *)&__data_end__); p++, cd++){
         *p = *cd; 
     }
     for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
         *p = 0;
     }
-    b = (uint32_t *)&__preinit_array_start;
-    e = (uint32_t *)&__preinit_array_end;
-    while (b < e) {
+    for (uint32_t * b = (uint32_t *)&__preinit_array_start; b < ((uint32_t *)&__preinit_array_end); b++) {
+        ((void (*)())b[0])();
+        WDOG_Feed();
+    }
+    for (uint32_t * b = (uint32_t *)&__init_array_start; b < ((uint32_t *)&__init_array_end); b++) {
         ((void (*)())b[0])();
         b++;
         WDOG_Feed();
     }
-    b = (uint32_t *)&__init_array_start;
-    e = (uint32_t *)&__init_array_end;
-    while (b < e) {
-        ((void (*)())b[0])();
-        b++;
-        WDOG_Feed();
-    }
-
     // default configuration values
     g_zuno_odhw_cfg.adc_reference  = adcRef5V;
     g_zuno_odhw_cfg.adc_resolution = 10; // 

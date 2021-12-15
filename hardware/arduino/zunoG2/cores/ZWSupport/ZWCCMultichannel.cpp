@@ -48,7 +48,6 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	report->specificDeviceClass = ZUNO_DEV_TYPES[type_index].spec_type;
 	commandClass = &report->commandClass[0];
 	commandClass = zuno_AddCommonClass(commandClass);
-	//if ((security_mask & SECURITY_KEY_S0_BIT) != 0)
 	if(g_zuno_sys->enclusion_state == INCLUSION_STATE_INCLUDED_SECURE){
 		commandClass++[0] =  COMMAND_CLASS_SECURITY;
 		commandClass++[0] =  COMMAND_CLASS_SECURITY_2;

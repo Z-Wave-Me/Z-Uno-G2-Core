@@ -7,7 +7,7 @@
 #include "Sync.h"
 #include "CrtxLeuart.h"
 
-#define LE_UART_SPEED_DEFAULT							9600
+#define LE_UART_SPEED_DEFAULT							1200
 #define LE_UART_CONFIG(databits, parity, stopbits)		(databits | parity | stopbits)
 
 #define LE_UART_SERIAL_8N1								LE_UART_CONFIG(LEUART_CTRL_DATABITS_EIGHT, LEUART_CTRL_PARITY_NONE, LEUART_CTRL_STOPBITS_ONE)
@@ -29,7 +29,6 @@ class LeUartClass : public Stream {
 		void									begin(unsigned long baud) { begin(baud, LE_UART_SERIAL_8N1); }
 		void									begin(unsigned long baud, uint32_t config) {this->begin(baud, config, RX0, TX0);};
 		void									end();
-		// void									startFrame(uint8_t value);
 		virtual int								available(void);
 		virtual int								peek(void);
 		virtual int								read(void);

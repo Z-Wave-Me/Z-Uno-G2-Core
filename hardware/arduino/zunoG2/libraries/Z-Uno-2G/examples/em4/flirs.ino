@@ -10,16 +10,24 @@ uint32_t loop_count = 0; // the variable that illustrates that RAM is alive duri
 
 void setup(){
 	MY_SERIAL.begin(1200, LE_UART_SERIAL_8N1, 8, 7);
+	MY_SERIAL.wakeUp('9');
+	MY_SERIAL.startFrame('0');
 	MY_SERIAL.print("BOOT REASON:");
 	MY_SERIAL.println(zunoGetWakeReason(), HEX);
 	zunoAttachSysHandler(ZUNO_HANDLER_WUP, 0, (void*) &_wakeHandler);
 	pinMode(LED_BUILTIN, OUTPUT);
-	NVIC_ClearPendingIRQ(LEUART0_IRQn);
-	NVIC_EnableIRQ(LEUART0_IRQn);
-	LEUART0->SIGFRAME = '0';
-	LEUART_IntEnable(LEUART0, LEUART_IEN_SIGF);
 }
 void _wakeHandler(void){
+	char				c;
+
+	c = LeUart.read();
+	while (LeUart.available()) {
+		c = LeUart.read();
+		if ( c != '9')
+			LeUart.print(c);
+	}
+	LeUart.print('\n');
+	MY_SERIAL.startFrame('0');
 	MY_SERIAL.print("wake time:");
 	MY_SERIAL.println(millis());
 	MY_SERIAL.print("loop count =");
@@ -38,7 +46,6 @@ void loop(){
 		zunoSendDeviceToSleep(); // We don't need parameter for FLiRS here, Z-Uno will ingore parameter anyway
 	}
 	// Here you can do something that could be interrupted by sleep mode
-	// ...
 	loop_count++; // Increment variable
 	delay(1000);
 	MY_SERIAL.println("Loop");

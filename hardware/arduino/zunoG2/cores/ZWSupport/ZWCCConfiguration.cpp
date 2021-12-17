@@ -428,7 +428,7 @@ void zuno_CCConfiguration_OnDefault(){
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN){
 			#ifndef OLDSTYLE_CONFIG_DEFAULT
 			// For most cases it just checks that configuration parameters are in right domain 
-			uint32_t current_value = zunoLoadCFGParam(i);
+			int32_t current_value = zunoLoadCFGParam(i);
 			if((current_value < cfg->minValue) || (current_value > cfg->maxValue))
 			#endif
 				zunoSaveCFGParam(i, cfg->defaultValue);

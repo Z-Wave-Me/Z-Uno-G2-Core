@@ -367,7 +367,6 @@ void LLInit() {
     }
     for (uint32_t * b = (uint32_t *)&__init_array_start; b < ((uint32_t *)&__init_array_end); b++) {
         ((void (*)())b[0])();
-        b++;
         WDOG_Feed();
     }
     // default configuration values

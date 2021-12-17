@@ -88,11 +88,7 @@ ZUNO_SETUP_S2ACCESS(SKETCH_FLAG_S2_AUTHENTICATED_BIT | SKETCH_FLAG_S2_UNAUTHENTI
 // Objects for external periphery
 DHT dht22_sensor(DHTPin, DHT22); // DHT sensor
 // OS calls setup() function on every device boot
-void setup() {
-    Serial.begin(115200);
-	Serial0.begin(115200);
-	
-   //MY_SERIAL.begin(115200);
+void setup() {	
    // Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
    pinMode(LedPin1, OUTPUT);
    pinMode(LedPin2, OUTPUT);

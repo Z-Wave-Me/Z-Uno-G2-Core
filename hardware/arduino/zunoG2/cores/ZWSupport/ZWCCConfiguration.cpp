@@ -2,7 +2,7 @@
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
 
-typedef uint32_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
+typedef ssize_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
 
 #define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(zunoCfgParamValue_t)) + EEPROM_CONFIGURATION_ADDR)
 
@@ -428,7 +428,7 @@ void zuno_CCConfiguration_OnDefault(){
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN){
 			#ifndef OLDSTYLE_CONFIG_DEFAULT
 			// For most cases it just checks that configuration parameters are in right domain 
-			int32_t current_value = zunoLoadCFGParam(i);
+			ssize_t current_value = zunoLoadCFGParam(i);
 			if((current_value < cfg->minValue) || (current_value > cfg->maxValue))
 			#endif
 				zunoSaveCFGParam(i, cfg->defaultValue);

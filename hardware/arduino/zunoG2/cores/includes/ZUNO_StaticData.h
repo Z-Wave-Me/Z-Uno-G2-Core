@@ -221,6 +221,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.maxValue = MX,\
 	.defaultValue = DEF,\
 	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_INFO_SIGN(NAME, INFO, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
@@ -228,6 +242,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 }\
 
 #define ZUNO_CONFIG_PARAMETER(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_SIGN(NAME, MN, MX, DEF)	\
 {\
 	.name = NAME,\
 	.info = NAME,\
@@ -255,6 +283,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.advanced = false\
 }\
 
+#define ZUNO_CONFIG_PARAMETER_1B_SIGN(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
 #define ZUNO_CONFIG_PARAMETER_2B(NAME, MN, MX, DEF)	\
 {\
 	.name = NAME,\
@@ -264,6 +306,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.defaultValue = DEF,\
 	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_2B_SIGN(NAME, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = NAME,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\
@@ -283,6 +339,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.advanced = false\
 }\
 
+#define ZUNO_CONFIG_PARAMETER_1B_INFO_SIGN(NAME, INFO, MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
 #define ZUNO_CONFIG_PARAMETER_2B_INFO(NAME, INFO,  MN, MX, DEF)	\
 {\
 	.name = NAME,\
@@ -292,6 +362,20 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.defaultValue = DEF,\
 	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.readOnly = false,\
+	.altering = false,\
+	.advanced = false\
+}\
+
+#define ZUNO_CONFIG_PARAMETER_2B_INFO_SIGN(NAME, INFO,  MN, MX, DEF)	\
+{\
+	.name = NAME,\
+	.info = INFO,\
+	.minValue = MN,\
+	.maxValue = MX,\
+	.defaultValue = DEF,\
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\

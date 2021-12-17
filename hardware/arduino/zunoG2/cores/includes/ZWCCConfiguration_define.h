@@ -1,8 +1,8 @@
 #ifndef ZWCC_CONFIGURATION_DEFINE_H
 #define ZWCC_CONFIGURATION_DEFINE_H
 
-uint32_t zunoLoadCFGParam(uint8_t param);
-void zunoSaveCFGParam(uint8_t param, uint32_t value);
+ssize_t zunoLoadCFGParam(uint8_t param);
+void zunoSaveCFGParam(uint8_t param, ssize_t value);
 
 #define ZUNO_CFG_PARAMETER_FORMAT_SIGNED			0x0
 #define ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED			0x1

@@ -221,7 +221,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.maxValue = MX,\
 	.defaultValue = DEF,\
 	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\
@@ -235,7 +235,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	.maxValue = MX,\
 	.defaultValue = DEF,\
 	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,\
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
+	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
 	.advanced = false\

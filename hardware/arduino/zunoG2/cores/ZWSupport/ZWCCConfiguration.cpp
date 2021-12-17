@@ -94,6 +94,8 @@ const ZunoCFGParameter_t SYSCFGPARAM8 =
 	.altering = false,
 	.advanced = true
 }; 
+#if defined(SKETCH_FLAGS) and (SKETCH_FLAGS == HEADER_FLAGS_NOREBOOT_CFG)
+#pragma message "parameter 9 CTT version"
 const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
 	.name = "RFFrequency",
@@ -106,7 +108,22 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
+#else 
+const ZunoCFGParameter_t SYSCFGPARAM9 =
+{
+	.name = "RFFrequency",
+	.info = "Changes Z-Wave region of Z-Uno",
+	.minValue = 0,
+	.maxValue = 0x9F6,
+	.defaultValue = 0x00FF,
+	.size = ZUNO_CFG_PARAMETER_SIZE_16BIT,
+	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
+	.readOnly = false,
+	.altering = false,
+	.advanced = true
+};
+#endif
 const ZunoCFGParameter_t SYSCFGPARAM11 =
 {
 	.name = "MultilevelReportInterval",

@@ -61,22 +61,25 @@ extern unsigned long __HeapLimit;
 #ifndef ZUNO_SKETCH_BUILD_TS
 #define ZUNO_SKETCH_BUILD_TS 0
 #endif
-
 #ifndef DBG_CONSOLE_PIN
-#if ZUNO_PIN_V == 1
-#define DBG_CONSOLE_PIN 0x00 // A0
-#elif ZUNO_PIN_V == 2
-#define DBG_CONSOLE_PIN 0x00 // A0
-#elif ZUNO_PIN_V == 3
-#define DBG_CONSOLE_PIN 0x2B // C11
-#elif ZUNO_PIN_V == 4
-#define DBG_CONSOLE_PIN 0x3D // D13
-#elif ZUNO_PIN_V == 6
-#define DBG_CONSOLE_PIN 0x3D // D13
+#ifdef LOGGING_DBG
+    #if ZUNO_PIN_V == 1
+    #define DBG_CONSOLE_PIN 0x00 // A0  
+    #elif ZUNO_PIN_V == 2
+    #define DBG_CONSOLE_PIN 0x00 // A0
+    #elif ZUNO_PIN_V == 3
+    #define DBG_CONSOLE_PIN 0x2B // C11
+    #elif ZUNO_PIN_V == 4
+    #define DBG_CONSOLE_PIN 0x3D // D13
+    #elif ZUNO_PIN_V == 6
+    #define DBG_CONSOLE_PIN 0x3D // D13
+    #else
+    #define DBG_CONSOLE_PIN 0xFF
+    #endif 
 #else
-#define DBG_CONSOLE_PIN 0xFF
-#endif 
-#endif
+    #define DBG_CONSOLE_PIN 0xFF
+#endif // LOGGING_DBG
+#endif // DBG_CONSOLE_PIN
 #ifndef ZUNO_EXT_FIRMWARES_COUNT
 #define ZUNO_EXT_FIRMWARES_COUNT 0
 #endif
@@ -355,7 +358,6 @@ void LLInit() {
     #endif
     // Constructors....
     // Global values initialization
-    
     for(uint32_t *p=&__data_start__, *cd = (uint32_t *)&__etext; p<((uint32_t *)&__data_end__); p++, cd++){
         *p = *cd; 
     }

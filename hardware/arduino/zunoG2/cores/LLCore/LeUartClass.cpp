@@ -197,6 +197,7 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	// Enable clocks for LEUART0
 	CMU_ClockEnable(cmuClock_LEUART0, true);
 	CMU->LFBPRESC0 = (CMU->LFBPRESC0 & ~_CMU_LFBPRESC0_LEUART0_MASK)  | CMU_LFBPRESC0_LEUART0_DIV1;// CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_1); // Don't prescale LEUART clock
+	CMU->LFRCOCTRL	= CMU->LFRCOCTRL & (~(CMU_LFRCOCTRL_ENDEM | CMU_LFRCOCTRL_ENCHOP));//Setting the ENCHOP and/or EN- DEM bitfields to 1 in the CMU_LFRCOCTRL register will improve the average LFRCO frequency accuracy at the cost of a worse cycle- to-cycle accuracy.
 	usartInit = LEUART_INIT_DEFAULT;
 	this->_baudrate = baudrate;
 	usartInit.baudrate = baudrate;

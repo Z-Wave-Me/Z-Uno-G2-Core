@@ -56,7 +56,11 @@ enum{
 };
 // ZUNO_ENABLE setups some global extra build flags
 // LOGGING_DBG
+<<<<<<< HEAD
 ZUNO_ENABLE( NO_DEFAULT_PIN_SETUP MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+=======
+ZUNO_ENABLE(DBG_CONSOLE_PIN=0xFF MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+>>>>>>> f31fc25c9feb1e939024b3ead292c6a1af2a8508
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel
@@ -115,7 +119,7 @@ void loop() {
    // Trigger motion and wait for relax (about 5 sec) before report idle
    byte currentMotionValue = digitalRead(MotionPin);
    if (currentMotionValue) {
-       if (!lastMotionValue && ((millis() - motionTrigTime) > zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
+       if (!lastMotionValue && ((millis() - motionTrigTime) > (size_t)zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
            lastMotionValue = 1;
            zunoSendReport(SENSOR_MOTION_CHANNEL);
            zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);

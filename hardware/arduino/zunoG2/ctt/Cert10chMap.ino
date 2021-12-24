@@ -16,7 +16,7 @@
 #define LedPin3         A2
 #define LedPin4         PWM1
 #define LedPin5         PWM2 
-#define LedPin6         PWM4
+#define LedPin6         PWM3
 #define MotionPin       A3
 #define DoorPin         12
 #define DHTPin          11
@@ -56,11 +56,7 @@ enum{
 };
 // ZUNO_ENABLE setups some global extra build flags
 // LOGGING_DBG
-<<<<<<< HEAD
-ZUNO_ENABLE( NO_DEFAULT_PIN_SETUP MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
-=======
-ZUNO_ENABLE(DBG_CONSOLE_PIN=0xFF MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
->>>>>>> f31fc25c9feb1e939024b3ead292c6a1af2a8508
+ZUNO_ENABLE(MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel

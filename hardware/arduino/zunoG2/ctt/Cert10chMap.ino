@@ -16,7 +16,7 @@
 #define LedPin3         A2
 #define LedPin4         PWM1
 #define LedPin5         PWM2 
-#define LedPin6         PWM3
+#define LedPin6         PWM4
 #define MotionPin       A3
 #define DoorPin         12
 #define DHTPin          11
@@ -56,7 +56,7 @@ enum{
 };
 // ZUNO_ENABLE setups some global extra build flags
 // LOGGING_DBG
-ZUNO_ENABLE(LOGGING_DBG MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+ZUNO_ENABLE( NO_DEFAULT_PIN_SETUP MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel
@@ -133,6 +133,7 @@ void loop() {
        zunoSendReport(SENSOR_DOOR_CHANNEL);
    }
    // Temperature sensor (based on DHT22 digital sensor)
+   
    int16_t currentTemperatureValue = dht22_sensor.readTemperatureC10();
    if(abs(lastTemperatureValue - currentTemperatureValue) > zunoLoadCFGParam(TEMP_HYST_PARAM)){
        lastTemperatureValue = currentTemperatureValue;

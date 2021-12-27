@@ -81,6 +81,7 @@ class SPIClass {
 		inline void											setClockDivider(uint8_t divider) {this->setClockDivider(divider, this->_ss_pin);};
 		void												setClockDivider(uint8_t divider, uint8_t slaveSelectPin);
 
+		ZunoError_t											memset(uint8_t c, size_t n);//max 2048 * 255
 		size_t												write(uint8_t data) { return (this->write((const uint8_t *)&data, 0x1));};
 		size_t												write(const uint8_t *data, size_t quantity);
 		ZunoError_t											setSlave(uint8_t mode) {return (this->setSlave(mode, SPI_BUFFER_LENGTH));};

@@ -6,6 +6,8 @@
 #include "errno.h"
 #include "string.h"
 
+uint64_t rtcc_micros(void);
+
 size_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet, time_t *timeUnix) {
 	struct tm					timeinfo;
 	int							tm_year;
@@ -38,19 +40,19 @@ void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time) {
 }
 
 static time_t _timeUnix = 0;
-static uint32_t _time = 0;
 
 time_t zunoGetTimeStamp(void) {
-	return (_timeUnix + ((millis() - _time) / 1000));
+	return (_timeUnix + (rtcc_micros() / 1000000));
 }
 
 static int _set(ZwTimerParametrsSetFrame_t *packet) {
 	time_t						timeUnix;
+	uint64_t					micr;
 
+	micr = rtcc_micros();
 	if (zuno_CCTimerParametrsGet(&packet->time, &timeUnix) == false)
 		return (ZUNO_COMMAND_BLOCKED);
-	_timeUnix = timeUnix;
-	_time = millis();
+	_timeUnix = timeUnix - (micr / 1000000);
 	zunoSysHandlerCall(ZUNO_HANDLER_NOTIFICATON_TIME_STAMP, 0x0);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -62,7 +64,7 @@ static int _report(void) {
 	report = (ZwTimerParametrsReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_TIME_PARAMETERS; //set in - fillOutgoingPacket
 	// report->cmd = TIME_PARAMETERS_REPORT; //set in - fillOutgoingPacket
-	time = _timeUnix + ((millis() - _time) / 1000);
+	time = _timeUnix + (rtcc_micros() / 1000000);
 	zuno_CCTimerParametrsSet(&report->time, time);
 	CMD_REPLY_LEN = sizeof(ZwTimerParametrsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);

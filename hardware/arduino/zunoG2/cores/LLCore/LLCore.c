@@ -575,7 +575,7 @@ uint64_t rtcc_micros(void) {
 	uint64_t			out;
 
 	tic1 = RTCC_CounterGet();
-	overflow = 0x0;// overflow = RTCC->RET[0x1F].REG;
+	overflow = RTCC->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
 	tic2 = RTCC_CounterGet();
 	if (tic2 < tic1) {
 		tic1 = tic2;
@@ -585,6 +585,20 @@ uint64_t rtcc_micros(void) {
 	out = (out << 0x20) | tic1;
 	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
 	return (out);
+}
+
+bool zunoIsValidDate(void) {
+	if (RTCC->RET[0x1E].REG == 0x0)
+		return (false);
+	return (true);
+}
+
+time_t zunoGetTimeStamp(void) {
+	return (RTCC->RET[0x1E].REG + (rtcc_micros() / 1000000));
+}
+
+void zunoSetTimeStamp(time_t timeUnix) {
+	RTCC->RET[0x1E].REG = timeUnix - (rtcc_micros() / 1000000);
 }
 
 dword millis(void){

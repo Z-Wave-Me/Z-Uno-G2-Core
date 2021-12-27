@@ -83,6 +83,8 @@ void zunoKickSleepTimeout(uint32_t ms);
 
 /* Clock/Time */
 time_t zunoGetTimeStamp(void);
+bool zunoIsValidDate(void);
+void zunoSetTimeStamp(time_t timeUnix);
 
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();

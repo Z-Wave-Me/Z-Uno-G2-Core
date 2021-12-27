@@ -371,8 +371,6 @@ size_t SPIClass::_transferDate(size_t data, size_t bFlags) {
 	config = this->_config;
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	if(_ss_pin != UNKNOWN_PIN)
-		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if ((bFlags & SPI_FLAGS_16BIT) != 0) {
 		usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
@@ -399,12 +397,11 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	ssize_t								channel_w;
 	LdmaClassTransferSingle_t			array_r;
 	LdmaClassTransferSingle_t			array_w;
+	uint64_t							ms;
 
 	config = this->_config;
 	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
-	if(_ss_pin != UNKNOWN_PIN)
-		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	usart = config->usart;
 	if (count <= SPI_MIN_WRITE_ZDMA)
 	{
@@ -417,12 +414,15 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 		}
 	}
 	else {
-		channel_r = -1;
 		usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
+		ms = count;
+		ms = ms * 8 * 1000 / this->_baudrate;
+		channel_r = -1;
 		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((channel_r = LdmaClass::transferSingle((const void *)&usart->RXDATA, b, count, config->dmaSignalRead, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array_r)) >= 0x0)) {
 			if ((channel_w = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
+				delay(ms);
 				while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
-					delay(0x1);
+					__NOP();
 				LdmaClass::transferStop(channel_w);
 			}
 			else
@@ -433,6 +433,33 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 		else
 			ret = ZunoErrorDmaLimitChannel;
 	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (ret);
+}
+
+ZunoError_t SPIClass::memset(uint8_t c, size_t n) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	USART_TypeDef						*usart;
+	ZunoError_t							ret;
+	ssize_t								channel_w;
+	LdmaClassTransferSingle_t			array_w;
+	uint64_t							ms;
+
+	config = this->_config;
+	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
+		return (ret);
+	usart = config->usart;
+	usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
+	ms = n;
+	ms = ms * 8 * 1000 / this->_baudrate;
+	if ((channel_w = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
+		delay(ms);
+		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
+			__NOP();
+		LdmaClass::transferStop(channel_w);
+	}
+	else
+		ret = ZunoErrorDmaLimitChannel;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ret);
 }

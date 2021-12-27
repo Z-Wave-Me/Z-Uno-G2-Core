@@ -12,6 +12,7 @@
 #include "errno.h"
 #include "sys/stat.h"
 #include "Custom_timestamp.h"
+#include "CrtxRtcc.h"
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -566,12 +567,46 @@ void delay(dword ms){
     zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
 }
 
+
+uint64_t rtcc_micros(void) {
+	uint32_t			tic1;
+	uint32_t			tic2;
+	uint32_t			overflow;
+	uint64_t			out;
+
+	tic1 = RTCC_CounterGet();
+	overflow = RTCC->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
+	tic2 = RTCC_CounterGet();
+	if (tic2 < tic1) {
+		tic1 = tic2;
+		overflow++;
+	}
+	out = overflow;
+	out = (out << 0x20) | tic1;
+	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
+	return (out);
+}
+
+bool zunoIsValidDate(void) {
+	if (RTCC->RET[0x1E].REG == 0x0)
+		return (false);
+	return (true);
+}
+
+time_t zunoGetTimeStamp(void) {
+	return (RTCC->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
+}
+
+void zunoSetTimeStamp(time_t timeUnix) {
+	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
+}
+
 dword millis(void){
-    return (dword) zunoSysCall(ZUNO_SYSFUNC_MILLIS, 0);
+	return (dword)(rtcc_micros() / 1000);
 }
 // JUST A STUB...
 dword micros(void){
-    return (dword) zunoSysCall(ZUNO_SYSFUNC_MILLIS, 0) * 1000UL;
+	return (dword)(rtcc_micros());
 }
 
 void delayMicroseconds(word tdelay){

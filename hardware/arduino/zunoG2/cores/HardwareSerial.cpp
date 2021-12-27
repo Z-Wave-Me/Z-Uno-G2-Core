@@ -138,18 +138,43 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 		while (b < e) {
 			usart->TXDATA = (uint32_t)b++[0];
 			delay(ms);
-			while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
+			while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
 				__NOP();
 		}
 	}
 	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0) {
 		delay(ms);
-		while (!(usart->STATUS & USART_STATUS_TXBL))/* Check that transmit buffer is empty */
+		while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
 		LdmaClass::transferStop(channel);
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	return (count);
+}
+
+void HardwareSerial::memset(uint8_t c, size_t n) {
+	const ZunoHardwareSerialConfig_t			*config;
+	USART_TypeDef								*usart;
+	ssize_t										channel;
+	LdmaClassTransferSingle_t					array;
+	uint32_t									frame;
+	uint32_t									ms;
+
+	config = &this->_configTable[this->_numberConfig];
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	usart = config->usart;
+	frame = usart->FRAME;
+	ms = 1000 * 0x8 * n * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
+	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
+	if ((channel = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array)) > 0x0) {
+		delay(ms);
+		while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
+			__NOP();
+		LdmaClass::transferStop(channel);
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
+	return ;
 }
 
 

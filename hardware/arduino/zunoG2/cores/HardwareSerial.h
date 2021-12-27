@@ -50,7 +50,8 @@ class HardwareSerial : public Stream {
 		inline size_t							write(long n) { return write((uint8_t)n); }
 		inline size_t							write(unsigned int n) { return write((uint8_t)n); }
 		inline size_t							write(int n) { return write((uint8_t)n); }
-
+		
+		void									memset(uint8_t c, size_t n);//max 2048 * 255
 		void									begin(void) {return (this->begin(HARDWARE_SERIAL_SPEED_DEFAULT));};
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);

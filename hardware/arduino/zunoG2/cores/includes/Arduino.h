@@ -81,6 +81,8 @@ void zunoLockSleep(void);
 bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);
 
+/* Clock/Time */
+time_t zunoGetTimeStamp(void);
 
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();
@@ -160,6 +162,7 @@ void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;};
 byte zunoAddChannel(byte type, byte subtype, byte options);
+bool zunoAddBaseCCS(byte ccs, byte version);
 void zunoSendReport(byte ch);
 void zunoResetLocally();
 void zunoSendNIF();

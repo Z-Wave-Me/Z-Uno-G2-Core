@@ -115,6 +115,7 @@ mktime (struct tm *tim_p)
   long days = 0;
   int year;
 
+  
   /* validate structure */
   validate_structure (tim_p);
 

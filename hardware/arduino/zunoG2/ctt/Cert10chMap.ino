@@ -55,8 +55,9 @@ enum{
    MOTION_RETRIGGER_TIME_PARAM 
 };
 // ZUNO_ENABLE setups some global extra build flags
-// LOGGING_DBG
-ZUNO_ENABLE(MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+// LOGGING_DBG 
+// NO_DEFAULT_PIN_SETUP
+ZUNO_ENABLE( MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel
@@ -101,6 +102,7 @@ void setup() {
    // Start dht sensor
    dht22_sensor.begin();
    dht22_sensor.readTemperatureC10(true);
+   //millis();
 }
 // OS calls loop() function repeatedly
 void loop() {

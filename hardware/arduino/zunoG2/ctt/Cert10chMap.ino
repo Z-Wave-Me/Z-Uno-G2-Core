@@ -16,7 +16,7 @@
 #define LedPin3         A2
 #define LedPin4         PWM1
 #define LedPin5         PWM2 
-#define LedPin6         PWM4
+#define LedPin6         PWM3
 #define MotionPin       A3
 #define DoorPin         12
 #define DHTPin          11

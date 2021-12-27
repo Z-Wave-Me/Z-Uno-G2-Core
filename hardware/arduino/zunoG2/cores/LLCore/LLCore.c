@@ -594,11 +594,11 @@ bool zunoIsValidDate(void) {
 }
 
 time_t zunoGetTimeStamp(void) {
-	return (RTCC->RET[0x1E].REG + (rtcc_micros() / 1000000));
+	return (RTCC->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
 }
 
 void zunoSetTimeStamp(time_t timeUnix) {
-	RTCC->RET[0x1E].REG = timeUnix - (rtcc_micros() / 1000000);
+	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
 }
 
 dword millis(void){

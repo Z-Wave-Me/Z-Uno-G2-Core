@@ -4,7 +4,7 @@
 
 void setup() {
 	if (zunoIsValidDate() == false)
-		zunoSetTimeStamp(ZUNO_SKETCH_BUILD_TS + 1);
+		zunoSetTimeStamp(ZUNO_SKETCH_BUILD_TS + 1 + (3 * 60 * 60));//+ (3 * 60 * 60) sec - Mck; + 1 sec  - build and load
 	MY_SERIAL.begin(112500);
 }
 

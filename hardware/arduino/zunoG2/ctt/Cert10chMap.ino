@@ -102,7 +102,6 @@ void setup() {
    // Start dht sensor
    dht22_sensor.begin();
    dht22_sensor.readTemperatureC10(true);
-   //millis();
 }
 // OS calls loop() function repeatedly
 void loop() {

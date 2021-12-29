@@ -30,6 +30,13 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 	BYTE association_type;
 	BYTE association_param;
 } ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION;
+
+typedef struct _ZUNO_BASE_CC_DESCRIPTION
+{
+	BYTE cc;
+	BYTE version;
+} ZUNO_BASE_CC_DESCRIPTION;
+
 #endif
 
 
@@ -90,6 +97,10 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_ASSOCIATION_GROUP_SCENE_CONTROL 			{ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER, ZUNO_ASSOC_NO_PARAMS}
 #define ZUNO_ASSOCIATION_GROUP_DOORLOCK					{ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER, ZUNO_ASSOC_NO_PARAMS}
 
+#define ZUNO_CC_VERSION(T, V)							{T, V}
+#define ZUNO_CC_V1(T)									{T, 1}
+#define ZUNO_CC_V2(T)									{T, 2}
+#define ZUNO_CC_V3(T)									{T, 3}
 
 //#endif
 // -----------------------------------------------------------------
@@ -99,6 +110,12 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 								{ \
 									__VA_ARGS__, \
 								}
+#define ZUNO_CUSTOM_CC(...) \
+								ZUNO_BASE_CC_DESCRIPTION __zunoCustomCCArray[]= \
+								{ \
+								  __VA_ARGS__, \
+								} 
+// ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ASSOCIATIONS(...)	\
 								 ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION ___zunoAssociationSetupArray[]= \
 								{ \
@@ -165,6 +182,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 
 #else
 #define ZUNO_SETUP_CHANNELS(...)
+#define ZUNO_CUSTOM_CC(...)
 #define ZUNO_SETUP_ASSOCIATIONS(...)
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE)  
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H)
@@ -180,6 +198,7 @@ typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 #define ZUNO_ENABLE(VAR_NAMES) 
 #define ZUNO_DECLARE(VAR_NAMES) 
 #define ZUNO_INCLUDE(VAR_NAMES) 
+ 
 
 #define ZUNO_CUSTOMLNK(VAR_NAME)
 #define ZUNO_NO_CHANNEL 														

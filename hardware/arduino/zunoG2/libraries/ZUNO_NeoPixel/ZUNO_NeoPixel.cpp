@@ -1,9 +1,10 @@
 #include "Arduino.h"
-#include "CrtxCmu.h"
 #include "stdlib.h"
 #include "LdmaClass.h"
 #include "ZUNO_NeoPixel.h"
 #include <math.h>
+#include "em_device.h"
+#include "em_timer.h"
 
 #define NEO_RESET_MICROSECONDS			60
 

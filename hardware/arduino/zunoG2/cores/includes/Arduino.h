@@ -12,15 +12,55 @@
 #include <string.h>
 #endif
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
-#include "CrtxGPIO.h"
-#include "CrtxADC.h"
+#include "em_device.h"
+#include "em_gpio.h"
+#include "em_adc.h"
 #include "ZWSupport.h"
-#include "CrtxCmu.h"
 #include "HardwareSerial.h"
 #include "zwaveme_libft.h"
 #include "Custom_decl.h" // 
 #include <math.h>
 #include "WCharacter.h"
+
+typedef enum {
+  /** Input disabled. Pullup if DOUT is set. */
+  GPIOMODE_DISABLED                  = _GPIO_P_MODEL_MODE0_DISABLED,
+  /** Input enabled. Filter if DOUT is set */
+  GPIOMODE_INPUT                     = _GPIO_P_MODEL_MODE0_INPUT,
+  /** Input enabled. DOUT determines pull direction */
+  GPIOMODE_INPUTPULL                 = _GPIO_P_MODEL_MODE0_INPUTPULL,
+  /** Input enabled with filter. DOUT determines pull direction */
+  GPIOMODE_INPUTPULLFILTER           = _GPIO_P_MODEL_MODE0_INPUTPULLFILTER,
+  /** Push-pull output */
+  GPIOMODE_OUTPUT_PUSHPULL           = _GPIO_P_MODEL_MODE0_PUSHPULL,
+  /** Wired-or output */
+  GPIOMODE_OUTPUT_WIREDOR              = _GPIO_P_MODEL_MODE0_WIREDOR,
+  /** Wired-or output with pull-down */
+  GPIOMODE_OUTPUT_WIREDORPD             = _GPIO_P_MODEL_MODE0_WIREDORPULLDOWN,
+  /** Open-drain output */
+  GPIOMODE_OUTPUT_OPENDRAIN             = _GPIO_P_MODEL_MODE0_WIREDAND,
+  /** Open-drain output with filter */
+  GPIOMODE_OUTPUT_OPENDRAINFLT          = _GPIO_P_MODEL_MODE0_WIREDANDFILTER,
+  /** Open-drain output with pullup */
+  GPIOMODE_OUTPUT_OPENDRAINPUP           = _GPIO_P_MODEL_MODE0_WIREDANDPULLUP,
+  /** Open-drain output with filter and pullup */
+  GPIOMODE_OUTPUT_OPENDRAINPUPFLT        = _GPIO_P_MODEL_MODE0_WIREDANDPULLUPFILTER,
+} GPIO_Mode_t;
+
+enum{
+    DISABLED = GPIOMODE_DISABLED,
+    OUTPUT = GPIOMODE_OUTPUT_PUSHPULL,
+    INPUT = GPIOMODE_INPUT,
+    INPUT_PULLUP    = 0x100 | GPIOMODE_INPUTPULL,
+    INPUT_PULLDOWN  = GPIOMODE_INPUTPULL,
+	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER,
+	INPUT_PULLDOWN_FILTER = GPIOMODE_INPUTPULLFILTER,
+    OUTPUT_UP = 0x100 | GPIOMODE_OUTPUT_PUSHPULL,
+    OUTPUT_DOWN = GPIOMODE_OUTPUT_PUSHPULL,
+    INPUT_UP = 0x100 | GPIOMODE_INPUT,
+    INPUT_DOWN = GPIOMODE_INPUT
+};
+
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)
@@ -127,8 +167,9 @@ uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin);
 uint32_t zunoMapPin2EM4Int(uint8_t em4_pin);
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
-inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet(getRealPort(pin), getRealPin(pin)));};
+inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 
+void analogWriteFrequency(uint32_t freq);
 void analogReference(ADC_Ref_TypeDef ref);
 void analogReadResolution(uint8_t bits);
 void analogWriteResolution(uint8_t bits);

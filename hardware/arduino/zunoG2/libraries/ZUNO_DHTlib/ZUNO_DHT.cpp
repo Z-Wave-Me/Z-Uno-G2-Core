@@ -1,11 +1,10 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
 #include "Sync.h"
 #include "ZUNO_DHT.h"
 #include "zwaveme_libft.h"
 #include "LdmaClass.h"
-
+#include "em_device.h"
+#include "em_timer.h"
 
 #define DHT_CHANNEL								0
 

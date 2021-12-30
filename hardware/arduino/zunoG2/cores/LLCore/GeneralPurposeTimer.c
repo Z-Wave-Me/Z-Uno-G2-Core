@@ -1,8 +1,8 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
 #include "Sync.h"
 #include "GeneralPurposeTimer.h"
+#include "em_device.h"
+#include "em_timer.h"
 
 #define GPT_TOP_SET_FREQ(interval)		(size_t)((((gFlags & ZUNO_GPT_SCALE1024) != 0) ? (32 * 4) : 1) * gTopSetPrescale * interval)//32 ps / 0.25ps
 #define GPT_DEFAULT_INTERVAL			0xFFFFF

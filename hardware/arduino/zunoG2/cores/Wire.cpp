@@ -1,8 +1,9 @@
 #include "Arduino.h"
-#include "ZGecko.h"
 #include "Wire.h"
 #include "stdlib.h"
 #include "LdmaClass.h"
+#include "em_device.h"
+#include "em_i2c.h"
 
 /* Layout details, A = address bit, X = don't care bit (set to 0):
 	7 bit address - use format AAAA AAAX.

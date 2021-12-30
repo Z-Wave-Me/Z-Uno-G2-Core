@@ -1,8 +1,7 @@
 #ifndef LDMA_CLASS_H
 #define LDMA_CLASS_H
 
-#include "CrtxLDMA.h"
-#include "CrtxI2C.h"
+#include "em_ldma.h"
 
 typedef enum							LdmaClassSignal_e
 {

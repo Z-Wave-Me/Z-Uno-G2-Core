@@ -1,6 +1,6 @@
 #include "Arduino.h"
-#include "CrtxGpcrc.h"
 #include "ZUNO_ModBus.h"
+#include "zwaveme_gpcrc.h"
 
 
 #define MOD_BUS_RTU_FN_ERROR				0x80
@@ -90,7 +90,7 @@ ZunoError_t ModBusRtuClass::begin(size_t baudrate, size_t rx, size_t tx, size_t 
 	ZunoError_t						ret;
 
 	this->_time_between = this->getBetween(baudrate);
-	if ((ret = this->_hardwareSerial->begin(baudrate, rx, tx)) != ZunoErrorOk)
+	if ((ret = this->_hardwareSerial->begin(baudrate, SERIAL_8N1, rx, tx)) != ZunoErrorOk)
 		return (ret);
 	this->_dir_pin = dir_pin;
 	pinMode(dir_pin, OUTPUT_UP);//Поднимаем и всегда RS485 держим на отправку данных

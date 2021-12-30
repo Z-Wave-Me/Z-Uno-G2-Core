@@ -3,8 +3,6 @@
 
 #include "Sync.h"
 
-#include "CrtxTimer.h"
-#include "CrtxUSART.h"
 
 typedef uint16_t ZunoNeoOptionMax_t;
 

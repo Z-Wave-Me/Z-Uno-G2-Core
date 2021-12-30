@@ -1,7 +1,6 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include "CrtxUSART.h"
 #include "Sync.h"
 #include "LdmaClass.h"
 

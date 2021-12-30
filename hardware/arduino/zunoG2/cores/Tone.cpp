@@ -1,6 +1,6 @@
 #include "Arduino.h"
-#include "CrtxTimer.h"
-#include "CrtxCmu.h"
+#include "em_device.h"
+#include "em_timer.h"
 
 #define PWM_TIMER						TIMER1
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1
@@ -124,14 +124,16 @@ static ZunoError_t _initPwm(size_t param) {
 	TIMER_TypeDef				*timer;
 	size_t						freq;
 	size_t						channel;
+	TIMER_Prescale_TypeDef		timer_prescale;
 
 	CMU_ClockEnable(PWM_TIMER_CLOCK, true);
 	timerInit = TIMER_INIT_DEFAULT;
 	freq = CMU_ClockFreqGet(TONE_TIMER_CLOCK);
-	timerInit.prescale = timerPrescale1;
-	if ((freq / g_zuno_odhw_cfg.pwm_freq) > 0xFFFF)
-		timerInit.prescale = timerPrescale2;
-	freq /=  (1 << timerInit.prescale);
+	timer_prescale = timerPrescale1;
+	while ((freq / g_zuno_odhw_cfg.pwm_freq / (1 << timer_prescale)) > 0xFFFF)
+		timer_prescale = (TIMER_Prescale_TypeDef)(timer_prescale + 1);
+	timerInit.prescale = timer_prescale;
+	freq /=  (1 << timer_prescale);
 	freq /= g_zuno_odhw_cfg.pwm_freq;
 	timer = PWM_TIMER;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC

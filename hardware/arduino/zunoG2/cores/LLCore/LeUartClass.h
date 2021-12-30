@@ -5,7 +5,6 @@
 #include "stdio.h"
 #include "LdmaClass.h"
 #include "Sync.h"
-#include "CrtxLeuart.h"
 
 #define LE_UART_SPEED_DEFAULT							9600
 #define LE_UART_CONFIG(databits, parity, stopbits)		(databits | parity | stopbits)

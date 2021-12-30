@@ -46,6 +46,8 @@
 	#include "zwave_custom_header_emlib.h"
 #endif
 
+#define CMSIS_NVIC_VIRTUAL
+#define ZGM130S037HGN1
 
 #if defined(ZGM130S037HGN1)
 #include "zgm130s037hgn1.h"

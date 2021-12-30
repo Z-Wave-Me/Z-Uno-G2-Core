@@ -57,7 +57,7 @@ enum{
 // ZUNO_ENABLE setups some global extra build flags
 // LOGGING_DBG 
 // NO_DEFAULT_PIN_SETUP
-ZUNO_ENABLE( MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+ZUNO_ENABLE(LOGGING_DBG MODERN_MULTICHANNEL SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel

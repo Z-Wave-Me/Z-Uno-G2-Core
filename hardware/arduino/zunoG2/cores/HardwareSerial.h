@@ -5,7 +5,9 @@
 #include "stdio.h"
 #include "LdmaClass.h"
 #include "Sync.h"
-#include "CrtxUSART.h"
+#include "em_device.h"
+#include "em_cmu.h"
+#include "em_usart.h"
 
 #define HARDWARE_SERIAL_SPEED_DEFAULT							115200
 #define HARDWARE_SERIAL_CONFIG(databits, parity, stopbits)		(databits | parity | stopbits)

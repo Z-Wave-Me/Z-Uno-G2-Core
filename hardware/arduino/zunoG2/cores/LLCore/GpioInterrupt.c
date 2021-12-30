@@ -1,6 +1,4 @@
 #include "Arduino.h"
-#include "ZGecko.h"
-#include "CrtxGPIO.h"
 #include "GpioInterrupt.h"
 
 
@@ -94,7 +92,7 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 			return (ret);
 		}
 	}
-	GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, true);
+	GPIO_ExtIntConfig((GPIO_Port_TypeDef)port, pin, pin, risingEdge, fallingEdge, true);
 	return (ZunoErrorOk);
 }
 

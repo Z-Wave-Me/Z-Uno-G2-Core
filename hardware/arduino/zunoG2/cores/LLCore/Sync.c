@@ -1,6 +1,4 @@
 #include "Arduino.h"
-#include "CrtxGcc.h"
-#include "CrtxCore.h"
 #include "Threading.h"
 #include "Sync.h"
 

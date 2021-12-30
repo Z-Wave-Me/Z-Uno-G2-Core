@@ -1,7 +1,6 @@
 #ifndef WIRE_H
 #define WIRE_H
 
-#include "CrtxI2C.h"
 
 #define Wire				Wire0
 

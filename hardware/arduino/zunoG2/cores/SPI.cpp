@@ -1,6 +1,21 @@
 #include "Arduino.h"
 #include "SPI.h"
 
+/*
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits16;
+	USART_SpiTransfer16
+	usart->FRAME = (usart->FRAME & ~(_USART_FRAME_DATABITS_MASK)) | usartDatabits8;
+*/
+static uint16_t USART_SpiTransfer16(USART_TypeDef *usart, uint16_t data)
+{
+	while (!(usart->STATUS & USART_STATUS_TXBL))
+		;
+	usart->TXDOUBLE = (uint32_t)data;
+	while (!(usart->STATUS & USART_STATUS_TXC))
+		;
+	return (uint16_t)usart->RXDOUBLE;
+}
+
 /* Public Constructors */
 SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {
 //baudrate - specified as zero in order to apply settings to USART at least once

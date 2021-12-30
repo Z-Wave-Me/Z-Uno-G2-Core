@@ -1,10 +1,5 @@
 #include "Arduino.h"
 #include "LLCore.h"
-#include "ZGecko.h"
-#include "CrtxGPIO.h"
-#include "CrtxADC.h"
-#include "CrtxTimer.h"
-#include "CrtxCore.h"
 #include "Stub.h"
 #include <stdarg.h>
 #include "Tone.h"
@@ -12,7 +7,11 @@
 #include "errno.h"
 #include "sys/stat.h"
 #include "Custom_timestamp.h"
-#include "CrtxRtcc.h"
+#include "em_device.h"
+#include "em_rtcc.h"
+#include "em_adc.h"
+#include "em_gpio.h"
+
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -621,7 +620,7 @@ void delayMicroseconds(word tdelay){
 
 /* pin */
 void pinMode(uint8_t pin, int mode){
-    GPIO_PinModeSet(getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
+    GPIO_PinModeSet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin), (GPIO_Mode_TypeDef)(mode & 0x0F), ((mode & 0x100) != 0) ? true : false);
 }
 
 uint8_t pin2HWPin(uint8_t pin) {
@@ -635,9 +634,9 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
     real_port = getRealPort(pin);
     real_pin = getRealPin(pin);
     if (mode == true)
-        GPIO_PinOutSet(real_port, real_pin);
+        GPIO_PinOutSet((GPIO_Port_TypeDef)real_port, real_pin);
     else
-        GPIO_PinOutClear(real_port, real_pin);
+        GPIO_PinOutClear((GPIO_Port_TypeDef)real_port, real_pin);
 }
 
 uint8_t getPin(uint8_t port, uint8_t pin) {
@@ -703,6 +702,93 @@ void analogReadResolution(uint8_t bits){
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime){
     g_zuno_odhw_cfg.adc_acqtime = acqtime;
 }
+
+
+ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
+  switch(pin){
+      /*
+      case A0:
+          return adcPosSelAPORT3XCH30;
+      case A1:
+          return adcPosSelAPORT4XCH31;
+      case A2:   
+          return adcPosSelAPORT1XCH6;
+      case A3:
+          return adcPosSelAPORT2XCH7;
+          */
+#if ZUNO_PIN_V == 1
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 2
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 3
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 4
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 6
+      case A0:
+          return adcPosSelAPORT1XCH22;
+      case A1:
+          return adcPosSelAPORT2XCH23;
+      case A2:   
+          return adcPosSelAPORT4XCH1;
+      case A3:
+          return adcPosSelAPORT3XCH2;
+#elif ZUNO_PIN_V == 1000
+
+#else
+	#error ZUNO_PIN_V
+#endif
+      case BATTERY:
+          return adcPosSelAVDD;
+      default:
+          return adcPosSelAVDD;
+  }
+
+}
+void zme_ADC_Enable(){
+   ADC_Init_TypeDef adcInit = ADC_INIT_DEFAULT;
+   // Enable ADC clock
+   CMU_ClockEnable(cmuClock_ADC0, true);
+   // Setup ADC
+   adcInit.timebase = ADC_TimebaseCalc(0);
+   // Set ADC clock to 7 MHz, use default HFPERCLK
+   adcInit.prescale = ADC_PrescaleCalc(7000000, 0);
+   ADC_Init(ADC0, &adcInit);
+}
+void zme_ADC_Disable(){
+   ADC_Reset(ADC0);
+   // Disable ADC clock
+   CMU_ClockEnable(cmuClock_ADC0, false);
+}
+
 int analogRead(uint8_t pin) {
     uint32_t sampleValue;
     if(!g_zuno_odhw_cfg.ADCInitialized){

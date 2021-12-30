@@ -3,6 +3,8 @@
 #include "stdarg.h"
 #include "LeUartClass.h"
 #include "zwaveme_libft.h"
+#include "em_device.h"
+#include "em_leuart.h"
 
 #define LE_UART_MIN_WRITE_ZDMA			2
 #define LE_UART_BUFFER_LENGTH			128
@@ -193,10 +195,10 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 		return (this->_beginFaill(ret, bFree, b));
 	// Enable LE (low energy) clocks
 	CMU_ClockEnable(cmuClock_HFLE, true); // Necessary for accessing LE modules
-	CMU->CTRL|=CMU_CTRL_CLKOUTSEL0_LFRCO;// CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFRCO); // Set a reference clock
+	CMU_ClockSelectSet(cmuClock_LFB, cmuSelect_LFRCO); // Set a reference clock
 	// Enable clocks for LEUART0
 	CMU_ClockEnable(cmuClock_LEUART0, true);
-	CMU->LFBPRESC0 = (CMU->LFBPRESC0 & ~_CMU_LFBPRESC0_LEUART0_MASK)  | CMU_LFBPRESC0_LEUART0_DIV1;// CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_1); // Don't prescale LEUART clock
+	CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_1); // Don't prescale LEUART clock
 	CMU->LFRCOCTRL	= CMU->LFRCOCTRL & (~(CMU_LFRCOCTRL_ENDEM | CMU_LFRCOCTRL_ENCHOP));//Setting the ENCHOP and/or EN- DEM bitfields to 1 in the CMU_LFRCOCTRL register will improve the average LFRCO frequency accuracy at the cost of a worse cycle- to-cycle accuracy.
 	usartInit = LEUART_INIT_DEFAULT;
 	this->_baudrate = baudrate;

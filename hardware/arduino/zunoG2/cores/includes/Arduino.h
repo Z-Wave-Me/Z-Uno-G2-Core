@@ -169,6 +169,7 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 
+void analogWriteFrequency(uint32_t freq);
 void analogReference(ADC_Ref_TypeDef ref);
 void analogReadResolution(uint8_t bits);
 void analogWriteResolution(uint8_t bits);

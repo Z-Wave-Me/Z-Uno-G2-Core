@@ -374,7 +374,7 @@ void LLInit() {
     g_zuno_odhw_cfg.adc_resolution = 10; // 
     g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
     g_zuno_odhw_cfg.pwm_resolution = 8;
-    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_MIN;
+    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
 
 }
 

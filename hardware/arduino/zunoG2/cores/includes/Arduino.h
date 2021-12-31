@@ -21,6 +21,7 @@
 #include "Custom_decl.h" // 
 #include <math.h>
 #include "WCharacter.h"
+#include "pgmspace.h"
 
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */
@@ -71,9 +72,6 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoGetWakeReason()     (g_zuno_sys->wakeup_reason)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 
-// Backward compatibility with AVR
-#define pgm_read_byte(addr) ((uint8_t*)addr)[0]
-#define PROGMEM
 // Arduino specific macroses/function
 long map(long x, long in_min, long in_max, long out_min, long out_max);
 long random(long min, long max);

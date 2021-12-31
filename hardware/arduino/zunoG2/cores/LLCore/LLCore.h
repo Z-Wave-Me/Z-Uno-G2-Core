@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#define MAX_SKETCH_NAME  48
 
 typedef struct ZUNOCodeHeader_s{
     char        sign[8];
@@ -21,6 +21,7 @@ typedef struct ZUNOCodeHeader_s{
 	ZUNOOTAFWDescr_t * ota_firmwares_descriptions;
 	uint32_t    ota_pincode;
 	uint32_t    ota_custom_offset;
+	char        name[MAX_SKETCH_NAME];
 } ZUNOCodeHeader_t;
 
 // Universal apport index

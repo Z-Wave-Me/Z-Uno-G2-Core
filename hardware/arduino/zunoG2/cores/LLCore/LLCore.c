@@ -92,6 +92,9 @@ extern unsigned long __HeapLimit;
 #ifndef ZUNO_CUSTOM_OTA_OFFSET
 #define ZUNO_CUSTOM_OTA_OFFSET 0UL
 #endif 
+#ifndef ZUNO_SKETCH_NAME
+#define ZUNO_SKETCH_NAME ""
+#endif
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {
                                                                                     {'Z','M','E','Z','U','N','O','C'}, 
@@ -106,7 +109,8 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     ZUNO_EXT_FIRMWARES_COUNT,
                                                                                     ZUNO_EXT_FIRMWARES_DESCR_PTR,
                                                                                     ZUNO_OTA_PIN,
-                                                                                    ZUNO_CUSTOM_OTA_OFFSET};
+                                                                                    ZUNO_CUSTOM_OTA_OFFSET,
+                                                                                    ZUNO_SKETCH_NAME};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 

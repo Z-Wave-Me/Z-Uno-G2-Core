@@ -201,7 +201,6 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	CMU_ClockDivSet(cmuClock_LEUART0, cmuClkDiv_1); // Don't prescale LEUART clock
 	CMU->LFRCOCTRL	= CMU->LFRCOCTRL & (~(CMU_LFRCOCTRL_ENDEM | CMU_LFRCOCTRL_ENCHOP));//Setting the ENCHOP and/or EN- DEM bitfields to 1 in the CMU_LFRCOCTRL register will improve the average LFRCO frequency accuracy at the cost of a worse cycle- to-cycle accuracy.
 	usartInit = LEUART_INIT_DEFAULT;
-	this->_baudrate = baudrate;
 	usartInit.baudrate = baudrate;
 	usartInit.databits = (LEUART_Databits_TypeDef)(option & _LEUART_CTRL_DATABITS_MASK);
 	usartInit.parity = (LEUART_Parity_TypeDef)(option & _LEUART_CTRL_PARITY_MASK);
@@ -229,6 +228,7 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	}
 	else
 		this->_channel = -1;
+	this->_baudrate = LEUART_BaudrateGet(usart);
 	zunoSyncReleseWrite(&gSyncLeUart, SyncMasterLeUart, &this->_lpKey);
 	if (len != 0x0 && channel < 0x0) {
 		this->end();

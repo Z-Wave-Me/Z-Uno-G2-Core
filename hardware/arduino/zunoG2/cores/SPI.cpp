@@ -431,7 +431,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	else {
 		usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
 		ms = count;
-		ms = ms * 8 * 1000 / this->_baudrate;
+		ms = ms * 8 * 1000 / USART_BaudrateGet(usart);
 		channel_r = -1;
 		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((channel_r = LdmaClass::transferSingle((const void *)&usart->RXDATA, b, count, config->dmaSignalRead, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array_r)) >= 0x0)) {
 			if ((channel_w = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
@@ -466,7 +466,7 @@ ZunoError_t SPIClass::memset(uint8_t c, size_t n) {
 	usart = config->usart;
 	usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
 	ms = n;
-	ms = ms * 8 * 1000 / this->_baudrate;
+	ms = ms * 8 * 1000 / USART_BaudrateGet(usart);
 	if ((channel_w = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
 		delay(ms);
 		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol

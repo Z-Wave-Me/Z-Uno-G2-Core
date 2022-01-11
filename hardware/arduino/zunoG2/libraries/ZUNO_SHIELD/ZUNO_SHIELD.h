@@ -6,7 +6,7 @@ typedef enum {
     SHIELD_POWER_3V_BATTERY
 } ShieldPowerMode_t;
 
-#define SHIELD_BASE_VREF 15700
+#define SHIELD_BASE_VREF 10500
 #define SHIELD_BASE_PWM_FREQ 39000 
 typedef enum {
     SHIELD_ADC_JUMPER_IO3V,

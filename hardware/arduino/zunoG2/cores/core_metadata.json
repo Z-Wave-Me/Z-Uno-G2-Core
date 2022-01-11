@@ -1,5 +1,5 @@
 {
-    "core_version":{"major":3,"minor":8,"branch":"beta"},
+    "core_version":{"major":3,"minor":9,"branch":"beta"},
     "load_offset":215040,
     "max_channel_ccs":2,
     "static_value_mapper":{

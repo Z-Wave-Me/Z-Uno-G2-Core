@@ -250,7 +250,6 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 		return (this->_beginFaill(ret, bFree, b));
 	CMU_ClockEnable(config->bus_clock, true);
 	usartInit = USART_INITASYNC_DEFAULT;
-	this->_baudrate = baudrate;
 	usartInit.baudrate = baudrate;
 	USART_InitAsync(usart, &usartInit);
 	usart->FRAME = option;
@@ -273,6 +272,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	}
 	else
 		this->_channel = -1;
+	this->_baudrate = USART_BaudrateGet(usart);
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
 	if (len != 0x0 && channel < 0x0) {
 		this->end();

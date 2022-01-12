@@ -14,7 +14,7 @@ void loop(){
 
 	SPI.beginTransaction();
 	SPI.transfer16(0x3031);
-	delay(100);
+	delay(2);
 	memcpy(&buffer[0x0], MESSAGE, sizeof(MESSAGE));
 	SPI.transfer(&buffer[0x0], sizeof(MESSAGE) - 0x1);
 	SPI.endTransaction();

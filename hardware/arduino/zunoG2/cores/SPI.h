@@ -33,12 +33,15 @@ typedef struct								ZunoSpiUsartTypeConfig_s
 {
 	USART_TypeDef							*usart;
 	ZunoSync_t								*lpLock;
+	void									(*IRQHandler)(uint32_t);
 	LdmaClassSignal_t						dmaSignalWrite;
 	LdmaClassSignal_t						dmaSignalRead;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
 	uint8_t									miso;
 	uint8_t									mosi;
+	uint8_t									subType;
+	IRQn_Type								irqType;
 }											ZunoSpiUsartTypeConfig_t;
 
 typedef struct								ZunoSpiSlave_s
@@ -47,6 +50,7 @@ typedef struct								ZunoSpiSlave_s
 	LdmaClassTransferSingle_t				array_w;
 	ssize_t									channel;
 	ssize_t									channel_w;
+	void									(*user_onRequest)(void);
 	uint16_t								len;
 	uint16_t								count;
 	uint8_t									buffer[];
@@ -80,6 +84,7 @@ class SPIClass {
 		inline void											setClockDivider(uint8_t divider) {this->setClockDivider(divider, this->_ss_pin);};
 		void												setClockDivider(uint8_t divider, uint8_t slaveSelectPin);
 
+		void												onRequest(void (*function)(void));
 		ZunoError_t											memset(uint8_t c, size_t n);//max 2048 * 255
 		size_t												write(uint8_t data) { return (this->write((const uint8_t *)&data, 0x1));};
 		size_t												write(const uint8_t *data, size_t quantity);
@@ -105,6 +110,10 @@ class SPIClass {
 		inline uint8_t										transfer(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 
 	private:
+		static void											_USART0_IRQHandler(uint32_t flags);
+		static void											_USART1_IRQHandler(uint32_t flags);
+		static void											_USART2_IRQHandler(uint32_t flags);
+		void												_USART_IRQHandler(uint32_t flags);
 		inline int											_readLock(uint8_t bOffset);
 		size_t												_transferDate(size_t data, size_t bFlags);
 		ZunoError_t											_transferStrlen(void *b, size_t bFlags);

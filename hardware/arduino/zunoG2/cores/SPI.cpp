@@ -33,36 +33,45 @@ const ZunoSpiUsartTypeConfig_t SPIClass::_configTable0 =
 {
 	.usart = USART0,
 	.lpLock = &gSyncUSART0,
+	.IRQHandler = SPIClass::_USART0_IRQHandler,
 	.dmaSignalWrite = LdmaClassSignal_USART0_TXBL,
 	.dmaSignalRead = LdmaClassSignal_USART0_RXDATAV,
 	.bus_clock = cmuClock_USART0,
 	.sck = SCK,
 	.miso = MISO,
-	.mosi = MOSI
+	.mosi = MOSI,
+	.subType = ZUNO_IRQVEC_USART0_RX,
+	.irqType = USART0_RX_IRQn
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable1 = 
 {
 	.usart = USART1,
 	.lpLock = &gSyncUSART1,
+	.IRQHandler = SPIClass::_USART1_IRQHandler,
 	.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
 	.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
 	.bus_clock = cmuClock_USART1,
 	.sck = SCK,
 	.miso = MISO,
-	.mosi = MOSI
+	.mosi = MOSI,
+	.subType = ZUNO_IRQVEC_USART1_RX,
+	.irqType = USART1_RX_IRQn
 };
 
 const ZunoSpiUsartTypeConfig_t SPIClass::_configTable2 = 
 {
 	.usart = USART2,
 	.lpLock = &gSyncUSART2,
+	.IRQHandler = SPIClass::_USART2_IRQHandler,
 	.dmaSignalWrite = LdmaClassSignal_USART2_TXBL,
 	.dmaSignalRead = LdmaClassSignal_USART2_RXDATAV,
 	.bus_clock = cmuClock_USART2,
 	.sck = SCK2,
 	.miso = MISO2,
-	.mosi = MOSI2
+	.mosi = MOSI2,
+	.subType = ZUNO_IRQVEC_USART2_RX,
+	.irqType = USART2_RX_IRQn
 };
 
 const USART_InitSync_TypeDef SPIClass::_initSpi = SPI_INIT_DEFAULT;//USART_INITSYNC_DEFAULT;
@@ -121,6 +130,22 @@ size_t SPIClass::write(const uint8_t *data, size_t quantity) {
 	return (quantity);
 }
 
+void SPIClass::onRequest(void (*function)(void)) {
+	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoSpiSlave_t						*slave;
+	USART_TypeDef						*usart;
+
+	config = this->_config;
+	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
+		return ;
+	if ((slave = this->_slave)!= 0x0) {
+		usart = config->usart;
+		slave->user_onRequest = function;
+		usart->TIMECMP1 = USART_TIMECMP1_TSTART_RXEOF | USART_TIMECMP1_TSTOP_RXACT | 0x7F;
+		usart->IEN = USART_IEN_TCMP1;
+	}
+	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+}
 
 void SPIClass::beginTransmissionSlave(void) {
 	const ZunoSpiUsartTypeConfig_t		*config;
@@ -179,8 +204,10 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 				USART_Enable(usart, usartDisable);
 				slave->len = len / 0x2;
 				if ((slave->channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, &slave->buffer[len / 0x2], len / 0x2, config->dmaSignalRead, ldmaCtrlSizeByte, &slave->arrayReceivedCyclical)) >= 0x0) {
+					zunoAttachSysHandler(ZUNO_HANDLER_IRQ, config->subType, (void *)config->IRQHandler);
 					slave->channel_w = -1;
 					slave->count = 0x0;
+					slave->user_onRequest = 0x0;
 					this->_slave = slave;
 					usart->CMD = USART_CMD_MASTERDIS;
 					pinMode(this->_sck_pin, INPUT_UP);
@@ -189,6 +216,8 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 					pinMode(this->_miso_pin, OUTPUT_UP);
 					usart->ROUTELOC0 = usart->ROUTELOC0 | (this->_ss_loc << _USART_ROUTELOC0_CSLOC_SHIFT);// Set USART pin locations
 					usart->ROUTEPEN = USART_ROUTEPEN_CLKPEN | USART_ROUTEPEN_CSPEN | USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;// Enable USART pins
+					NVIC_ClearPendingIRQ(config->irqType);
+					NVIC_EnableIRQ(config->irqType);
 				}
 				else {
 					free(slave);
@@ -212,6 +241,8 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 		usart->CMD = USART_CMD_MASTEREN;
 		usart->ROUTELOC0 = usart->ROUTELOC0 & (~_USART_ROUTELOC0_CSLOC_MASK);
 		usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
+		usart->IEN = _USART_IEN_RESETVALUE;
+		NVIC_DisableIRQ(config->irqType);
 		USART_Enable(usart, usartEnable);
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
@@ -347,7 +378,7 @@ int SPIClass::available(void) {
 	config = this->_config;
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (0);
-	if (this->_slave == 0x0)
+	if (this->_slave == 0x0 || this->_slave->channel == -1)
 		out = 0x0;
 	else
 		out = LdmaClass::receivedAvailable(this->_slave->channel);
@@ -363,6 +394,52 @@ int SPIClass::read(void) {
 }
 
 /* Private Methods */
+void SPIClass::_USART_IRQHandler(uint32_t flags) {
+	ZunoSpiSlave_t						*slave;
+	ssize_t								channel_w;
+	size_t								len;
+	const ZunoSpiUsartTypeConfig_t		*config;
+
+	config = this->_config;
+	slave = this->_slave;
+	if (slave->user_onRequest != 0x0)
+	{
+		if ((channel_w = slave->channel_w) == -1  || LdmaClass::transferDone(channel_w) == true)
+		{
+			if (channel_w != -1) {
+				LdmaClass::transferStop(channel_w);
+				slave->channel_w = -1;
+				config->usart->CMD = USART_CMD_CLEARRX;
+				slave->channel = LdmaClass::receivedCyclical((void *)&config->usart->RXDATA, &slave->buffer[slave->len / 0x2], slave->len / 0x2, config->dmaSignalRead, ldmaCtrlSizeByte, &slave->arrayReceivedCyclical);
+			}
+			else {
+				slave->count = 0x0;
+				slave->user_onRequest();
+				if ((len = slave->count) != 0x0) {
+					if ((slave->channel_w = LdmaClass::transferSingle(&slave->buffer[0x0], (void*)&(config->usart->TXDATA), len, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &slave->array_w)) > 0x0) {
+						LdmaClass::transferStop(slave->channel);
+						slave->channel = -1;
+					}
+				}
+			}
+		
+		}
+	}
+	(void)flags;
+}
+
+void SPIClass::_USART0_IRQHandler(uint32_t flags) {
+	SPI0._USART_IRQHandler(flags);
+}
+
+void SPIClass::_USART1_IRQHandler(uint32_t flags) {
+	SPI1._USART_IRQHandler(flags);
+}
+
+void SPIClass::_USART2_IRQHandler(uint32_t flags) {
+	SPI2._USART_IRQHandler(flags);
+}
+
 inline int SPIClass::_readLock(uint8_t bOffset) {
 	const ZunoSpiUsartTypeConfig_t				*config;
 	int											out;
@@ -370,7 +447,7 @@ inline int SPIClass::_readLock(uint8_t bOffset) {
 	config = this->_config;
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return (-1);
-	if (this->_slave == 0x0)
+	if (this->_slave == 0x0  || this->_slave->channel == -1)
 		out = -1;
 	else
 		out = LdmaClass::receivedReadPeek(this->_slave->channel, bOffset);
@@ -406,6 +483,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 	const ZunoSpiUsartTypeConfig_t		*config;
 	USART_TypeDef						*usart;
 	void								*e;
+	uint8_t								*tmp;
 	ZunoError_t							ret;
 	size_t								out;
 	ssize_t								channel_r;
@@ -433,7 +511,7 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 		ms = count;
 		ms = ms * 8 * 1000 / USART_BaudrateGet(usart);
 		channel_r = -1;
-		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((channel_r = LdmaClass::transferSingle((const void *)&usart->RXDATA, b, count, config->dmaSignalRead, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array_r)) >= 0x0)) {
+		if ((bFlags & SPI_FLAGS_CONST) != 0 || ((channel_r = LdmaClass::transferSingle((const void *)&usart->RXDATA, b, count - 0x1, config->dmaSignalRead, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncOne, &array_r)) >= 0x0)) {
 			if ((channel_w = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
 				delay(ms);
 				while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
@@ -442,8 +520,11 @@ ZunoError_t SPIClass::_transfer(void *b, size_t count, size_t bFlags) {
 			}
 			else
 				ret = ZunoErrorDmaLimitChannel;
-			if (channel_r >= 0x0)
+			if (channel_r >= 0x0) {
+				tmp = (uint8_t *)b;
+				tmp[count - 0x1] = usart->RXDATA;
 				LdmaClass::transferStop(channel_r);
+			}
 		}
 		else
 			ret = ZunoErrorDmaLimitChannel;
@@ -502,6 +583,7 @@ ZunoError_t SPIClass::_deInit(size_t param) {
 	USART_Reset(spi->_config->usart);
 	if ((slave = spi->_slave) != 0x0) {
 		LdmaClass::transferStop(slave->channel);
+		NVIC_DisableIRQ(spi->_config->irqType);
 		free(slave);
 	}
 	return (ZunoErrorOk);

@@ -462,7 +462,9 @@ void * zunoJumpTable(int vec, void * data) {
                 g_sketch_inited = true;
             }
             loop();
+            #if (SKETCH_FLAGS_LOOP_DELAY>0)
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
+            #endif
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);

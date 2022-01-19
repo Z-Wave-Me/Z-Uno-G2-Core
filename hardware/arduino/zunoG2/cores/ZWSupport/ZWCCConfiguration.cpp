@@ -33,7 +33,7 @@ const ZunoCFGParameter_t CFGPARAM_DEFAULT =
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	static ZunoCFGParameter_t param_data;
 	memcpy(&param_data, &CFGPARAM_DEFAULT, sizeof(ZunoCFGParameter_t));
-	if(param > CONFIGPARAM_MAX_PARAM)
+	if(param > CONFIGPARAM_MAX_PARAM || param < CONFIGPARAM_MIN_PARAM)
 		return (ZUNO_CFG_PARAMETER_UNKNOWN);
 	char* p_nn  = strstr(param_data.name, "NN");
 	p_nn[0] = '0' + (param / 10) % 10;

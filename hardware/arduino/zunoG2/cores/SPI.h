@@ -90,8 +90,6 @@ class SPIClass {
 		size_t												write(const uint8_t *data, size_t quantity);
 		ZunoError_t											setSlave(uint8_t mode) {return (this->setSlave(mode, SPI_BUFFER_LENGTH));};
 		ZunoError_t											setSlave(uint8_t mode, uint16_t len);
-		void												beginTransmissionSlave(void);
-		uint16_t												endTransmissionSlave(void);
 		int													available(void);
 		int													peek(void);
 		int													read(void);

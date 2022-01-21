@@ -147,43 +147,6 @@ void SPIClass::onRequest(void (*function)(void)) {
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
-void SPIClass::beginTransmissionSlave(void) {
-	const ZunoSpiUsartTypeConfig_t		*config;
-	ZunoSpiSlave_t						*slave;
-
-	config = this->_config;
-	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
-		return ;
-	if ((slave = this->_slave)!= 0x0) {
-		LdmaClass::transferStop(slave->channel_w);
-		slave->channel_w = -1;
-		slave->count = 0x0;
-	}
-	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
-}
-
-uint16_t SPIClass::endTransmissionSlave(void) {
-	const ZunoSpiUsartTypeConfig_t		*config;
-	ZunoSpiSlave_t						*slave;
-	size_t								len;
-
-	config = this->_config;
-	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
-		return (0x0);
-	if ((slave = this->_slave)!= 0x0) {
-		len = slave->count;
-		if ((slave->channel_w = LdmaClass::transferSingle(&slave->buffer[0x0], (void*)&(config->usart->TXDATA), len, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &slave->array_w)) > 0x0) {
-			;
-		}
-		else
-			len = 0x0;
-	}
-	else
-		len = 0x0;
-	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
-	return (len);
-}
-
 ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 	ZunoError_t							ret;
 	USART_TypeDef						*usart;

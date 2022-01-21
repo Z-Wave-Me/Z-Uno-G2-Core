@@ -709,111 +709,121 @@ void analogAcqTime(ADC_AcqTime_TypeDef acqtime){
     g_zuno_odhw_cfg.adc_acqtime = acqtime;
 }
 
+ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin) {
+	ADC_PosSel_TypeDef				out;
 
-ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin){
-  switch(pin){
-      /*
-      case A0:
-          return adcPosSelAPORT3XCH30;
-      case A1:
-          return adcPosSelAPORT4XCH31;
-      case A2:   
-          return adcPosSelAPORT1XCH6;
-      case A3:
-          return adcPosSelAPORT2XCH7;
-          */
-#if ZUNO_PIN_V == 1
-      case A0:
-          return adcPosSelAPORT1XCH22;
-      case A1:
-          return adcPosSelAPORT2XCH23;
-      case A2:   
-          return adcPosSelAPORT4XCH1;
-      case A3:
-          return adcPosSelAPORT3XCH2;
-#elif ZUNO_PIN_V == 2
-      case A0:
-          return adcPosSelAPORT1XCH22;
-      case A1:
-          return adcPosSelAPORT2XCH23;
-      case A2:   
-          return adcPosSelAPORT4XCH1;
-      case A3:
-          return adcPosSelAPORT3XCH2;
-#elif ZUNO_PIN_V == 3
-      case A0:
-          return adcPosSelAPORT1XCH22;
-      case A1:
-          return adcPosSelAPORT2XCH23;
-      case A2:   
-          return adcPosSelAPORT4XCH1;
-      case A3:
-          return adcPosSelAPORT3XCH2;
-#elif ZUNO_PIN_V == 4
-      case A0:
-          return adcPosSelAPORT1XCH22;
-      case A1:
-          return adcPosSelAPORT2XCH23;
-      case A2:   
-          return adcPosSelAPORT4XCH1;
-      case A3:
-          return adcPosSelAPORT3XCH2;
-#elif ZUNO_PIN_V == 6
-      case A0:
-          return adcPosSelAPORT1XCH22;
-      case A1:
-          return adcPosSelAPORT2XCH23;
-      case A2:   
-          return adcPosSelAPORT4XCH1;
-      case A3:
-          return adcPosSelAPORT3XCH2;
-#elif ZUNO_PIN_V == 1000
-
-#else
-	#error ZUNO_PIN_V
-#endif
-      case BATTERY:
-          return adcPosSelAVDD;
-      default:
-          return adcPosSelAVDD;
-  }
-
+	switch(pin) {
+		case 21://PC6
+			out = adcPosSelAPORT1XCH6;
+			break ;
+		case 22://PC7
+			out = adcPosSelAPORT1YCH7;
+			break ;
+		case 0://PC8
+			out = adcPosSelAPORT1XCH8;
+			break ;
+		case 1://PC9
+			out = adcPosSelAPORT1YCH9;
+			break ;
+		case 23://PC10
+			out = adcPosSelAPORT1XCH10;
+			break ;
+		case 25://PC11
+			out = adcPosSelAPORT1YCH11;
+			break ;
+		case 2://PF2
+			out = adcPosSelAPORT1XCH18;
+			break ;
+		case 7://PF4
+			out = adcPosSelAPORT1XCH20;
+			break ;
+		case 8://PF5
+			out = adcPosSelAPORT1YCH21;
+			break ;
+		case 3://PF6
+			out = adcPosSelAPORT1XCH22;
+			break ;
+		case 4://PF7
+			out = adcPosSelAPORT1YCH23;
+			break ;
+		case 5://PD9
+			out = adcPosSelAPORT3YCH1;
+			break ;
+		case 6://PD10
+			out = adcPosSelAPORT3XCH2;
+			break ;
+		case 9://PD11
+			out = adcPosSelAPORT3YCH3;
+			break ;
+		case 10://PD12
+			out = adcPosSelAPORT3XCH4;
+			break ;
+		case 24://PD13
+			out = adcPosSelAPORT3YCH5;
+			break ;
+		case 11://PD14
+			out = adcPosSelAPORT3XCH6;
+			break ;
+		case 12://PD15
+			out = adcPosSelAPORT3YCH7;
+			break ;
+		case 13://PA0
+			out = adcPosSelAPORT3XCH8;
+			break ;
+		case 14://PA1
+			out = adcPosSelAPORT3YCH9;
+			break ;
+		case 15://PA2
+			out = adcPosSelAPORT3XCH10;
+			break ;
+		case 16://PA3
+			out = adcPosSelAPORT3YCH11;
+			break ;
+		case 17://PA4
+			out = adcPosSelAPORT3XCH12;
+			break ;
+		default:
+			out = adcPosSelAVDD;
+			break ;
+	}
+	return (out);
 }
-void zme_ADC_Enable(){
-   ADC_Init_TypeDef adcInit = ADC_INIT_DEFAULT;
-   // Enable ADC clock
-   CMU_ClockEnable(cmuClock_ADC0, true);
-   // Setup ADC
-   adcInit.timebase = ADC_TimebaseCalc(0);
-   // Set ADC clock to 7 MHz, use default HFPERCLK
-   adcInit.prescale = ADC_PrescaleCalc(7000000, 0);
-   ADC_Init(ADC0, &adcInit);
-}
-void zme_ADC_Disable(){
-   ADC_Reset(ADC0);
-   // Disable ADC clock
-   CMU_ClockEnable(cmuClock_ADC0, false);
+
+void zmeADCInit() {
+	ADC_Init_TypeDef				adcInit;
+
+	if(!g_zuno_odhw_cfg.ADCInitialized){
+		adcInit = ADC_INIT_DEFAULT;
+		CMU_ClockEnable(cmuClock_HFPER, true);
+		CMU_ClockEnable(cmuClock_ADC0, true);
+		CMU->ADCCTRL = CMU_ADCCTRL_ADC0CLKSEL_AUXHFRCO;// Select AUXHFRCO for ADC ASYNC mode so that ADC can run on EM2
+		CMU_AUXHFRCOBandSet(cmuAUXHFRCOFreq_4M0Hz);
+		adcInit.timebase = ADC_TimebaseCalc(0);
+		adcInit.prescale = ADC_PrescaleCalc(CMU_AUXHFRCOBandGet(), 0);
+		adcInit.em2ClockConfig = adcEm2ClockOnDemand;
+		ADC_Init(ADC0, &adcInit);
+		g_zuno_odhw_cfg.ADCInitialized = true;
+	}
 }
 
 int analogRead(uint8_t pin) {
-    uint32_t sampleValue;
-    if(!g_zuno_odhw_cfg.ADCInitialized){
-        // Initialize ADC only the first time we need it
-        zme_ADC_Enable();
-        g_zuno_odhw_cfg.ADCInitialized = true;
-    }
-    ADC_InitSingle_TypeDef singleInit = ADC_INITSINGLE_DEFAULT;
-    // Init for single conversion use, use 5V reference
-    singleInit.reference  = (ADC_Ref_TypeDef)g_zuno_odhw_cfg.adc_reference;
-    singleInit.posSel     = zme_ADC_PIN2Channel(pin);
-    singleInit.resolution = __adc_resolution2Mode(g_zuno_odhw_cfg.adc_resolution);
-    singleInit.acqTime    = (ADC_AcqTime_TypeDef)g_zuno_odhw_cfg.adc_acqtime;
-    ADC_InitSingle(ADC0, &singleInit);
-    ADC_Start(ADC0, adcStartSingle);
-    while (ADC0->STATUS & ADC_STATUS_SINGLEACT);
-    sampleValue = ADC_DataSingleGet(ADC0);
-    // zme_ADC_Disable(); // Move to "BEFORESLEEP" hadler
-    return __oversampleValue(sampleValue, __adc_resolution2RealBits(g_zuno_odhw_cfg.adc_resolution), g_zuno_odhw_cfg.adc_resolution);
+	uint32_t								sampleValue;
+	ADC_InitSingle_TypeDef					singleInit;
+
+	zmeADCInit();
+	singleInit = ADC_INITSINGLE_DEFAULT;
+	// Init for single conversion use, use 5V reference
+	singleInit.reference  = (ADC_Ref_TypeDef)g_zuno_odhw_cfg.adc_reference;
+	singleInit.posSel     = zme_ADC_PIN2Channel(pin);
+	singleInit.resolution = __adc_resolution2Mode(g_zuno_odhw_cfg.adc_resolution);
+	singleInit.acqTime    = (ADC_AcqTime_TypeDef)g_zuno_odhw_cfg.adc_acqtime;
+	ADC_InitSingle(ADC0, &singleInit);
+	ADC_Start(ADC0, adcStartSingle);
+	while (ADC0->STATUS & ADC_STATUS_SINGLEACT)
+		;
+	sampleValue = ADC_DataSingleGet(ADC0);
+	ADC0->CMD = ADC_CMD_SINGLESTOP;
+	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(g_zuno_odhw_cfg.adc_resolution), g_zuno_odhw_cfg.adc_resolution));
 }
 
 

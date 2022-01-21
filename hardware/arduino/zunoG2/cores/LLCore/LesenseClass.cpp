@@ -270,7 +270,7 @@ ZunoError_t LesenseClass::_lesenseInit(void) {
 		initLesense.coreCtrl.debugRun = false;
 		initLesense.coreCtrl.bufOverWr = true;
 		LESENSE_Init(&initLesense, true);//Initialize LESENSE interface
-		// LESENSE_ScanFreqSet(0x0, this->_values.LesenseScanSequence_fq);
+		LESENSE_ScanFreqSet(0x0, this->_values.LesenseScanSequence_fq);
 		NVIC_ClearPendingIRQ(LESENSE_IRQn);
 		NVIC_EnableIRQ(LESENSE_IRQn);
 		this->_values.count_lesense++;

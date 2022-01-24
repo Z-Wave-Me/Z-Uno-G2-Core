@@ -22,6 +22,7 @@
 #include "ZWCCVersion.h"
 #include "Debug.h"
 #include "ZWCCSuperVision.h"
+#include "ZWCCUserCode.h"
 
 #include "ZUNO_AutoChannels.h"
 
@@ -309,6 +310,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 				result = zuno_CCTimerParametrsHandler(cmd);
 				break ;
 			#endif
+			#ifdef WITH_CC_USER_CODE
+			case COMMAND_CLASS_USER_CODE:
+				result = zuno_CCUserCodeHandler(cmd);
+				break ;
+			#endif
 			#ifdef WITH_CC_BATTERY
 			case COMMAND_CLASS_BATTERY:
 				result = zuno_CCBattery(cmd);
@@ -407,6 +413,25 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 		#ifdef WITH_CC_TIME_PARAMETERS
 		case COMMAND_CLASS_TIME_PARAMETERS:
 			if (cmd == TIME_PARAMETERS_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_USER_CODE
+		case COMMAND_CLASS_USER_CODE:
+			if (cmd == MASTER_CODE_GET_V2)
+				return (false);
+			if (cmd == USER_CODE_CHECKSUM_GET_V2)
+				return (false);
+			if (cmd == USER_CODE_KEYPAD_MODE_GET_V2)
+				return (false);
+			if (cmd == EXTENDED_USER_CODE_GET_V2)
+				return (false);
+			if (cmd == USER_CODE_GET_V2)
+				return (false);
+			if (cmd == USER_CODE_CAPABILITIES_GET_V2)
+				return (false);
+			if (cmd == USERS_NUMBER_GET_V2)
 				return (false);
 			return (true);
 			break ;

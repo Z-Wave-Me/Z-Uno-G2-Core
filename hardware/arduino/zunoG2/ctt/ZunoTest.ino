@@ -11,6 +11,7 @@
 */
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 #include "ZWCCUserCode.h"
+#include "ZWCCEntryControl.h"
 
 // Pins definitions 
 #define LedPin1         A0
@@ -59,7 +60,7 @@ enum{
 // ZUNO_ENABLE setups some global extra build flags
 // LOGGING_DBG 
 // NO_DEFAULT_PIN_SETUP
-ZUNO_ENABLE(LOGGING_DBG WITH_CC_USER_CODE MODERN_MULTICHANNEL ZUNO_SKETCH_NAME="10CHCertSketch" SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+ZUNO_ENABLE(LOGGING_DBG WITH_CC_USER_CODE WITH_CC_ENTRY_CONTROL MODERN_MULTICHANNEL ZUNO_SKETCH_NAME="10CHCertSketch" SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel
@@ -114,6 +115,8 @@ ZUNO_SETUP_USER_CODE(
 	ZUNO_SETUP_USER_CODE_AVAILABLE()
 );
 
+ZUNO_SETUP_ENTRY_CONTROL_KEYS('0','1', '2', '3', '4', '5', '6', '7', '8', '9');
+
 // Device's configuration parametrs definitions  
 ZUNO_SETUP_CONFIGPARAMETERS(
    ZUNO_CONFIG_PARAMETER_INFO("Temperature hysteresis", "Defines hysteresis of temperature", 1, 20, 5),
@@ -152,6 +155,7 @@ void setup() {
 		zunoAddAssociation(1, 0);
 		zunoSetS2Keys(0x83);
 		zunoAddBaseCCS(COMMAND_CLASS_USER_CODE, USER_CODE_VERSION);
+		zunoAddBaseCCS(COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION);
 		zunoCommitCfg();
 	}
 	zunoAppendChannelHandler( 0,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&switchValue1);

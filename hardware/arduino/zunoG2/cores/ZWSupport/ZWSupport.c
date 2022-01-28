@@ -271,6 +271,13 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 }
 #endif
 
+uint8_t *zuno_AddCommonClassMinimal(uint8_t *b) {
+	b++[0] = COMMAND_CLASS_ZWAVEPLUS_INFO;
+	#ifndef SUPERVISION_HIGHEST_S2_ONLY
+	b++[0] = COMMAND_CLASS_SUPERVISION;
+	#endif
+	return (b);
+}
 uint8_t *zuno_AddCommonClass(uint8_t *b) {
 	b++[0] = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	b++[0] = COMMAND_CLASS_ASSOCIATION;
@@ -1335,4 +1342,15 @@ uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
 		sz--;
 	}
 	return  res;
+}
+int _zunoTransposeSecurityLevel(uint8_t sec) {
+	switch (sec) {
+		case SECURITY_KEY_NONE:
+			return -2;
+		case SECURITY_KEY_S0:
+			return  -1;
+		default:
+			return sec;
+	}
+	return sec;
 }

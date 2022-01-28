@@ -26,7 +26,7 @@ static void zuno_initMchData() {
 	g_mch_aux_data.num_channels = num_channels;
 }
 
-uint8_t *zuno_AddCommonClass(uint8_t *b);
+
 
 static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	ZUNOChannel_t								*channel;
@@ -47,14 +47,31 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	report->genericDeviceClass = ZUNO_DEV_TYPES[type_index].gen_type;
 	report->specificDeviceClass = ZUNO_DEV_TYPES[type_index].spec_type;
 	commandClass = &report->commandClass[0];
+	#ifdef MODERN_MULTICHANNEL_S2
+	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE)
+		commandClass = zuno_AddCommonClass(commandClass);
+	else
+		commandClass = zuno_AddCommonClassMinimal(commandClass);
+	#else
 	commandClass = zuno_AddCommonClass(commandClass);
-	if(g_zuno_sys->enclusion_state == INCLUSION_STATE_INCLUDED_SECURE){
+	#endif
+	#ifndef MODERN_MULTICHANNEL_S2_ALWAYS
+	if(g_zuno_sys->enclusion_state == INCLUSION_STATE_INCLUDED_SECURE)
+	#endif
+	{
 		commandClass++[0] =  COMMAND_CLASS_SECURITY;
 		commandClass++[0] =  COMMAND_CLASS_SECURITY_2;
 	}
-	commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
-	if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
-		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
+	#ifdef MODERN_MULTICHANNEL_S2
+	// CTT test S2_SupportedCCRequirement_Rev02
+	// CC:0060.03.00.21.00E
+	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE) 
+	#endif
+	{
+		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
+		if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
+			commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
+	}
 	CMD_REPLY_LEN = sizeof(ZwMultiChannelCapabilityReportFrame_t) + (commandClass - &report->commandClass[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }

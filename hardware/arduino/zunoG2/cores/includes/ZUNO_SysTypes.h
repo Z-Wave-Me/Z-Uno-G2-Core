@@ -41,7 +41,7 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint8_t				security_keys;
 	uint16_t            __reserved;
 	uint16_t            crc16;
-}ZUNODeviceConfiguation_t;
+}__attribute__((aligned(1),packed)) ZUNODeviceConfiguation_t;
 typedef struct ZUNOOTAFWDescr_s{
 	uint16_t id;
 	uint16_t version;

@@ -55,9 +55,13 @@ enum{
    MOTION_RETRIGGER_TIME_PARAM 
 };
 // ZUNO_ENABLE setups some global extra build flags
-// LOGGING_DBG 
-// NO_DEFAULT_PIN_SETUP
-ZUNO_ENABLE(MODERN_MULTICHANNEL ZUNO_SKETCH_NAME="10CHCertSketch" SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG);
+ZUNO_ENABLE(
+            // LOGGING_DBG    // Uncomment for console output on TX0
+            MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
+            SUPERVISION_HIGHEST_S2_ONLY // Supervision works on higher S2 level ONLY 
+            MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
+            MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device encluded non-secure
+            SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG); // Do not reboot device if we apply some system configuration parameters which normally do it
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel

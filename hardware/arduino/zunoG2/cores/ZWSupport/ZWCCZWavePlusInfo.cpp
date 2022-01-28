@@ -9,6 +9,8 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	size_t								userIconType;
 	size_t								roleType;
 
+	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
+		return ZUNO_COMMAND_BLOCKED;
 	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(cmd->dst_zw_channel);
 	uint8_t type_index = ch_data->type -1;
 	report = (ZwZwavePlusInfoReportFrame_t *)&CMD_REPLY_CC;

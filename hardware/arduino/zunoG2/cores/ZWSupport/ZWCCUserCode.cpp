@@ -145,17 +145,13 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 				userIdentifier++;
 				continue ;
 			}
-			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
+			count = parametr->userCodeLen;
+			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t) + count) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
 				break ;
-			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t));
+			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) + count;
 			vg->userIdentifier1 = userIdentifier >> 0x8;
 			vg->userIdentifier2 = userIdentifier;
 			vg->userIdStatus = userIdStatus;
-			count = parametr->userCodeLen;
-			if ((len + count) > ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT) {
-				len = len - (sizeof(ZwExtendedUserCodeReportFrameVg_t));
-				break ;
-			}
 			memcpy(&vg->userCode[0x0], &parametr->userCode[0x0], count);
 			vg->properties1 = count;
 			vg = (ZwExtendedUserCodeReportFrameVg_t *)((size_t)vg + sizeof(ZwExtendedUserCodeReportFrameVg_t) + count);
@@ -163,6 +159,12 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 			userIdentifier++;
 			start->numberOfUserCodes++;
 		}
+	}
+	while (userIdentifier <= __g_zuno_user_code_param_count) {
+		parametr++;
+		if (parametr->userIdStatus != USER_CODE_STATUS_AVAILABLE)
+			break ;
+		userIdentifier++;
 	}
 	if (userIdentifier > __g_zuno_user_code_param_count)
 		userIdentifier = 0x0;

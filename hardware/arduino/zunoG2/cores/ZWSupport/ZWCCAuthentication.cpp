@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "ZWSupport.h"
 #include "ZWCCAuthentication.h"
+#include "CrcClass.h"
 
 __WEAK ZwAuthenticationId_t __g_zuno_authentication_id[] = 
 {
@@ -354,17 +355,6 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet)
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static uint16_t _crc16_ccitt_aug(uint16_t crc16, uint8_t *data, size_t len) {
-	uint8_t				i;
-
-	while (len--) {
-		crc16 = crc16 ^ data++[0] << 8;
-		i = 0;
-		while (i++ < 8)
-			crc16 = ((crc16 & 0x8000) != 0) ? (crc16 << 1) ^ 0x1021 : crc16 << 1;
-	}
-	return (crc16);
-} 
 
 // static uint8_t *_authentication_checksum_report_combination_test(ZwAuthenticationId_t *b_id, size_t type) {
 // 	uint8_t													*tmp;
@@ -430,9 +420,9 @@ static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME 
 					if ((authenticationDataLength = b_data->authenticationDataLength) != 0x0 && b_data->type == type) {
 						test = 0x1;
 						tempos = __builtin_bswap16(Identifie);
-						crc16 = _crc16_ccitt_aug(crc16, (uint8_t *)&tempos, sizeof(tempos));
+						crc16 = CrcClass::crc16_ccitt_aug(crc16, (uint8_t *)&tempos, sizeof(tempos));
 						memcpy(&tmp, &b_data->authenticationData[0x0], sizeof(b_data->authenticationData));
-						crc16 = _crc16_ccitt_aug(crc16, tmp, authenticationDataLength);
+						crc16 = CrcClass::crc16_ccitt_aug(crc16, tmp, authenticationDataLength);
 					}
 					Identifie++;
 					b_data++;
@@ -454,12 +444,12 @@ static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME 
 						combination.st.properties1 = tempos;
 						tempos = tempos * 0x2;
 						combination.AuthenticationIDBlockLength = sizeof(combination) + tempos;
-						crc16 = _crc16_ccitt_aug(crc16, (uint8_t *)&combination, sizeof(combination));
+						crc16 = CrcClass::crc16_ccitt_aug(crc16, (uint8_t *)&combination, sizeof(combination));
 						if (tempos > (sizeof(b_id->authenticationData)))
 							tmp = (uint8_t *)(b_id->authenticationData[0x0] | (b_id->authenticationData[0x1] << 8) | (b_id->authenticationData[0x2] << 16) | (b_id->authenticationData[03] << 24));
 						else
 							tmp = &b_id->authenticationData[0x0];
-						crc16 = _crc16_ccitt_aug(crc16, tmp, tempos);
+						crc16 = CrcClass::crc16_ccitt_aug(crc16, tmp, tempos);
 					}
 					Identifie++;
 					b_id++;

@@ -24,6 +24,7 @@
 #include "ZWCCSuperVision.h"
 #include "ZWCCUserCode.h"
 #include "ZWCCEntryControl.h"
+#include "ZWCCAuthentication.h"
 
 #include "ZUNO_AutoChannels.h"
 
@@ -320,6 +321,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 				result = zuno_CCTimerParametrsHandler(cmd);
 				break ;
 			#endif
+			#ifdef WITH_CC_AUTHENTICATION
+			case COMMAND_CLASS_AUTHENTICATION:
+				result = zuno_CCAuthenticationHandler(cmd);
+				break ;
+			#endif
 			#ifdef WITH_CC_ENTRY_CONTROL
 			case COMMAND_CLASS_ENTRY_CONTROL:
 				result = zuno_CCEntryControlHandler(cmd);
@@ -430,6 +436,15 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == TIME_PARAMETERS_GET)
 				return (false);
 			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_AUTHENTICATION
+		case COMMAND_CLASS_AUTHENTICATION:
+			if (cmd == AUTHENTICATION_DATA_SET)
+				return (true);
+			if (cmd == AUTHENTICATION_TECHNOLOGIES_COMBINATION_SET)
+				return (true);
+			return (false);
 			break ;
 		#endif
 		#ifdef WITH_CC_ENTRY_CONTROL

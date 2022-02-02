@@ -2,6 +2,7 @@
 #include "ZWSupport.h"
 #include "ZWCCUserCode.h"
 #include <string.h>
+#include "CrcClass.h"
 
 __WEAK uint8_t __g_zuno_user_code_asii_mask[0x10] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xFF, 0x03, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
@@ -145,17 +146,13 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 				userIdentifier++;
 				continue ;
 			}
-			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
+			count = parametr->userCodeLen;
+			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t) + count) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
 				break ;
-			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t));
+			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) + count;
 			vg->userIdentifier1 = userIdentifier >> 0x8;
 			vg->userIdentifier2 = userIdentifier;
 			vg->userIdStatus = userIdStatus;
-			count = parametr->userCodeLen;
-			if ((len + count) > ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT) {
-				len = len - (sizeof(ZwExtendedUserCodeReportFrameVg_t));
-				break ;
-			}
 			memcpy(&vg->userCode[0x0], &parametr->userCode[0x0], count);
 			vg->properties1 = count;
 			vg = (ZwExtendedUserCodeReportFrameVg_t *)((size_t)vg + sizeof(ZwExtendedUserCodeReportFrameVg_t) + count);
@@ -163,6 +160,12 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 			userIdentifier++;
 			start->numberOfUserCodes++;
 		}
+	}
+	while (userIdentifier <= __g_zuno_user_code_param_count) {
+		parametr++;
+		if (parametr->userIdStatus != USER_CODE_STATUS_AVAILABLE)
+			break ;
+		userIdentifier++;
 	}
 	if (userIdentifier > __g_zuno_user_code_param_count)
 		userIdentifier = 0x0;
@@ -303,18 +306,6 @@ static int _extended_user_code_set(ZwExtendedUserCodeSetFrameStart_t *paket) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static uint16_t _crc16_ccitt_aug(uint16_t crc16, uint8_t *data, size_t len) {
-	uint8_t				i;
-
-	while (len--) {
-		crc16 = crc16 ^ data++[0] << 8;
-		i = 0;
-		while (i++ < 8)
-			crc16 = ((crc16 & 0x8000) != 0) ? (crc16 << 1) ^ 0x1021 : crc16 << 1;
-	}
-	return (crc16);
-} 
-
 static int _user_code_checksum_report(void) {
 	ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME		*report;
 	ZwUserCodeParametr_t						*b;
@@ -336,9 +327,9 @@ static int _user_code_checksum_report(void) {
 	while (b < e) {
 		if ((userIdStatus = b->userIdStatus) != USER_CODE_STATUS_AVAILABLE) {
 			tempos = __builtin_bswap16(userIdentifier);
-			crc16 = _crc16_ccitt_aug(crc16, (uint8_t *)&tempos, sizeof(tempos));
-			crc16 = _crc16_ccitt_aug(crc16, &userIdStatus, sizeof(userIdStatus));
-			crc16 = _crc16_ccitt_aug(crc16, &b->userCode[0x0], b->userCodeLen);
+			crc16 = CrcClass::crc16_ccitt_aug(crc16, (uint8_t *)&tempos, sizeof(tempos));
+			crc16 = CrcClass::crc16_ccitt_aug(crc16, &userIdStatus, sizeof(userIdStatus));
+			crc16 = CrcClass::crc16_ccitt_aug(crc16, &b->userCode[0x0], b->userCodeLen);
 			i++;
 		}
 		userIdentifier++;

@@ -17,6 +17,7 @@ typedef enum							SyncMaster_e
 	SyncMasterPwm,
 	SyncMasterBtn,
 	SyncMasterLesenseClass,
+	SyncMasterCrcClass,
 	SyncMasterDht
 }										SyncMaster_t;
 

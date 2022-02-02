@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "ZUNO_ModBus.h"
-#include "zwaveme_gpcrc.h"
+#include "CrcClass.h"
 
 
 #define MOD_BUS_RTU_FN_ERROR				0x80
@@ -131,7 +131,7 @@ size_t ModBusRtuClass::send(HardwareSerial *hardwareSerial, void *src, size_t le
 	len = len- 2;
 	b = (uint8_t *)src;
 	e = &b[len];
-	crc16 = crc16_modbus(b, e - b);
+	crc16 = CrcClass::crc16_modbus(b, e - b);
 	e[0] = crc16 & 0xFF;
 	e[1] = crc16 >> 8;
 	len = len + 2;
@@ -159,7 +159,7 @@ ZunoError_t ModBusRtuClass::receive(HardwareSerial *hardwareSerial, void *dest, 
 		return (ZunoErrorNotData);
 	i = i - 2;
 	e = &b[i];
-	crc16 = crc16_modbus(b, e - b);
+	crc16 = CrcClass::crc16_modbus(b, e - b);
 	if (e[0] != (crc16 & 0xFF) || e[1] != (crc16 >> 8))
 		return (ZunoErrorNotMatchCrc);
 	count[0] = i;

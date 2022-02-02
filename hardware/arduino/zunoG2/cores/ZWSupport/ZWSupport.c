@@ -272,18 +272,20 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 #endif
 
 uint8_t *zuno_AddCommonClassMinimal(uint8_t *b) {
+	#ifdef MODERN_MULTICHANNEL_S2
 	b++[0] = COMMAND_CLASS_ZWAVEPLUS_INFO;
-	#ifndef SUPERVISION_HIGHEST_S2_ONLY
 	b++[0] = COMMAND_CLASS_SUPERVISION;
 	#endif
 	return (b);
 }
 uint8_t *zuno_AddCommonClass(uint8_t *b) {
+	#ifndef MODERN_MULTICHANNEL_S2
 	b++[0] = COMMAND_CLASS_ZWAVEPLUS_INFO;
+	b++[0] = COMMAND_CLASS_SUPERVISION;
+	#endif
 	b++[0] = COMMAND_CLASS_ASSOCIATION;
 	b++[0] = COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION;
 	b++[0] = COMMAND_CLASS_ASSOCIATION_GRP_INFO;
-	b++[0] = COMMAND_CLASS_SUPERVISION;
 	return (b);
 }
 

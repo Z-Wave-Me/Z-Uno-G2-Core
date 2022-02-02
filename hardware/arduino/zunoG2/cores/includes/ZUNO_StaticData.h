@@ -164,6 +164,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 								char ___zunoDeclareList[] = #VAR_NAMES
 #define ZUNO_INCLUDE(VAR_NAMES) \
 								char ___zunoIncludeList[] = #VAR_NAMES
+#define ZUNO_SETUP_DEBUG_MODE(ON) \
+								char ___zunoDbgMode = ON
 
 #define ZUNO_INCLUDE(VAR_NAMES) 
 #define ZUNO_NO_CHANNEL 														{0, 0, 0, 0, 0}
@@ -198,6 +200,7 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_ENABLE(VAR_NAMES) 
 #define ZUNO_DECLARE(VAR_NAMES) 
 #define ZUNO_INCLUDE(VAR_NAMES) 
+#define ZUNO_SETUP_DEBUG_MODE(ON)
  
 
 #define ZUNO_CUSTOMLNK(VAR_NAME)

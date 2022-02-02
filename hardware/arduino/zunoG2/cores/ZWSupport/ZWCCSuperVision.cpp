@@ -45,13 +45,15 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	frame = (ZwCSuperVisionGetFrame_t *)cmd->cmd;
 	if((frame->cmdClass != COMMAND_CLASS_SUPERVISION) || (frame->cmd != SUPERVISION_GET))
 		return (process_result);
+    __cc_supervision._unpacked = false;
 	#ifdef SUPERVISION_HIGHEST_S2_ONLY
-	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
-		return ZUNO_COMMAND_BLOCKED;
+	#pragma message "Higher Supervision level only"
+	if (cmd->zw_rx_secure_opts != zunoSecurityStatus()) {
+			return ZUNO_COMMAND_BLOCKED;
+	}
 	#endif
-    
 	id = (frame->properties1 & SUPERVISION_GET_PROPERTIES1_SESSION_ID_MASK);
-	__cc_supervision._unpacked = false;
+	
 	if (id == __cc_supervision._prev_id)
 		return (ZUNO_COMMAND_PROCESSED);
 	__cc_supervision._prev_id = id;

@@ -47,11 +47,11 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd) {
 	report->genericDeviceClass = ZUNO_DEV_TYPES[type_index].gen_type;
 	report->specificDeviceClass = ZUNO_DEV_TYPES[type_index].spec_type;
 	commandClass = &report->commandClass[0];
+	commandClass = zuno_AddCommonClassMinimal(commandClass);
 	#ifdef MODERN_MULTICHANNEL_S2
-	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE)
+	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE){
 		commandClass = zuno_AddCommonClass(commandClass);
-	else
-		commandClass = zuno_AddCommonClassMinimal(commandClass);
+	}
 	#else
 	commandClass = zuno_AddCommonClass(commandClass);
 	#endif
@@ -142,6 +142,9 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd) {
 	// We have only one channel => there is no need to expose multichannel
 	if(!g_mch_aux_data.num_channels)
 		return (ZUNO_COMMAND_BLOCKED);
+	/// Mutichannel is always secure command class and availiably ONLY on the highest S2 level
+	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
+		return ZUNO_COMMAND_BLOCKED; // Don't answer to it 
 	switch(ZW_CMD) {
 		case MULTI_CHANNEL_CAPABILITY_GET:
 			rs = _capability_get((ZwMultiChannelCapabilityGetFrame_t *)cmd->cmd);

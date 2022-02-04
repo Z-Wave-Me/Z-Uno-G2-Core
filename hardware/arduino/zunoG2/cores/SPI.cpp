@@ -17,12 +17,12 @@ static uint16_t USART_SpiTransfer16(USART_TypeDef *usart, uint16_t data)
 }
 
 /* Public Constructors */
-SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {
+SPISettings::SPISettings(uint32_t clock, uint8_t bitOrder, uint8_t dataMode): clock(clock), bitOrder(bitOrder), dataMode(dataMode) {
 //baudrate - specified as zero in order to apply settings to USART at least once
 }
 
 SPISettings::SPISettings(void) {
-	SPISettings(1000000, MSBFIRST, SPI_MODE0);
+	SPISettings(4000000, MSBFIRST, SPI_MODE0);
 }
 
 #define SPI_MIN_WRITE_ZDMA			2
@@ -262,7 +262,7 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 	return (ZunoErrorOk);
 }
 
-void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode) {
+void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode) {
 	USART_TypeDef						*usart;
 	const ZunoSpiUsartTypeConfig_t		*config;
 
@@ -270,7 +270,7 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMod
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return ;
 	usart = config->usart;
-	usart->CTRL = (usart->CTRL & ~(USART_CTRL_MSBF | usartClockMode0 | usartClockMode1 | usartClockMode2 | usartClockMode3)) | (bitOrder ? USART_CTRL_MSBF : 0) | dataMode;
+	usart->CTRL = (usart->CTRL & ~(USART_CTRL_MSBF | usartClockMode0 | usartClockMode1 | usartClockMode2 | usartClockMode3)) | (bitOrder ? USART_CTRL_MSBF : 0) | this->_convertMode(dataMode);
 	if (clock != this->_baudrate) {
 		this->_baudrate = clock;
 		USART_BaudrateSyncSet(usart, 0, clock);
@@ -292,7 +292,7 @@ void SPIClass::setBitOrder(uint8_t order) {
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
 
-void SPIClass::setDataMode(USART_ClockMode_TypeDef mode, uint8_t slaveSelectPin) {
+void SPIClass::setDataMode(uint8_t mode, uint8_t slaveSelectPin) {
 	USART_TypeDef						*usart;
 	const ZunoSpiUsartTypeConfig_t		*config;
 
@@ -300,7 +300,7 @@ void SPIClass::setDataMode(USART_ClockMode_TypeDef mode, uint8_t slaveSelectPin)
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
 		return ;
 	usart = config->usart;
-	usart->CTRL = (usart->CTRL & ~(usartClockMode0 | usartClockMode1 | usartClockMode2 | usartClockMode3)) | mode;
+	usart->CTRL = (usart->CTRL & ~(usartClockMode0 | usartClockMode1 | usartClockMode2 | usartClockMode3)) | this->_convertMode(mode);
 	this->_ss_pin = slaveSelectPin;
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 }
@@ -390,6 +390,28 @@ void SPIClass::_USART_IRQHandler(uint32_t flags) {
 	}
 	(void)flags;
 }
+
+USART_ClockMode_TypeDef SPIClass::_convertMode(uint8_t mode) {
+	USART_ClockMode_TypeDef							out;
+
+	switch (mode) {
+		case SPI_MODE0:
+		default:
+			out = usartClockMode0;
+			break ;
+		case SPI_MODE1:
+			out = usartClockMode1;
+			break ;
+		case SPI_MODE2:
+			out = usartClockMode2;
+			break ;
+		case SPI_MODE3:
+			out = usartClockMode3;
+			break ;
+	}
+	return (out);
+}
+
 
 void SPIClass::_USART0_IRQHandler(uint32_t flags) {
 	SPI0._USART_IRQHandler(flags);

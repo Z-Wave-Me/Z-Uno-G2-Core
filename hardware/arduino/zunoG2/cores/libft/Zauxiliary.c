@@ -224,38 +224,38 @@ static void	fn_reverse(char *start, char *end)
 	}
 }
 
-static uint64_t _divItoa(ZauxiliaryDiv_t dividend, ZauxiliaryDiv_t divisor) {
-	uint32_t					offset;
-	ZauxiliaryDiv_t				out;
-	ZauxiliaryDiv_t				saveDivisor;
+// static uint64_t _divItoa(ZauxiliaryDiv_t dividend, ZauxiliaryDiv_t divisor) {
+// 	uint32_t					offset;
+// 	ZauxiliaryDiv_t				out;
+// 	ZauxiliaryDiv_t				saveDivisor;
 
-	if (dividend.major == 0) 
-		return (dividend.minor / divisor.minor);
-	saveDivisor.minor = divisor.minor;
-	out.value = 0;
-	offset = (31 - __builtin_clz(dividend.major)) + __builtin_clz(divisor.minor) + 1;
-	divisor.value = divisor.value << offset;
-	while (dividend.major != 0) {
-		out.minor = out.minor << 1;
-		if (dividend.value >= divisor.value) {
-			dividend.value -= divisor.value;
-			out.minor = out.minor | 1;
-		}
-		divisor.value = divisor.value >> 1;
-	}
-	out.value = out.value << (offset - 31 + __builtin_clz(out.minor));
-	out.minor |= dividend.minor / saveDivisor.minor;
-	return (out.value);
-}
+// 	if (dividend.major == 0) 
+// 		return (dividend.minor / divisor.minor);
+// 	saveDivisor.minor = divisor.minor;
+// 	out.value = 0;
+// 	offset = (31 - __builtin_clz(dividend.major)) + __builtin_clz(divisor.minor) + 1;
+// 	divisor.value = divisor.value << offset;
+// 	while (dividend.major != 0) {
+// 		out.minor = out.minor << 1;
+// 		if (dividend.value >= divisor.value) {
+// 			dividend.value -= divisor.value;
+// 			out.minor = out.minor | 1;
+// 		}
+// 		divisor.value = divisor.value >> 1;
+// 	}
+// 	out.value = out.value << (offset - 31 + __builtin_clz(out.minor));
+// 	out.minor |= dividend.minor / saveDivisor.minor;
+// 	return (out.value);
+// }
 
-static uint64_t _divItoaPre(uintmax_t dividend, uintmax_t divisor) {
-	ZauxiliaryDiv_t				dividendTwo;
-	ZauxiliaryDiv_t				divisorTwo;
+// static uint64_t _divItoaPre(uintmax_t dividend, uintmax_t divisor) {
+// 	ZauxiliaryDiv_t				dividendTwo;
+// 	ZauxiliaryDiv_t				divisorTwo;
 
-	dividendTwo.value = dividend;
-	divisorTwo.value = divisor;
-	return (_divItoa(dividendTwo, divisorTwo));
-}
+// 	dividendTwo.value = dividend;
+// 	divisorTwo.value = divisor;
+// 	return (_divItoa(dividendTwo, divisorTwo));
+// }
 
 static uint8_t _alphabet(uint8_t value, size_t option) {
 	if (value > 9)
@@ -308,7 +308,7 @@ uint8_t itoa_base(char *buffer, uintmax_t value, size_t base, size_t option) {
 			buffer++[0] = ' ';
 			i = 0;
 		}
-		tmp = _divItoaPre(value, base);
+		tmp = value / base;
 		buffer++[0] = _alphabet(value - tmp * base, option);
 		value = tmp;
 		i++;

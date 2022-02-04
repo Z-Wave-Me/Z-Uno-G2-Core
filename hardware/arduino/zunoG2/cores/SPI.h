@@ -16,15 +16,15 @@
 #define SPI_CLOCK_DIV64				0x40
 #define SPI_CLOCK_DIV128			0x80
 
-#define SPI_MODE0		usartClockMode0
-#define SPI_MODE1		usartClockMode1
-#define SPI_MODE2		usartClockMode2
-#define SPI_MODE3		usartClockMode3
+#define SPI_MODE0		0x0
+#define SPI_MODE1		0x1
+#define SPI_MODE2		0x2
+#define SPI_MODE3		0x3
 
 #define MSBFIRST		true
 #define LSBFIRST		false
 
-#define SPI_INIT_DEFAULT					{usartEnable, 0, 1000000, usartDatabits8, true, MSBFIRST, SPI_MODE0, false, usartPrsRxCh0, false, false, 0, 0}
+#define SPI_INIT_DEFAULT					{usartEnable, 0, 4000000, usartDatabits8, true, MSBFIRST, usartClockMode0, false, usartPrsRxCh0, false, false, 0, 0}
 
 #define SPI_FLAGS_CONST				0x1
 #define SPI_FLAGS_16BIT				0x2
@@ -59,12 +59,12 @@ typedef struct								ZunoSpiSlave_s
 class SPISettings {
 	public:
 		SPISettings(void);
-		SPISettings(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode);
+		SPISettings(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
 
 	private:
 		uint32_t							clock;
 		uint8_t								bitOrder;
-		USART_ClockMode_TypeDef				dataMode;
+		uint8_t								dataMode;
 
 	friend class SPIClass;
 };
@@ -79,8 +79,8 @@ class SPIClass {
 		inline uint8_t										transfer(uint8_t data) {return ((uint8_t)this->_transferDate(data, 0));};
 		inline uint16_t										transfer16(uint16_t data) {return ((uint16_t)this->_transferDate(data, SPI_FLAGS_16BIT));};
 		void												setBitOrder(uint8_t order);
-		inline void											setDataMode(USART_ClockMode_TypeDef mode) {this->setDataMode(mode, this->_ss_pin);};
-		void												setDataMode(USART_ClockMode_TypeDef mode, uint8_t slaveSelectPin);
+		inline void											setDataMode(uint8_t mode) {this->setDataMode(mode, this->_ss_pin);};
+		void												setDataMode(uint8_t mode, uint8_t slaveSelectPin);
 		inline void											setClockDivider(uint8_t divider) {this->setClockDivider(divider, this->_ss_pin);};
 		void												setClockDivider(uint8_t divider, uint8_t slaveSelectPin);
 
@@ -95,8 +95,8 @@ class SPIClass {
 		int													read(void);
 		ZunoError_t											begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
 		inline void											beginTransaction(SPISettings *spi_setings) {this->beginTransaction(spi_setings->clock, spi_setings->bitOrder, spi_setings->dataMode);};
-		inline void											beginTransaction(void) {this->beginTransaction(1000000, MSBFIRST, SPI_MODE0);};
-		void												beginTransaction(uint32_t clock, uint8_t bitOrder, USART_ClockMode_TypeDef dataMode);
+		inline void											beginTransaction(void) {this->beginTransaction(4000000, MSBFIRST, SPI_MODE0);};
+		void												beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
 		inline ZunoError_t									transfer(const void *buffer, size_t count) { return(this->_transfer((void *)buffer, count, SPI_FLAGS_CONST));};
 		inline ZunoError_t									transfer(const void *buffer) {return(this->transfer((char *)buffer));};
 		inline ZunoError_t									transfer(const char *buffer) {return(this->_transferStrlen((void *)buffer, SPI_FLAGS_CONST));};
@@ -108,6 +108,7 @@ class SPIClass {
 		inline uint8_t										transfer(int data) {return ((uint8_t)this->_transferDate(data, 0));};
 
 	private:
+		inline USART_ClockMode_TypeDef						_convertMode(uint8_t mode);
 		static void											_USART0_IRQHandler(uint32_t flags);
 		static void											_USART1_IRQHandler(uint32_t flags);
 		static void											_USART2_IRQHandler(uint32_t flags);

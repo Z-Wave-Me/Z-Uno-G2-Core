@@ -68,6 +68,7 @@ typedef struct ZUNOChannelsData_s{
 ZUNOChannelsData_t g_channels_data;
 typedef struct ZUnoRcvContext_s {
 	bool 	bMulticast;
+	bool    bBroadcast;
 	uint8_t source_node_id;
 }ZUnoRcvContext_t;
 ZUnoRcvContext_t g_rcv_context;
@@ -526,6 +527,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	int result = ZUNO_UNKNOWN_CMD;
 	
 	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;
+	g_rcv_context.bBroadcast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0;
 	g_rcv_context.source_node_id = cmd->src_node;
 
 	#ifdef LOGGING_DBG
@@ -1303,8 +1305,9 @@ void zunoSendReport(byte ch){
 	// Supervision context
 	uint8_t node_id = zunoGetSupervisionHost();
 	// If it's Multicast do not report value to sender
-	if((g_rcv_context.source_node_id != 0) && g_rcv_context.bMulticast){
-		node_id = g_rcv_context.source_node_id;
+	if((g_rcv_context.source_node_id != 0) && (g_rcv_context.bMulticast || g_rcv_context.bBroadcast)){
+		return; // Do not report to any node!!!
+		//node_id = g_rcv_context.source_node_id;
 	}
 	// We have to store supervision context if we have it
 	// Z-Wave protocol requires to exclude supervision host's node when device is reporting

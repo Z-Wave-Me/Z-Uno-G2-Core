@@ -474,6 +474,7 @@ void * zunoJumpTable(int vec, void * data) {
                 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
                 if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
                     zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
+                     _zunoSleepOnInclusionStart();
                 }
                 if(evnt->event == ZUNO_SYS_EVENT_OTA_STARTED){
                     _zunoSleepOnFWUpgradeStart();
@@ -482,15 +483,12 @@ void * zunoJumpTable(int vec, void * data) {
                     _zunoSleepOnFWUpgradeStop();
                 }
                 if(evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS){
-                    if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
-                         _zunoSleepOnInclusionStart();
-                    else if (evnt->params[0] != INCLUSION_STATUS_USER_ABORT){
-                        // Add an extra time for interview 
-                        if(evnt->params[0] == INCLUSION_STATUS_SUCESS)
-                            zunoKickSleepTimeout(ZUNO_SLEEP_INTERVIEW_TIMEOUT);
-                        _zunoSleepOnInclusionComplete();
-                        
-                    }
+                    //if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
+                    //else 
+                    if(evnt->params[0] == INCLUSION_STATUS_SUCESS)
+                        zunoKickSleepTimeout(ZUNO_SLEEP_INTERVIEW_TIMEOUT);
+                    _zunoSleepOnInclusionComplete();
+                       
                 }
                 #endif
                 // Clean when device was excluded

@@ -12,7 +12,8 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	
 	#ifdef MODERN_MULTICHANNEL_S2
 	if ((cmd->zw_rx_secure_opts == SECURITY_KEY_NONE) &&
-	    (zunoSecurityStatus() != SECURITY_KEY_NONE) ) {
+	    (zunoSecurityStatus() != SECURITY_KEY_NONE) && 
+		(cmd->dst_zw_channel != 0) ) {
 			return ZUNO_COMMAND_BLOCKED;
 	}
 	#endif

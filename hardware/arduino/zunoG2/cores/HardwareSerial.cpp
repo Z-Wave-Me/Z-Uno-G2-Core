@@ -294,6 +294,10 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	HardwareSerial Serial(2);// USB
 	HardwareSerial Serial1(1); // UART1
 	HardwareSerial Serial0(0); // UART0
+#elif ZUNO_PIN_V == 0
+	HardwareSerial Serial(1);// USB
+	HardwareSerial Serial1(1); // UART1
+	HardwareSerial Serial0(0); // UART0
 #else
 	#error ZUNO_PIN_V
 #endif

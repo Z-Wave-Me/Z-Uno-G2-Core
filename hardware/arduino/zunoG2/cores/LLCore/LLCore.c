@@ -21,7 +21,7 @@
 #endif
 
 #ifndef ZUNO_DEFAULT_PIN_STATE
-#define ZUNO_DEFAULT_PIN_STATE INPUT
+#define ZUNO_DEFAULT_PIN_STATE INPUT_PULLUP
 #endif
 
 #ifdef LOGGING_DBG
@@ -63,7 +63,9 @@ extern unsigned long __HeapLimit;
 #endif
 #ifndef DBG_CONSOLE_PIN
 #ifdef LOGGING_DBG
-    #if ZUNO_PIN_V == 1
+    #if ZUNO_PIN_V == 0
+    #define DBG_CONSOLE_PIN 0x27 // C7
+    #elif ZUNO_PIN_V == 1
     #define DBG_CONSOLE_PIN 0x00 // A0  
     #elif ZUNO_PIN_V == 2
     #define DBG_CONSOLE_PIN 0x00 // A0
@@ -121,8 +123,46 @@ void zuno_CCTimer(uint32_t);
 // D = 3
 // E = 4
 // F = 5
+#if ZUNO_PIN_V == 0
+// "SDKBOARD" map
+#pragma message "ZUNO_PIN_V==0. SDK BOARD"
+const PinDef_t ZUNO_PIN_DEFS[] = {
+   // LEFT SIDE
+    {2, 8},//0 - PC8 - 0 
+    {2, 9},//1 - PC9 - 1 
+    {5, 2},//2 - PF2  - 2 
+    {5, 3},//3 - PF6 - A0 
+    {5, 6},//4 - PF7 - A1 
+    {3, 9},//5 - PD9 - A2 
+    {3, 10},//6 - PD10 -A3
+    {0, 0},//7 - PF4 - 7
+    {0, 1},//8 - PF5 - 8
+    // RIGHT SIDE
+    {3, 11},//9 - PD11 - 9
+    {3, 12},//10 - PD12 - 10
+    {3, 14},//11 - PD14 - 11
+    {3, 15},//12 - PD15 - 12
+    {0, 0},//13 - PA0 - PWM1 and ARDURINO LED
+    {0, 1},//14 - PA1 - PWM2
+    {0, 2},//15 - PA2 - PWM3
+    {0, 3},//16 - PA3 - PWM4
+    {0, 4},//17 - PA4 - 17
+    {1, 13},//18 - PB13 - 18
+    {1, 12},//19 - PB12 - 19 
+    {1, 11},//20 - PB11 - 20 
+    {2, 6},//21 - PC6 - 21
+    {0, 0},//22 - PC7 - 22
+    {5, 7},//23 - PF7 - BTN
+    {2, 7},//24 - PD13 - TX0
+    {2, 11},//25 - PC11 - RX0
+    // DO NOT USE !!!
+    {0, 1},//26 - PA5 - USB Serial rx
+    {0, 0},//27 - PF3 - USB Serial tx
+    {5, 4},//28 - PB15 - green
+    {5, 5}//29 - PB14 - red
+};
 
-#if ZUNO_PIN_V == 1
+#elif ZUNO_PIN_V == 1
 // "NIKBOARD" map
 #pragma message "ZUNO_PIN_V==1"
 const PinDef_t ZUNO_PIN_DEFS[] = {

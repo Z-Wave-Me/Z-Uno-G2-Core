@@ -7,7 +7,7 @@
 * 1 door sensor
 * 1 temperature sensor
 * 1 humidity sensor
-* 
+*  
 */
 #include "ZUNO_DHT.h"// Additional include for DHT sensor support
 // Pins definitions 
@@ -57,8 +57,8 @@ enum{
 // ZUNO_ENABLE setups some global extra build flags
 ZUNO_ENABLE(
             LOGGING_DBG    // Uncomment for console output on TX0
+            // SKETCH_VERSION=258 // OTA
             MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
-            //SUPERVISION_HIGHEST_S2_ONLY // Supervision works on higher S2 level ONLY 
             MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
             MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
             SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG); // Do not reboot device if we apply some system configuration parameters which normally do it
@@ -80,7 +80,7 @@ ZUNO_SETUP_CHANNELS(
    ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_HUMIDITY, SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE, 2, 1,lastHumidityValue)
 );
 
-// Device's configuration parametrs definitions  
+// Device's configuration parameters definition  
 ZUNO_SETUP_CONFIGPARAMETERS(
    ZUNO_CONFIG_PARAMETER_INFO("Temperature hysteresis", "Defines hysteresis of temperature", 1, 20, 5),
    ZUNO_CONFIG_PARAMETER_INFO("Humidity hysteresis", "Defines hysteresis of humidity", 1, 20, 5),

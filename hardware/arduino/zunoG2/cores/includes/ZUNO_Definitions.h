@@ -1182,5 +1182,34 @@ enum {
 	#error ZUNO_PIN_V
 #endif
 
+#define RAIL_PTI_MODE_DISABLED     0
+#define RAIL_PTI_MODE_SPI          1
+#define RAIL_PTI_MODE_UART         2
+#define RAIL_PTI_MODE_UART_ONEWIRE 3
+
+typedef struct RAIL_PtiConfig {
+  // Packet Trace mode (UART or SPI) 
+  uint8_t mode;
+  // Output baudrate for PTI in Hz 
+  uint32_t baud;
+  // Data output (DOUT) location for pin/port
+  uint8_t doutLoc;
+  // Data output (DOUT) GPIO port 
+  uint8_t doutPort;
+  // Data output (DOUT) GPIO pin 
+  uint8_t doutPin;
+  // Data clock (DCLK) location for pin/port. Only used in SPI mode 
+  uint8_t dclkLoc;
+  // Data clock (DCLK) GPIO port. Only used in SPI mode 
+  uint8_t dclkPort;
+  // Data clock (DCLK) GPIO pin. Only used in SPI mode 
+  uint8_t dclkPin;
+  // Data frame (DFRAME) location for pin/port 
+  uint8_t dframeLoc;
+  // Data frame (DFRAME) GPIO port 
+  uint8_t dframePort;
+  // Data frame (DFRAME) GPIO pin 
+  uint8_t dframePin;
+} RAIL_PtiConfig_t;
 
 #endif // ZUNO_DEFINITIONS

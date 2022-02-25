@@ -210,6 +210,7 @@ void zunoSendNIF();
 bool zunoStartDeviceConfiguration();
 inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
 void zunoStartLearn(byte timeout, bool secured);
+bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
 // Backward compatibility macro
 #define ZUNO_START_CONFIG() 						zunoStartDeviceConfiguration()
 #define ZUNO_ADD_CHANNEL(TYPE, SUBTYPE, OPTIONS)  	zunoAddChannel(TYPE, SUBTYPE, OPTIONS)

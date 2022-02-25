@@ -21,7 +21,7 @@
 #endif
 
 #ifndef ZUNO_DEFAULT_PIN_STATE
-#define ZUNO_DEFAULT_PIN_STATE INPUT_PULLUP
+#define ZUNO_DEFAULT_PIN_STATE DISABLED
 #endif
 
 #ifdef LOGGING_DBG
@@ -1380,6 +1380,32 @@ long random(long max){
 }
 void randomSeed(long seed){
     srand(seed);
+}
+bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
+    RAIL_PtiConfig_t cfg;
+    memset(&cfg, 0, sizeof(RAIL_PtiConfig_t));
+    cfg.mode = RAIL_PTI_MODE_UART_ONEWIRE;
+    cfg.baud = baud;
+
+    cfg.doutPort = getRealPort(tx_pin);
+    cfg.doutPin = getRealPin(tx_pin);
+    uint8_t loc  = getLocation(g_loc_pa0_pf7_all, sizeof(g_loc_pa0_pf7_all), tx_pin);
+    if(loc == INVALID_PIN_INDEX)
+        return false;
+    loc = loc ? loc - 1 : MAX_VALID_PINLOCATION;
+    cfg.doutLoc = loc;
+    
+    uint32_t res =  (uint32_t)zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, &cfg);
+    #ifdef LOGGING_DBG
+    LOGGING_UART.print("ZUNO PTI LOC:");
+    LOGGING_UART.println(loc);
+    LOGGING_UART.print("ZUNO PTI RES:");
+    LOGGING_UART.println(res);
+    #endif
+    return res == 0;
+}
+void zunoPTIDisable(){
+    zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, NULL);
 }
 
 extern "C" void __cxa_pure_virtual() { 

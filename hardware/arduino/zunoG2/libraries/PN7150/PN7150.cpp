@@ -1047,26 +1047,36 @@ const PN7150ClassTlvTag_t *PN7150Class::_tagFind(const PN7150ClassTlvTag_t *tag,
 	const uint8_t							*b;
 	const uint8_t							*e;
 
-	len = this->_tagGetLen(tag);
-	b = &answer->ndef.parameters[0x0];
-	e = (const uint8_t *)((uint8_t *)answer + (answer->ndef.header.len + (sizeof(answer->ndef.header) - sizeof(SW1SW2))));
-	return (this->_tagFind_add(tag, b, e, len));
+	switch (answer->ndef.parameters[0x0]) {
+		case 0x70:
+			len = this->_tagGetLen((const PN7150ClassTlvTag_t *)&answer->ndef.parameters[0x0]);
+			b = &answer->ndef.parameters[0x0] + len + 0x1 + 0x1;//+0x1 - len; 0x1 - Record Template
+			e = (const uint8_t *)(b + answer->ndef.parameters[len]);
+			break ;
+		default:
+			b = &answer->ndef.parameters[0x0];
+			e = (const uint8_t *)((uint8_t *)answer + (answer->ndef.header.len + (sizeof(answer->ndef.header) - sizeof(SW1SW2))));
+			break ;
+	}
+	return (this->_tagFind_add(tag, b, e, this->_tagGetLen(tag)));
 }
 
 const PN7150ClassTlvTag_t *PN7150Class::_tagFind_add(const PN7150ClassTlvTag_t *tag, const uint8_t *b, const uint8_t *e, size_t len) {
 	const PN7150ClassTlvTag_t								*tag_add;
 	size_t													len_add;
 	const PN7150ClassTlvTag_t								*out;
+	const uint8_t											*tmp;
 
 	while (b < e) {
 		tag_add = (const PN7150ClassTlvTag_t *)b;
 		len_add = this->_tagGetLen(tag_add);
 		if (len_add == len && memcmp(tag_add, tag, len) == 0x0)
 			return (tag_add);
+		tmp = b + len_add + 0x1 + b[len_add];//tag-len-value
 		if (tag_add->tag_object == true)
-			if ((out = this->_tagFind_add(tag, b + len_add + 0x1, b + b[len_add], len)) != 0x0)//tag-len-value
+			if ((out = this->_tagFind_add(tag, b + len_add + 0x1, tmp, len)) != 0x0)//tag-len-value
 				return (out);
-		b = b + len_add + 0x1 + b[len_add];//tag-len-value
+		b = tmp;
 	}
 	return (0x0);
 }

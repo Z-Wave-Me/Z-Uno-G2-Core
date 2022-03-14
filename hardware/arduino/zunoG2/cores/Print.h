@@ -93,7 +93,8 @@ class Print
 	public:
 		size_t						printFloat(float, uint8_t digits);
 		uint8_t						fixPrint(long, uint8_t  = 2);
-		size_t						dumpPrint(uint8_t *b, size_t count, size_t line_size = 10);
+		inline size_t				dumpPrint(const void *b, size_t count, size_t line_size = 10) {return (this->dumpPrint((const uint8_t *)b, count, line_size));};
+		size_t						dumpPrint(const uint8_t *b, size_t count, size_t line_size = 10);
 		uint8_t						formatPrint(int n, uint8_t format);
 		int							printf(const char *format, ...)  __attribute__ ((__format__ (__printf__, 2, 3)));
 	private:

@@ -291,7 +291,7 @@ uint8_t Print::fixPrint(long n, uint8_t precision) {
 	return count;
 }
 
-size_t Print::dumpPrint(uint8_t *b, size_t count, size_t line_size) {
+size_t Print::dumpPrint(const uint8_t *b, size_t count, size_t line_size) {
 	size_t					ch;
 	size_t					n;
 

@@ -11,7 +11,7 @@
 
 typedef struct						ReportAuxData_s
 {
-	uint8_t							nodeIdSource;
+	node_id_t						nodeIdSource;
 	uint8_t							channelSource;
 	uint8_t							cmdClass;
 	uint8_t							*rawReportData;

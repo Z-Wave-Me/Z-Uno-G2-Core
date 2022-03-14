@@ -33,7 +33,7 @@ static void __zunoSetupWUPTimeout() {
 
 void zuno_sendWUP_NotificationReport() {
 	ZunoWakeUpSave_t				save;
-	size_t							wake_nodeid;
+	size_t						wake_nodeid;
 
 	if(zunoNID() == 0)
 		return;

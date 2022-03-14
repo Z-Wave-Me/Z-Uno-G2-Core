@@ -2,6 +2,12 @@
 #define __ZUNO_SYS_TYPES__
 #include "ZUNO_Definitions.h"
 
+/*
+ * Global nodeID type definitions.
+ */
+typedef uint16_t node_id_t;    // This is used where 2 byte nodeID is needed, like in all that is related to LR.
+typedef uint8_t  node_id_8_t;  // This is used where a 1 byte nodeID is needed, like in all NVM3 related operations.
+
 // Sketch setup
 typedef struct ZUNOChannel_s {
 	uint8_t type;
@@ -56,8 +62,8 @@ typedef struct ZUNOCommandPacket_s{
 	uint8_t   len;   // 6B
 	uint8_t   src_zw_channel;// 7
 	uint8_t   dst_zw_channel;// 8
-	uint16_t   src_node;// 9
-	uint16_t   dst_node;// 10
+	node_id_t   src_node;// 9
+	node_id_t   dst_node;// 10
 	uint8_t   zw_rx_opts;// 11
 	uint8_t   zw_rx_secure_opts;//12
 	uint8_t	  aux_data[ZUNO_COMMAND_PACKET_MAX_AUX_DATA];
@@ -66,7 +72,7 @@ typedef struct ZUNOCommandPacket_s{
 typedef struct ZUNOSetupSysState_s {
 	uint8_t wakeup_reason;
 	uint8_t enclusion_state;
-	uint16_t node_id;
+	node_id_t node_id;
 	uint8_t granted_keys;
 	uint8_t highest_security_level;
 	uint32_t gpio_em4flags;

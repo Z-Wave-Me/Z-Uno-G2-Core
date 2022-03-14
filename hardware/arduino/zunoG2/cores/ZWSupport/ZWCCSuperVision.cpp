@@ -30,7 +30,7 @@ static void __unpackSV(ZUNOCommandPacket_t *cmd, ZwCSuperVisionGetFrame_t *frame
 	zuno_dbgdumpZWPacakge(cmd);
 	#endif
 }
-uint8_t zunoGetSupervisionHost(){
+node_id_t zunoGetSupervisionHost(){
 	if(!__cc_supervision._unpacked)
 		return 0;
 	return __cc_supervision._node_id;

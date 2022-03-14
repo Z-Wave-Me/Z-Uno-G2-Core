@@ -12,7 +12,7 @@ extern uint8_t g_outgoing_report_data[];
 typedef struct							ZunoWakeUpSave_s
 {
 	uint32_t							wakeUpIntervalStepSeconds: 0x18;
-	uint32_t							nodeId: 0x8;
+	uint32_t							nodeId: ((sizeof(node_id_t) * 0x8));
 }										ZunoWakeUpSave_t;
 
 void _zunoSleepOnWUPStart();
@@ -33,7 +33,7 @@ static void __zunoSetupWUPTimeout() {
 
 void zuno_sendWUP_NotificationReport() {
 	ZunoWakeUpSave_t				save;
-	size_t							wake_nodeid;
+	node_id_t						wake_nodeid;
 
 	if(zunoNID() == 0)
 		return;

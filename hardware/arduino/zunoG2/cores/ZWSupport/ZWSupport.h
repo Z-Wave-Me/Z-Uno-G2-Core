@@ -135,7 +135,7 @@ byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 byte getMaxChannelTypes();
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd);
 void fillOutgoingReportPacket(uint8_t ch);
-bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, uint8_t dst);
+bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void ZWCCSetup();
 
 bool _zunoHasPendingReports();

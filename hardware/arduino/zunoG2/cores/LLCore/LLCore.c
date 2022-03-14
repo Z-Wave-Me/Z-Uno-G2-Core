@@ -394,8 +394,11 @@ extern void (*__fini_array_end []) (void) __attribute__((weak));
 
 void LLInit() {  
     #ifndef NO_DEFAULT_PIN_SETUP
-    for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++)
+    for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++){
+        if(i == BUTTON_PIN)
+            continue;
         pinMode(i, ZUNO_DEFAULT_PIN_STATE);//set default state
+    }
     #endif
     // Constructors....
     // Global values initialization
@@ -1384,7 +1387,7 @@ void randomSeed(long seed){
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
     RAIL_PtiConfig_t cfg;
     memset(&cfg, 0, sizeof(RAIL_PtiConfig_t));
-    cfg.mode = RAIL_PTI_MODE_UART_ONEWIRE;
+    cfg.mode = RAIL_PTI_MODE_UART_ONEWIRE; //RAIL_PTI_MODE_UART; //RAIL_PTI_MODE_UART_ONEWIRE;
     cfg.baud = baud;
 
     cfg.doutPort = getRealPort(tx_pin);
@@ -1394,6 +1397,14 @@ bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
         return false;
     loc = loc ? loc - 1 : MAX_VALID_PINLOCATION;
     cfg.doutLoc = loc;
+    
+    uint8_t test_pin = 13;
+    cfg.dframePort = getRealPort(test_pin);
+    cfg.dframePin = getRealPin(test_pin);
+    loc  = getLocation(g_loc_pa0_pf7_all, sizeof(g_loc_pa0_pf7_all), test_pin);
+    loc = (loc>=2) ? loc-2 : 30 + loc;
+    cfg.dframeLoc = loc;
+
     
     uint32_t res =  (uint32_t)zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, &cfg);
     #ifdef LOGGING_DBG

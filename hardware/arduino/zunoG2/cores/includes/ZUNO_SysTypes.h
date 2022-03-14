@@ -56,8 +56,8 @@ typedef struct ZUNOCommandPacket_s{
 	uint8_t   len;   // 6B
 	uint8_t   src_zw_channel;// 7
 	uint8_t   dst_zw_channel;// 8
-	uint8_t   src_node;// 9
-	uint8_t   dst_node;// 10
+	uint16_t   src_node;// 9
+	uint16_t   dst_node;// 10
 	uint8_t   zw_rx_opts;// 11
 	uint8_t   zw_rx_secure_opts;//12
 	uint8_t	  aux_data[ZUNO_COMMAND_PACKET_MAX_AUX_DATA];
@@ -66,7 +66,7 @@ typedef struct ZUNOCommandPacket_s{
 typedef struct ZUNOSetupSysState_s {
 	uint8_t wakeup_reason;
 	uint8_t enclusion_state;
-	uint8_t node_id;
+	uint16_t node_id;
 	uint8_t granted_keys;
 	uint8_t highest_security_level;
 	uint32_t gpio_em4flags;

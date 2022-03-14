@@ -1287,7 +1287,10 @@ void zunoSendReportHandler(uint32_t ticks) {
 				break;
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
-			g_outgoing_report_packet.aux_data[0] = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
+			node_id_t					node;
+
+			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
+			memcpy(&g_outgoing_report_packet.aux_data[0], &node, sizeof(node));
 			zunoSendZWPackage(&g_outgoing_report_packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){

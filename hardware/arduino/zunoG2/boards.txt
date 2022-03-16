@@ -46,7 +46,6 @@ zuno2.menu.Frequency.Hk = Hong Kong
 zuno2.menu.Frequency.Jp = Japan
 zuno2.menu.Frequency.Kr = Korea
 zuno2.menu.Frequency.LR_US1 = USA Long Range 
-zuno2.menu.Frequency.LR_US2 = USA Long Range BK
 
 
 zuno2.menu.Frequency.Ru.build.rf_freq = RU
@@ -60,7 +59,7 @@ zuno2.menu.Frequency.Hk.build.rf_freq = HK
 zuno2.menu.Frequency.Jp.build.rf_freq = JP
 zuno2.menu.Frequency.Kr.build.rf_freq = KR
 zuno2.menu.Frequency.LR_US1.build.rf_freq = US_LR 
-zuno2.menu.Frequency.LR_US2.build.rf_freq = US_LR_BK
+
 
 zuno2.menu.Security.Off = Disabled
 zuno2.menu.Security.On = Enabled

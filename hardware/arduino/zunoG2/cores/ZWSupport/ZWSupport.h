@@ -54,6 +54,7 @@ enum
 	COMMAND_CLASS_CONFIGURATION = 0x70,
 	COMMAND_CLASS_NOTIFICATION = 0x71,
 	COMMAND_CLASS_POWERLEVEL = 0x73,
+	COMMAND_CLASS_SOUND_SWITCH = 0x79,
 	COMMAND_CLASS_BATTERY = 0x80,
 	COMMAND_CLASS_WAKE_UP = 0x84,
 	COMMAND_CLASS_ASSOCIATION = 0x85,
@@ -174,6 +175,7 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define SPECIFIC_TYPE_DOORBELL                                                           0x12
 #define SPECIFIC_TYPE_SATELLITE_RECEIVER                                                 0x04 /*Satellite Receiver*/
 #define SPECIFIC_TYPE_SATELLITE_RECEIVER_V2                                              0x11 /*Satellite Receiver V2*/
+#define SPECIFIC_TYPE_SOUND_SWITCH                                                       0x01
 
 /* Device class Display */
 #define GENERIC_TYPE_DISPLAY                                                             0x04

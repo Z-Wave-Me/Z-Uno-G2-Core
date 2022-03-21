@@ -13,6 +13,7 @@
 #include "ZWCCUserCode.h"
 #include "ZWCCEntryControl.h"
 #include "ZWCCTimerParametrs.h"
+#include "ZWCCSoundSwitch.h"
 
 // Pins definitions 
 #define LedPin1         A0
@@ -62,8 +63,8 @@ enum{
 ZUNO_ENABLE(
             WITH_CC_USER_CODE WITH_CC_ENTRY_CONTROL WITH_CC_TIME_PARAMETERS
             LOGGING_DBG    // Uncomment for console output on TX0
+            // SKETCH_VERSION=258 // OTA
             MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
-            //SUPERVISION_HIGHEST_S2_ONLY // Supervision works on higher S2 level ONLY 
             MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
             MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
             SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG); // Do not reboot device if we apply some system configuration parameters which normally do it
@@ -82,7 +83,15 @@ ZUNO_SETUP_CHANNELS(
    ZUNO_SENSOR_BINARY_MOTION(lastMotionValue),
    ZUNO_SENSOR_BINARY_DOOR_WINDOW(lastDoorValue),
    ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_TEMPERATURE, SENSOR_MULTILEVEL_SCALE_CELSIUS, 2, 1, lastTemperatureValue),
-   ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_HUMIDITY, SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE, 2, 1,lastHumidityValue)
+   ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_HUMIDITY, SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE, 2, 1,lastHumidityValue),
+   ZUNO_SOUND_SWITCH(50, 0x2)
+);
+ZUNO_SETUP_SOUND_SWITCH_COMMON(
+	ZUNO_SETUP_SOUND_SWITCH(11,
+		ZUNO_SETUP_SOUND_SWITCH_SET("First", 60),
+		ZUNO_SETUP_SOUND_SWITCH_SET("Two", 1000),
+		ZUNO_SETUP_SOUND_SWITCH_SET("Third", 2000)
+	);
 );
 
 ZUNO_SETUP_USER_CODE_KEYS('a');
@@ -158,6 +167,8 @@ void setup() {
 		zunoSetZWChannel( 8, 0x09);
 		zunoAddChannel(4,5,34);
 		zunoSetZWChannel( 9, 0x0a);
+		zunoAddChannel(13,50,2);
+		zunoSetZWChannel(10, 0x0b);
 		zunoAddAssociation(1, 0);
 		zunoSetS2Keys(0x83);
 		zunoAddBaseCCS(COMMAND_CLASS_USER_CODE, USER_CODE_VERSION);

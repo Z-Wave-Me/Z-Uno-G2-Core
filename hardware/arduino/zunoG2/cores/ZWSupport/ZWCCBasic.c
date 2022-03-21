@@ -5,13 +5,27 @@
 #include "ZWCCSwitchMultilevel.h"
 
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
+int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier);
 
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	size_t							value;
+	size_t							type;
 
-	zuno_CCTimerBasicFindStop(channel);
+	type = ZUNO_CFG_CHANNEL(channel).type;
 	value = paket->value;
-	switch (ZUNO_CFG_CHANNEL(channel).type) {
+	#if defined(WITH_CC_SOUND_SWITCH)
+	switch (type) {
+		#if defined(WITH_CC_SOUND_SWITCH)
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			return (zuno_CCSoundSwitchBasicSet(channel, value));
+			break ;
+		#endif
+		default:
+			break ;
+	}
+	#endif
+	zuno_CCTimerBasicFindStop(channel);
+	switch (type) {
 		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 			value = zuno_CCThermostatModeTobasic(channel, value);
@@ -50,18 +64,34 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
+int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report);
+
 static int _basic_get(byte channel) {
 	ZwBasicReportV2Frame_t					*report;
 	ZunoTimerBasic_t						*lp;
 	size_t									currentValue;
 	size_t									targetValue;
 	size_t									duration;
+	size_t									type;
 
 	report = (ZwBasicReportV2Frame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
+	CMD_REPLY_LEN = sizeof(ZwBasicReportV2Frame_t);
+	type = ZUNO_CFG_CHANNEL(channel).type;
+	#if defined(WITH_CC_SOUND_SWITCH)
+	switch (type) {
+		#if defined(WITH_CC_SOUND_SWITCH)
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			return (zuno_CCSoundSwitchBasicGet(channel, report));
+			break ;
+		#endif
+		default:
+			break ;
+	}
+	#endif
 	currentValue = ZWCC_BASIC_GETTER_1P(channel);
-	switch (ZUNO_CFG_CHANNEL(channel).type) {
+	switch (type) {
 		#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
@@ -91,7 +121,6 @@ static int _basic_get(byte channel) {
 	report->targetValue = targetValue;
 	report->duration = duration;
 	zunoExitCritical();
-	CMD_REPLY_LEN = sizeof(ZwBasicReportV2Frame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

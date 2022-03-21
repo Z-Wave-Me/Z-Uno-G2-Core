@@ -10,6 +10,7 @@
 #include "ZWCCThermostat.h"
 #include "ZWCCBattery.h"
 #include "ZWCCMeterTbl.h"
+#include "ZWCCSoundSwitch.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -260,6 +261,11 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#ifdef WITH_CC_SWITCH_COLOR
 		case COMMAND_CLASS_SWITCH_COLOR:
 			cmd = SWITCH_COLOR_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_SOUND_SWITCH
+		case COMMAND_CLASS_SOUND_SWITCH:
+			cmd = SOUND_SWITCH_TONE_PLAY_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE

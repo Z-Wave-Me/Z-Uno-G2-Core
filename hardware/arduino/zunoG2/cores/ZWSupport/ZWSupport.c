@@ -25,6 +25,7 @@
 #include "ZWCCUserCode.h"
 #include "ZWCCEntryControl.h"
 #include "ZWCCAuthentication.h"
+#include "ZWCCSoundSwitch.h"
 
 #include "ZUNO_AutoChannels.h"
 
@@ -161,6 +162,14 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
 				return true;
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
+				return true;
+			if(cmd_class == COMMAND_CLASS_BASIC)
+				return true;
+			break;
+		#endif
+		#ifdef WITH_CC_SOUND_SWITCH
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_SOUND_SWITCH)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
@@ -407,6 +416,15 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (true);
 			break ;
 		#endif
+		#ifdef WITH_CC_SOUND_SWITCH
+		case COMMAND_CLASS_SOUND_SWITCH:
+			if (cmd == SOUND_SWITCH_CONFIGURATION_SET)
+				return (true);
+			if (cmd == SOUND_SWITCH_TONE_PLAY_SET)
+				return (true);
+			return (false);
+			break ;
+		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE
 		case COMMAND_CLASS_THERMOSTAT_MODE:
 			if (cmd == THERMOSTAT_MODE_SUPPORTED_GET)
@@ -629,6 +647,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:
 					result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_SOUND_SWITCH
+				case COMMAND_CLASS_SOUND_SWITCH:
+					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_MODE
@@ -1256,6 +1279,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchColorReport(ch, NULL);
+				break;
+			#endif
+			#ifdef WITH_CC_SOUND_SWITCH
+			case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+				rs = zuno_CCSoundSwitchReport(ch, NULL);
 				break;
 			#endif
 			#ifdef WITH_CC_DOORLOCK

@@ -45,12 +45,10 @@ SECTIONS
 
 	.text :
 	{
-		_sketch_code_start = . ;
 		*(.init)
 		*(.fini)
 		*(.text*)
 		*(.rodata.*)
-		_sketch_code_end = . ;
 	} > SKETCH_MAINCODE
 
 	. = ALIGN (4);
@@ -80,6 +78,11 @@ SECTIONS
 		. = ALIGN(4);
 		__data_end__ = .;
 	} > SKETCH_RAM
+
+	.data_count_size (NOLOAD):
+	{
+		. = . + SIZEOF(.data);
+	} > SKETCH_MAINCODE
 
 	.bss (NOLOAD):
 	{

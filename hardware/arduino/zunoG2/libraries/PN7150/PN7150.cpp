@@ -973,7 +973,7 @@ PN7150ClassStatus_t PN7150Class::connect(bool clear) {
 	size_t										offset;
 	PN7150ClassStatus_t							recovery;
 
-	if (this->_wire->begin(this->_addr, this->_scl, this->_sda, &this->_buffer_wire[0x0], sizeof(this->_buffer_wire)) != ZunoErrorOk)
+	if (this->_wire->begin(0x0, this->_scl, this->_sda, &this->_buffer_wire[0x0], sizeof(this->_buffer_wire)) != ZunoErrorOk)
 		return (PN7150ClassStatusI2cBegin);
 	pinMode(this->_irq, INPUT);
 	pinMode(this->_ven, OUTPUT);
@@ -1047,15 +1047,22 @@ const PN7150ClassTlvTag_t *PN7150Class::_tagFind(const PN7150ClassTlvTag_t *tag,
 	const uint8_t							*b;
 	const uint8_t							*e;
 
+	len = (answer->ndef.header.len + (sizeof(answer->ndef.header) - sizeof(SW1SW2)));
 	switch (answer->ndef.parameters[0x0]) {
 		case 0x70:
-			len = this->_tagGetLen((const PN7150ClassTlvTag_t *)&answer->ndef.parameters[0x0]);
-			b = &answer->ndef.parameters[0x0] + len + 0x1 + 0x1;//+0x1 - len; 0x1 - Record Template
-			e = (const uint8_t *)(b + answer->ndef.parameters[len]);
+		case 0x77://EMV Book 3 Version 4.3
+			if (answer->ndef.parameters[0x1] != len && answer->ndef.parameters[0x1] == 0x81) {
+				b = &answer->ndef.parameters[0x3];
+				e = &answer->ndef.parameters[0x3] + answer->ndef.parameters[0x2];
+			}
+			else {
+				b = &answer->ndef.parameters[0x0];
+				e = (const uint8_t *)((uint8_t *)answer + len);
+			}
 			break ;
 		default:
 			b = &answer->ndef.parameters[0x0];
-			e = (const uint8_t *)((uint8_t *)answer + (answer->ndef.header.len + (sizeof(answer->ndef.header) - sizeof(SW1SW2))));
+			e = (const uint8_t *)((uint8_t *)answer + len);
 			break ;
 	}
 	return (this->_tagFind_add(tag, b, e, this->_tagGetLen(tag)));

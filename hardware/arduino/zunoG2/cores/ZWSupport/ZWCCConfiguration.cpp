@@ -78,7 +78,7 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.size = ZUNO_CFG_PARAMETER_SIZE_8BIT,
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
-	.altering = false,
+	.altering = true,
 	.advanced = true
 }; 
 const ZunoCFGParameter_t SYSCFGPARAM8 =

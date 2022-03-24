@@ -927,6 +927,7 @@ enum {
 #ifndef DEFAULT_CONFIG_FLAGS
 #define DEFAULT_CONFIG_FLAGS 0
 #endif
+#define DEFAULT_PRODUCT_ID 0x0001
 
 #ifndef ZUNO_PIN_V
 	#define ZUNO_PIN_V			6//default

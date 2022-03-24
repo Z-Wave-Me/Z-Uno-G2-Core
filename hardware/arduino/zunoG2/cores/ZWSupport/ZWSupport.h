@@ -9,7 +9,7 @@
 #define ZUNO_MAX_REPORTCOUNT_PER_MOMENT 1
 #endif
 #define UNKNOWN_CHANNEL       0xFF 
-
+#define LOWEST_LONG_RANGE_NODE_ID   (0x0100)
 /* Application Status command class commands */
 #define APPLICATION_STATUS_VERSION                                                       0x01
 #define APPLICATION_BUSY                                                                 0x01

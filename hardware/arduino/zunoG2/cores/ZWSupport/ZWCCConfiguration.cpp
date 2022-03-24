@@ -68,6 +68,7 @@ const ZunoCFGParameter_t SYSCFGPARAM2 =
 	.altering = false,
 	.advanced = true
 }; 
+#ifdef SECURITY_CONFIG_PARAM
 const ZunoCFGParameter_t SYSCFGPARAM7 =
 {
 	.name = "Security",
@@ -81,6 +82,7 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.altering = true,
 	.advanced = true
 }; 
+#endif
 const ZunoCFGParameter_t SYSCFGPARAM8 =
 {
 	.name = "RFLogging",
@@ -157,8 +159,10 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 			return &SYSCFGPARAM1;
 		case 2:
 			return &SYSCFGPARAM2;
+		#ifdef SECURITY_CONFIG_PARAM
 		case 7:
 			return &SYSCFGPARAM7;
+		#endif
 		case 8:
 			return &SYSCFGPARAM8;
 		case 9:

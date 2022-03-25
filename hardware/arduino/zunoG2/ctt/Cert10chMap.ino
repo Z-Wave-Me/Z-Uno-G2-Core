@@ -61,7 +61,8 @@ ZUNO_ENABLE(
             MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
             MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
             MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
-            SKETCH_FLAGS=HEADER_FLAGS_REBOOT_CFG); // Do not reboot device if we apply some system configuration parameters which normally do it
+            //SKETCH_FLAGS=HEADER_FLAGS_REBOOT_CFG
+            ); // Do not reboot device if we apply some system configuration parameters which normally do it
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel

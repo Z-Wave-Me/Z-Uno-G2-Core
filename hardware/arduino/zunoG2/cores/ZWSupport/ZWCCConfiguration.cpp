@@ -2,9 +2,7 @@
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
 
-typedef ssize_t zunoCfgParamValue_t; // CONFIGPARAM_MAX_SIZE;
-
-#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(zunoCfgParamValue_t)) + EEPROM_CONFIGURATION_ADDR)
+#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
@@ -21,7 +19,7 @@ const ZunoCFGParameter_t CFGPARAM_DEFAULT =
 	.name = "Parameter NN",
 	.info = "Custom configuration parameter",
 	.minValue = 0x0,
-	.maxValue = 0x7FFFFFFF,
+	.maxValue = -1,
 	.defaultValue = 0x7FFFFFFF,
 	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
@@ -263,7 +261,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	zunoSaveCFGParam(param, (zunoCfgParamValue_t)value);
+	zunoSaveCFGParam(param, (int32_t)value);
 	zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -409,33 +407,69 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd) {
 }
 
 
-zunoCfgParamValue_t zunoLoadCFGParam(uint8_t param)
-{
-	zunoCfgParamValue_t		out;
+ssize_t zunoLoadCFGParam(uint8_t param) {
+	const ZunoCFGParameter_t							*cfg;
+	int32_t												out;
+	ssize_t												minValue;
+	ssize_t												maxValue;
+
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
-	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(zunoCfgParamValue_t), (uint8_t *)&out);
+	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(out), (uint8_t *)&out);
+	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
+		return (out);
+	minValue = cfg->minValue;
+	maxValue= cfg->maxValue;
+	if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED) {
+		if ((uint32_t)out < (uint32_t)minValue || (uint32_t)out > (uint32_t)maxValue)
+			out = cfg->defaultValue;
+	}
+	else if ((int32_t)out < (int32_t)minValue || (int32_t)out > (int32_t)maxValue)
+		out = cfg->defaultValue;
 	return (out);
 }
 
-void zunoSaveCFGParam(uint8_t param, zunoCfgParamValue_t value)
-{
+void zunoSaveCFGParam(uint8_t param, ssize_t value) {
+	const ZunoCFGParameter_t							*cfg;
+	int32_t												result;
+	size_t												size;
+
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return ;
-	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(zunoCfgParamValue_t), (uint8_t *)&value);
-}
-
-void zuno_CCConfiguration_OnDefault(){
-	const ZunoCFGParameter_t							*cfg;
-	for(int i=CONFIGPARAM_MIN_PARAM; i<=CONFIGPARAM_MAX_PARAM; i++){
-		cfg = zunoCFGParameter(i);
-		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN){
-			#ifndef OLDSTYLE_CONFIG_DEFAULT
-			// For most cases it just checks that configuration parameters are in right domain 
-			ssize_t current_value = zunoLoadCFGParam(i);
-			if((current_value < cfg->minValue) || (current_value > cfg->maxValue))
-			#endif
-				zunoSaveCFGParam(i, cfg->defaultValue);
+	if ((cfg = zunoCFGParameter(param)) != ZUNO_CFG_PARAMETER_UNKNOWN) {
+		if (cfg->readOnly == true)
+			return ;
+		size = cfg->size;
+		if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED) {
+			switch (size) {
+				case ZUNO_CFG_PARAMETER_SIZE_8BIT:
+					result = (uint8_t)value;
+					break ;
+				case ZUNO_CFG_PARAMETER_SIZE_16BIT:
+					result = (uint16_t)value;
+					break ;
+				case ZUNO_CFG_PARAMETER_SIZE_32BIT:
+				default:
+					result = (uint32_t)value;
+					break ;
+			}
+		}
+		else {
+			switch (size) {
+				case ZUNO_CFG_PARAMETER_SIZE_8BIT:
+					result = (int8_t)value;
+					break ;
+				case ZUNO_CFG_PARAMETER_SIZE_16BIT:
+					result = (int16_t)value;
+					break ;
+				case ZUNO_CFG_PARAMETER_SIZE_32BIT:
+				default:
+					result = (int32_t)value;
+					break ;
+			}
 		}
 	}
+	else
+		result = value;
+	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(result), (uint8_t *)&result);
 }

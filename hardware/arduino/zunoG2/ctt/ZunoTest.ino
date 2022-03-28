@@ -61,13 +61,14 @@ enum{
 };
 // ZUNO_ENABLE setups some global extra build flags
 ZUNO_ENABLE(
-            WITH_CC_USER_CODE WITH_CC_ENTRY_CONTROL WITH_CC_TIME_PARAMETERS
+            WITH_CC_ENTRY_CONTROL WITH_CC_USER_CODE WITH_CC_TIME_PARAMETERS
             LOGGING_DBG    // Uncomment for console output on TX0
             // SKETCH_VERSION=258 // OTA
             MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
             MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
             MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
-            SKETCH_FLAGS=HEADER_FLAGS_NOREBOOT_CFG); // Do not reboot device if we apply some system configuration parameters which normally do it
+            //SKETCH_FLAGS=HEADER_FLAGS_REBOOT_CFG
+            ); // Do not reboot device if we apply some system configuration parameters which normally do it
 // Device's endpoints definition
 // 3 switch binary
 // 3 switch multilevel
@@ -86,6 +87,13 @@ ZUNO_SETUP_CHANNELS(
    ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_HUMIDITY, SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE, 2, 1,lastHumidityValue),
    ZUNO_SOUND_SWITCH(50, 0x2)
 );
+
+ZUNO_CUSTOM_CC(
+	ZUNO_CC_VERSION(COMMAND_CLASS_USER_CODE, USER_CODE_VERSION),
+	ZUNO_CC_VERSION(COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION),
+	ZUNO_CC_VERSION(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION)
+);
+
 ZUNO_SETUP_SOUND_SWITCH_COMMON(
 	ZUNO_SETUP_SOUND_SWITCH(11,
 		ZUNO_SETUP_SOUND_SWITCH_SET("First", 60),
@@ -146,46 +154,6 @@ ZUNO_SETUP_S2ACCESS(SKETCH_FLAG_S2_AUTHENTICATED_BIT | SKETCH_FLAG_S2_UNAUTHENTI
 DHT dht22_sensor(DHTPin, DHT22); // DHT sensor
 // OS calls setup() function on every device boot
 void setup() {
-	if(zunoStartDeviceConfiguration()) {
-		zunoAddChannel(1,0,0);
-		zunoSetZWChannel( 0, 0x01 | ZWAVE_CHANNEL_MAPPED_BIT);
-		zunoAddChannel(1,0,0);
-		zunoSetZWChannel( 1, 0x02);
-		zunoAddChannel(1,0,0);
-		zunoSetZWChannel( 2, 0x03);
-		zunoAddChannel(2,0,0);
-		zunoSetZWChannel( 3, 0x04);
-		zunoAddChannel(2,0,0);
-		zunoSetZWChannel( 4, 0x05);
-		zunoAddChannel(2,0,0);
-		zunoSetZWChannel( 5, 0x06);
-		zunoAddChannel(3,12,0);
-		zunoSetZWChannel( 6, 0x07);
-		zunoAddChannel(3,10,0);
-		zunoSetZWChannel( 7, 0x08);
-		zunoAddChannel(4,1,34);
-		zunoSetZWChannel( 8, 0x09);
-		zunoAddChannel(4,5,34);
-		zunoSetZWChannel( 9, 0x0a);
-		zunoAddChannel(13,50,2);
-		zunoSetZWChannel(10, 0x0b);
-		zunoAddAssociation(1, 0);
-		zunoSetS2Keys(0x83);
-		zunoAddBaseCCS(COMMAND_CLASS_USER_CODE, USER_CODE_VERSION);
-		zunoAddBaseCCS(COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION);
-		zunoAddBaseCCS(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION);
-		zunoCommitCfg();
-	}
-	zunoAppendChannelHandler( 0,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&switchValue1);
-	zunoAppendChannelHandler( 1,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&switchValue2);
-	zunoAppendChannelHandler( 2,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&switchValue3);
-	zunoAppendChannelHandler( 3,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&dimValue1);
-	zunoAppendChannelHandler( 4,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&dimValue2);
-	zunoAppendChannelHandler( 5,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&dimValue3);
-	zunoAppendChannelHandler( 6,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&lastMotionValue);
-	zunoAppendChannelHandler( 7,  1, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&lastDoorValue);
-	zunoAppendChannelHandler( 8,  2, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&lastTemperatureValue);
-	zunoAppendChannelHandler( 9,  2, CHANNEL_HANDLER_SINGLE_VALUEMAPPER, (void*)&lastHumidityValue);
    // Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
    pinMode(LedPin1, OUTPUT);
    pinMode(LedPin2, OUTPUT);

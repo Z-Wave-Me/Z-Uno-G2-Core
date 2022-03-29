@@ -70,9 +70,9 @@ zuno2.menu.Security.On.build.security = 1
 zuno2.menu.TXPower.Normal       = Normal +0dBm
 zuno2.menu.TXPower.Magnified    = Magnified +5dBm
 zuno2.menu.TXPower.Ultra        = Ultra +10dBm
-zuno2.menu.TXPower.Normal.build.pow       = 0
-zuno2.menu.TXPower.Magnified.build.pow    = 50
-zuno2.menu.TXPower.Ultra.build.pow        = 100
+zuno2.menu.TXPower.Normal.build.pow       = 5
+zuno2.menu.TXPower.Magnified.build.pow    = 10
+zuno2.menu.TXPower.Ultra.build.pow        = 18
 
 zuno2.menu.RFLogging.Off = Disabled
 zuno2.menu.RFLogging.On = Enabled

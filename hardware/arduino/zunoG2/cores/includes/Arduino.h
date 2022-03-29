@@ -114,7 +114,7 @@ bool zunoIsBatteryRequested();
 /* sleep */
 void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 void zunoMarkDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
-inline void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4) { zunoMarkDeviceToSleep(mode); };
+void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
 void zunoLockSleep(void);
 bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);

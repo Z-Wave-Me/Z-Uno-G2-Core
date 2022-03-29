@@ -1345,6 +1345,12 @@ void zunoKickSleepTimeout(uint32_t ms){
     #endif
 }
 #endif
+void zunoSendDeviceToSleep(uint8_t mode) { 
+  // we inform the system that device is ready for sleep
+  zunoMarkDeviceToSleep(mode);
+  // suspend the main tread
+  zunoSuspendThread(g_zuno_sys->hMainThread);
+}
 void zunoMarkDeviceToSleep(uint8_t mode){
     g_zuno_sys->sleep_highest_mode = mode;
     g_sleep_data.user_latch = false;

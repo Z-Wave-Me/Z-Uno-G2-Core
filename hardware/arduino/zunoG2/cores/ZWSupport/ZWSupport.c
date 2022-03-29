@@ -1044,7 +1044,6 @@ void dbgCCTypes() {
 }
 #endif
 // 
-void zuno_CCConfiguration_OnDefault();
 void initCCSDataDefault() {
 	static bool inited = false;
 	if(inited)
@@ -1055,10 +1054,6 @@ void initCCSDataDefault() {
 	#ifdef WITH_CC_WAKEUP
 	zuno_CCWakeup_OnDefault();
 	#endif
-	//#ifdef WITH_CC_CONFIGURATION
-	zuno_CCConfiguration_OnDefault();
-	//#endif
-
 }
 // Adds user-defined command class support to main end-point NIF and Secure NIF. Be careful with that! 
 bool zunoAddBaseCCS(byte ccs, byte version){

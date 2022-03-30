@@ -370,6 +370,7 @@ typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
+#define MAX_SLEEP_TIMERS 2
 typedef struct ZUNOSleepData_s{
     uint32_t timeout;
     uint32_t wup_timeout;
@@ -378,7 +379,9 @@ typedef struct ZUNOSleepData_s{
     bool     inclusion_latch:1;
     bool     wup_latch:1;
     bool     fwupd_latch:1;
-
+     // Store user-defined timeouts
+    uint32_t sleep_timers[MAX_SLEEP_TIMERS];
+    uint32_t user_sleep_ts; // time mark when sleep mode was applied
 }ZUNOSleepData_t;
 ZUNOSleepData_t g_sleep_data;
 // prototypes 
@@ -593,10 +596,12 @@ void * zunoJumpTable(int vec, void * data) {
 }
 
 void zunoSetWUPTimer(uint32_t timeout){
-    zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 0,  timeout);
+    g_sleep_data.sleep_timers[0] = timeout;
+    //zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 0,  timeout);
 }
 void zunoSetCustomWUPTimer(uint32_t timeout){
-    zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 1,  timeout);
+    g_sleep_data.sleep_timers[1] = timeout;
+    //zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 1,  timeout);
 }
 void zunoStartLearn(byte timeout, bool secured){
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
@@ -1169,6 +1174,8 @@ static void _zunoInitSleepingData(){
     g_sleep_data.wup_latch = false;
     g_sleep_data.wup_timeout = 0;
     g_sleep_data.em4_map = 0;
+    memset(g_sleep_data.sleep_timers, 0, sizeof(g_sleep_data.sleep_timers));
+    g_sleep_data.user_sleep_ts = millis();
 }
 #endif
 
@@ -1205,6 +1212,13 @@ static void _zunoInitDefaultWakeup(){
 }
 void _zunoSysSleep(){
     GPIO_IntClear(g_sleep_data.em4_map);
+    // Initialize wakeup timers
+    uint32_t df = (millis() - g_sleep_data.user_sleep_ts) / 1000;
+    for(int i=0;i<MAX_SLEEP_TIMERS;i++)
+        if(g_sleep_data.sleep_timers[i]){
+            uint32_t val = (g_sleep_data.sleep_timers[i] > df)? g_sleep_data.sleep_timers[i] - df : 1;
+            zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, i,  val);
+        }
 }
 
 static void _zunoSleepingUpd(){
@@ -1349,9 +1363,13 @@ void zunoSendDeviceToSleep(uint8_t mode) {
   // we inform the system that device is ready for sleep
   zunoMarkDeviceToSleep(mode);
   // suspend the main tread
-  zunoSuspendThread(g_zuno_sys->hMainThread);
+  if((g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) != 0){
+    zunoSuspendThread(g_zuno_sys->hMainThread);
+  }
 }
 void zunoMarkDeviceToSleep(uint8_t mode){
+    // Store time mark
+    g_sleep_data.user_sleep_ts = millis();
     g_zuno_sys->sleep_highest_mode = mode;
     g_sleep_data.user_latch = false;
     #ifdef LOGGING_DBG

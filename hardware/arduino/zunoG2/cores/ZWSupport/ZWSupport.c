@@ -240,7 +240,7 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 	p->flags 	= flags;
 	p->dst_node	= dst; 
 	p->src_node  = zunoNID();
-	p->src_zw_channel  = (ZUNO_CFG_CHANNEL(ch).zw_channel) & ~(ZWAVE_CHANNEL_MAPPED_BIT);
+	p->src_zw_channel  = ch; // (ZUNO_CFG_CHANNEL(ch).zw_channel) & ~(ZWAVE_CHANNEL_MAPPED_BIT);
 	p->zw_rx_opts = ZWAVE_PLUS_TX_OPTIONS;
 	p->zw_rx_secure_opts = 0xFF; // Ask system to detect the security level automatically
 								 // In most cases it uses highest avaliable level
@@ -1258,7 +1258,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 		LOGGING_UART.print(" TYPE:");
 		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
-		fillOutgoingReportPacket(ch);
+		fillOutgoingReportPacket(ZUNO_CFG_CHANNEL(ch).zw_channel);
 		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
 		rs = ZUNO_UNKNOWN_CMD;
 		switch(ZUNO_CFG_CHANNEL(ch).type) {

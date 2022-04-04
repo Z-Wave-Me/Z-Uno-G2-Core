@@ -170,4 +170,22 @@ typedef struct ZUNOOnDemandHW_s {
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 
+#define MAX_SLEEP_TIMERS 2
+typedef struct ZUNOSleepData_s{
+    uint32_t timeout;
+    uint32_t wup_timeout;
+    uint32_t em4_map;
+     // Store user-defined timeouts
+    uint32_t sleep_timers[MAX_SLEEP_TIMERS];
+    uint32_t user_sleep_ts; // time mark when sleep mode was applied
+    uint16_t latch;
+    bool     user_latch:1;
+    bool     inclusion_latch:1;
+    bool     wup_latch:1;
+    bool     fwupd_latch:1;
+    bool     indicator_latch:1;
+}ZUNOSleepData_t;
+
+extern ZUNOSleepData_t g_sleep_data;
+
 #endif // __ZUNO_SYS_TYPES__

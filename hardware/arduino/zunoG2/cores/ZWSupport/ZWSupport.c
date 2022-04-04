@@ -26,6 +26,8 @@
 #include "ZWCCEntryControl.h"
 #include "ZWCCAuthentication.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
+#include "ZWCCCentralScene.h"
 
 #include "ZUNO_AutoChannels.h"
 
@@ -175,6 +177,12 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		#endif
+		#ifdef WITH_CC_CENTRAL_SCENE
+		case ZUNO_CENTRAL_SCENE_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_CENTRAL_SCENE)
+				return true;
+			break;
+		#endif
 		#ifdef WITH_CC_DOORLOCK
 		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
@@ -314,6 +322,9 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_CONFIGURATION:
 				result = zuno_CCConfigurationHandler(cmd);
 				break ;
+			case COMMAND_CLASS_INDICATOR:
+				result = zuno_CCIndicatorHandler(cmd);
+				break ;
 			case COMMAND_CLASS_ASSOCIATION:
 				result = zuno_CCAssociationHandler(cmd);
 				break ;
@@ -425,6 +436,13 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (false);
 			break ;
 		#endif
+		#ifdef WITH_CC_CENTRAL_SCENE
+		case COMMAND_CLASS_CENTRAL_SCENE:
+			if (cmd == CENTRAL_SCENE_CONFIGURATION_SET)
+				return (true);;
+			return (false);
+			break ;
+		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE
 		case COMMAND_CLASS_THERMOSTAT_MODE:
 			if (cmd == THERMOSTAT_MODE_SUPPORTED_GET)
@@ -498,6 +516,11 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == CONFIGURATION_SET)
 				return (true);
 			if (cmd == CONFIGURATION_DEFAULT_RESET)
+				return (true);
+			return (false);
+			break ;
+		case COMMAND_CLASS_INDICATOR:
+			if (cmd == INDICATOR_SET_V4)
 				return (true);
 			return (false);
 			break ;
@@ -652,6 +675,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SOUND_SWITCH
 				case COMMAND_CLASS_SOUND_SWITCH:
 					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd);
+					break;
+				#endif
+				#ifdef WITH_CC_CENTRAL_SCENE
+				case COMMAND_CLASS_CENTRAL_SCENE:
+					result = zuno_CCCentralSceneHandler(zuno_ch, cmd);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_MODE

@@ -244,6 +244,20 @@
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_CENTRAL_SCENE_CHANNEL_NUMBER", "type_val":14,
+            "cc_flags":["WITH_CC_CENTRAL_SCENE"],
+            "ccs":[
+                {"name":"COMMAND_CLASS_CENTRAL_SCENE","version":"CENTRAL_SCENE_VERSION"}
+            ],
+            "generic_type":"GENERIC_TYPE_WALL_CONTROLLER",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
+            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "preproc_flags":[],
+            "cluster_rule":"${type}"
         }
     ]
 }

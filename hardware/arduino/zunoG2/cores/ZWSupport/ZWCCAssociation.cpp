@@ -11,6 +11,7 @@
 #include "ZWCCBattery.h"
 #include "ZWCCMeterTbl.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCCentralScene.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -266,6 +267,11 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#ifdef WITH_CC_SOUND_SWITCH
 		case COMMAND_CLASS_SOUND_SWITCH:
 			cmd = SOUND_SWITCH_TONE_PLAY_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_CENTRAL_SCENE
+		case COMMAND_CLASS_CENTRAL_SCENE:
+			cmd = CENTRAL_SCENE_NOTIFICATION;
 			break ;
 		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE

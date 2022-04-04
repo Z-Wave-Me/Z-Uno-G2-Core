@@ -17,6 +17,7 @@
 #include "em_adc.h"
 #include "ZWSupport.h"
 #include "HardwareSerial.h"
+#include "LeUartClass.h"
 #include "zwaveme_libft.h"
 #include "Custom_decl.h" // 
 #include <math.h>

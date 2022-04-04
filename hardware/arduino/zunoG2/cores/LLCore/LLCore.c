@@ -370,19 +370,6 @@ typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 
 ZUNOSetupSysState_t * g_zuno_sys;
 ZUNOOnDemandHW_t g_zuno_odhw_cfg;
-#define MAX_SLEEP_TIMERS 2
-typedef struct ZUNOSleepData_s{
-    uint32_t timeout;
-    uint32_t wup_timeout;
-    uint32_t em4_map;
-    bool     user_latch:1;
-    bool     inclusion_latch:1;
-    bool     wup_latch:1;
-    bool     fwupd_latch:1;
-     // Store user-defined timeouts
-    uint32_t sleep_timers[MAX_SLEEP_TIMERS];
-    uint32_t user_sleep_ts; // time mark when sleep mode was applied
-}ZUNOSleepData_t;
 ZUNOSleepData_t g_sleep_data;
 // prototypes 
 void loop();
@@ -1226,6 +1213,18 @@ static void _zunoSleepingUpd(){
 	if(!digitalRead(BUTTON_PIN))
         return; // Never spleep until button released
 	#endif
+    if(g_sleep_data.latch) {
+        #ifdef LOGGING_DBG
+        //LOGGING_UART.println("CAN'T SLEEP: INDICATOR ON");
+        #endif
+        return;
+    }
+    if(g_sleep_data.indicator_latch){
+        #ifdef LOGGING_DBG
+        //LOGGING_UART.println("CAN'T SLEEP: INDICATOR ON");
+        #endif
+        return;
+    }
     if(g_sleep_data.user_latch){
         #ifdef LOGGING_DBG
         //LOGGING_UART.println("CAN'T SLEEP: ULATCH");

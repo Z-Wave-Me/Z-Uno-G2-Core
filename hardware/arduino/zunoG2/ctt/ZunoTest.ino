@@ -1,101 +1,59 @@
-/* 
-* This scretch was certified by the Z-Wave Alliance.
-* 
-* 3 switches
-* 3 dimmers
-* 1 motion sensor
-* 1 door sensor
-* 1 temperature sensor
-* 1 humidity sensor
-* 
-*/
-#include "ZUNO_DHT.h"// Additional include for DHT sensor support
 #include "ZWCCUserCode.h"
 #include "ZWCCEntryControl.h"
 #include "ZWCCTimerParametrs.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
+#include "ZWCCCentralScene.h"
+#include "ZUNO_Buttons.h"
 
-// Pins definitions 
-#define LedPin1         A0
-#define LedPin2         A1
-#define LedPin3         A2
-#define LedPin4         PWM1
-#define LedPin5         PWM2 
-#define LedPin6         PWM3
-#define MotionPin       A3
-#define DoorPin         12
-#define DHTPin          11
-// Switch levels
-#define SWITCH_ON       0xff
-#define SWITCH_OFF      0
-#define MY_SERIAL       Serial0
-// Global variables for device channels
-// switches
-byte switchValue1 = 0;
-byte switchValue2 = 0;
-byte switchValue3 = 0;
-// dimmers
-byte dimValue1 = 0;
-byte dimValue2 = 0;
-byte dimValue3 = 0;
-// binary sensors
-byte lastMotionValue = 0;
-byte lastDoorValue = 0;
-// temperature & humidity sensor
-uint16_t lastHumidityValue = 0;
-int16_t lastTemperatureValue = 0;
-// Last motion sensor trigger time 
-uint32_t motionTrigTime;
-// enum for some sensors channels, this makes code readable
+#define BUTTON						23
+#define MY_SERIAL					Serial0
+
 enum{ 
-   SENSOR_MOTION_CHANNEL = 7,
-   SENSOR_DOOR_CHANNEL,
-   SENSOR_TEMPERATURE_CHANNEL,
-   SENSOR_HUMIDITY_CHANNEL,
+	SOUND_SWITCH_CHANNEL = 0x1,
+	CENTRAL_SCENE_CHANNEL
 };
+
 // enum for parameter numbers
 enum{
-   TEMP_HYST_PARAM=64,
-   HUMIDITY_HYST_PARAM,
-   MOTION_RETRIGGER_TIME_PARAM 
+	TEMP_HYST_PARAM=64,
+	HUMIDITY_HYST_PARAM,
+	MOTION_RETRIGGER_TIME_PARAM 
 };
+
 // ZUNO_ENABLE setups some global extra build flags
 ZUNO_ENABLE(
-            WITH_CC_ENTRY_CONTROL WITH_CC_USER_CODE WITH_CC_TIME_PARAMETERS
-            LOGGING_DBG    // Uncomment for console output on TX0
-            // SKETCH_VERSION=258 // OTA
-            MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
-            MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
-            MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
-            //SKETCH_FLAGS=HEADER_FLAGS_REBOOT_CFG
-            ); // Do not reboot device if we apply some system configuration parameters which normally do it
-// Device's endpoints definition
-// 3 switch binary
-// 3 switch multilevel
-// 2 notification sensors
-// 2 multilevel sensors 
+			WITH_CC_ENTRY_CONTROL WITH_CC_USER_CODE WITH_CC_TIME_PARAMETERS
+			// LOGGING_DBG// Uncomment for console output on TX0
+			// DBG_CONSOLE_PIN=0xFF
+			MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
+			MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
+			);
+
 ZUNO_SETUP_CHANNELS(
-   ZUNO_SWITCH_BINARY(switchValue1, NULL),
-   ZUNO_SWITCH_BINARY(switchValue2, NULL),
-   ZUNO_SWITCH_BINARY(switchValue3, NULL),
-   ZUNO_SWITCH_MULTILEVEL(dimValue1, NULL),
-   ZUNO_SWITCH_MULTILEVEL(dimValue2, NULL),
-   ZUNO_SWITCH_MULTILEVEL(dimValue3, NULL),
-   ZUNO_SENSOR_BINARY_MOTION(lastMotionValue),
-   ZUNO_SENSOR_BINARY_DOOR_WINDOW(lastDoorValue),
-   ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_TEMPERATURE, SENSOR_MULTILEVEL_SCALE_CELSIUS, 2, 1, lastTemperatureValue),
-   ZUNO_SENSOR_MULTILEVEL(ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_HUMIDITY, SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE, 2, 1,lastHumidityValue),
-   ZUNO_SOUND_SWITCH(50, 0x2)
+	ZUNO_SOUND_SWITCH(50, 0x2),
+	ZUNO_CENTRAL_SCENE()
 );
 
 ZUNO_CUSTOM_CC(
 	ZUNO_CC_VERSION(COMMAND_CLASS_USER_CODE, USER_CODE_VERSION),
 	ZUNO_CC_VERSION(COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION),
-	ZUNO_CC_VERSION(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION)
+	ZUNO_CC_VERSION(COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION),
+	ZUNO_CC_VERSION(COMMAND_CLASS_INDICATOR, INDICATOR_VERSION)
+);
+
+ZUNO_SETUP_CENTRAL_SCENE_COMMON(
+	ZUNO_SETUP_CENTRAL_SCENE(CENTRAL_SCENE_CHANNEL, (CENTRAL_SCENE_KEY_PRESSED_1_MASK | CENTRAL_SCENE_KEY_RELEASED_MASK | CENTRAL_SCENE_KEY_HELD_DOWN_MASK | CENTRAL_SCENE_KEY_PRESSED_2_MASK | CENTRAL_SCENE_KEY_PRESSED_3_MASK),
+		ZUNO_SETUP_CENTRAL_SCENE_SET()
+	);
+);
+
+ZUNO_SETUP_INDICATOR(
+	ZUNO_SETUP_INDICATOR_INFO(0x5, LED_BUILTIN)
 );
 
 ZUNO_SETUP_SOUND_SWITCH_COMMON(
-	ZUNO_SETUP_SOUND_SWITCH(11,
+	ZUNO_SETUP_SOUND_SWITCH(SOUND_SWITCH_CHANNEL,
 		ZUNO_SETUP_SOUND_SWITCH_SET("First", 60),
 		ZUNO_SETUP_SOUND_SWITCH_SET("Two", 1000),
 		ZUNO_SETUP_SOUND_SWITCH_SET("Third", 2000)
@@ -103,7 +61,6 @@ ZUNO_SETUP_SOUND_SWITCH_COMMON(
 );
 
 ZUNO_SETUP_USER_CODE_KEYS('a');
-
 ZUNO_SETUP_USER_CODE(
 	ZUNO_SETUP_USER_CODE_AVAILABLE(),
 	ZUNO_SETUP_USER_CODE_AVAILABLE(),
@@ -142,73 +99,104 @@ ZUNO_SETUP_ENTRY_CONTROL_KEYS('0','1', '2', '3', '4', '5', '6', '7', '8', '9');
 
 // Device's configuration parametrs definitions  
 ZUNO_SETUP_CONFIGPARAMETERS(
-   ZUNO_CONFIG_PARAMETER_INFO("Temperature hysteresis", "Defines hysteresis of temperature", 1, 20, 5),
-   ZUNO_CONFIG_PARAMETER_INFO("Humidity hysteresis", "Defines hysteresis of humidity", 1, 20, 5),
-   ZUNO_CONFIG_PARAMETER_INFO("Motion trigger time", "Minimal trigger interval in ms", 0, 100000, 5000)
+	ZUNO_CONFIG_PARAMETER_INFO("Temperature hysteresis", "Defines hysteresis of temperature", 1, 20, 5),
+	ZUNO_CONFIG_PARAMETER_INFO("Humidity hysteresis", "Defines hysteresis of humidity", 1, 20, 5),
+	ZUNO_CONFIG_PARAMETER_INFO("Motion trigger time", "Minimal trigger interval in ms", 0, 100000, 5000)
 );
+
+ZUNO_SETUP_SLEEPING_MODE(ZUNO_SLEEPING_MODE_FREQUENTLY_AWAKE);
+
 // Associations of device
 ZUNO_SETUP_ASSOCIATIONS(ZUNO_ASSOCIATION_GROUP_SET_VALUE); // Send Basic Set to association group
+
 // Device's S2 keys
 ZUNO_SETUP_S2ACCESS(SKETCH_FLAG_S2_AUTHENTICATED_BIT | SKETCH_FLAG_S2_UNAUTHENTICATED_BIT | SKETCH_FLAG_S0_BIT);
-// Objects for external periphery
-DHT dht22_sensor(DHTPin, DHT22); // DHT sensor
-// OS calls setup() function on every device boot
-void setup() {
-   // Configure I/O pins. Analog and PWM will be automatically set up on analogRead/analogWrite functions call
-   pinMode(LedPin1, OUTPUT);
-   pinMode(LedPin2, OUTPUT);
-   pinMode(LedPin3, OUTPUT);
-   pinMode(LedPin4, OUTPUT);
-   pinMode(LedPin5, OUTPUT);
-   pinMode(LedPin6, OUTPUT);
-   pinMode(MotionPin, INPUT_PULLUP);
-   pinMode(DoorPin, INPUT_PULLUP);
-   // Start dht sensor
-   dht22_sensor.begin();
-   dht22_sensor.readTemperatureC10(true);
+
+static void _reset_print(const char *txt) {
+	const char							*tmp;
+
+	switch (zunoGetWakeReason()) {
+		case ZUNO_WAKEUP_REASON_PIN:
+			tmp = "Triggered by reset pin\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_WUT_EM4:
+			tmp = "Triggered by timer from EM4 state\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_WATCH_DOG:
+			tmp = "Triggered by watchdog\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_EXT_EM4:
+			tmp = "Triggered by external interrupt from EM4 state\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_POR:
+			tmp = "Triggered by no power \n";
+			break ;
+		case ZUNO_WAKEUP_REASON_SOFTRESET:
+			tmp = "Triggered by software\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_BROWNOUT:
+			tmp = "Triggered by voltage surges\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_EXT_EM2:
+			tmp = "Triggered by external interrupt from EM2 state\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_WUT_EM2:
+			tmp = "Triggered by timer from EM2 state\n";
+			break ;
+		case ZUNO_WAKEUP_REASON_RADIO_EM2:
+			tmp = "Triggered by radio from EM2 state\n";
+			break ;
+		default:
+			tmp = "Unknown\n";
+			break ;
+	}
+	MY_SERIAL.print(txt);
+	MY_SERIAL.print(tmp);
 }
-// OS calls loop() function repeatedly
+
+static void _wakeHandler(void){
+	_reset_print("\nWakeup reason: ");
+}
+
+void setup() {
+	MY_SERIAL.begin(115200);
+	_reset_print("\nBoot reason: ");
+	zunoAttachSysHandler(ZUNO_HANDLER_WUP, 0, (void*) &_wakeHandler);
+	Btn.addButton(BUTTON);
+}
+
 void loop() {
-   // Switches
-   digitalWrite(LedPin1, switchValue1 == 0);
-   digitalWrite(LedPin2, switchValue2 == 0);
-   digitalWrite(LedPin3, switchValue3 == 0);
-   // Dimmers
-   analogWrite(LedPin4, ((word)dimValue1)*255/99);
-   analogWrite(LedPin5, ((word)dimValue2)*255/99);
-   analogWrite(LedPin6, ((word)dimValue3)*255/99);
-   // Trigger motion and wait for relax (about 5 sec) before report idle
-   byte currentMotionValue = digitalRead(MotionPin);
-   if (currentMotionValue) {
-       if (!lastMotionValue && ((millis() - motionTrigTime) > (size_t)zunoLoadCFGParam(MOTION_RETRIGGER_TIME_PARAM))) {
-           lastMotionValue = 1;
-           zunoSendReport(SENSOR_MOTION_CHANNEL);
-           zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_ON);
-           motionTrigTime = millis();
-       }
-   } else if (lastMotionValue) {
-       lastMotionValue = 0; 
-       zunoSendReport(SENSOR_MOTION_CHANNEL);
-       zunoSendToGroupSetValueCommand(CTRL_GROUP_1, SWITCH_OFF);
-   }
-   // Door/Window sensor
-   byte currentDoorValue = digitalRead(DoorPin); 
-   if (currentDoorValue != lastDoorValue) { 
-       lastDoorValue = currentDoorValue;
-       zunoSendReport(SENSOR_DOOR_CHANNEL);
-   }
-   // Temperature sensor (based on DHT22 digital sensor)
-   
-   int16_t currentTemperatureValue = dht22_sensor.readTemperatureC10();
-   if(abs(lastTemperatureValue - currentTemperatureValue) > zunoLoadCFGParam(TEMP_HYST_PARAM)){
-       lastTemperatureValue = currentTemperatureValue;
-       zunoSendReport(SENSOR_TEMPERATURE_CHANNEL);
-   }
-   // Humidity sensor (based on DHT22 digital sensor)
-   uint16_t currentHumidityValue = dht22_sensor.readHumidityH10();
-   if(abs(lastHumidityValue - currentHumidityValue) > zunoLoadCFGParam(HUMIDITY_HYST_PARAM)){
-       lastHumidityValue = currentHumidityValue;
-       zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
-   }
-   delay(50);
+	process_buttons();
+	if (Btn.isFree(BUTTON))
+		zunoSendDeviceToSleep(); // We don't need parameter for FLiRS here, Z-Uno will ingore parameter anyway
+}
+
+static uint8_t long_click = false;
+
+void process_buttons() {
+	if (long_click == true && Btn.isReleased(BUTTON)) {
+		zuno_CCCentralSceneReport(CENTRAL_SCENE_CHANNEL, 0x1, CENTRAL_SCENE_KEY_RELEASED);
+		long_click = false;
+		MY_SERIAL.println("isReleased");
+	}
+	if(Btn.isSingleClick(BUTTON)) {
+		zuno_CCCentralSceneReport(CENTRAL_SCENE_CHANNEL, 0x1, CENTRAL_SCENE_KEY_PRESSED_1);
+		MY_SERIAL.println("isSingleClick");
+
+	}
+	if(Btn.isTripleClick(BUTTON)) {
+		zuno_CCCentralSceneReport(CENTRAL_SCENE_CHANNEL, 0x1, CENTRAL_SCENE_KEY_PRESSED_3);
+		MY_SERIAL.println("isTripleClick");
+
+	}
+	if(Btn.isLongClick(BUTTON)) {
+		zuno_CCCentralSceneReport(CENTRAL_SCENE_CHANNEL, 0x1, CENTRAL_SCENE_KEY_HELD_DOWN);
+		long_click = true;
+		MY_SERIAL.println("isLongClick");
+
+	}
+	if(Btn.isDoubleClick(BUTTON)) {
+		zuno_CCCentralSceneReport(CENTRAL_SCENE_CHANNEL, 0x1, CENTRAL_SCENE_KEY_PRESSED_2);
+		MY_SERIAL.println("isDoubleClick");
+	}
 }

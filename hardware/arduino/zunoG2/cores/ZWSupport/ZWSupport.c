@@ -177,12 +177,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		#endif
-		#ifdef WITH_CC_CENTRAL_SCENE
-		case ZUNO_CENTRAL_SCENE_CHANNEL_NUMBER:
-			if(cmd_class == COMMAND_CLASS_CENTRAL_SCENE)
-				return true;
-			break;
-		#endif
 		#ifdef WITH_CC_DOORLOCK
 		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_DOOR_LOCK)
@@ -337,6 +331,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);
 				break ;
+			#ifdef WITH_CC_CENTRAL_SCENE
+			case COMMAND_CLASS_CENTRAL_SCENE:
+				result = zuno_CCCentralSceneHandler(cmd);
+				break;
+			#endif
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
 				result = zuno_CCTimerParametrsHandler(cmd);
@@ -675,11 +674,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SOUND_SWITCH
 				case COMMAND_CLASS_SOUND_SWITCH:
 					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd);
-					break;
-				#endif
-				#ifdef WITH_CC_CENTRAL_SCENE
-				case COMMAND_CLASS_CENTRAL_SCENE:
-					result = zuno_CCCentralSceneHandler(zuno_ch, cmd);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_MODE

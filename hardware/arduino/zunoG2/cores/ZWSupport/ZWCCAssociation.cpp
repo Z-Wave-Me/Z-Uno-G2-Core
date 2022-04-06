@@ -269,11 +269,6 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 			cmd = SOUND_SWITCH_TONE_PLAY_REPORT;
 			break ;
 		#endif
-		#ifdef WITH_CC_CENTRAL_SCENE
-		case COMMAND_CLASS_CENTRAL_SCENE:
-			cmd = CENTRAL_SCENE_NOTIFICATION;
-			break ;
-		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE
 		case COMMAND_CLASS_THERMOSTAT_MODE:
 			cmd = THERMOSTAT_MODE_REPORT;

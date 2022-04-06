@@ -21,9 +21,6 @@
 #define CENTRAL_SCENE_KEY_PRESSED_5_MASK												(0x1 << CENTRAL_SCENE_KEY_PRESSED_5)
 #define CENTRAL_SCENE_KEY_ALL_MASK														(CENTRAL_SCENE_KEY_PRESSED_1_MASK | CENTRAL_SCENE_KEY_RELEASED_MASK | CENTRAL_SCENE_KEY_HELD_DOWN_MASK | CENTRAL_SCENE_KEY_PRESSED_2_MASK | CENTRAL_SCENE_KEY_PRESSED_3_MASK | CENTRAL_SCENE_KEY_PRESSED_4_MASK | CENTRAL_SCENE_KEY_PRESSED_5_MASK)
 
-#define CENTRAL_SCENE_FAST_REFRESH(channel)				ZUNO_CFG_CHANNEL(channel).params[0x0]
-#define CENTRAL_SCENE_COUNT(channel)					ZUNO_CFG_CHANNEL(channel).params[0x1]
-
 #define CENTRAL_SCENE_UPDATE_MS_SLOW					55000
 #define CENTRAL_SCENE_UPDATE_MS_FAST					200
 
@@ -126,33 +123,22 @@ typedef struct								ZunoCentralSceneParameterArray_s
 
 const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArray(size_t channel);
 
-#define ZUNO_SETUP_CENTRAL_SCENE_COMMON(...) 	\
-	const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArrayUser(size_t channel) {					\
-		const ZunoCentralSceneParameterArray_t					*out;					\
-		switch (channel) {					\
-			__VA_ARGS__						\
-			default:					\
-				out = 0x0;					\
-				break ;					\
-		}					\
-		return (out);					\
-	}					\
-
-#define ZUNO_SETUP_CENTRAL_SCENE(CHANNEL, MASK, ...) 	\
-	case CHANNEL:								\
-		static const ZunoCentralSceneParameter_t _central_scene_parameter_##CHANNEL[]= \
+#define ZUNO_SETUP_CENTRAL_SCENE(MASK, ...) 	\
+	const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArrayUser(void) {					\
+		static const ZunoCentralSceneParameter_t _central_scene_parameter[]= \
 		{ \
 			__VA_ARGS__, \
 		};\
-		static ZunoCentralSceneParameterTimer_t _central_scene_parameter_timer_##CHANNEL[((sizeof(_central_scene_parameter_##CHANNEL) / sizeof(_central_scene_parameter_##CHANNEL[0x0])))]; \
-		static const ZunoCentralSceneParameterArray_t _central_scene_parameter_array_##CHANNEL = \
+		static ZunoCentralSceneParameterTimer_t _central_scene_parameter_timer[((sizeof(_central_scene_parameter) / sizeof(_central_scene_parameter[0x0])))]; \
+		static const ZunoCentralSceneParameterArray_t _central_scene_parameter_array = \
 		{ \
-			.timer = &_central_scene_parameter_timer_##CHANNEL[0x0],									\
+			.timer = &_central_scene_parameter_timer[0x0],									\
 			.mask = MASK, \
-			.count = ((sizeof(_central_scene_parameter_##CHANNEL) / sizeof(_central_scene_parameter_##CHANNEL[0x0])))			\
+			.count = ((sizeof(_central_scene_parameter) / sizeof(_central_scene_parameter[0x0])))			\
 		};\
-		out = &_central_scene_parameter_array_##CHANNEL;\
-		break ;								\
+		return (&_central_scene_parameter_array);					\
+	}					\
+
 
 #define ZUNO_SETUP_CENTRAL_SCENE_SET()	\
 {\
@@ -160,7 +146,7 @@ const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArray(size_t
 }\
 
 
-int zuno_CCCentralSceneHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-void zuno_CCCentralSceneReport(uint8_t channel, uint8_t sceneNumber, uint8_t event);
+int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd);
+void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event);
 
 #endif// ZWCC_CENTRAL_SCENE_H

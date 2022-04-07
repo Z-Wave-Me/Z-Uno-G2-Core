@@ -153,13 +153,18 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	time_t													time_stamp;
 	const ZunoSoundSwitchParameterArray_t					*parameter_array;
 	const ZunoSoundSwitchParameter_t						*parameter;
+	int														result;
 
 	parameter_array = _soundSwitchGetParameterArray(channel);
+	result = ZUNO_COMMAND_PROCESSED;
 	if (toneIdentifier == 0x0)//stop any
 		playCommandToneVolume = 0x0;
 	else {
-		if (_soundSwitchParameter(parameter_array, toneIdentifier) == 0x0)
+		if (_soundSwitchParameter(parameter_array, toneIdentifier) == 0x0) {
+			if (toneIdentifier != 0xFF)
+				result = ZUNO_COMMAND_BLOCKED_FAILL;
 			toneIdentifier = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel);
+		}
 		if (playCommandToneVolume == 0x0)
 			playCommandToneVolume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
 		else if (playCommandToneVolume == 0xFF) {
@@ -188,7 +193,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	parameter_array->play->toneIdentifier = toneIdentifier;
 	parameter_array->play->playCommandToneVolume = playCommandToneVolume;
 	zunoExitCritical();
-	return (ZUNO_COMMAND_PROCESSED);
+	return (result);
 }
 
 static int _soundSwitchTonePlaySet(const ZwSoundSwitchTonePlayFrame_t *frame, size_t channel, size_t len) {

@@ -26,6 +26,8 @@
 #include "ZWCCEntryControl.h"
 #include "ZWCCAuthentication.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
+#include "ZWCCCentralScene.h"
 
 #include "ZUNO_AutoChannels.h"
 
@@ -314,6 +316,9 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_CONFIGURATION:
 				result = zuno_CCConfigurationHandler(cmd);
 				break ;
+			case COMMAND_CLASS_INDICATOR:
+				result = zuno_CCIndicatorHandler(cmd);
+				break ;
 			case COMMAND_CLASS_ASSOCIATION:
 				result = zuno_CCAssociationHandler(cmd);
 				break ;
@@ -326,6 +331,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
 				result = zuno_CCAssociationGprInfoHandler(cmd);
 				break ;
+			#ifdef WITH_CC_CENTRAL_SCENE
+			case COMMAND_CLASS_CENTRAL_SCENE:
+				result = zuno_CCCentralSceneHandler(cmd);
+				break;
+			#endif
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
 				result = zuno_CCTimerParametrsHandler(cmd);
@@ -425,6 +435,13 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (false);
 			break ;
 		#endif
+		#ifdef WITH_CC_CENTRAL_SCENE
+		case COMMAND_CLASS_CENTRAL_SCENE:
+			if (cmd == CENTRAL_SCENE_CONFIGURATION_SET)
+				return (true);;
+			return (false);
+			break ;
+		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE
 		case COMMAND_CLASS_THERMOSTAT_MODE:
 			if (cmd == THERMOSTAT_MODE_SUPPORTED_GET)
@@ -498,6 +515,11 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == CONFIGURATION_SET)
 				return (true);
 			if (cmd == CONFIGURATION_DEFAULT_RESET)
+				return (true);
+			return (false);
+			break ;
+		case COMMAND_CLASS_INDICATOR:
+			if (cmd == INDICATOR_SET_V4)
 				return (true);
 			return (false);
 			break ;

@@ -11,6 +11,7 @@
 #include "ZWCCBattery.h"
 #include "ZWCCMeterTbl.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCCentralScene.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]

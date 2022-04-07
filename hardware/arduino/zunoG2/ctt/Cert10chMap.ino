@@ -58,9 +58,9 @@ enum{
 ZUNO_ENABLE(
             LOGGING_DBG    // Uncomment for console output on TX0
             // SKETCH_VERSION=258 // OTA
-            MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
-            MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
-            MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
+            // MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
+            // MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
+            // MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
             //SKETCH_FLAGS=HEADER_FLAGS_REBOOT_CFG
             ); // Do not reboot device if we apply some system configuration parameters which normally do it
 // Device's endpoints definition
@@ -107,6 +107,7 @@ void setup() {
    // Start dht sensor
    dht22_sensor.begin();
    dht22_sensor.readTemperatureC10(true);
+   Serial0.print("*** START! ");
 }
 // OS calls loop() function repeatedly
 void loop() {
@@ -118,6 +119,13 @@ void loop() {
    analogWrite(LedPin4, ((word)dimValue1)*255/99);
    analogWrite(LedPin5, ((word)dimValue2)*255/99);
    analogWrite(LedPin6, ((word)dimValue3)*255/99);
+   for(int i=0;i<10;i++){
+       if(zunoIsChannelUpdated(i+1)){
+           Serial0.print("*** Channel ");
+           Serial0.print(i+1);
+           Serial0.println(" was updated!");
+       }
+   }
    // Trigger motion and wait for relax (about 5 sec) before report idle
    byte currentMotionValue = digitalRead(MotionPin);
    if (currentMotionValue) {

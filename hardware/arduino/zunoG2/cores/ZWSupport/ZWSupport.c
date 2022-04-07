@@ -835,6 +835,7 @@ int32_t zuno_universalGetter1P(byte zuno_ch) {
 void zuno_universalSetter1P(byte zuno_ch, int32_t value) {
 	if(zuno_ch > ZUNO_CFG_CHANNEL_COUNT)
 		return;
+	_zunoMarkChannelUpdated(zuno_ch);
 	byte type = g_zuno_channelhandlers_map[zuno_ch].descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	byte val_type = (g_zuno_channelhandlers_map[zuno_ch].descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
 	switch(type) {
@@ -872,7 +873,6 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value) {
 static uint32_t _callGetter2P(byte val_type, byte ch, void * handler, uint32_t value){
 	if (handler == 0)
 		return (0);
-	
 	switch(val_type) {
 		case HADLER_ARGTYPE_1UB:
 		case HADLER_ARGTYPE_1SB:
@@ -909,6 +909,7 @@ uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
 
 	if (zuno_ch > ZUNO_CFG_CHANNEL_COUNT)
 		return (0);
+	_zunoMarkChannelUpdated(zuno_ch);
 	lp = &g_zuno_channelhandlers_map[zuno_ch];
 	type = ((ZUnoChannelDtaHandler_t *)lp)->descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	val_type = (((ZUnoChannelDtaHandler_t *)lp)->descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
@@ -1180,6 +1181,9 @@ bool _zunoHasPendingReports(){
 
 
 bool zunoIsChannelUpdated(uint8_t ch){
+	if(ch < 1)
+		ch = 1;
+	ch -= 1;
 	return __isSyncMapChannelAndClear(&g_channels_data.update_map, ch);
 }
 bool zunoIsChannelRequested(uint8_t ch){
@@ -1190,6 +1194,9 @@ bool zunoIsBatteryRequested(){
 }
 void _zunoMarkChannelRequested(uint8_t ch){
 	__setSyncMapChannel(&g_channels_data.request_map, ch);
+}
+void _zunoMarkChannelUpdated(uint8_t ch){
+	__setSyncMapChannel(&g_channels_data.update_map, ch);
 }
 void _zunoMarkSystemClassRequested(uint8_t systembit){
 	__setSyncMapChannel(&g_channels_data.sys_requests, systembit);

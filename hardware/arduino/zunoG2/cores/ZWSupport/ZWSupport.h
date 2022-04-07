@@ -141,6 +141,7 @@ void ZWCCSetup();
 
 bool _zunoHasPendingReports();
 void _zunoMarkChannelRequested(uint8_t ch);
+void _zunoMarkChannelUpdated(uint8_t ch);
 void _zunoMarkSystemClassRequested(uint8_t systembit);
 
 #define CMD_REPLY_LEN g_outgoing_main_packet.len 

@@ -1,11 +1,13 @@
-#ifndef LE_UART_H
-#define LE_UART_H
+#ifndef LESENSE_CLASS_UART_H
+#define LESENSE_CLASS_UART_H
 
 #include "em_lesense.h"
+#include "em_acmp.h"
 
 typedef enum
 {
-	LesenseTypeAdc
+	LesenseTypeAdc,
+	LesenseTypeAcmp
 } ZunoLesenseType_t;
 
 
@@ -47,6 +49,7 @@ typedef struct							ZunoLesenseAdc_s
 class LesenseClass {
 	public:
 		LesenseClass(void);
+		// ZunoError_t								addAcmpThres(uint8_t pin, bool (*function)(uint8_t, uint16_t), uint16_t acmpThres, LESENSE_ChCompMode_TypeDef compMode);
 		inline size_t							getScanSequence(void) {return ((1000000 / this->_values.LesenseScanSequence_fq));};
 		ZunoError_t								setScanSequence(size_t ups);
 		ZunoError_t								addAdc(uint8_t pin, bool (*function)(uint8_t, uint16_t));
@@ -57,6 +60,7 @@ class LesenseClass {
 		ZunoError_t								adcThres(uint8_t pin, uint16_t cntThres, LESENSE_ChCompMode_TypeDef compMode);
 
 	private:
+		// inline ZunoError_t						_addAcmpThres(uint8_t pin, bool (*function)(uint8_t, uint16_t), uint16_t acmpThres, LESENSE_ChCompMode_TypeDef compMode, ACMP_Channel_TypeDef possel);
 		inline ZunoError_t						_addAdc(uint8_t pin, ADC_PosSel_TypeDef possel, bool (*function)(uint8_t, uint16_t));
 		inline void								_deleteAdc(uint8_t pin);
 		inline void								_adcInit(void);
@@ -76,4 +80,4 @@ class LesenseClass {
 extern LesenseClass Lesense;
 
 
-#endif // LE_UART_H
+#endif // LESENSE_CLASS_UART_H

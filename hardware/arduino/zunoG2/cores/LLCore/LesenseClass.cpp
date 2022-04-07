@@ -29,6 +29,21 @@ LesenseClass::LesenseClass(void) {
 }
 
 /* Public Methods */
+// ZunoError_t LesenseClass::addAcmpThres(uint8_t pin, bool (*function)(uint8_t, uint16_t), uint16_t acmpThres, LESENSE_ChCompMode_TypeDef compMode) {
+// 	ACMP_Channel_TypeDef			possel;
+// 	ZunoError_t						ret;
+
+// 	if ((possel = (ACMP_Channel_TypeDef)zme_ADC_PIN2Channel(pin)) == (ACMP_Channel_TypeDef)adcPosSelAVDD)
+// 		return (ZunoErrorInvalidPin);
+// 	if (((possel & ADC_MASK_CHANNEL)) > ((sizeof(LESENSE->CH) / sizeof(LESENSE->CH[0x0])) - 0x1))
+// 		return (ZunoErrorInvalidPin);
+// 	if ((ret = zunoSyncLockWrite(&LesenseClass::_values.SyncLesenseClass, SyncMasterLesenseClass, &LesenseClass::_values.LesenseClassKey)) != ZunoErrorOk)
+// 		return (ret);
+// 	ret = this->_addAcmpThres(pin, function, acmpThres, compMode, possel);
+// 	zunoSyncReleseWrite(&LesenseClass::_values.SyncLesenseClass, SyncMasterLesenseClass, &LesenseClass::_values.LesenseClassKey);
+// 	return (ret);
+// }
+
 ZunoError_t LesenseClass::setScanSequence(size_t ups) {
 	ZunoError_t						ret;
 
@@ -128,6 +143,72 @@ ZunoError_t LesenseClass::adcAcqTime(ADC_AcqTime_TypeDef acqtime) {
 
 
 /* Private Methods */
+// ZunoError_t LesenseClass::_addAcmpThres(uint8_t pin, bool (*function)(uint8_t, uint16_t), uint16_t acmpThres, LESENSE_ChCompMode_TypeDef compMode, ACMP_Channel_TypeDef possel) {
+// 	ZunoLesenseHeader_t				*list;
+// 	ZunoError_t						ret;
+// 	uint32_t						perctrl;
+// 	ACMP_TypeDef					*acmp;
+// 	CMU_Clock_TypeDef				clock;
+// 	ACMP_CapsenseInit_TypeDef		capsenseInit;
+// 	LESENSE_ChDesc_TypeDef			initLesenseCh;
+// 	size_t							channel;
+
+// 	list = this->_findList(pin);
+// 	if (list != 0x0)
+// 		return (ZunoErrorOk);
+// 	perctrl = LESENSE->PERCTRL;
+// 	if ((perctrl & _LESENSE_PERCTRL_ACMP0MODE_MASK) == LESENSE_PERCTRL_ACMP0MODE_DISABLE) {
+// 		acmp = ACMP0;
+// 		clock = cmuClock_ACMP0;
+// 		perctrl = LESENSE_PERCTRL_ACMP0MODE_MUXTHRES;
+// 	}
+// 	else if ((perctrl & _LESENSE_PERCTRL_ACMP1MODE_MASK) == LESENSE_PERCTRL_ACMP1MODE_DISABLE) {
+// 		acmp = ACMP1;
+// 		clock = cmuClock_ACMP1;
+// 		perctrl = LESENSE_PERCTRL_ACMP1MODE_MUXTHRES;
+// 	}
+// 	else
+// 		return (ZunoErrorInvalidPin);
+// 	if ((list = (ZunoLesenseHeader_t *)malloc(sizeof(ZunoLesenseAdc_t))) == 0)
+// 		return (ZunoErrorMemory);
+// 	if ((ret = this->_lesenseInit()) != ZunoErrorOk) {
+// 		free(list);
+// 		return (ret);
+// 	}
+// 	list->pin = pin;
+// 	list->next = 0x0;
+// 	list->function = ((bool (*)(uint8_t, uint16_t))function);
+// 	list->type = LesenseTypeAcmp;
+// 	LESENSE_ScanStop();
+// 	CMU_ClockEnable(cmuClock_HFPER, true);
+// 	CMU_ClockEnable(clock, true);
+// 	capsenseInit = ACMP_CAPSENSE_INIT_DEFAULT;
+// 	ACMP_CapsenseInit(acmp, &capsenseInit);
+// 	ACMP_CapsenseChannelSet(acmp, possel);
+// 	while (!(acmp->STATUS & ACMP_STATUS_ACMPACT))// Wait until ACMP warms up
+// 		;
+// 	channel = (possel & ADC_MASK_CHANNEL);
+// 	list->channel = channel;
+// 	initLesenseCh = LESENSE_CH_CONF_DEFAULT;
+// 	initLesenseCh.enaScanCh = true;  // Enable scan channel
+// 	initLesenseCh.enaInt = true;
+// 	initLesenseCh.storeCntRes = false;
+// 	initLesenseCh.sampleMode = lesenseSampleModeACMP;
+// 	initLesenseCh.intMode = lesenseSetIntLevel;
+// 	initLesenseCh.compMode = compMode;
+// 	initLesenseCh.evalMode = lesenseEvalModeThreshold;
+// 	initLesenseCh.acmpThres = acmpThres;
+// 	initLesenseCh.exTime = 0x0;
+// 	initLesenseCh.measDelay = 0x0;
+// 	initLesenseCh.sampleDelay = 0x0;
+// 	LESENSE_ChannelConfig(&initLesenseCh, channel);
+// 	LESENSE->CH[channel].EVAL = LESENSE->CH[channel].EVAL | LESENSE_CH_EVAL_STRSAMPLE_DATASRC;
+// 	this->_addList(list);
+// 	// LESENSE->PERCTRL = LESENSE->PERCTRL | perctrl;
+// 	LESENSE_ScanStart();
+// 	return (ZunoErrorOk);
+// }
+
 void LesenseClass::_deleteAdc(uint8_t pin) {
 	ZunoLesenseHeader_t				*list;
 	ADC_PosSel_TypeDef				possel;

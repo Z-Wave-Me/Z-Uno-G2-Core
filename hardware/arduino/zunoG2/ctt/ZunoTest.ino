@@ -27,8 +27,6 @@ ZUNO_ENABLE(
 			WITH_CC_ENTRY_CONTROL WITH_CC_USER_CODE WITH_CC_TIME_PARAMETERS WITH_CC_CENTRAL_SCENE
 			// LOGGING_DBG// Uncomment for console output on TX0
 			// DBG_CONSOLE_PIN=0xFF
-			MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
-			MODERN_MULTICHANNEL_S2_ALWAYS // Add S2 to multichannel if device included non-secure
 			);
 
 ZUNO_SETUP_CHANNELS(

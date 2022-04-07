@@ -35,7 +35,7 @@ static const ZunoIndicatorParameter_t _indicator_parameter =
 	.description = 0x0,
 	.support_prop_mask = INDICATOR_PROP_SUPPORT_MASK,
 	.pin = INDICATOR_LED_PIN,
-	.indicatorId = INDICATOR_IND_NODE_IDENTIFY
+	.indicatorId = INDICATOR_ID_NODE_IDENTIFY
 };
 
 static const ZunoIndicatorParameter_t *_indicatorGetParameterArray(size_t indicatorId) {
@@ -47,7 +47,7 @@ static const ZunoIndicatorParameter_t *_indicatorGetParameterArray(size_t indica
 	if ((parameter_array = zunoIndicatorGetParameterArrayUser()) != 0x0) {
 		parameter_array_e = zunoIndicatorGetParameterArrayUserEnd();
 		parameter_array_b = parameter_array;
-		if (indicatorId != INDICATOR_IND_NA) {
+		if (indicatorId != INDICATOR_ID_NA) {
 			while (parameter_array_b < parameter_array_e) {
 				if (parameter_array_b->indicatorId == indicatorId)
 					return (parameter_array_b);
@@ -63,12 +63,12 @@ static const ZunoIndicatorParameter_t *_indicatorGetParameterArray(size_t indica
 				}
 				parameter_array_b++;
 			}
-			if (indicatorId > INDICATOR_IND_NODE_IDENTIFY)
+			if (indicatorId > INDICATOR_ID_NODE_IDENTIFY)
 				parameter_array = &_indicator_parameter;
 			return (parameter_array);
 		}
 	}
-	if (indicatorId == INDICATOR_IND_NA || indicatorId == INDICATOR_IND_NODE_IDENTIFY)
+	if (indicatorId == INDICATOR_ID_NA || indicatorId == INDICATOR_ID_NODE_IDENTIFY)
 		return (&_indicator_parameter);
 	return (0x0);
 }
@@ -81,7 +81,7 @@ static ZunoIndicatorTimer_t *_indicatorGetParameterArrayTimer(size_t indicatorId
 		timer_array = zunoIndicatorGetParameterArrayUserTimer();
 		return (&timer_array[parameter_array - zunoIndicatorGetParameterArrayUser()]);
 	}
-	if (indicatorId == INDICATOR_IND_NODE_IDENTIFY)
+	if (indicatorId == INDICATOR_ID_NODE_IDENTIFY)
 		return (&_indicator_parameter_timer);
 	return (0x0);
 }
@@ -104,10 +104,10 @@ static const ZunoIndicatorParameter_t *_indicatorGetParameterArrayNext(size_t in
 			}
 			parameter_array_b++;
 		}
-		if (indicatorId_next != (size_t)-1 && (indicatorId >= INDICATOR_IND_NODE_IDENTIFY || indicatorId_next <= INDICATOR_IND_NODE_IDENTIFY))
+		if (indicatorId_next != (size_t)-1 && (indicatorId >= INDICATOR_ID_NODE_IDENTIFY || indicatorId_next <= INDICATOR_ID_NODE_IDENTIFY))
 			return (parameter_array);
 	}
-	if (indicatorId < INDICATOR_IND_NODE_IDENTIFY)
+	if (indicatorId < INDICATOR_ID_NODE_IDENTIFY)
 		return (&_indicator_parameter);
 	return (0x0);
 }
@@ -123,8 +123,8 @@ static int _indicator_supported_report(const ZW_INDICATOR_SUPPORTED_GET_V4_FRAME
 	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
 	// report->cmd = INDICATOR_SUPPORTED_REPORT_V4; set in - fillOutgoingPacket
 	if ((parameter_array = _indicatorGetParameterArray(frame->indicatorId)) == 0x0) {
-		report->indicatorId = INDICATOR_IND_NA;
-		report->nextIndicatorId = INDICATOR_IND_NA;
+		report->indicatorId = INDICATOR_ID_NA;
+		report->nextIndicatorId = INDICATOR_ID_NA;
 		report->properties1 = 0x0;
 		len =  sizeof(report[0x0]);
 	}
@@ -137,7 +137,7 @@ static int _indicator_supported_report(const ZW_INDICATOR_SUPPORTED_GET_V4_FRAME
 		memcpy(&report->propertySupportedBitMask[0x0], (uint8_t *)&support_prop_mask, len);
 		len = sizeof(report[0x0]) + len;
 		if ((parameter_array = _indicatorGetParameterArrayNext(indicatorId)) == 0x0)
-			indicatorId = INDICATOR_IND_NA;
+			indicatorId = INDICATOR_ID_NA;
 		else
 			indicatorId = parameter_array->indicatorId;
 		report->nextIndicatorId = indicatorId;
@@ -186,7 +186,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len) {
 	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
 	// report->cmd = INDICATOR_REPORT_V4; set in - fillOutgoingPacket
 	if (len == sizeof(frame->v1)) {
-		timer_array = _indicatorGetParameterArrayTimer(INDICATOR_IND_NODE_IDENTIFY);
+		timer_array = _indicatorGetParameterArrayTimer(INDICATOR_ID_NODE_IDENTIFY);
 		switch (timer_array->type_prop) {
 			case INDICATOR_PROP_TYPE_TIMEOUT:
 				if (timer_array->ms != 0x0)
@@ -213,7 +213,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len) {
 	indicatorId = frame->v4.indicatorId;
 	if ((timer_array = _indicatorGetParameterArrayTimer(indicatorId)) == 0x0) {
 		len = 0x1;
-		report->v4.variantgroup[0x0].indicatorId = INDICATOR_IND_NA;
+		report->v4.variantgroup[0x0].indicatorId = INDICATOR_ID_NA;
 		report->v4.variantgroup[0x0].propertyId = 0x0;
 		report->v4.variantgroup[0x0].value = 0x0;
 	}
@@ -459,13 +459,13 @@ static int _indicator_set_v1(size_t value) {
 	ZunoIndicatorTimerProp_t						prop;
 
 	prop.binary.value = value;
-	return (_indicator_set_binary(_indicatorGetParameterArray(INDICATOR_IND_NODE_IDENTIFY), &prop));
+	return (_indicator_set_binary(_indicatorGetParameterArray(INDICATOR_ID_NODE_IDENTIFY), &prop));
 }
 
 static void _indicator_set_clear(size_t indicatorId, VG_INDICATOR_SET_V4_VG *variantgroup, VG_INDICATOR_SET_V4_VG *variantgroup_e) {
 	while (variantgroup < variantgroup_e) {
 		if (indicatorId == variantgroup->indicatorId)
-			variantgroup->indicatorId = INDICATOR_IND_NA;
+			variantgroup->indicatorId = INDICATOR_ID_NA;
 		variantgroup++;
 	}
 }
@@ -474,7 +474,7 @@ static void _indicator_set_clear_mask(size_t indicatorId, VG_INDICATOR_SET_V4_VG
 	while (variantgroup < variantgroup_e) {
 		if (indicatorId == variantgroup->indicatorId) {
 			if ((prop_mask & (0x1 << variantgroup->propertyId)) != 0x0)
-				variantgroup->indicatorId = INDICATOR_IND_NA;
+				variantgroup->indicatorId = INDICATOR_ID_NA;
 		}
 		variantgroup++;
 	}
@@ -509,7 +509,7 @@ static int _indicator_set_v4(size_t indicatorId, uint32_t prop_mask, VG_INDICATO
 		if (indicatorId == variantgroup->indicatorId) {
 			propertyId = variantgroup->propertyId;
 			if ((prop_mask & (0x1 << propertyId)) != 0x0) {
-				variantgroup->indicatorId = INDICATOR_IND_NA;
+				variantgroup->indicatorId = INDICATOR_ID_NA;
 				value = variantgroup->value;
 				switch (variantgroup->propertyId) {
 					case INDICATOR_PROP_BINARY:
@@ -569,7 +569,7 @@ static int _indicator_set_v4(size_t indicatorId, uint32_t prop_mask, VG_INDICATO
 
 static int _indicator_set_find_na(VG_INDICATOR_SET_V4_VG *variantgroup_b, VG_INDICATOR_SET_V4_VG *variantgroup_e) {
 	while (variantgroup_b < variantgroup_e) {
-		if (variantgroup_b->indicatorId == INDICATOR_IND_NA)
+		if (variantgroup_b->indicatorId == INDICATOR_ID_NA)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 		variantgroup_b++;
 	}
@@ -597,7 +597,7 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 	variantgroup_e = &vg[len];
 	result = _indicator_set_find_na(variantgroup, variantgroup_e);
 	while (variantgroup < variantgroup_e) {
-		if ((indicatorId = variantgroup->indicatorId) != INDICATOR_IND_NA) {
+		if ((indicatorId = variantgroup->indicatorId) != INDICATOR_ID_NA) {
 			if ((parameter_array = _indicatorGetParameterArray(indicatorId)) != 0x0) {
 				propertyId = variantgroup->propertyId;
 				if ((parameter_array->support_prop_mask & (0x1 << propertyId)) != 0x0) {
@@ -646,7 +646,7 @@ void zunoIndicatorInit() {
 	tempos = 0x0;
 	while (parameter_array_b < parameter_array_e) {
 		indicatorId = parameter_array_b->indicatorId;
-		if (indicatorId == INDICATOR_IND_NODE_IDENTIFY)
+		if (indicatorId == INDICATOR_ID_NODE_IDENTIFY)
 			tempos++;
 		zunoIndicatorPinMode(parameter_array_b->pin, OUTPUT_DOWN, indicatorId);
 		parameter_array_b++;

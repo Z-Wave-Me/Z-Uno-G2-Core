@@ -438,7 +438,7 @@ void zunoKickSleepTimeout(uint32_t ms);
 void _zunoSleepOnInclusionStart();
 void _zunoSleepOnInclusionComplete();
 
-
+void zunoAwakeUsrCode();
 
 #ifdef LOGGING_DBG
 bool g_logging_inited = false;
@@ -500,6 +500,8 @@ void * zunoJumpTable(int vec, void * data) {
             #endif
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
+            // Awake code if user had sent device to sleep, but z-wave message has arrived
+            zunoAwakeUsrCode();
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
@@ -554,6 +556,8 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
+                // Awake code if user had sent device to sleep, but interrupt has triggered
+                zunoAwakeUsrCode();
             }
             break;
         case ZUNO_JUMPTBL_SLEEP:
@@ -565,6 +569,8 @@ void * zunoJumpTable(int vec, void * data) {
             #endif
             break;
         case ZUNO_JUMPTBL_WUP:
+            // Awake code if user had sent device to sleep, but wakeup timer triggered
+            zunoAwakeUsrCode();
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             _zunoInitSleepingData();
             _zunoCheckWakeupBtn();
@@ -1358,6 +1364,12 @@ void zunoKickSleepTimeout(uint32_t ms){
     #endif
 }
 #endif
+void zunoAwakeUsrCode(){
+    zunoLockSleep();
+    if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
+        zunoResumeThread(g_zuno_sys->hMainThread);
+    }
+}
 void zunoSendDeviceToSleep(uint8_t mode) { 
   // we inform the system that device is ready for sleep
   zunoMarkDeviceToSleep(mode);

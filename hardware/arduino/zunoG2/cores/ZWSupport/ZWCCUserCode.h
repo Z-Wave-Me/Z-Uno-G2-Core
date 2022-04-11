@@ -364,5 +364,6 @@ typedef struct									ZwUserCodeMaster_s
 
 
 int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd);
+uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len);
 
 #endif// ZWCC_TIMER_PARAMETERS_H

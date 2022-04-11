@@ -1,6 +1,13 @@
 ﻿#include "PN7150.h"
 
-#define PN7150_CLASS_DEBUG Serial0
+
+#ifdef LOGGING_DBG
+	#ifndef LOGGING_UART
+		#define PN7150_CLASS_DEBUG					Serial0
+	#else
+		#define PN7150_CLASS_DEBUG					LOGGING_UART
+	#endif
+#endif
 
 static const uint16_t SW1SW2 = 0x0090;
 static const PN7150ClassCmdCoreReset_t NCICoreResetKeep = PN7150_CLASS_CORE_RESET_CMD_DEFAULT(PN7150_CLASS_CORE_RESET_CMD_TYPE_KEEP);
@@ -101,6 +108,7 @@ PN7150ClassStatus_t PN7150Class::ppse(uint8_t index) {
 	static const PN7150ClassTlvTag_t				tag_pan = {PN7150_CLASS_NDEF_TAG_PAN};
 	static const PN7150ClassTlvTag_t				tag_pan_v2 = {PN7150_CLASS_NDEF_TAG_PAN_V2};
 	static const PN7150ClassTlvTag_t				tag_afl = {PN7150_CLASS_NDEF_TAG_AFL};
+	static const uint16_t							not_file = 0x826A;
 	PN7150ClassStatus_t								ret;
 	PN7150ClassRfNfc_t								*info;
 	PN7150ClassCmdRspCommon_t						answer;
@@ -122,11 +130,14 @@ PN7150ClassStatus_t PN7150Class::ppse(uint8_t index) {
 	if ((info = this->_getInfo(index)) == 0x0)
 		return (PN7150ClassStatusArgument);
 	if (info->protocol != PN7150_CLASS_PROT_ISODEP)
-		return (PN7150ClassStatusArgument);
+		return (PN7150ClassStatusNotSupportInterface);
 	if ((ret = this->_select(&answer, index)) != PN7150ClassStatusOk)
 		return (ret);
-	if ((ret = this->_NxpNci_ReaderTagCmd(&select_pse, &answer)) != PN7150ClassStatusOk)
+	if ((ret = this->_NxpNci_ReaderTagCmd(&select_pse, &answer)) != PN7150ClassStatusOk) {
+		if (ret == PN7150ClassStatusFailedStatus && memcmp(&not_file, &answer.buffer[sizeof(answer.ndef.header) + answer.ndef.header.len - sizeof(not_file)], sizeof(not_file)) == 0x0)
+			return (PN7150ClassStatusNotSupportInterface);
 		return (ret);
+	}
 	ndef_cmd = select_adf;
 	if ((len = this->_tagGetData(this->_tagFind(&tag_adf, &answer), &ndef_cmd.value[0x0], PN7150_CLASS_NDEF_TAG_APPLICATION_DEDICATED_FILE_NAME_SIZE_MAX)) == 0x0)
 		return (PN7150ClassStatusFailed);
@@ -186,7 +197,6 @@ PN7150ClassStatus_t PN7150Class::ppse(uint8_t index) {
 			b_afl++;
 		}
 	}
-	// Serial0.dumpPrint((uint8_t *)&select_pse, (sizeof(select_pse.header) + select_pse.header.len), (sizeof(select_pse.header) + select_pse.header.len));
 	return (PN7150ClassStatusOk);
 }
 
@@ -655,13 +665,11 @@ PN7150ClassStatus_t PN7150Class::getPowerTransmitter(PN7150ClassPowerTransmitter
 PN7150ClassStatus_t PN7150Class::discoveryRestart(void (*userFunc)(void)) {
 	static const PN7150ClassCmdRfDeactivate_t		deactivate = PN7150_CLASS_CMD_RF_DEACTIVATE_CMD_DEFAULT(PN7150_CLASS_CMD_RF_DEACTIVATE_MODE_IDLE);
 	PN7150ClassCmdRspCommon_t						answer;
-	PN7150ClassStatus_t								ret;
 
 	while (this->_wireReceive(&answer, TIMEOUT_100MS) == PN7150ClassStatusOk)
 		;
-	if ((ret = this->_NxpNci_HostTransceive(&deactivate, &answer)) != PN7150ClassStatusOk)
-		return (ret);
-	this->_wireReceive(&answer, TIMEOUT_1S);
+	if (this->_NxpNci_HostTransceive(&deactivate, &answer) == PN7150ClassStatusOk)//Если еще карточка в зоне - то деактивируем
+		this->_wireReceive(&answer, TIMEOUT_1S);
 	return (this->discovery(userFunc));
 }
 

@@ -699,7 +699,8 @@ typedef enum					PN7150ClassStatus_e
 	PN7150ClassStatusIrq,
 	PN7150ClassStatusMemory,
 	PN7150ClassStatusConfigure,
-	PN7150ClassStatusActive
+	PN7150ClassStatusActive,
+	PN7150ClassStatusNotSupportInterface
 }								PN7150ClassStatus_t;
 
 typedef enum					PN7150ClassPowerMode_e

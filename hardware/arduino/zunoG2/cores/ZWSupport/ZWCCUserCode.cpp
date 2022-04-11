@@ -417,3 +417,17 @@ int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd) {
 	}
 	return (rs);
 }
+
+uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len) {
+	ZwUserCodeParametr_t						*parametr_b;
+	ZwUserCodeParametr_t						*parametr_e;
+
+	parametr_b = &__g_zuno_user_code_param[0x0];
+	parametr_e = &__g_zuno_user_code_param[__g_zuno_user_code_param_count];
+	while (parametr_b < parametr_e) {
+		if (parametr_b->userIdStatus == USER_CODE_STATUS_ENABLED_GRANT_ACCESS && parametr_b->userCodeLen == len && memcmp(code, &parametr_b->userCode[0x0], len) == 0x0)
+			return (true);
+		parametr_b++;
+	}
+	return (false);
+}

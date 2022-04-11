@@ -678,3 +678,29 @@ int zuno_CCIndicatorHandler(ZUNOCommandPacket_t *cmd) {
 	}
 	return (rs);
 }
+
+typedef struct								ZwIndicatorSetV4FrameToggling_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									indicator0Value;/**/
+	uint8_t									properties1;/* masked byte */
+	VG_INDICATOR_SET_V4_VG					variantgroup[0x3];/**/
+}											ZwIndicatorSetV4FrameToggling_t;
+
+void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_t on_off_cycles, uint8_t on_time) {
+	ZwIndicatorSetV4FrameToggling_t			frame;
+
+	zunoIndicatorInit();
+	frame.properties1 = (sizeof(frame.variantgroup) / sizeof(frame.variantgroup[0x0]));
+	frame.variantgroup[0x0].indicatorId = indicatorId;
+	frame.variantgroup[0x0].propertyId = INDICATOR_PROP_TOGGLING_ON_OFF_PERIOD;
+	frame.variantgroup[0x0].value = on_off_period;
+	frame.variantgroup[0x1].indicatorId = indicatorId;
+	frame.variantgroup[0x1].propertyId = INDICATOR_PROP_TOGGLING_ON_OFF_CYCLES;
+	frame.variantgroup[0x1].value = on_off_cycles;
+	frame.variantgroup[0x2].indicatorId = indicatorId;
+	frame.variantgroup[0x2].propertyId = INDICATOR_PROP_TOGGLING_ON_TIME;
+	frame.variantgroup[0x2].value = on_time;
+	_indicator_set((const ZwIndicatorSetFrame_t *)&frame, sizeof(frame));
+}

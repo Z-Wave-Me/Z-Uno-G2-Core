@@ -1243,9 +1243,10 @@ void zunoSendReportHandler(uint32_t ticks) {
         return; // it doesn't => go away
 	#ifdef WITH_CC_BATTERY
 	if(__zunoDispatchPendingBatteryReport()){
-		zunoSendBatteryReportHandler();
-		if((--max_report_count) == 0)
-			return;
+		if (zunoSendBatteryReportHandler() == true) {
+			if((--max_report_count) == 0)
+				return;
+		}
 	}
 	#endif
 	#ifdef WITH_CC_WAKEUP

@@ -7,6 +7,8 @@
 #define BATTERY_HIGH 3000
 #endif
 
+static uint8_t _save_batteryLevel = 0xFF;
+
 #if !defined(WITH_CUSTOM_BATTERY_HANDLER)
 uint8_t defaultBatteryHandler(){
     uint8_t old_res  = g_zuno_odhw_cfg.adc_resolution;
@@ -41,24 +43,49 @@ static uint8_t batteryReportValue(){
 	return defaultBatteryHandler();
     #endif // WITH_CUSTOM_BATTERY_HANDLER
 }
-void zunoSendBatteryReportHandler() {
+
+bool zunoSendBatteryReportHandler() {
+	size_t											batteryLevel;
+	ZwBatteryReportFrame_t							*report;
+
+	batteryLevel = batteryReportValue();
+	if (batteryLevel == _save_batteryLevel)
+		return (false);
 	fillOutgoingReportPacket(0);
-	CMD_REPORT_CC = COMMAND_CLASS_BATTERY;
-	CMD_REPORT_CMD = BATTERY_REPORT;
-	CMD_REPORT_DATA(0) = batteryReportValue();
-	CMD_REPORT_LEN = 3;
+	report = (ZwBatteryReportFrame_t *)&CMD_REPORT_CC;
+	report->cmdClass = COMMAND_CLASS_BATTERY;
+	report->cmd = BATTERY_REPORT;
+	report->batteryLevel = batteryLevel;
+	CMD_REPORT_LEN = sizeof(report[0x0]);
 	zunoSendZWPackage(&g_outgoing_report_packet);
+	return (true);
 }
 
-int     zuno_CCBattery(ZUNOCommandPacket_t * cmd){
-    int rs = ZUNO_UNKNOWN_CMD;
-    switch(ZW_CMD){
-        case BATTERY_GET:
-            _zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
-            CMD_REPLY_DATA(0) = batteryReportValue();
-            CMD_REPLY_LEN = 3;
-            
-            return ZUNO_COMMAND_ANSWERED;
-    }
-    return rs;
+static int _battery_report(void) {
+	ZwBatteryReportFrame_t							*report;
+	size_t											batteryLevel;
+
+	_zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
+	report = (ZwBatteryReportFrame_t *)&CMD_REPLY_CC;
+	// report->cmdClass = COMMAND_CLASS_BATTERY; set in - fillOutgoingPacket
+	// report->cmd = BATTERY_REPORT; set in - fillOutgoingPacket
+	batteryLevel = batteryReportValue();
+	_save_batteryLevel = batteryLevel;
+	report->batteryLevel = batteryLevel;
+	CMD_REPLY_LEN = sizeof(report[0x0]);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+int zuno_CCBattery(ZUNOCommandPacket_t * cmd){
+	int								rs;
+
+	switch(ZW_CMD) {
+		case BATTERY_GET:
+			rs = _battery_report();
+			break ;
+		default:
+			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
+			break ;
+	}
+	return (rs);
 }

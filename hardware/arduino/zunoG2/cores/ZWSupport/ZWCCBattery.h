@@ -15,7 +15,7 @@ typedef struct								ZwBatteryReportFrame_s
 	uint8_t									batteryLevel;/**/
 }											ZwBatteryReportFrame_t;
 
-void zunoSendBatteryReportHandler();
+bool zunoSendBatteryReportHandler();
 void    zunoSendBatteryReport();
 int     zuno_CCBattery(ZUNOCommandPacket_t * cmd);
 void    zuno_CCBattery_OnSetup();

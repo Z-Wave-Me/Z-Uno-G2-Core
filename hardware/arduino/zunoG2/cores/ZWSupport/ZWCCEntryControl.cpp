@@ -10,22 +10,29 @@
 #define ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_MAXMIMUM				0xA
 #define ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_DEFAULT				0x4
 
-__WEAK uint8_t __g_zuno_entry_control_asii_mask[0x10] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+__WEAK uint8_t zuno_CCEntryControlAsiiMask(uint8_t *mask) {
+	return (0x0);
+	(void)mask;
+}
 
-static const uint32_t __g_zuno_entry_control_data_type_mask = ((0x1 << ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_NA) | (0x1 << ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_RAW) | (0x1 << ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_ASCII));
-static const uint32_t __g_zuno_entry_control_event_mask = 0x0;//((0x1 << ENTRY_CONTROL_NOTIFICATION_ENTER) | (0x1 << ENTRY_CONTROL_NOTIFICATION_CANCEL) | (0x1 << ENTRY_CONTROL_NOTIFICATION_POLICE));
+extern __WEAK const volatile uint32_t __g_zuno_entry_control_data_type_mask = 0x0;
+
+extern __WEAK const volatile uint32_t __g_zuno_entry_control_event_mask = 0x0;
+
 static uint8_t __g_zuno_entry_control_cached_size = ENTRY_CONTROL_CACHED_SIZE_SUPPORTED_DEFAULT;
+
 static uint8_t __g_zuno_entry_control_cached_timout = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_DEFAULT;
 
 static int _entry_control_key_supported_report(void) {
 	ZwEntryControlKeySupportedReportFrame_t		*report;
+	size_t										len;
 
 	report = (ZwEntryControlKeySupportedReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// report->cmd = ENTRY_CONTROL_KEY_SUPPORTED_REPORT; //set in - fillOutgoingPacket
-	report->keySupportedBitMaskLength = sizeof(__g_zuno_entry_control_asii_mask);
-	memcpy(&report->keySupportedBitMask[0x0], &__g_zuno_entry_control_asii_mask[0x0], sizeof(__g_zuno_entry_control_asii_mask));
-	CMD_REPLY_LEN = sizeof(ZwEntryControlKeySupportedReportFrame_t) + sizeof(__g_zuno_entry_control_asii_mask);
+	len = zuno_CCEntryControlAsiiMask(&report->keySupportedBitMask[0x0]);
+	report->keySupportedBitMaskLength = len;
+	CMD_REPLY_LEN = sizeof(ZwEntryControlKeySupportedReportFrame_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -106,18 +113,38 @@ int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd) {
 	return (rs);
 }
 
-void zuno_CCEntryControlNotification(uint8_t date_type, uint8_t event_type, uint8_t *b, size_t len) {
+bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint8_t *b, size_t len) {
 	ZwEntryControlNotificationFrame_t		*report;
 	static uint8_t							sequenceNumber = 0x0;
 
-	report = (ZwEntryControlNotificationFrame_t *)&CMD_REPLY_CC;
+	if ((__g_zuno_entry_control_data_type_mask & (0x1 << data_type)) == 0x0)
+		return (false);
+	if ((__g_zuno_entry_control_event_mask & (0x1 << event_type)) == 0x0)
+		return (false);
+	switch (data_type) {
+		case ENTRY_CONTROL_NOTIFICATION_DATA_NA:
+			if (b != 0x0 || len != 0x0)
+				return (false);
+			break ;
+		case ENTRY_CONTROL_NOTIFICATION_DATA_RAW:
+			if (len < 0x1 || len > 0x20)
+				return (false);
+			break ;
+		case ENTRY_CONTROL_NOTIFICATION_DATA_MD5:
+			if (len != 0x10)
+				return (false);
+			break ;
+	}
+	fillOutgoingReportPacket(0x0);
+	report = (ZwEntryControlNotificationFrame_t *)&CMD_REPORT_CC;
 	report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; 
 	report->cmd = ENTRY_CONTROL_NOTIFICATION;
 	report->sequenceNumber = sequenceNumber++;
-	report->properties1 = date_type;
+	report->properties1 = data_type;
 	report->eventType = event_type;
 	report->eventDataLength = len;
 	memcpy(&report->eventData[0x0], b, len);
-	CMD_REPLY_LEN = sizeof(report[0x0]) + len;
-	zunoSendZWPackage(&g_outgoing_main_packet);
+	CMD_REPORT_LEN = sizeof(report[0x0]) + len;
+	zunoSendZWPackage(&g_outgoing_report_packet);
+	return (true);
 }

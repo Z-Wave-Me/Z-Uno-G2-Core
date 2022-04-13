@@ -30,10 +30,16 @@ const ZunoCFGParameter_t CFGPARAM_DEFAULT =
 // Default method for zuno configuration parameter's metadata
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	static ZunoCFGParameter_t param_data;
+	static char               alternative_name[32];
 	memcpy(&param_data, &CFGPARAM_DEFAULT, sizeof(ZunoCFGParameter_t));
-	if(param > CONFIGPARAM_MAX_PARAM || param < CONFIGPARAM_MIN_PARAM)
+	strcpy(alternative_name, param_data.name);
+	param_data.name = alternative_name;
+	if((param > CONFIGPARAM_MAX_PARAM) || 
+		(param < CONFIGPARAM_MIN_PARAM))
 		return (ZUNO_CFG_PARAMETER_UNKNOWN);
 	char* p_nn  = strstr(param_data.name, "NN");
+	if(p_nn == NULL)
+		return (const ZunoCFGParameter_t *)&param_data;
 	p_nn[0] = '0' + (param / 10) % 10;
 	p_nn[1] = '0' + (param % 10);
 	return (const ZunoCFGParameter_t *)&param_data;

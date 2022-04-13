@@ -1366,9 +1366,14 @@ void zunoKickSleepTimeout(uint32_t ms){
 #endif
 void zunoAwakeUsrCode(){
     zunoLockSleep();
-    if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
+    #ifdef LOGGING_DBG
+    uint8_t val = zunoThreadIsRunning(g_zuno_sys->hMainThread);
+    LOGGING_UART.print("Tread running:");
+    LOGGING_UART.print(val);
+    #endif
+    //if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
         zunoResumeThread(g_zuno_sys->hMainThread);
-    }
+    //}
 }
 void zunoSendDeviceToSleep(uint8_t mode) { 
   // we inform the system that device is ready for sleep

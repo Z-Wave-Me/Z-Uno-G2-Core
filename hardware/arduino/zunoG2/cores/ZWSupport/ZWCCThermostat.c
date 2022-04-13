@@ -133,25 +133,26 @@ static int _supported_report_setpoint(uint8_t channel) {//Processed to get the v
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-
-static uint16_t _limit_setpoint(uint8_t b_test, uint16_t value) {
-	int16_t					up_limit;
-	int16_t					down_limit;
-	uint8_t					ratio;
-
-	if ((b_test & THERMOSTAT_RANGE_NEG) != 0 && (b_test & THERMOSTAT_RANGE_POS) != 0) {
+uint16_t _get_limits_setpoint(uint8_t compressed_value, int16_t & down_limit, int16_t &	up_limit){
+	if (((compressed_value & THERMOSTAT_RANGE_NEG) != 0) && 
+		((compressed_value & THERMOSTAT_RANGE_POS) != 0)) {
 		up_limit = 10 * THERMOSTAT_SETPOINT_RATIO;
 		down_limit = -10 * THERMOSTAT_SETPOINT_RATIO;
-	} else if ((b_test & THERMOSTAT_RANGE_NEG) != 0 ) {
+	} else if ((compressed_value & THERMOSTAT_RANGE_NEG) != 0 ) {
 		up_limit = 0;
 		down_limit = -10 * THERMOSTAT_SETPOINT_RATIO;
 	} else {
 		up_limit = 10 * THERMOSTAT_SETPOINT_RATIO;
 		down_limit = 0;
 	}
-	ratio = b_test & THERMOSTAT_LIMITS_MASK;
-	up_limit = up_limit * ratio;
-	down_limit = down_limit * ratio;
+	down_limit *= (compressed_value & THERMOSTAT_LIMITS_MASK);
+	up_limit *= (compressed_value & THERMOSTAT_LIMITS_MASK);
+
+}
+static uint16_t _limit_setpoint(uint8_t b_test, uint16_t value) {
+	int16_t					up_limit;
+	int16_t					down_limit;
+	_get_limits_setpoint(b_test, down_limit, up_limit);
 	if ((int16_t)value > up_limit)
 		value = (uint16_t)up_limit;
 	if ((int16_t)value < down_limit)
@@ -230,23 +231,26 @@ static int _setpoint_capabilities_get(size_t channel, const ZwThermostatSetpoint
 	// report->cmd = THERMOSTAT_SETPOINT_CAPABILITIES_REPORT; set in - fillOutgoingPacket
 	componentId = cmd->properties1 & THERMOSTAT_MASK_4_BIT;
 	data = &report->data[0x0];
+	int16_t					up_limit;
+	int16_t					down_limit;
+	_get_limits_setpoint(ZUNO_CFG_CHANNEL(channel).params[0], down_limit, up_limit);
 	if (_bitTestComponentId(channel, componentId) == true) {
 		report->properties1 = componentId;
-		data[0x0] = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
-		data[0x1] = 0x0;
-		data[0x2] = 0x0;
-		data[0x3] = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
-		data[0x4] = 0xFF;
-		data[0x5] = 0xFF;
+		data[0] = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
+		data[1] = down_limit >> 8;
+		data[2] = down_limit & 0xFF;
+		data[3] = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
+		data[4] = up_limit >> 8;
+		data[5] = up_limit & 0xFF;
 		count = 0x2 + THERMOSTAT_SETPOINT_SIZE * 0x2;
 	}
 	else {
-		report->properties1 = 0x0;
-		data[0x0] = 0x1;
-		data[0x1] = 0x0;
-		data[0x2] = 0x1;
-		data[0x3] = 0x0;
-		count = 0x4;
+		report->properties1 = 0;
+		data[0] = 1;
+		data[1] = 0;
+		data[2] = 1;
+		data[3] = 0;
+		count = 4;
 	}
 	CMD_REPLY_LEN = sizeof(ZwThermostatSetpointCapabilitiesReportFrame_t) + count;
 	return (ZUNO_COMMAND_ANSWERED);

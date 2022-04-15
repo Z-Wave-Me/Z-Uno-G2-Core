@@ -375,46 +375,6 @@ ZUNOSleepData_t g_sleep_data;
 void loop();
 void setup();
 
-extern void (*__preinit_array_start []) (void) __attribute__((weak));
-extern void (*__preinit_array_end []) (void) __attribute__((weak));
-extern void (*__init_array_start []) (void) __attribute__((weak));
-extern void (*__init_array_end []) (void) __attribute__((weak));
-extern void (*__fini_array_start []) (void) __attribute__((weak));
-extern void (*__fini_array_end []) (void) __attribute__((weak));
-
-void LLInit() {  
-    #ifndef NO_DEFAULT_PIN_SETUP
-    for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++){
-        if(i == BUTTON_PIN)
-            continue;
-        pinMode(i, ZUNO_DEFAULT_PIN_STATE);//set default state
-    }
-    #endif
-    // Constructors....
-    // Global values initialization
-    for(uint32_t *p=&__data_start__, *cd = (uint32_t *)&__etext; p<((uint32_t *)&__data_end__); p++, cd++){
-        *p = *cd; 
-    }
-    for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
-        *p = 0;
-    }
-    for (uint32_t * b = (uint32_t *)&__preinit_array_start; b < ((uint32_t *)&__preinit_array_end); b++) {
-        ((void (*)())b[0])();
-        WDOG_Feed();
-    }
-    for (uint32_t * b = (uint32_t *)&__init_array_start; b < ((uint32_t *)&__init_array_end); b++) {
-        ((void (*)())b[0])();
-        WDOG_Feed();
-    }
-    // default configuration values
-    g_zuno_odhw_cfg.adc_reference  = adcRef5V;
-    g_zuno_odhw_cfg.adc_resolution = 10; // 
-    g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
-    g_zuno_odhw_cfg.pwm_resolution = 8;
-    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
-
-}
-
 void LLDestroy() {
 }
 
@@ -454,6 +414,68 @@ void _zunoSleepOnFWUpgradeStop();
 void _zunoSleepOnFWUpgradeStart();
 #endif
 void initCCSDataDefault();
+
+extern void (*__preinit_array_start []) (void) __attribute__((weak));
+extern void (*__preinit_array_end []) (void) __attribute__((weak));
+extern void (*__init_array_start []) (void) __attribute__((weak));
+extern void (*__init_array_end []) (void) __attribute__((weak));
+extern void (*__fini_array_start []) (void) __attribute__((weak));
+extern void (*__fini_array_end []) (void) __attribute__((weak));
+
+static void LLInit(void *data) {
+    #ifndef NO_DEFAULT_PIN_SETUP
+    for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++){
+		#ifdef LOGGING_DBG
+			#if DBG_CONSOLE_PIN != 0xFF
+			if (((getRealPort(i) << 0x4) | getRealPin(i)) == DBG_CONSOLE_PIN)
+				continue ;
+			#endif
+		#endif
+        if(i == BUTTON_PIN)
+            continue;
+        pinMode(i, ZUNO_DEFAULT_PIN_STATE);//set default state
+    }
+    #endif
+    // Constructors....
+    // Global values initialization
+    for(uint32_t *p=&__data_start__, *cd = (uint32_t *)&__etext; p<((uint32_t *)&__data_end__); p++, cd++){
+        *p = *cd; 
+    }
+    for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
+        *p = 0;
+    }
+    for (uint32_t * b = (uint32_t *)&__preinit_array_start; b < ((uint32_t *)&__preinit_array_end); b++) {
+        ((void (*)())b[0])();
+        WDOG_Feed();
+    }
+    for (uint32_t * b = (uint32_t *)&__init_array_start; b < ((uint32_t *)&__init_array_end); b++) {
+        ((void (*)())b[0])();
+        WDOG_Feed();
+    }
+    // default configuration values
+    g_zuno_odhw_cfg.adc_reference  = adcRef5V;
+    g_zuno_odhw_cfg.adc_resolution = 10; // 
+    g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
+    g_zuno_odhw_cfg.pwm_resolution = 8;
+    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
+	g_zuno_sys = (ZUNOSetupSysState_t*)data;
+	#ifdef LOGGING_DBG
+	LOGGING_UART.begin(115200);
+	#endif
+	#ifdef WITH_AUTOSETUP
+	zuno_static_autosetup();
+	#endif
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	_zunoInitSleepingData();
+	_zunoInitDefaultWakeup();
+	#endif
+	#ifdef WITH_CC_ENTRY_CONTROL
+	void __g_zuno_user_code_init(void); 
+	__g_zuno_user_code_init();
+	#endif
+	g_sketch_inited = false;
+}
+
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -474,19 +496,7 @@ void * zunoJumpTable(int vec, void * data) {
     */
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
-            LLInit();
-            g_zuno_sys = (ZUNOSetupSysState_t*)data;
-            #ifdef WITH_AUTOSETUP
-            zuno_static_autosetup();
-            #endif
-            #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
-            _zunoInitSleepingData();
-            _zunoInitDefaultWakeup();
-            #endif
-            #ifdef LOGGING_DBG
-            LOGGING_UART.begin(115200);
-            #endif
-            g_sketch_inited = false;
+            LLInit(data);
             break;
         case ZUNO_JUMPTBL_LOOP:
             if(!g_sketch_inited){

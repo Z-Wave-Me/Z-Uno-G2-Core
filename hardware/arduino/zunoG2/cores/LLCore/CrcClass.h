@@ -11,8 +11,8 @@ class CrcClass {
 		static uint16_t					crc16_arc(const void *data, size_t len) {return (CrcClass::crc16_arc(0x0, data, len));};
 		static uint16_t					crc16_arc(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x8005, initValue, data, len));};
 
-		static uint16_t					crc16_ccitt_aug(const void *data, size_t len) {return (CrcClass::crc16_ccitt_aug(0xF0B8, data, len));};//reverse 0x1D0F
-		static uint16_t					crc16_ccitt_aug(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x1021, initValue, data, len));};
+		static uint16_t					crc16_ccitt_aug(const void *data, size_t len) {return (CrcClass::crc16_ccitt_aug(0x1D0F, data, len));};
+		static uint16_t					crc16_ccitt_aug(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x1021, (__RBIT(initValue) >> 0x10), data, len));};
 
 		static uint16_t					crc16_ccitt_false(const void *data, size_t len) {return (CrcClass::crc16_ccitt_false(0xFFFF, data, len));};
 		static uint16_t					crc16_ccitt_false(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x1021, initValue, data, len));};
@@ -23,8 +23,8 @@ class CrcClass {
 		static uint16_t					crc16_cdma2000(const void *data, size_t len) {return (CrcClass::crc16_cdma2000(0xFFFF, data, len));};
 		static uint16_t					crc16_cdma2000(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0xC867, initValue, data, len));};
 
-		static uint16_t					crc16_dds_110(const void *data, size_t len) {return (CrcClass::crc16_dds_110(0xB001, data, len));};//reverse 0x800d
-		static uint16_t					crc16_dds_110(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x8005, initValue, data, len));};
+		static uint16_t					crc16_dds_110(const void *data, size_t len) {return (CrcClass::crc16_dds_110(0x800d, data, len));};
+		static uint16_t					crc16_dds_110(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x8005, (__RBIT(initValue) >> 0x10), data, len));};
 
 		static uint16_t					crc16_dect_r(const void *data, size_t len) {return (CrcClass::crc16_dect_r(0x0, data, len));};
 		static uint16_t					crc16_dect_r(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x589, initValue, data, len) ^ 0x1);};
@@ -47,8 +47,8 @@ class CrcClass {
 		static uint16_t					crc16_mcrf4xx(const void *data, size_t len) {return (CrcClass::crc16_mcrf4xx(0xFFFF, data, len));};
 		static uint16_t					crc16_mcrf4xx(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, initValue, data, len));};
 
-		static uint16_t					crc16_riello(const void *data, size_t len) {return (CrcClass::crc16_riello(0x554D, data, len));};//reverse 0xB2AA
-		static uint16_t					crc16_riello(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, initValue, data, len));};
+		static uint16_t					crc16_riello(const void *data, size_t len) {return (CrcClass::crc16_riello(0xB2AA, data, len));};
+		static uint16_t					crc16_riello(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, (__RBIT(initValue) >> 0x10), data, len));};
 
 		static uint16_t					crc16_t10_dif(const void *data, size_t len) {return (CrcClass::crc16_t10_dif(0x0, data, len));};
 		static uint16_t					crc16_t10_dif(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0x8BB7, initValue, data, len));};
@@ -56,14 +56,14 @@ class CrcClass {
 		static uint16_t					crc16_teledisk(const void *data, size_t len) {return (CrcClass::crc16_teledisk(0x0, data, len));};
 		static uint16_t					crc16_teledisk(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInFalse_RefOutFalse(0xA097, initValue, data, len));};
 
-		static uint16_t					crc16_tms37157(const void *data, size_t len) {return (CrcClass::crc16_tms37157(0x3791, data, len));};//reverse 0x89EC
-		static uint16_t					crc16_tms37157(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, initValue, data, len));};
+		static uint16_t					crc16_tms37157(const void *data, size_t len) {return (CrcClass::crc16_tms37157(0x89EC, data, len));};
+		static uint16_t					crc16_tms37157(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, (__RBIT(initValue) >> 0x10), data, len));};
 
 		static uint16_t					crc16_usb(const void *data, size_t len) {return (CrcClass::crc16_usb(0xFFFF, data, len));};
 		static uint16_t					crc16_usb(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x8005, initValue, data, len) ^ 0xFFFF);};
 
-		static uint16_t					crc16_a(const void *data, size_t len) {return (CrcClass::crc16_a(0x6363, data, len));};//reverse 0xC6C6
-		static uint16_t					crc16_a(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, initValue, data, len));};
+		static uint16_t					crc16_a(const void *data, size_t len) {return (CrcClass::crc16_a(0xC6C6, data, len));};
+		static uint16_t					crc16_a(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, (__RBIT(initValue) >> 0x10), data, len));};
 
 		static uint16_t					crc16_kermit(const void *data, size_t len) {return (CrcClass::crc16_kermit(0x0, data, len));};
 		static uint16_t					crc16_kermit(uint16_t initValue, const void *data, size_t len) {return (CrcClass::_crc_RefInTrue_RefOutTrue(0x1021, initValue, data, len));};

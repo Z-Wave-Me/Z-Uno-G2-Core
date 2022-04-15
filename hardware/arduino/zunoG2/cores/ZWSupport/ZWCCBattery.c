@@ -51,6 +51,7 @@ bool zunoSendBatteryReportHandler() {
 	batteryLevel = batteryReportValue();
 	if (batteryLevel == _save_batteryLevel)
 		return (false);
+	_save_batteryLevel = batteryLevel;
 	fillOutgoingReportPacket(0);
 	report = (ZwBatteryReportFrame_t *)&CMD_REPORT_CC;
 	report->cmdClass = COMMAND_CLASS_BATTERY;

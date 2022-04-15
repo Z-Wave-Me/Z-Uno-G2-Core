@@ -133,7 +133,7 @@ static int _supported_report_setpoint(uint8_t channel) {//Processed to get the v
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-uint16_t _get_limits_setpoint(uint8_t compressed_value, int16_t & down_limit, int16_t &	up_limit){
+static void _get_limits_setpoint(uint8_t compressed_value, int16_t & down_limit, int16_t &	up_limit){
 	if (((compressed_value & THERMOSTAT_RANGE_NEG) != 0) && 
 		((compressed_value & THERMOSTAT_RANGE_POS) != 0)) {
 		up_limit = 10 * THERMOSTAT_SETPOINT_RATIO;

@@ -192,6 +192,9 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...);
 #define EEPROM_WAKEUP_SIZE								0x4
 #define EEPROM_CONFIGURATION_ADDR						(EEPROM_WAKEUP_ADDR + EEPROM_WAKEUP_SIZE)
 #define EEPROM_CONFIGURATION_SIZE						0x84
+#ifndef EEPROM_USER_CODE_ADDR
+	#define EEPROM_USER_CODE_ADDR						EEPROM_SKETH_ADDR
+#endif
 
 inline int zunoEEPROMWrite(word address, word size, byte * data) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, true, address, size, data);};
 inline int zunoEEPROMRead(word address, word size, byte * data) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, false, address, size, data);};

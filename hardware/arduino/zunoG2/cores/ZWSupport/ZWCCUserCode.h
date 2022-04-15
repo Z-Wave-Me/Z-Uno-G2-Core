@@ -300,8 +300,19 @@ typedef struct									ZwUserCodeParametr_s
 		uint8_t									userIdStatus: 0x4;
 		uint8_t									userCodeLen: 0x4;
 	};
-	
 }												ZwUserCodeParametr_t;
+
+typedef struct									ZwUserCodeParametrFlashCrc_s
+{
+	ZwUserCodeParametr_t						code;
+	uint8_t										cr16_rom[0x2];/* LSB  to MSB */
+}												ZwUserCodeParametrFlashCrc_t;
+
+typedef struct									ZwUserCodeParametrFlash_s
+{
+	ZwUserCodeParametrFlashCrc_t				crc;
+	uint8_t										cr16_flash[0x2];/* LSB  to MSB */
+}												ZwUserCodeParametrFlash_t;
 
 typedef struct									ZwUserCodeMaster_s
 {
@@ -309,42 +320,75 @@ typedef struct									ZwUserCodeMaster_s
 	uint8_t										masterCodeLen;
 }												ZwUserCodeMaster_t;
 
+typedef struct									ZwUserCodeMasterFlashCrc_s
+{
+	ZwUserCodeMaster_t							code;
+	uint8_t										cr16_rom[0x2];/* LSB  to MSB */
+}												ZwUserCodeMasterFlashCrc_t;
+
+typedef struct									ZwUserCodeMasterFlash_s
+{
+	ZwUserCodeMasterFlashCrc_t					crc;
+	uint8_t										cr16_flash[0x2];/* LSB  to MSB */
+}												ZwUserCodeMasterFlash_t;
+
 #define USER_CODE_STATUS_AVAILABLE						0x0
 #define USER_CODE_STATUS_ENABLED_GRANT_ACCESS			0x1
 #define USER_CODE_STATUS_DISABLED						0x2
-
 
 #define USER_CODE_KEYPAD_MODE_NORMA						0x0
 #define USER_CODE_KEYPAD_MODE_VACATION					0x1
 
 
-#define ZUNO_SETUP_USER_CODE_KEYS(...) 	\
-								uint8_t __g_zuno_user_code_asii_mask[0x10]; \
-								uint8_t __g_zuno_user_code_asii_function(void) { \
+#define ZUNO_SETUP_USER_CODE_KEYS_COMMON(...)	\
+								extern uint8_t __g_zuno_user_code_asii_mask[0x10]; \
+								void __g_zuno_user_code_asii_function(void) { \
 									size_t					tempos; \
 									size_t					i; \
-									const char				*b; \
-																 \
-									static const char asii[] = {__VA_ARGS__, 0x0}; \
-									b = &asii[0x0]; \
 									__g_zuno_user_code_asii_mask[0x6] = 0xFF; \
 									__g_zuno_user_code_asii_mask[0x7] = 0x3; \
-									while ((tempos = b++[0x0]) != 0x0) { \
-										i = tempos / 0x8; \
-										__g_zuno_user_code_asii_mask[i] = __g_zuno_user_code_asii_mask[i] | (0x1 << (tempos % 0x8)); \
-									} \
-									return (0x0); \
+									__VA_ARGS__ ;\
 								} \
-								static uint8_t __g_zuno_user_code_asii_tmp = __g_zuno_user_code_asii_function(); \
 
-#define ZUNO_SETUP_USER_CODE(...) 	\
-							    ZwUserCodeParametr_t __g_zuno_user_code_param[] = \
+#define ZUNO_SETUP_USER_CODE_KEYS_SET(KEY)		\
+									if (KEY <= 0x7F) { \
+									tempos = KEY; \
+									i = tempos / 0x8; \
+									__g_zuno_user_code_asii_mask[i] = __g_zuno_user_code_asii_mask[i] | (0x1 << (tempos % 0x8)); \
+									} \
+
+#define ZUNO_SETUP_USER_CODE_KEYS_INTERVAL(START, END) \
+									if (START <= 0x7F && END <= 0x7F && START <= END) { \
+										tempos = START; \
+										while (tempos <= END) { \
+											i = tempos / 0x8; \
+											__g_zuno_user_code_asii_mask[i] = __g_zuno_user_code_asii_mask[i] | (0x1 << (tempos % 0x8)); \
+											tempos++; \
+										} \
+									} \
+
+#define ZUNO_SETUP_USER_CODE_MASTER(...) 	\
+								const ZwUserCodeMaster_t *__g_zuno_user_code_master_get_function(void) { \
+									static const ZwUserCodeMaster_t _master = \
+									{\
+										.masterCode = {__VA_ARGS__}, \
+										.masterCodeLen = (sizeof((int[]){__VA_ARGS__})/sizeof(int)) \
+									};\
+									return (&_master); \
+								} \
+
+#define ZUNO_SETUP_USER_CODE_COMMON(...) 	\
+								static const ZwUserCodeParametr_t __g_zuno_user_code_param_array[] = \
 								{ \
 									__VA_ARGS__, \
 								};\
-								uint16_t __g_zuno_user_code_param_count = (sizeof(__g_zuno_user_code_param) / sizeof(ZwUserCodeParametr_t)); \
+								const ZwUserCodeParametr_t *__g_zuno_user_code_user_array_get_function(void) { \
+									return (&__g_zuno_user_code_param_array[0x0]); \
+								} \
+								uint16_t __g_zuno_user_code_param_count = (sizeof(__g_zuno_user_code_param_array) / sizeof(__g_zuno_user_code_param_array[0x0])); \
+								uint16_t __g_zuno_user_code_param_crc16[(sizeof(__g_zuno_user_code_param_array) / sizeof(__g_zuno_user_code_param_array[0x0]))]; \
 
-#define ZUNO_SETUP_USER_CODE_AVAILABLE()	\
+#define ZUNO_SETUP_USER_CODE_SET_AVAILABLE()	\
 {\
 	.userCode = {0x0, 0x0, 0x0, 0x0}, \
 	{ \
@@ -353,7 +397,7 @@ typedef struct									ZwUserCodeMaster_s
 	} \
 }\
 
-#define ZUNO_SETUP_USER_CODE_ENABLED(...)	\
+#define ZUNO_SETUP_USER_CODE_SET_ENABLED(...)	\
 {\
 	.userCode = {__VA_ARGS__}, \
 	{ \

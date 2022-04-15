@@ -4,10 +4,28 @@
 #include <string.h>
 #include "CrcClass.h"
 
-__WEAK uint8_t __g_zuno_user_code_asii_mask[0x10] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xFF, 0x03, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+#define EEPROM_USER_CODE_MASTER_ADDR		EEPROM_USER_CODE_ADDR
+#define EEPROM_USER_CODE_MASTER_SIZE		(sizeof(ZwUserCodeMasterFlash_t))
+#define EEPROM_USER_CODE_USER_ADDR			(EEPROM_USER_CODE_MASTER_ADDR + EEPROM_USER_CODE_MASTER_SIZE)
 
+uint8_t __g_zuno_user_code_asii_mask[0x10];
+__WEAK void __g_zuno_user_code_asii_function(void) {
+	__g_zuno_user_code_asii_mask[0x6] = 0xFF;
+	__g_zuno_user_code_asii_mask[0x7] = 0x3;
+}
 
-__WEAK ZwUserCodeParametr_t __g_zuno_user_code_param[] = 
+__WEAK const ZwUserCodeMaster_t *__g_zuno_user_code_master_get_function(void) {
+	static const ZwUserCodeMaster_t							_master =
+	{
+		.masterCode = {0x0},
+		.masterCodeLen = 0x0
+	};
+
+	return (&_master);
+}
+static uint16_t __g_zuno_user_code_param_master_crc16 = 0x0;
+
+static const ZwUserCodeParametr_t __g_zuno_user_code_param_array[] = 
 {
 	{
 		.userCode = {0x0, 0x0, 0x0, 0x0},
@@ -17,21 +35,118 @@ __WEAK ZwUserCodeParametr_t __g_zuno_user_code_param[] =
 		}
 	}
 };
-__WEAK uint16_t __g_zuno_user_code_param_count = (sizeof(__g_zuno_user_code_param) / sizeof(ZwUserCodeParametr_t));
-
-static ZwUserCodeMaster_t __g_zuno_user_code_param_master;
+__WEAK const ZwUserCodeParametr_t *__g_zuno_user_code_user_array_get_function(void) {
+	return (&__g_zuno_user_code_param_array[0x0]);
+}
+__WEAK uint16_t __g_zuno_user_code_param_count = (sizeof(__g_zuno_user_code_param_array) / sizeof(__g_zuno_user_code_param_array[0x0]));
+__WEAK uint16_t __g_zuno_user_code_param_crc16[(sizeof(__g_zuno_user_code_param_array) / sizeof(__g_zuno_user_code_param_array[0x0]))];
 
 static uint8_t __g_zuno_user_code_keypad_mode_current = USER_CODE_KEYPAD_MODE_NORMA;
-// extern uint8_t __g_zuno_user_code_keypad_mode_current;
 
 #define ZUNO_USER_CODE_KEYPAD_MODE_SET(mode)			__g_zuno_user_code_keypad_mode_current = mode
 #define ZUNO_USER_CODE_KEYPAD_MODE_GET()				__g_zuno_user_code_keypad_mode_current
 
-// extern __WEAK
 static const uint32_t __g_zuno_user_code_status_mask = ((0x1 << USER_CODE_STATUS_AVAILABLE) | (0x1 << USER_CODE_STATUS_ENABLED_GRANT_ACCESS) | (0x1 << USER_CODE_STATUS_DISABLED));
 
 static const uint32_t __g_zuno_user_code_keypad_mode = ((0x1 << USER_CODE_KEYPAD_MODE_NORMA) | (0x1 << USER_CODE_KEYPAD_MODE_VACATION));
 
+static uint8_t _master_get(void *masterCode) {
+	const ZwUserCodeMaster_t			*master_parametr;
+	ZwUserCodeMasterFlash_t				master;
+	uint16_t							crc16;
+	size_t								masterCodeLen;
+
+	zunoEEPROMRead(EEPROM_USER_CODE_MASTER_ADDR, EEPROM_USER_CODE_MASTER_SIZE, (byte *)&master);
+	master_parametr = __g_zuno_user_code_master_get_function();
+	crc16 = CrcClass::crc16_ccitt_aug((void *)&master.crc, sizeof(master.crc));
+	if (memcmp(&crc16, &master.cr16_flash[0x0], sizeof(crc16)) == 0x0) {
+		crc16 = CrcClass::crc16_ccitt_aug(master_parametr, sizeof(master_parametr[0x0]));
+		if (memcmp(&crc16, &master.crc.cr16_rom[0x0], sizeof(crc16)) == 0x0) {
+			masterCodeLen = master.crc.code.masterCodeLen;
+			memcpy(masterCode, &master.crc.code.masterCode[0x0], masterCodeLen);
+			return (masterCodeLen);
+		}
+	}
+	masterCodeLen = master_parametr->masterCodeLen;
+	memcpy(masterCode, &master_parametr->masterCode[0x0], masterCodeLen);
+	return (masterCodeLen);
+}
+
+static void _master_save(void *masterCode, size_t masterCodeLen) {
+	const ZwUserCodeMaster_t			*master_parametr;
+	ZwUserCodeMasterFlash_t				master;
+	uint16_t							crc16;
+
+	__g_zuno_user_code_param_master_crc16 = CrcClass::crc16_ccitt_aug(masterCode, masterCodeLen);
+	master.crc.code.masterCodeLen = masterCodeLen;
+	memcpy(&master.crc.code.masterCode[0x0], masterCode, masterCodeLen);
+	master_parametr = __g_zuno_user_code_master_get_function();
+	crc16 = CrcClass::crc16_ccitt_aug(master_parametr, sizeof(master_parametr[0x0]));
+	memcpy(&master.crc.cr16_rom[0x0], &crc16, sizeof(master.crc.cr16_rom));
+	crc16 = CrcClass::crc16_ccitt_aug((void *)&master.crc, sizeof(master.crc));
+	memcpy(&master.cr16_flash[0x0], &crc16, sizeof(master.cr16_flash));
+	zunoEEPROMWrite(EEPROM_USER_CODE_MASTER_ADDR, EEPROM_USER_CODE_MASTER_SIZE, (byte *)&master);
+}
+
+static void _user_code_get(ZwUserCodeParametr_t *out, size_t userIdentifier) {
+	ZwUserCodeParametrFlash_t			user;
+	uint16_t							crc16;
+	const ZwUserCodeParametr_t			*user_array;
+
+	user_array = __g_zuno_user_code_user_array_get_function();
+	userIdentifier--;
+	zunoEEPROMRead(EEPROM_USER_CODE_ADDR + (userIdentifier * sizeof(user)), sizeof(user), (byte *)&user);
+	crc16 = CrcClass::crc16_ccitt_aug((void *)&user.crc, sizeof(user.crc));
+	if (memcmp(&crc16, &user.cr16_flash[0x0], sizeof(crc16)) == 0x0) {
+		crc16 = CrcClass::crc16_ccitt_aug(&user_array[userIdentifier], sizeof(user_array[0x0]));
+		if (memcmp(&crc16, &user.crc.cr16_rom[0x0], sizeof(crc16)) == 0x0) {
+			memcpy(out, &user.crc.code, sizeof(out[0x0]));
+			return ;
+		}
+	}
+	memcpy(out, &user_array[userIdentifier], sizeof(out[0x0]));
+}
+
+static void _user_code_save(ZwUserCodeParametrFlash_t *user, size_t userIdentifier, size_t userIdStatus) {
+	uint16_t									crc16;
+	const ZwUserCodeParametr_t					*user_array;
+
+	user_array = __g_zuno_user_code_user_array_get_function();
+	userIdentifier--;
+	if (userIdStatus != USER_CODE_STATUS_AVAILABLE)
+		crc16 = CrcClass::crc16_ccitt_aug(&user->crc.code.userCode[0x0], user->crc.code.userCodeLen);
+	else
+		crc16 = 0x0;
+	__g_zuno_user_code_param_crc16[userIdentifier] = crc16;
+	crc16 = CrcClass::crc16_ccitt_aug(&user_array[userIdentifier], sizeof(user_array[0x0]));
+	memcpy(&user->crc.cr16_rom[0x0], &crc16, sizeof(user->crc.cr16_rom));
+	crc16 = CrcClass::crc16_ccitt_aug((void *)&user->crc, sizeof(user->crc));
+	memcpy(&user->cr16_flash[0x0], &crc16, sizeof(user->cr16_flash));
+	zunoEEPROMWrite(EEPROM_USER_CODE_ADDR + (userIdentifier * sizeof(user[0x0])), sizeof(user[0x0]), (byte *)user);
+}
+
+void __g_zuno_user_code_init(void) {
+	size_t								i;
+	union
+	{
+		ZwUserCodeMaster_t				master;
+		ZwUserCodeParametr_t			user;
+	};
+	size_t								userCodeLen;
+
+	__g_zuno_user_code_asii_function();
+	i = _master_get(&master.masterCode[0x0]);
+	if (i > 0x4)
+		__g_zuno_user_code_param_master_crc16 = CrcClass::crc16_ccitt_aug((void *)&master.masterCode[0x0], i);
+	i = 0x1;
+	while (i <= __g_zuno_user_code_param_count) {
+		_user_code_get(&user, i);
+		userCodeLen = user.userCodeLen;
+		if (user.userIdStatus != USER_CODE_STATUS_AVAILABLE && userCodeLen > 0x4)
+			__g_zuno_user_code_param_crc16[i - 0x1] = CrcClass::crc16_ccitt_aug((void *)&user.userCode[0x0], userCodeLen);
+		i++;
+	}
+}
 
 static int _users_number_report(ZW_USERS_NUMBER_GET_FRAME *paket) {
 	ZW_USERS_NUMBER_REPORT_FRAME_t			*report;
@@ -79,7 +194,7 @@ static int _user_code_capabilities_report(ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME
 static int _user_code_report(ZW_USER_CODE_GET_FRAME *paket) {
 	size_t										userIdentifier;
 	ZwUserCodeReportFrame_t						*report;
-	ZwUserCodeParametr_t						*parametr;
+	ZwUserCodeParametr_t						parametr;
 	size_t										count;
 
 	report = (ZwUserCodeReportFrame_t *)&CMD_REPLY_CC;
@@ -93,10 +208,10 @@ static int _user_code_report(ZW_USER_CODE_GET_FRAME *paket) {
 		CMD_REPLY_LEN = sizeof(ZwUserCodeReportFrame_t) + 0x4;
 		return (ZUNO_COMMAND_ANSWERED);
 	}
-	parametr = &__g_zuno_user_code_param[userIdentifier - 0x1];
-	report->userIdStatus = parametr->userIdStatus;
-	count = parametr->userCodeLen;
-	memcpy(&report->userCode[0x0], &parametr->userCode[0x0], count);
+	_user_code_get(&parametr, userIdentifier);
+	report->userIdStatus = parametr.userIdStatus;
+	count = parametr.userCodeLen;
+	memcpy(&report->userCode[0x0], &parametr.userCode[0x0], count);
 	CMD_REPLY_LEN = sizeof(ZwUserCodeReportFrame_t) + count;
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -106,7 +221,7 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 	ZwExtendedUserCodeReportFrameStart_t		*start;
 	ZwExtendedUserCodeReportFrameEnd_t			*end;
 	ZwExtendedUserCodeReportFrameVg_t			*vg;
-	ZwUserCodeParametr_t						*parametr;
+	ZwUserCodeParametr_t						parametr;
 	size_t										count;
 	size_t										len;
 	size_t										userIdStatus;
@@ -128,10 +243,10 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 		CMD_REPLY_LEN = (sizeof(ZwExtendedUserCodeReportFrameStart_t) + sizeof(ZwExtendedUserCodeReportFrameEnd_t) + sizeof(ZwExtendedUserCodeReportFrameVg_t));
 		return (ZUNO_COMMAND_ANSWERED);
 	}
-	parametr = &__g_zuno_user_code_param[userIdentifier - 0x1];
-	if ((vg->userIdStatus = parametr->userIdStatus) != USER_CODE_STATUS_AVAILABLE) {
-		count = parametr->userCodeLen;
-		memcpy(&vg->userCode[0x0], &parametr->userCode[0x0], count);
+	_user_code_get(&parametr, userIdentifier);
+	if ((vg->userIdStatus = parametr.userIdStatus) != USER_CODE_STATUS_AVAILABLE) {
+		count = parametr.userCodeLen;
+		memcpy(&vg->userCode[0x0], &parametr.userCode[0x0], count);
 	}
 	else
 		count = 0x0;
@@ -141,19 +256,19 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 	userIdentifier++;
 	if ((paket->properties1 & EXTENDED_USER_CODE_GET_PROPERTIES1_REPORT_MORE_BIT_MASK_V2) != 0x0) {
 		while (userIdentifier <= __g_zuno_user_code_param_count) {
-			parametr++;
-			if ((userIdStatus = parametr->userIdStatus) == USER_CODE_STATUS_AVAILABLE) {
+			_user_code_get(&parametr, userIdentifier);
+			if ((userIdStatus = parametr.userIdStatus) == USER_CODE_STATUS_AVAILABLE) {
 				userIdentifier++;
 				continue ;
 			}
-			count = parametr->userCodeLen;
+			count = parametr.userCodeLen;
 			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t) + count) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
 				break ;
 			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) + count;
 			vg->userIdentifier1 = userIdentifier >> 0x8;
 			vg->userIdentifier2 = userIdentifier;
 			vg->userIdStatus = userIdStatus;
-			memcpy(&vg->userCode[0x0], &parametr->userCode[0x0], count);
+			memcpy(&vg->userCode[0x0], &parametr.userCode[0x0], count);
 			vg->properties1 = count;
 			vg = (ZwExtendedUserCodeReportFrameVg_t *)((size_t)vg + sizeof(ZwExtendedUserCodeReportFrameVg_t) + count);
 			len = len + count;
@@ -162,8 +277,8 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 		}
 	}
 	while (userIdentifier <= __g_zuno_user_code_param_count) {
-		parametr++;
-		if (parametr->userIdStatus != USER_CODE_STATUS_AVAILABLE)
+		_user_code_get(&parametr, userIdentifier);
+		if (parametr.userIdStatus != USER_CODE_STATUS_AVAILABLE)
 			break ;
 		userIdentifier++;
 	}
@@ -177,16 +292,16 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 }
 
 static void _user_code_set_all(void) {
-	ZwUserCodeParametr_t						*b;
-	ZwUserCodeParametr_t						*e;
+	ZwUserCodeParametrFlash_t					user;
+	size_t										userIdentifier;
 
-	b = &__g_zuno_user_code_param[0x0];
-	e = &__g_zuno_user_code_param[__g_zuno_user_code_param_count];
-	while (b < e) {
-		memset(&b->userCode[0x0], 0x0, 0x4);
-		b->userCodeLen = 0x4;
-		b->userIdStatus = USER_CODE_STATUS_AVAILABLE;
-		b++;
+	memset(&user.crc.code.userCode[0x0], 0x0, 0x4);
+	user.crc.code.userCodeLen = 0x4;
+	user.crc.code.userIdStatus = USER_CODE_STATUS_AVAILABLE;
+	userIdentifier = 0x1;
+	while (userIdentifier <= __g_zuno_user_code_param_count) {
+		_user_code_save(&user, userIdentifier, USER_CODE_STATUS_AVAILABLE);
+		userIdentifier++;
 	}
 }
 
@@ -209,15 +324,17 @@ static size_t _user_code_set_one_test(uint8_t *b, size_t len) {
 }
 
 static size_t _user_code_set_one_duplicate(uint8_t *userCode, size_t len) {
-	ZwUserCodeParametr_t						*b;
-	ZwUserCodeParametr_t						*e;
-
-	if (__g_zuno_user_code_param_master.masterCodeLen == len && memcmp(&__g_zuno_user_code_param_master.masterCode[0x0], userCode, len) == 0x0)
+	uint16_t									*b;
+	uint16_t									*e;
+	uint16_t									crc16;
+	
+	crc16 = CrcClass::crc16_ccitt_aug(userCode, len);
+	if (crc16 == __g_zuno_user_code_param_master_crc16)
 		return (false);
-	b = &__g_zuno_user_code_param[0x0];
-	e = &__g_zuno_user_code_param[__g_zuno_user_code_param_count];
+	b = &__g_zuno_user_code_param_crc16[0x0];
+	e = &__g_zuno_user_code_param_crc16[__g_zuno_user_code_param_count];
 	while (b < e) {
-		if (b->userIdStatus != USER_CODE_STATUS_AVAILABLE && b->userCodeLen == len && memcmp(&b->userCode[0x0], userCode, len) == 0x0)
+		if (b[0x0] == crc16)
 			return (false);
 		b++;
 	}
@@ -225,24 +342,24 @@ static size_t _user_code_set_one_duplicate(uint8_t *userCode, size_t len) {
 }
 
 static int _user_code_set_one(size_t userIdentifier, size_t userIdStatus, uint8_t *b, size_t len) {
-	ZwUserCodeParametr_t						*parametr;
+	ZwUserCodeParametrFlash_t						user;
 
-	parametr = &__g_zuno_user_code_param[userIdentifier - 0x1];
 	if (userIdStatus != USER_CODE_STATUS_AVAILABLE) {
-		if (len < 0x4 || len > sizeof(parametr->userCode))
+		if (len < 0x4 || len > sizeof(user.crc.code.userCode))
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 		if (_user_code_set_one_test(b, len) == false)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 		if (_user_code_set_one_duplicate(b, len) == false)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
-		memcpy(&parametr->userCode[0x0], b, len);
+		memcpy(&user.crc.code.userCode[0x0], b, len);
 	}
 	else {
-		memset(&parametr->userCode[0x0], 0x0, 0x4);
+		memset(&user.crc.code.userCode[0x0], 0x0, 0x4);
 		len = 0x4;
 	}
-	parametr->userIdStatus = userIdStatus;
-	parametr->userCodeLen = len;
+	user.crc.code.userIdStatus = userIdStatus;
+	user.crc.code.userCodeLen = len;
+	_user_code_save(&user, userIdentifier, userIdStatus);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -308,8 +425,7 @@ static int _extended_user_code_set(ZwExtendedUserCodeSetFrameStart_t *paket) {
 
 static int _user_code_checksum_report(void) {
 	ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME		*report;
-	ZwUserCodeParametr_t						*b;
-	ZwUserCodeParametr_t						*e;
+	ZwUserCodeParametr_t						parametr;
 	uint16_t									userIdentifier;
 	uint16_t									tempos;
 	uint8_t										userIdStatus;
@@ -319,21 +435,19 @@ static int _user_code_checksum_report(void) {
 	report = (ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// report->cmd = USER_CODE_CHECKSUM_REPORT_V2; //set in - fillOutgoingPacket
-	b = &__g_zuno_user_code_param[0x0];
-	e = &__g_zuno_user_code_param[__g_zuno_user_code_param_count];
 	i = 0x0;
 	userIdentifier = 0x1;
 	crc16 = 0x1D0F;
-	while (b < e) {
-		if ((userIdStatus = b->userIdStatus) != USER_CODE_STATUS_AVAILABLE) {
+	while (userIdentifier <= __g_zuno_user_code_param_count) {
+		_user_code_get(&parametr, userIdentifier);
+		if ((userIdStatus = parametr.userIdStatus) != USER_CODE_STATUS_AVAILABLE) {
 			tempos = __builtin_bswap16(userIdentifier);
 			crc16 = CrcClass::crc16_ccitt_aug(crc16, (uint8_t *)&tempos, sizeof(tempos));
 			crc16 = CrcClass::crc16_ccitt_aug(crc16, &userIdStatus, sizeof(userIdStatus));
-			crc16 = CrcClass::crc16_ccitt_aug(crc16, &b->userCode[0x0], b->userCodeLen);
+			crc16 = CrcClass::crc16_ccitt_aug(crc16, &parametr.userCode[0x0], parametr.userCodeLen);
 			i++;
 		}
 		userIdentifier++;
-		b++;
 	}
 	if (i == 0x0)
 		crc16 = 0x0;
@@ -350,27 +464,26 @@ static int _user_code_master_report(void) {
 	report = (ZwMasterCodeReportFrame_t *)&CMD_REPLY_CC;
 	// report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// report->cmd = MASTER_CODE_REPORT_V2; //set in - fillOutgoingPacket
-	masterCodeLen = __g_zuno_user_code_param_master.masterCodeLen;
+	masterCodeLen = _master_get(&report->masterCode[0x0]);
 	report->properties1 = masterCodeLen;
-	memcpy(&report->masterCode[0x0], &__g_zuno_user_code_param_master.masterCode[0x0], masterCodeLen);
 	CMD_REPLY_LEN = sizeof(ZwMasterCodeReportFrame_t) + masterCodeLen;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _user_code_master_set(ZwMasterCodeSetFrame_t *paket) {
 	size_t							masterCodeLen;
+	const ZwUserCodeMaster_t		*master_parametr;
 
 	masterCodeLen = paket->properties1 & MASTER_CODE_SET_PROPERTIES1_MASTER_CODE_LENGTH_MASK_V2;
 	if (masterCodeLen != 0x0) {
-		if (masterCodeLen < 0x4 || masterCodeLen > (sizeof(__g_zuno_user_code_param_master.masterCode)))
+		if (masterCodeLen < 0x4 || masterCodeLen > (sizeof(master_parametr->masterCode)))
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 		if (_user_code_set_one_test(&paket->masterCode[0x0], masterCodeLen) == false)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 		if (_user_code_set_one_duplicate(&paket->masterCode[0x0], masterCodeLen) == false)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	__g_zuno_user_code_param_master.masterCodeLen = masterCodeLen;
-	memcpy(&__g_zuno_user_code_param_master.masterCode[0x0], &paket->masterCode[0x0], masterCodeLen);
+	_master_save(&paket->masterCode[0x0], masterCodeLen);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -419,15 +532,22 @@ int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd) {
 }
 
 uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len) {
-	ZwUserCodeParametr_t						*parametr_b;
-	ZwUserCodeParametr_t						*parametr_e;
+	uint16_t										*b;
+	uint16_t										*e;
+	uint16_t										crc16;
+	const ZwUserCodeParametr_t						*user_array;
 
-	parametr_b = &__g_zuno_user_code_param[0x0];
-	parametr_e = &__g_zuno_user_code_param[__g_zuno_user_code_param_count];
-	while (parametr_b < parametr_e) {
-		if (parametr_b->userIdStatus == USER_CODE_STATUS_ENABLED_GRANT_ACCESS && parametr_b->userCodeLen == len && memcmp(code, &parametr_b->userCode[0x0], len) == 0x0)
+	if (len < 0x4 || len > sizeof(user_array->userCode))
+		return (false);
+	if (_user_code_set_one_test(code, len) == false)
+		return (false);
+	crc16 = CrcClass::crc16_ccitt_aug(code, len);
+	b = &__g_zuno_user_code_param_crc16[0x0];
+	e = &__g_zuno_user_code_param_crc16[__g_zuno_user_code_param_count];
+	while (b < e) {
+		if (b[0x0] == crc16)
 			return (true);
-		parametr_b++;
+		b++;
 	}
 	return (false);
 }

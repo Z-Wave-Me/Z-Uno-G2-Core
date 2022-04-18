@@ -76,7 +76,7 @@ void zuno_CCCentralSceneTimer(void);
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 static void _exe(void) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
@@ -117,7 +117,7 @@ static void _exe(void) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 	_exe();
 	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)

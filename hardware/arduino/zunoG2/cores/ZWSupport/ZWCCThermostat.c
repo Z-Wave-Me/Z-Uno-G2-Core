@@ -81,20 +81,14 @@ static int _set_mode(size_t channel, const ZwThermostatModeSetFrame_t *cmd) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _report_mode(uint8_t channel, bool reply) {
-	ZwThermostatModeReportFrame_t			*lp;
+static int _report_mode(uint8_t channel, ZUNOCommandPacket_t *packet) {
+	ZwThermostatModeReportFrame_t			*report;
 
-	if(reply){
-		lp = (ZwThermostatModeReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(lp->v2);
-	} else {
-		lp = (ZwThermostatModeReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(lp->v2);
-	}
-	
-	lp->v2.cmdClass = COMMAND_CLASS_THERMOSTAT_MODE;
-	lp->v2.cmd = THERMOSTAT_MODE_REPORT;
-	lp->v2.level = zuno_universalGetter1P(channel) & THERMOSTAT_MASK_4_BIT;//Mode (4 bits)
+	report = (ZwThermostatModeReportFrame_t *)&packet->cmd[0x0];
+	report->v2.cmdClass = COMMAND_CLASS_THERMOSTAT_MODE;
+	report->v2.cmd = THERMOSTAT_MODE_REPORT;
+	report->v2.level = zuno_universalGetter1P(channel) & THERMOSTAT_MASK_4_BIT;//Mode (4 bits)
+	packet->len = sizeof(report->v2);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -107,7 +101,7 @@ int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			break ;
 		case THERMOSTAT_MODE_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = _report_mode(channel, true);
+			rs = _report_mode(channel, &g_outgoing_main_packet);
 			break ;
 		case THERMOSTAT_MODE_SUPPORTED_GET:
 			rs = _supported_report_mode(channel);
@@ -160,46 +154,37 @@ static uint16_t _limit_setpoint(uint8_t b_test, uint16_t value) {
 	return (value);
 }
 
-static int  _setpoint_get(size_t channel, const ZwThermostatSetpointGetFrame_t *cmd) {
-	ZwThermostatSetpointReportFrame_t			*lp;
+static int  _setpoint_get(size_t channel, const ZwThermostatSetpointGetFrame_t *cmd, ZUNOCommandPacket_t *packet) {
+	ZwThermostatSetpointReportFrame_t			*report;
 	size_t										componentId;
 	uint16_t									out;
 	size_t										count;
 	
-	if (cmd != NULL) {
+	if (cmd != NULL)
 		componentId = cmd->level;
-		lp = (ZwThermostatSetpointReportFrame_t *)&CMD_REPLY_CC;
-	} else {
+	else
 		componentId = zuno_universalGetter1P(channel);
-		lp = (ZwThermostatSetpointReportFrame_t *)&CMD_REPORT_CC;
-		
-	}
+	report = (ZwThermostatSetpointReportFrame_t *)&packet->cmd[0x0];
 	componentId = componentId & THERMOSTAT_MASK_4_BIT;//Setpoint Type (4 bits)
-	lp->cmdClass = COMMAND_CLASS_THERMOSTAT_SETPOINT;
-	lp->cmd = THERMOSTAT_SETPOINT_REPORT;
+	report->cmdClass = COMMAND_CLASS_THERMOSTAT_SETPOINT;
+	report->cmd = THERMOSTAT_SETPOINT_REPORT;
 	if (_bitTestComponentId(channel, componentId) == true) {
-		lp->level = componentId;
-		lp->level2 = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
+		report->level = componentId;
+		report->level2 = THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_SETPOINT_SCALE(channel), THERMOSTAT_SETPOINT_PRECISION);
 		out = zuno_universalGetter2P(channel, componentId);
 		out = _limit_setpoint(ZUNO_CFG_CHANNEL(channel).params[0], out);
-		lp->value[0x0] = (uint8_t)(out >> (sizeof(out) * 8 / 2));
-		lp->value[0x1] = (uint8_t)(out & 0xFF);
+		report->value[0x0] = (uint8_t)(out >> (sizeof(out) * 8 / 2));
+		report->value[0x1] = (uint8_t)(out & 0xFF);
 		count = THERMOSTAT_SETPOINT_SIZE;
 	}
 	else {
-		lp->level = 0x0;
-		lp->level2 = 0x1;//THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_CELSIUS, THERMOSTAT_SETPOINT_PRECISION);
-		lp->value[0x0] = 0x0;
+		report->level = 0x0;
+		report->level2 = 0x1;//THERMOSTAT_SETPOINT_PARAMETR(THERMOSTAT_SETPOINT_SIZE, THERMOSTAT_CELSIUS, THERMOSTAT_SETPOINT_PRECISION);
+		report->value[0x0] = 0x0;
 		count = 0x1;
 	}
-	if(cmd == NULL){
-		CMD_REPORT_LEN = sizeof(ZwThermostatSetpointReportFrame_t) + count;
-		zunoSendZWPackage(&g_outgoing_report_packet);
-	} else {
-		CMD_REPLY_LEN = sizeof(ZwThermostatSetpointReportFrame_t) + count;
-		zunoSendZWPackage(&g_outgoing_main_packet);
-	}
-	return (ZUNO_COMMAND_PROCESSED);
+	packet->len = sizeof(report[0x0]) + count;
+	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _set_setpoint(uint8_t channel, ZUNOCommandPacket_t *cmd) {
@@ -266,7 +251,7 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 			break ;
 		case THERMOSTAT_SETPOINT_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = _setpoint_get(channel, (const ZwThermostatSetpointGetFrame_t *)cmd->cmd);
+			rs = _setpoint_get(channel, (const ZwThermostatSetpointGetFrame_t *)cmd->cmd, &g_outgoing_main_packet);
 			break ;
 		case THERMOSTAT_SETPOINT_SUPPORTED_GET:
 			rs = _supported_report_setpoint(channel);
@@ -281,13 +266,16 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) 
 	return (rs);
 }
 
-int zuno_CCThermostatReport(byte channel) {
+#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet) {
+	int				rs;
+
 	#ifdef WITH_CC_THERMOSTAT_MODE
-	_report_mode(channel, false);
+	rs = _report_mode(channel, packet);
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_SETPOINT
-	 _setpoint_get(channel, NULL);
+	rs = _setpoint_get(channel, NULL, packet);
 	#endif
-	return (ZUNO_COMMAND_PROCESSED);
-	(void)channel;
+	return (rs);
 }
+#endif

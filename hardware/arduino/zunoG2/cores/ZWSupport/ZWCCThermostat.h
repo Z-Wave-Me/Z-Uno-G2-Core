@@ -532,6 +532,6 @@ typedef struct							ZwThermostatSetpointCapabilitiesReportFrame_s
 }										ZwThermostatSetpointCapabilitiesReportFrame_t;
 
 int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
-int zuno_CCThermostatReport(byte channel);
+int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet);
 int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
 #endif // ZWCC_SWITCH_THERMOSTAT_H

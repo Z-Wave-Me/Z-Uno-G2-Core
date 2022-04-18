@@ -2,7 +2,7 @@
 #include "ZWSupport.h"
 #include "Arduino.h"
 
-int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {//v6
+int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket) {//v6
 	ZwMeterReportFrame_t				*report;
 	uint32_t							params;
 	uint32_t							channel_size;
@@ -13,7 +13,6 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {//v6
 	size_t								scale;
 	size_t								properties1;
 	size_t								type;
-	uint8_t								*paket_len;
 
 	params = ZUNO_CFG_CHANNEL(channel).params[0];
 	if (paket == 0x0 || (len = paket->len) == sizeof(ZW_METER_GET_FRAME)) {
@@ -29,14 +28,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {//v6
 		if (scale != 0x0 && scale != GET_SCALE(params))
 			return (ZUNO_COMMAND_BLOCKED);
 	}
-	if (paket != 0x0) {
-		paket_len = &CMD_REPLY_LEN;
-		report = (ZwMeterReportFrame_t *)&CMD_REPLY_CC;
-	}
-	else {
-		paket_len = &CMD_REPORT_LEN;
-		report = (ZwMeterReportFrame_t *)&CMD_REPORT_CC;
-	}
+	report = (ZwMeterReportFrame_t *)&report_paket->cmd[0x0];
 	report->v3.byte1.cmdClass = COMMAND_CLASS_METER;
 	report->v3.byte1.cmd = METER_REPORT;
 	report->v3.byte1.properties1 = (ZUNO_CFG_CHANNEL(channel).sub_type & METER_REPORT_PROPERTIES1_METER_TYPE_MASK) | (len == sizeof(ZW_METER_GET_FRAME) ? 0x0  : (METER_REPORT_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | GET_SCALE2(params));
@@ -47,7 +39,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket) {//v6
 	_zme_memcpy(lp, (uint8_t *)&value, channel_size);
 	lp[channel_size] = 0;//deltaTime1
 	lp[channel_size + 1] = 0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
-	paket_len[0x0] = 0x6 + channel_size;
+	report_paket->len = 0x6 + channel_size;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -94,7 +86,7 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	switch (ZW_CMD) {
 		case METER_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCMeterReport(channel, cmd);
+			rs = zuno_CCMeterReport(channel, cmd, &g_outgoing_main_packet);
 			break ;
 		case METER_SUPPORTED_GET://v6
 			CMD_REPLY_DATA(0) = ZUNO_CFG_CHANNEL(channel).sub_type | (METER_SUPPORTED_REPORT_RATE_TYPE_IMPORT_ONLY << METER_SUPPORTED_REPORT_PROPERTIES1_RATE_TYPE_SHIFT);

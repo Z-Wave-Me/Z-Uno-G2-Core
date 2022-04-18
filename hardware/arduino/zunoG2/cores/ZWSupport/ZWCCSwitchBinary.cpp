@@ -4,20 +4,13 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSuperVision.h"
 
-int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
+int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet) {
 	ZwBasicBinaryReportFrame_t				*report;
 	size_t									currentValue;
 	size_t									targetValue;
 	size_t									duration;
 	ZunoTimerBasic_t						*lp;
 
-	if(reply){
-		CMD_REPLY_LEN = sizeof(report->v2);
-		report = (ZwBasicBinaryReportFrame_t *)&CMD_REPLY_CC;
-	} else {
-		CMD_REPORT_LEN = sizeof(report->v2);
-		report = (ZwBasicBinaryReportFrame_t *)&CMD_REPORT_CC;
-	}	
 	currentValue = zuno_universalGetter1P(channel) ? 0xFF : 0x00;
 	zunoEnterCritical();
 	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
@@ -34,12 +27,13 @@ int zuno_CCSwitchBinaryReport(byte channel, bool reply) {
 		duration = 0x0;
 	}
 	zunoExitCritical();
+	report = (ZwBasicBinaryReportFrame_t *)&packet->cmd[0x0];
 	report->v2.cmdClass = COMMAND_CLASS_SWITCH_BINARY;
 	report->v2.cmd = SWITCH_BINARY_REPORT;
 	report->v2.currentValue = currentValue;
 	report->v2.targetValue = targetValue;
 	report->v2.duration = duration;
-	CMD_REPLY_LEN = sizeof(report->v2);
+	packet->len = sizeof(report->v2);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -89,7 +83,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 
 	switch(ZW_CMD) {
 		case SWITCH_BINARY_GET:
-			rs = zuno_CCSwitchBinaryReport(channel, true);
+			rs = zuno_CCSwitchBinaryReport(channel, &g_outgoing_main_packet);
 			_zunoMarkChannelRequested(channel);
 			break;
 		case SWITCH_BINARY_SET:

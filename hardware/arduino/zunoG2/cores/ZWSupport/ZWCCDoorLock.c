@@ -220,7 +220,7 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = _report_configuration(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_GET:
-			rs = zuno_CCDoorLockReport(channel, true);
+			rs = zuno_CCDoorLockReport(channel, &g_outgoing_main_packet);
 			_zunoMarkChannelRequested(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_SET:
@@ -236,7 +236,7 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	return (rs);
 }
 
-int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
+int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZwDoorLockOperationReportFrame_t		*report;
 	size_t									doorLockMode;
 	size_t									ticks;
@@ -246,13 +246,6 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	ZwDoorLockPropertiesSave_t				properties_save;
 	ZunoTimerBasic_t						*lp;
 
-	if(reply){
-		report = (ZwDoorLockOperationReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(report->v4);
-	} else {
-		report = (ZwDoorLockOperationReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(report->v4);
-	}
 	doorLockMode = zuno_universalGetter1P(channel);
 	zunoEnterCritical();
 	DOOR_LOCK_GET_PROPERTIES_SAVE(channel, properties_save);
@@ -273,6 +266,7 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 		lockTimeoutSeconds = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
 	}
 	zunoExitCritical();
+	report = (ZwDoorLockOperationReportFrame_t *)&packet->cmd[0x0];
 	report->v4.cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	report->v4.cmd = DOOR_LOCK_OPERATION_REPORT;
 	report->v4.currentDoorLockMode = doorLockMode;
@@ -282,6 +276,7 @@ int zuno_CCDoorLockReport(uint8_t channel, bool reply) {
 	report->v4.lockTimeoutSeconds = lockTimeoutSeconds;
 	report->v4.targetDoorLockMode = doorLockMode;
 	report->v4.duration = 0x0;
+	packet->len = sizeof(report->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

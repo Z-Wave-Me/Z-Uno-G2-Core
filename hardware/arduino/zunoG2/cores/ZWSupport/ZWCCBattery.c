@@ -47,18 +47,19 @@ static uint8_t batteryReportValue(){
 bool zunoSendBatteryReportHandler() {
 	size_t											batteryLevel;
 	ZwBatteryReportFrame_t							*report;
+	ZUNOCommandPacketReport_t						frame;
 
 	batteryLevel = batteryReportValue();
 	if (batteryLevel == _save_batteryLevel)
 		return (false);
 	_save_batteryLevel = batteryLevel;
-	fillOutgoingReportPacket(0);
-	report = (ZwBatteryReportFrame_t *)&CMD_REPORT_CC;
+	fillOutgoingReportPacketAsync(&frame, 0x0);
+	report = (ZwBatteryReportFrame_t *)&frame.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_BATTERY;
 	report->cmd = BATTERY_REPORT;
 	report->batteryLevel = batteryLevel;
-	CMD_REPORT_LEN = sizeof(report[0x0]);
-	zunoSendZWPackage(&g_outgoing_report_packet);
+	frame.packet.len = sizeof(report[0x0]);
+	zunoSendZWPackage(&frame.packet);
 	return (true);
 }
 

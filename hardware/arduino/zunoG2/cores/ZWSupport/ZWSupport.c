@@ -52,9 +52,7 @@ typedef struct ZUnoChannelDtaHandler_s{
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 ZUNOCommandPacket_t g_outgoing_main_packet;
-ZUNOCommandPacket_t g_outgoing_report_packet;
 uint8_t             g_outgoing_main_data[MAX_ZW_PACKAGE];
-uint8_t             g_outgoing_report_data[MAX_ZW_PACKAGE];
 // Report data
 //-------------------------------------------------------------------------------------------------
 
@@ -258,11 +256,11 @@ void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
 	g_outgoing_main_packet.dst_zw_channel    = cmd->src_zw_channel;
 
 }
-void fillOutgoingReportPacket(uint8_t ch) {
-	fillOutgoingRawPacket(&g_outgoing_report_packet, 
-						  g_outgoing_report_data,
-						 ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
+
+void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) {
+	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
 }
+
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 	
@@ -1237,6 +1235,8 @@ void zunoSendWakeUpNotification(){
 }
 bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
+	ZUNOCommandPacketReport_t									frame;
+
 	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	// Check if device is included to network
 	if(zunoNID() == 0)
@@ -1288,53 +1288,53 @@ void zunoSendReportHandler(uint32_t ticks) {
 		LOGGING_UART.print(" TYPE:");
 		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
-		fillOutgoingReportPacket(ZUNO_CFG_CHANNEL(ch).zw_channel);
+		fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
 		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
 		rs = ZUNO_UNKNOWN_CMD;
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchBinaryReport(ch, false);
+				rs = zuno_CCSwitchBinaryReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchMultilevelReport(ch, false);
+				rs = zuno_CCSwitchMultilevelReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchColorReport(ch, NULL);
+				rs = zuno_CCSwitchColorReport(ch, NULL, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SOUND_SWITCH
 			case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
-				rs = zuno_CCSoundSwitchReport(ch, NULL);
+				rs = zuno_CCSoundSwitchReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_DOORLOCK
 			case ZUNO_DOORLOCK_CHANNEL_NUMBER:
-				rs = zuno_CCDoorLockReport(ch, false);
+				rs = zuno_CCDoorLockReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
 			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCNotificationReport(ch, NULL);
+				rs = zuno_CCNotificationReport(ch, NULL, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL
 			case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSensorMultilevelReport(ch, false);
+				rs = zuno_CCSensorMultilevelReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_METER
 			case ZUNO_METER_CHANNEL_NUMBER:
-				rs = zuno_CCMeterReport(ch, NULL);
+				rs = zuno_CCMeterReport(ch, NULL, &frame.packet);
 				break;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				rs = zuno_CCThermostatReport(ch);
+				rs = zuno_CCThermostatReport(ch, &frame.packet);
 				break;
 			#endif
 			default:
@@ -1344,8 +1344,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 			node_id_t					node;
 
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
-			memcpy(&g_outgoing_report_packet.aux_data[0], &node, sizeof(node));
-			zunoSendZWPackage(&g_outgoing_report_packet);
+			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
+			zunoSendZWPackage(&frame.packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);

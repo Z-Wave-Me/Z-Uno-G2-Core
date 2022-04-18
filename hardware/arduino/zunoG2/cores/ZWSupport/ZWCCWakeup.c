@@ -7,7 +7,6 @@ extern uint8_t     g_outgoing_data[];
 
 static uint8_t    g_wup_sended_notify = 0;
 static uint8_t    g_wup_inclusion = 0;
-extern uint8_t g_outgoing_report_data[];
 
 typedef struct							ZunoWakeUpSave_s
 {
@@ -34,6 +33,7 @@ static void __zunoSetupWUPTimeout() {
 void zuno_sendWUP_NotificationReport() {
 	ZunoWakeUpSave_t				save;
 	size_t						wake_nodeid;
+	ZUNOCommandPacketReport_t	frame;
 
 	if(zunoNID() == 0)
 		return;
@@ -48,17 +48,16 @@ void zuno_sendWUP_NotificationReport() {
 	wake_nodeid = save.nodeId;
 	if((wake_nodeid < 0x1) || (wake_nodeid > MAX_NODEID))
 		wake_nodeid = 0x1;
-	fillOutgoingRawPacket(&g_outgoing_report_packet, g_outgoing_report_data, 0, 0, wake_nodeid);
-	g_outgoing_report_packet.src_zw_channel  = 0; 
+	fillOutgoingRawPacket(&frame.packet, &frame.data[0x0], 0x0, 0x0, wake_nodeid);
 	// !!! DBG
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print("SENDING WUP NOTIFICATION! NodeID:");
 	LOGGING_UART.println(wake_nodeid);
 	#endif
-	CMD_REPORT_CC = COMMAND_CLASS_WAKE_UP;
-	CMD_REPORT_CMD = WAKE_UP_NOTIFICATION;
-	CMD_REPORT_LEN = 2;
-	zunoSendZWPackage(&g_outgoing_report_packet);
+	frame.packet.cmd[0x0] = COMMAND_CLASS_WAKE_UP;
+	frame.packet.cmd[0x1] = WAKE_UP_NOTIFICATION;
+	frame.packet.len = 2;
+	zunoSendZWPackage(&frame.packet);
 	_zunoSleepOnWUPStart();
 }
 

@@ -146,6 +146,12 @@ void _zunoMarkChannelRequested(uint8_t ch);
 void _zunoMarkChannelUpdated(uint8_t ch);
 void _zunoMarkSystemClassRequested(uint8_t systembit);
 
+typedef struct				ZUNOCommandPacketReport_s
+{
+	ZUNOCommandPacket_t		packet;
+	uint8_t					data[MAX_ZW_PACKAGE];
+}							ZUNOCommandPacketReport_t;
+
 #define CMD_REPLY_LEN g_outgoing_main_packet.len 
 #define CMD_REPLY_CMD g_outgoing_main_packet.cmd[1]
 #define CMD_REPLY_DATA(N) g_outgoing_main_packet.cmd[N+2]

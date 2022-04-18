@@ -232,7 +232,8 @@ const char *zunoAssociationGroupName(uint8_t groupIndex);
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
-void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close);
+void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close, uint16_t seconds);
+inline void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {return (zunoSendToGroupDoorlockControlTiming(groupIndex, open_close, 0x0));};
 
 /* Misc */
 void WDOG_Feed();

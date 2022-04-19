@@ -631,16 +631,12 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 	return (result);
 }
 
-void zunoIndicatorInit() {
-	static uint8_t											init = false;
+void __g_zuno_indicator_init() {
 	const ZunoIndicatorParameter_t							*parameter_array_b;
 	const ZunoIndicatorParameter_t							*parameter_array_e;
 	size_t													indicatorId;
 	size_t													tempos;
 
-	if (init == true)
-		return ;
-	init = true;
 	parameter_array_b = zunoIndicatorGetParameterArrayUser();
 	parameter_array_e = zunoIndicatorGetParameterArrayUserEnd();
 	tempos = 0x0;
@@ -658,7 +654,6 @@ void zunoIndicatorInit() {
 int zuno_CCIndicatorHandler(ZUNOCommandPacket_t *cmd) {
 	int				rs;
 
-	zunoIndicatorInit();
 	switch(ZW_CMD) {
 		case INDICATOR_SET_V4:
 			rs = _indicator_set((const ZwIndicatorSetFrame_t *)&cmd->cmd[0x0], cmd->len);
@@ -691,7 +686,6 @@ typedef struct								ZwIndicatorSetV4FrameToggling_s
 void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_t on_off_cycles, uint8_t on_time) {
 	ZwIndicatorSetV4FrameToggling_t			frame;
 
-	zunoIndicatorInit();
 	frame.properties1 = (sizeof(frame.variantgroup) / sizeof(frame.variantgroup[0x0]));
 	frame.variantgroup[0x0].indicatorId = indicatorId;
 	frame.variantgroup[0x0].propertyId = INDICATOR_PROP_TOGGLING_ON_OFF_PERIOD;

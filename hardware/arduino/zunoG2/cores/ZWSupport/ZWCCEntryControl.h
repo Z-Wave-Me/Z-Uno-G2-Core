@@ -196,28 +196,35 @@ typedef struct										ZwEntryControlKeySupportedReportFrame_s
 #define ZUNO_SETUP_ENTRY_CONTROL_DATA(DATA_MASK)	\
 										extern const volatile uint32_t __g_zuno_entry_control_data_type_mask = (DATA_MASK & ENTRY_CONTROL_NOTIFICATION_DATA_MASK);\
 
-#define ZUNO_SETUP_ENTRY_CONTROL_KEYS(...)	\
-									uint8_t zuno_CCEntryControlAsiiMask(uint8_t *mask) { \
-										static const char		asii[] = {__VA_ARGS__}; \
-										size_t					litter; \
-										size_t					i; \
-										size_t					len; \
-										const char				*b; \
-										const char				*e; \
-																	 \
-										memset(mask, 0x0, 0x10); \
-										b = &asii[0x0]; \
-										e = &asii[sizeof(asii)]; \
-										len = 0x0; \
-										while (b < e) { \
-											if ((litter = b++[0x0]) > 0x7F) \
-												continue ; \
-											i = litter / 0x8; \
+#define ZUNO_SETUP_ENTRY_CONTROL_KEYS_COMMON(...)	\
+								uint8_t zuno_CCEntryControlAsiiMask(uint8_t *mask){\
+									size_t					tempos; \
+									size_t					i; \
+									size_t					len; \
+									len = 0x0; \
+									__VA_ARGS__ ;\
+									return (len + 0x1); \
+								} \
+
+#define ZUNO_SETUP_ENTRY_CONTROL_KEYS_SET(KEY)		\
+									if (KEY <= 0x7F) { \
+									tempos = KEY; \
+									i = tempos / 0x8; \
+									if (i > len) \
+										len = i; \
+									mask[i] = mask[i] | (0x1 << (tempos % 0x8)); \
+									} \
+
+#define ZUNO_SETUP_ENTRY_CONTROL_KEYS_INTERVAL(START, END) \
+									if (START <= 0x7F && END <= 0x7F && START <= END) { \
+										tempos = START; \
+										while (tempos <= END) { \
+											i = tempos / 0x8; \
 											if (i > len) \
 												len = i; \
-											mask[i] = mask[i] | (0x1 << (litter % 0x8)); \
+											mask[i] = mask[i] | (0x1 << (tempos % 0x8)); \
+											tempos++; \
 										} \
-										return (len + 0x1); \
 									} \
 
 bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint8_t *b, size_t len);

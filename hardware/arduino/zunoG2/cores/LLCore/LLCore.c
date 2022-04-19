@@ -473,6 +473,8 @@ static void LLInit(void *data) {
 	void __g_zuno_user_code_init(void); 
 	__g_zuno_user_code_init();
 	#endif
+	void __g_zuno_indicator_init(void);
+	__g_zuno_indicator_init();
 	g_sketch_inited = false;
 }
 

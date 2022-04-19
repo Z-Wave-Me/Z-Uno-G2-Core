@@ -6,7 +6,7 @@
 #define ZUNO_REPORTTIME_DIVIDER  0x07
 #endif
 #ifndef ZUNO_MAX_REPORTCOUNT_PER_MOMENT 
-#define ZUNO_MAX_REPORTCOUNT_PER_MOMENT 1
+#define ZUNO_MAX_REPORTCOUNT_PER_MOMENT 3
 #endif
 #define UNKNOWN_CHANNEL       0xFF 
 #define LOWEST_LONG_RANGE_NODE_ID   (0x0100)
@@ -126,7 +126,12 @@ typedef void zuno_configuration_changed(uint8_t, uint32_t);
 
 // Common CC subroutines and data
 extern ZUNOCommandPacket_t g_outgoing_main_packet;
-extern ZUNOCommandPacket_t g_outgoing_report_packet;
+
+typedef struct				ZUNOCommandPacketReport_s
+{
+	ZUNOCommandPacket_t		packet;
+	uint8_t					data[MAX_ZW_PACKAGE];
+}							ZUNOCommandPacketReport_t;
 
 void zuno_universalSetter1P(byte zuno_ch, int32_t value);
 void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add);
@@ -137,7 +142,7 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 byte getMaxChannelTypes();
 void fillOutgoingPacket(ZUNOCommandPacket_t * cmd);
-void fillOutgoingReportPacket(uint8_t ch);
+void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void ZWCCSetup();
 
@@ -150,11 +155,6 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define CMD_REPLY_CMD g_outgoing_main_packet.cmd[1]
 #define CMD_REPLY_DATA(N) g_outgoing_main_packet.cmd[N+2]
 #define CMD_REPLY_CC  g_outgoing_main_packet.cmd[0]
-
-#define CMD_REPORT_LEN g_outgoing_report_packet.len 
-#define CMD_REPORT_CMD g_outgoing_report_packet.cmd[1]
-#define CMD_REPORT_DATA(N) g_outgoing_report_packet.cmd[N+2]
-#define CMD_REPORT_CC  g_outgoing_report_packet.cmd[0]
 
 #define ZW_CMD_CLASS          (cmd->cmd[0])
 #define ZW_CMD                (cmd->cmd[1])

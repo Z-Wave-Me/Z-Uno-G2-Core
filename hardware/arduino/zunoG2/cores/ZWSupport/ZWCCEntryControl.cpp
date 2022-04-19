@@ -116,6 +116,7 @@ int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd) {
 bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint8_t *b, size_t len) {
 	ZwEntryControlNotificationFrame_t		*report;
 	static uint8_t							sequenceNumber = 0x0;
+	ZUNOCommandPacketReport_t				frame;
 
 	if ((__g_zuno_entry_control_data_type_mask & (0x1 << data_type)) == 0x0)
 		return (false);
@@ -135,8 +136,8 @@ bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint
 				return (false);
 			break ;
 	}
-	fillOutgoingReportPacket(0x0);
-	report = (ZwEntryControlNotificationFrame_t *)&CMD_REPORT_CC;
+	fillOutgoingReportPacketAsync(&frame, 0x0);
+	report = (ZwEntryControlNotificationFrame_t *)&frame.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; 
 	report->cmd = ENTRY_CONTROL_NOTIFICATION;
 	report->sequenceNumber = sequenceNumber++;
@@ -144,7 +145,7 @@ bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint
 	report->eventType = event_type;
 	report->eventDataLength = len;
 	memcpy(&report->eventData[0x0], b, len);
-	CMD_REPORT_LEN = sizeof(report[0x0]) + len;
-	zunoSendZWPackage(&g_outgoing_report_packet);
+	frame.packet.len = sizeof(report[0x0]) + len;
+	zunoSendZWPackage(&frame.packet);
 	return (true);
 }

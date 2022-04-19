@@ -420,75 +420,109 @@ void zunoAddAssociation(byte type, uint32_t params) {
 	(void)params;
 }
 
-static void _send_group(uint8_t groupIndex)
-{
-	g_outgoing_report_packet.dst_node = groupIndex + 1;
-	g_outgoing_report_packet.src_zw_channel = 0;
-	zunoSendZWPackage(&g_outgoing_report_packet);
+static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {
+	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], 0x0, ZUNO_PACKETFLAGS_GROUP, groupIndex + 1);
 }
 
+static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
+	frame->packet.len = len;
+	zunoSendZWPackage(&frame->packet);
+}
 
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {
 	ZwBasicSetFrame_t								*lp;
+	ZUNOCommandPacketReport_t						frame;
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
-	fillOutgoingReportPacket(0);
-	lp = (ZwBasicSetFrame_t *)&CMD_REPORT_CC;
+	_init_group(&frame, groupIndex);
+	lp = (ZwBasicSetFrame_t *)&frame.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_BASIC;
 	lp->cmd = BASIC_SET;
 	lp->value = value;
-	CMD_REPORT_LEN = sizeof(ZwBasicSetFrame_t);
-	_send_group(groupIndex);
+	_send_group(&frame, sizeof(lp[0x0]));
 }
 
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop) {
 	ZwSwitchMultilevelStartLevelChangeFrame_t						*lp;
+	ZUNOCommandPacketReport_t										frame;
+	size_t															len;
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
-	fillOutgoingReportPacket(0);
-	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&CMD_REPORT_CC;
+	_init_group(&frame, groupIndex);
+	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&frame.packet.cmd[0x0];
 	lp->v1.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	if(start_stop != false) {
 		lp->v1.cmd = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
 		lp->v1.properties1 = (direction == true) ? 0x60 : 0x20;
 		lp->v1.startLevel = 0;
-		CMD_REPORT_LEN = sizeof(lp->v1);
+		len = sizeof(lp->v1);
 	}
 	else {
 		lp->v1.cmd = SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE;
-		CMD_REPORT_LEN = sizeof(ZwSwitchMultilevelStopLevelChangeFrame_t);
+		len = sizeof(ZwSwitchMultilevelStopLevelChangeFrame_t);
 	}
-	_send_group(groupIndex);
+	_send_group(&frame, len);
 }
 
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene) {
 	ZwSceneActivationSetFrame_t								*lp;
+	ZUNOCommandPacketReport_t								frame;
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
-	fillOutgoingReportPacket(0);
-	lp = (ZwSceneActivationSetFrame_t *)&CMD_REPORT_CC;
+	_init_group(&frame, groupIndex);
+	lp = (ZwSceneActivationSetFrame_t *)&frame.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_SCENE_ACTIVATION;
 	lp->cmd = SCENE_ACTIVATION_SET;
 	lp->sceneId = scene;
 	//lp->dimmingDuration = 0xFF;//Specify dimming duration configured by the Scene Actuator Configuration Set and Scene Controller Configuration Set Command depending on device used.
 	//CMD_REPORT_LEN = sizeof(ZwSceneActivationSetFrame_t);
-	CMD_REPORT_LEN = 3;
-	_send_group(groupIndex);
+	_send_group(&frame, 0x3);
 }
 
-void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {
+void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close, uint16_t seconds) {
 	ZwDoorLockOperationSet_t								*lp;
+	ZwDoorLockConfigurationSetFrame_t						*time;
+	ZUNOCommandPacketReport_t								frame;
+	size_t													lockTimeoutMinutes;
+	size_t													lockTimeoutSeconds;
+	size_t													operationType;
+	size_t													doorLockMode;
 
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
-	fillOutgoingReportPacket(0);
-	lp = (ZwDoorLockOperationSet_t *)&CMD_REPORT_CC;
-	lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
+	_init_group(&frame, groupIndex);
+	time = (ZwDoorLockConfigurationSetFrame_t *)&frame.packet.cmd[0x0];
+	time->v3.cmdClass = COMMAND_CLASS_DOOR_LOCK;
+	time->v3.cmd = DOOR_LOCK_CONFIGURATION_SET;
+	if (seconds == 0x0) {
+		operationType = DOOR_LOCK_CONFIGURATION_REPORT_CONSTANT_OPERATION_V4;
+		lockTimeoutMinutes = 0xFE;
+		lockTimeoutSeconds = 0xFE;
+		if (open_close != false)
+			doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_V4;
+		else
+			doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_SECURED_V4;
+	}
+	else {
+		if (seconds > 15239)//15239 max seconds
+			seconds = 15239;
+		operationType = DOOR_LOCK_CONFIGURATION_REPORT_TIMED_OPERATION_V4;
+		lockTimeoutMinutes = seconds / 60;
+		lockTimeoutSeconds = seconds % 60;
+		doorLockMode = DOOR_LOCK_OPERATION_REPORT_DOOR_UNSECURED_WITH_TIMEOUT_V4;
+	}
+	time->v3.operationType = operationType;
+	time->v3.properties1 = 0x0;
+	time->v3.lockTimeoutMinutes = lockTimeoutMinutes;
+	time->v3.lockTimeoutSeconds = lockTimeoutSeconds;
+	_send_group(&frame, sizeof(time->v3));
+	lp = (ZwDoorLockOperationSet_t *)&frame.packet.cmd[0x0];
+	// lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	lp->cmd = DOOR_LOCK_OPERATION_SET;
-	lp->doorLockMode = (open_close != false) ? 0x00 : 0xFF;
-	CMD_REPORT_LEN = sizeof(ZwDoorLockOperationSet_t);// FIXME
-	_send_group(groupIndex);
+	lp->doorLockMode = doorLockMode;
+	_send_group(&frame, sizeof(lp[0x0]));
+	(void)seconds;
 }

@@ -244,7 +244,7 @@ int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 	switch (ZW_CMD) {
 		case SOUND_SWITCH_TONE_PLAY_GET_V2:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCSoundSwitchReport(channel, cmd);
+			rs = zuno_CCSoundSwitchReport(channel, &g_outgoing_main_packet);
 			break ;
 		case SOUND_SWITCH_TONE_PLAY_SET_V2:
 			rs = _soundSwitchTonePlaySet((const ZwSoundSwitchTonePlayFrame_t *)&cmd->cmd[0x0], channel, cmd->len);
@@ -279,27 +279,18 @@ void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t pla
 	_soundSwitchTonePlaySetAdd(channel, toneIdentifier, playCommandToneVolume);
 }
 
-int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME							*report;
 	const ZunoSoundSwitchParameterArray_t								*parameter_array;
 
-	if (cmd != NULL) {
-		report = (ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(report[0x0]);
-	} else {
-		report = (ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(report[0x0]);
-	}
+	report = (ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME *)&packet->cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_SOUND_SWITCH;
 	report->cmd = SOUND_SWITCH_TONE_PLAY_REPORT_V2;
 	parameter_array = _soundSwitchGetParameterArray(channel);
 	report->toneIdentifier = parameter_array->play->toneIdentifier;
 	report->playCommandToneVolume = parameter_array->play->playCommandToneVolume;
-	if(cmd != NULL)
-		zunoSendZWPackage(&g_outgoing_main_packet);
-	else
-		zunoSendZWPackage(&g_outgoing_report_packet);
-	return (ZUNO_COMMAND_PROCESSED);
+	packet->len = sizeof(report[0x0]);
+	return (ZUNO_COMMAND_ANSWERED);
 }
 
 void zuno_CCSoundSwitchTimer(void) {

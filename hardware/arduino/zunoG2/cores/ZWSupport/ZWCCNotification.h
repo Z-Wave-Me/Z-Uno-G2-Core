@@ -279,7 +279,7 @@ inline void zuno_CCNotificationInitData() {
 	zunoEEPROMWrite(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);
 };
 
-int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd);
+int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacket_t *packet);
 int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t * cmd);
 
 #endif // NOTIFICATION_CC_H

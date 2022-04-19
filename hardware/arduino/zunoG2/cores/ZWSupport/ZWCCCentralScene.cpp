@@ -119,21 +119,40 @@ void zuno_CCCentralSceneTimer(void) {
 	timer_b = &parametr_array->timer[0x0];
 	timer_e = &parametr_array->timer[parametr_array->count];
 	ms = (rtcc_micros() / 1000);
-	zunoEnterCritical();
 	while (timer_b < timer_e) {
 		ms_old = timer_b->ms;
 		if (ms_old != 0 && ms_old <= ms)
 			zuno_CCCentralSceneReport(timer_b - &parametr_array->timer[0x0] + 0x1, CENTRAL_SCENE_KEY_HELD_DOWN);
 		timer_b++;
 	}
+}
+
+static void _CCCentralSceneReport(uint8_t sceneNumber, uint8_t event, const ZunoCentralSceneParameterArray_t *parametr_array, uint64_t ms) {
+	static uint8_t												sequenceNumber = 0x0;
+	ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME						*report;
+	size_t														properties1;
+	ZUNOCommandPacketReport_t									frame;
+
+	zunoEnterCritical();
+	_lock(&parametr_array->timer[sceneNumber- 0x1], ms);
 	zunoExitCritical();
+	fillOutgoingReportPacketAsync(&frame, 0x0);
+	report = (ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME *)&frame.packet.cmd[0x0];
+	report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE;
+	report->cmd = CENTRAL_SCENE_NOTIFICATION;
+	report->sequenceNumber = sequenceNumber++;
+	if (_slow_mode == true)
+		properties1 = CENTRAL_SCENE_CONFIGURATION_SET_PROPERTIES1_SLOW_REFRESH_BIT_MASK_V3;
+	else
+		properties1 = 0x0;
+	report->properties1 = properties1 | event;
+	report->sceneNumber = sceneNumber;
+	frame.packet.len = sizeof(report[0x0]);
+	zunoSendZWPackage(&frame.packet);
 }
 
 void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event) {
-	static uint8_t												sequenceNumber = 0x0;
 	const ZunoCentralSceneParameterArray_t						*parametr_array;
-	ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME						*report;
-	size_t														properties1;
 	uint64_t													ms;
 
 	parametr_array = zunoCentralSceneGetParameterArrayUser();
@@ -148,9 +167,7 @@ void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event) {
 		case CENTRAL_SCENE_KEY_PRESSED_4:
 		case CENTRAL_SCENE_KEY_PRESSED_5:
 		case CENTRAL_SCENE_KEY_RELEASED:
-			zunoEnterCritical();
-			_lock(&parametr_array->timer[sceneNumber- 0x1], 0x0);
-			zunoExitCritical();
+			_CCCentralSceneReport(sceneNumber, event, parametr_array, 0x0);
 			break ;
 		case CENTRAL_SCENE_KEY_HELD_DOWN:
 			if (_slow_mode == true)
@@ -158,25 +175,10 @@ void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event) {
 			else
 				ms = CENTRAL_SCENE_UPDATE_MS_FAST;
 			ms = ms + (rtcc_micros() / 1000);
-			zunoEnterCritical();
-			_lock(&parametr_array->timer[sceneNumber- 0x1], ms);
-			zunoExitCritical();
+			_CCCentralSceneReport(sceneNumber, event, parametr_array, ms);
 			break ;
 		default:
-			return ;
 			break ;
 	}
-	fillOutgoingReportPacket(0x0);
-	report = (ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME *)&CMD_REPORT_CC;
-	report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE;
-	report->cmd = CENTRAL_SCENE_NOTIFICATION;
-	report->sequenceNumber = sequenceNumber++;
-	if (_slow_mode == true)
-		properties1 = CENTRAL_SCENE_CONFIGURATION_SET_PROPERTIES1_SLOW_REFRESH_BIT_MASK_V3;
-	else
-		properties1 = 0x0;
-	report->properties1 = properties1 | event;
-	report->sceneNumber = sceneNumber;
-	CMD_REPORT_LEN = sizeof(report[0x0]);
-	zunoSendZWPackage(&g_outgoing_report_packet);
+
 }

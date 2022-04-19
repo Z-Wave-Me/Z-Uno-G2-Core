@@ -43,7 +43,7 @@ static const byte NOTIFICATION_MAPPER[] = {
 // 	return (ZUNO_COMMAND_PROCESSED);
 // }
 
-int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
+int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet){
 	uint32_t							eeprom_mask;
 	size_t								index;
 	size_t								notificationType;
@@ -52,17 +52,13 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 	ZwNotificationGetFrame_t			*cmd_get = NULL;
 
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);// Load report mask from EEPROM
-	
 	if(cmd == NULL){
 		// If it's unsolicited report we have to check if it was turned on by user
 		if((eeprom_mask & (1UL << channel)) == 0)// Unsolicited => doesn't have incoming package
 			return (ZUNO_COMMAND_BLOCKED); // User don't want this report => don't send it
-		report = (ZwNotificationReportFrame_t *)&CMD_REPORT_CC;
-		CMD_REPORT_LEN = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
-	} else {
-		report = (ZwNotificationReportFrame_t *)&CMD_REPLY_CC;
-		CMD_REPLY_LEN = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	}
+	report = (ZwNotificationReportFrame_t *)&packet->cmd[0x0];
+	packet->len = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
 	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
 	if(cmd != NULL) {
@@ -111,11 +107,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd){
 					report->byte1.properties1 = 1;
 					report->byte1.eventParameter1 = (val >> 8) & 0xFF;
 					// Add parameter length to whole packet lenth
-					if(cmd == NULL){
-						CMD_REPORT_LEN++; 
-					} else {
-						CMD_REPLY_LEN++;
-					}
+					packet->len = packet->len + 0x1;
 				}
 				mevent = NOTIFICATION_MAPPER[index + 1];
 			} else {
@@ -201,7 +193,7 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd){
 	switch(ZW_CMD) {
 		case NOTIFICATION_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCNotificationReport(channel, cmd);	
+			rs = zuno_CCNotificationReport(channel, cmd, &g_outgoing_main_packet);
 			break ;
 		case NOTIFICATION_SET:
 			rs = _set(channel, (ZwNotificationSetFrame_t *)cmd->cmd);

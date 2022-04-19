@@ -55,5 +55,5 @@ typedef union								ZwBasicBinaryReportFrame_u {//For more convenient support, 
 }											ZwBasicBinaryReportFrame_t;
 
 int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t * cmd);
-int zuno_CCSwitchBinaryReport(byte channel, bool reply);
+int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet);
 #endif // SWITCHBINARY_CC_H

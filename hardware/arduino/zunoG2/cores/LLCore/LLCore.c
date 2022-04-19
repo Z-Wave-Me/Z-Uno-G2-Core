@@ -469,7 +469,7 @@ static void LLInit(void *data) {
 	_zunoInitSleepingData();
 	_zunoInitDefaultWakeup();
 	#endif
-	#ifdef WITH_CC_ENTRY_CONTROL
+	#ifdef WITH_CC_USER_CODE
 	void __g_zuno_user_code_init(void); 
 	__g_zuno_user_code_init();
 	#endif

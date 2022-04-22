@@ -96,7 +96,7 @@ class SPIClass {
 		ZunoError_t											begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
 		inline void											beginTransaction(SPISettings *spi_setings) {this->beginTransaction(spi_setings->clock, spi_setings->bitOrder, spi_setings->dataMode);};
 		inline void											beginTransaction(void) {this->beginTransaction(4000000, MSBFIRST, SPI_MODE0);};
-		void												beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
+		ZunoError_t											beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode);
 		inline ZunoError_t									transfer(const void *buffer, size_t count) { return(this->_transfer((void *)buffer, count, SPI_FLAGS_CONST));};
 		inline ZunoError_t									transfer(const void *buffer) {return(this->transfer((char *)buffer));};
 		inline ZunoError_t									transfer(const char *buffer) {return(this->_transferStrlen((void *)buffer, SPI_FLAGS_CONST));};

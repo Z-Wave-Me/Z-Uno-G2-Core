@@ -3,7 +3,6 @@
 
 #include "Arduino.h"
 #include "SPI.h"
-#include "ZunoError.h"
 
 #define SPI_FLASH_CLASS_CMD_PAGE_PROGRAM										0x02
 #define SPI_FLASH_CLASS_CMD_READ												0x03
@@ -29,10 +28,6 @@
 	.supports_fast_read = true \
 } \
 
-#define ZUNO_ERROR_SPI_FLASH_CLASS_NOT_MATCH_JEDEC_ID										(ZUNO_ERROR_CONSTRUCTOR_SYSTEM(ZUNO_ERROR_TYPE_SPI_FLASH, 0x0))
-#define ZUNO_ERROR_SPI_FLASH_CLASS_NOT_INITILIZATION										(ZUNO_ERROR_CONSTRUCTOR_SYSTEM(ZUNO_ERROR_TYPE_SPI_FLASH, 0x1))
-#define ZUNO_ERROR_SPI_FLASH_CLASS_INVALID_ARGUMENT											(ZUNO_ERROR_CONSTRUCTOR_SYSTEM(ZUNO_ERROR_TYPE_SPI_FLASH, 0x2))
-
 typedef struct						SpiFlashClassDevice_s
 {
 	uint32_t						total_size;
@@ -54,33 +49,48 @@ typedef struct						SpiFlashClassCmdRead_s
 	uint8_t							dummy;
 }									SpiFlashClassCmdRead_t;
 
+typedef struct						SpiFlashClassCmdJedec_s
+{
+	uint8_t							command;
+	uint8_t							ids[4];
+}									SpiFlashClassCmdJedec_t;
+
 class SpiFlashClass {
 	public:
-		SpiFlashClass(SPIClass *spi, uint8_t ss);
-		inline ZUNO_ERROR_TYPE										begin(const SpiFlashClassDevice_t *device) {return (this->begin(device, 0x0));};
-		ZUNO_ERROR_TYPE												begin(const SpiFlashClassDevice_t *device, uint32_t *JEDEC_ID);
-		ZUNO_ERROR_TYPE												sleep(void);
-		ZUNO_ERROR_TYPE												wakeUp(void);
-		ZUNO_ERROR_TYPE												eraseChip(void);
-		inline ZUNO_ERROR_TYPE										eraseBlock4k(uint32_t addr) {return (this->_eraseBlock(addr, SPI_FLASH_CLASS_CMD_ERASE_BLOCK_4K));};
-		inline ZUNO_ERROR_TYPE										eraseBlock64k(uint32_t addr) {return (this->_eraseBlock(addr, SPI_FLASH_CLASS_CMD_ERASE_BLOCK_64K));};
-		ZUNO_ERROR_TYPE												writeEnable(void);
-		ZUNO_ERROR_TYPE												writeDisable(void);
-		ZUNO_ERROR_TYPE												readStatus(uint32_t *status);
-		ZUNO_ERROR_TYPE												waitBusy(void);
-		ZUNO_ERROR_TYPE												read(uint32_t addr, void *data, size_t len);
-		ZUNO_ERROR_TYPE												writeBuffer(uint32_t addr, const void *data, size_t len);
+		SpiFlashClass(void);
+		SpiFlashClass(SPIClass *spi, uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+		bool														begin(void);
+		bool														begin(uint32_t *JEDEC_ID);
+		bool														begin(const SpiFlashClassDevice_t *device);
+		bool														sleep(void);
+		bool														wakeUp(void);
+		bool														eraseChip(void);
+		inline bool													eraseBlock4k(uint32_t addr) {return (this->_eraseBlock(addr, SPI_FLASH_CLASS_CMD_ERASE_BLOCK_4K));};
+		inline bool													eraseBlock64k(uint32_t addr) {return (this->_eraseBlock(addr, SPI_FLASH_CLASS_CMD_ERASE_BLOCK_64K));};
+		bool														writeEnable(void);
+		bool														writeDisable(void);
+		bool														readStatus(uint32_t *status);
+		bool														read(uint32_t addr, void *data, size_t len);
+		bool														writeBuffer(uint32_t addr, const void *data, size_t len);
+		bool														getJEDECID(uint32_t *JEDEC_ID);
 
 	private:
-		ZUNO_ERROR_TYPE												_eraseBlock(uint32_t addr, size_t command);
-		inline ZUNO_ERROR_TYPE										_writeBuffer_add(const SpiFlashClassCmdRead_t *cmd_addr, size_t cmd_addr_len, const void *data, size_t len);
-		inline ZUNO_ERROR_TYPE										_read_add(const SpiFlashClassCmdRead_t *cmd_read, size_t cmd_read_len, void *data, size_t len);
+		inline bool													waitBusy(void);
+		inline bool													_init(SpiFlashClassCmdJedec_t *cmd_jedec);
+		inline bool													_init_end(const SpiFlashClassDevice_t *device, SpiFlashClassCmdJedec_t *cmd_jedec);
+		bool														_eraseBlock(uint32_t addr, size_t command);
+		inline bool													_writeBuffer_add(const SpiFlashClassCmdRead_t *cmd_addr, size_t cmd_addr_len, const void *data, size_t len);
+		inline bool													_read_add(const SpiFlashClassCmdRead_t *cmd_read, size_t cmd_read_len, void *data, size_t len);
 		inline size_t												_fillAddress(uint8_t *buff, uint32_t addr);
-		inline ZUNO_ERROR_TYPE										_sendCommand(size_t command, void *response, size_t len);
-		inline ZUNO_ERROR_TYPE										_sendCommandAdd(size_t command, void *response, size_t len);
+		inline bool													_sendCommand(size_t command, void *response, size_t len);
+		inline bool													_sendCommandAdd(size_t command, void *response, size_t len);
+		inline bool													_last_status(uint32_t status, bool ret);
 		const SpiFlashClassDevice_t					*_device;
 		SPIClass									*_spi;
 		uint32_t									_clock;
+		uint8_t										_sck;
+		uint8_t										_miso;
+		uint8_t										_mosi;
 		uint8_t										_ss;
 		uint8_t										_addr_byte;
 };

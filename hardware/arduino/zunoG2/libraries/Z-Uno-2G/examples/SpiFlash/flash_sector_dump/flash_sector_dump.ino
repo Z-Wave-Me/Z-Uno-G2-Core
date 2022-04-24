@@ -2,22 +2,22 @@
 
 #define MY_SERIAL							Serial
 
-SpiFlashClass spi_flash(&SPI, SS);
+SpiFlashClass spi_flash = SpiFlashClass();
 
 const SpiFlashClassDevice_t device = SPI_FLASH_CLASS_M25PE40;
 
 void setup(void) {
-	ZUNO_ERROR_TYPE						ret;
 	uint32_t							JEDEC_ID;
 
 	MY_SERIAL.begin(115200);
+	MY_SERIAL.println();
 	MY_SERIAL.println("SPI Flash Sector Dump example");
-	SPI.begin(SCK, MISO, MOSI, UNKNOWN_PIN);
-	if ((ret = spi_flash.begin(&device, &JEDEC_ID)) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot initilzed device - %08lX\n", ret);
+	if (spi_flash.begin(&device) != true) {
+		MY_SERIAL.print("Error: cannot initilzed device\n");
 		while (0xFF)
 			delay(0x10);
 	}
+	spi_flash.getJEDECID(&JEDEC_ID);
 	MY_SERIAL.print("JEDEC ID: 0x");
 	MY_SERIAL.println(JEDEC_ID, HEX);
 	MY_SERIAL.print("Flash size: ");
@@ -25,12 +25,11 @@ void setup(void) {
 }
 
 void dump_sector(uint32_t sector) {
-	ZUNO_ERROR_TYPE							ret;
 	static uint8_t							buf[4096];
 
 	memset(buf, 0xff, sizeof(buf));
-	if ((ret = spi_flash.read(sector*4096, buf, 4096)) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot read device - %08lX\n", ret);
+	if (spi_flash.read(sector*4096, buf, 4096) != true) {
+		MY_SERIAL.print("Error: cannot read device.\n");
 		while (0xFF)
 			delay(0x10);
 	}

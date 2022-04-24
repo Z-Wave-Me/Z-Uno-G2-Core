@@ -1,4 +1,5 @@
 #include "SpiFlash.h"
+#include "Status.h"
 
 #define SPI_FLASH_CLASS_CLOCK_MULTIPLIER										1000000
 
@@ -11,12 +12,6 @@ typedef struct						SpiFlashClassCmd_s
 	uint8_t							buff[];
 }									SpiFlashClassCmd_t;
 
-typedef struct						SpiFlashClassCmdJedec_s
-{
-	uint8_t							command;
-	uint8_t							ids[4];
-}									SpiFlashClassCmdJedec_t;
-
 typedef struct						SpiFlashClassCmdReadStatus_s
 {
 	uint8_t							command;
@@ -24,59 +19,79 @@ typedef struct						SpiFlashClassCmdReadStatus_s
 }									SpiFlashClassCmdReadStatus_t;
 
 /* Constants */
-
+static const SpiFlashClassDevice_t					_device_all[] =
+{
+	SPI_FLASH_CLASS_M25PE40
+};
 
 /* Public Constructors */
-SpiFlashClass::SpiFlashClass(SPIClass *spi, uint8_t ss): _device(0x0), _spi(spi), _clock(4000000), _ss(ss), _addr_byte(0x2) {
+SpiFlashClass::SpiFlashClass(void): _device(0x0), _spi(&SPI), _clock(4000000), _sck(SCK), _miso(MISO), _mosi(MOSI), _ss(SS), _addr_byte(0x2) {
+}
+
+SpiFlashClass::SpiFlashClass(SPIClass *spi, uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss): _device(0x0), _spi(spi), _clock(4000000), _sck(sck), _miso(miso), _mosi(mosi), _ss(ss), _addr_byte(0x2) {
 }
 
 /* Public Methods */
-ZUNO_ERROR_TYPE SpiFlashClass::begin(const SpiFlashClassDevice_t *device, uint32_t *JEDEC_ID) {
+bool SpiFlashClass::getJEDECID(uint32_t *JEDEC_ID) {
+	const SpiFlashClassDevice_t						*device;
+
+	if ((device = this->_device) == 0x0)
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_NOT_INITILIZATION), false));
+	JEDEC_ID[0X0] = (device->manufacturer_id << 16) | (device->memory_type << 8) | device->capacity;
+	return (true);
+}
+
+bool SpiFlashClass::begin(void) {
 	SpiFlashClassCmdJedec_t					cmd_jedec;
-	ZUNO_ERROR_TYPE							ret;
 	size_t									manufacturer_id;
 	size_t									memory_type;
 	size_t									capacity;
-	size_t									offset;
-	uint32_t								refFreq;
-	uint32_t								clock;
-
-	pinMode(this->_ss, OUTPUT_UP);
-	if ((ret = this->wakeUp()) != ZUNO_ERROR_SUCCESS)
-		return (ret);
-	if ((ret = this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_JEDEC_ID, &cmd_jedec, sizeof(cmd_jedec))) != ZUNO_ERROR_SUCCESS)
-		return (ret);
-	// For simplicity with commonly used device, we only check for continuation code at 2nd byte (e.g Fujitsu FRAM devices)
-	if (cmd_jedec.ids[0x1] == 0x7F)
-		offset = 0x2;
-	else
-		offset = 0x1;
+	const SpiFlashClassDevice_t				*b;
+	const SpiFlashClassDevice_t				*e;
+	if (this->_init(&cmd_jedec) != true)
+		return (false);
 	manufacturer_id = cmd_jedec.ids[0x0];
-	memory_type = cmd_jedec.ids[offset + 0x0];
-	capacity = cmd_jedec.ids[offset + 0x1];
-	if (JEDEC_ID != 0x0)
-		JEDEC_ID[0X0] = (manufacturer_id << 16) | (memory_type << 8) | capacity;
-	if (device == 0x0)
-		return (ZUNO_ERROR_SUCCESS);
-	if (manufacturer_id != device->manufacturer_id || memory_type != device->memory_type || capacity != device->capacity)
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_NOT_MATCH_JEDEC_ID);
-	this->_device = device;
-	refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;//CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;
-	clock = device->max_clock_speed_mhz * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
-	if (clock > refFreq)
-		clock = refFreq;
-	this->_clock = clock;
-	if (device->total_size > (64 * 1024))
-		this->_addr_byte = 0x3;
-	return (ZUNO_ERROR_SUCCESS);
+	memory_type = cmd_jedec.ids[0x1];
+	capacity = cmd_jedec.ids[0x2];
+	b = &_device_all[0x0];
+	e = &_device_all[(sizeof(_device_all) / sizeof(_device_all[0x0]))];
+	while (b < e) {
+		if (manufacturer_id == b->manufacturer_id && memory_type == b->memory_type && capacity == b->capacity)
+			return (this->_init_end(b, &cmd_jedec));
+		b++;
+	}
+	return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_DEVICE_NOT_FOUND), false));
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::waitBusy(void) {
+bool SpiFlashClass::begin(uint32_t *JEDEC_ID) {
+	SpiFlashClassCmdJedec_t					cmd_jedec;
+	size_t									manufacturer_id;
+	size_t									memory_type;
+	size_t									capacity;
+
+	if (this->_init(&cmd_jedec) != true)
+		return (false);
+	manufacturer_id = cmd_jedec.ids[0x0];
+	memory_type = cmd_jedec.ids[0x1];
+	capacity = cmd_jedec.ids[0x2];
+	JEDEC_ID[0X0] = (manufacturer_id << 16) | (memory_type << 8) | capacity;
+	return (true);
+}
+
+bool SpiFlashClass::begin(const SpiFlashClassDevice_t *device) {
+	SpiFlashClassCmdJedec_t					cmd_jedec;
+
+	if (this->_init(&cmd_jedec) != true)
+		return (false);
+	return (this->_init_end(device, &cmd_jedec));
+}
+
+bool SpiFlashClass::waitBusy(void) {
 	uint32_t										status;
-	ZUNO_ERROR_TYPE									ret;
+	bool											ret;
 
 	while (true) {
-		if ((ret = this->readStatus(&status)) != ZUNO_ERROR_SUCCESS)
+		if ((ret = this->readStatus(&status)) != true)
 			break ;
 		if ((status & (SPI_FLASH_CLASS_STATUS_WIP | SPI_FLASH_CLASS_STATUS_WEL)) == 0x0)
 			break ;
@@ -85,57 +100,57 @@ ZUNO_ERROR_TYPE SpiFlashClass::waitBusy(void) {
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::eraseChip(void) {
-	ZUNO_ERROR_TYPE									ret;
+bool SpiFlashClass::eraseChip(void) {
+	bool									ret;
 
-	if ((ret = this->writeEnable()) != ZUNO_ERROR_SUCCESS)
-		return (ret);
-	if ((ret = this->_sendCommand(SPI_FLASH_CLASS_CMD_ERASE_CHIP, 0x0, 0x0)) != ZUNO_ERROR_SUCCESS)
-		return (ret);
+	if (this->writeEnable() != true)
+		return (false);
+	if (this->_sendCommand(SPI_FLASH_CLASS_CMD_ERASE_CHIP, 0x0, 0x0) != true)
+		return (false);
 	ret = this->waitBusy();
-	if (ret != ZUNO_ERROR_SUCCESS)
+	if (ret != true)
 		this->writeDisable();
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::_eraseBlock(uint32_t addr, size_t command) {
+bool SpiFlashClass::_eraseBlock(uint32_t addr, size_t command) {
 	const SpiFlashClassDevice_t						*device;
-	ZUNO_ERROR_TYPE									ret;
+	bool											ret;
 	SpiFlashClassCmdRead_t							cmd_addr;
 	size_t											cmd_addr_len;
 
 	if ((device = this->_device) == 0x0)
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_NOT_INITILIZATION);
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_NOT_INITILIZATION), false));
 	if (device->total_size < addr)
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_INVALID_ARGUMENT);
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_BAD_ARGUMENTS), false));
 	cmd_addr_len = this->_fillAddress(&cmd_addr.addr[0x0], addr) + sizeof(cmd_addr.command);
-	if ((ret = this->writeEnable()) != ZUNO_ERROR_SUCCESS)
-		return (ret);
-	if ((ret = this->_sendCommand(command, &cmd_addr, sizeof(cmd_addr_len))) == ZUNO_ERROR_SUCCESS)
+	if (this->writeEnable() != true)
+		return (false);
+	if ((ret = this->_sendCommand(command, &cmd_addr, sizeof(cmd_addr_len))) == true)
 		ret = this->waitBusy();
-	if (ret != ZUNO_ERROR_SUCCESS)
+	if (ret != true)
 		this->writeDisable();
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::writeBuffer(uint32_t addr, const void *data, size_t len) {
+bool SpiFlashClass::writeBuffer(uint32_t addr, const void *data, size_t len) {
 	const SpiFlashClassDevice_t						*device;
-	ZUNO_ERROR_TYPE									ret;
+	bool											ret;
 	size_t											page_size;
 	SpiFlashClassCmdRead_t							cmd_addr;
 	size_t											cmd_addr_len;
 	size_t											step;
 
 	if ((device = this->_device) == 0x0)
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_NOT_INITILIZATION);
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_NOT_INITILIZATION), false));
 	if (device->total_size < (addr + len))
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_INVALID_ARGUMENT);
-	ret = ZUNO_ERROR_SUCCESS;
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_BAD_ARGUMENTS), false));
+	ret = true;
 	page_size = device->page_size;
 	step = page_size - (addr & (page_size - 0x1));
 	cmd_addr.command = SPI_FLASH_CLASS_CMD_PAGE_PROGRAM;
 	while (len != 0x0) {
-		if ((ret = this->writeEnable()) != ZUNO_ERROR_SUCCESS)
+		if ((ret = this->writeEnable()) != true)
 			break ;
 		cmd_addr_len = this->_fillAddress(&cmd_addr.addr[0x0], addr) + sizeof(cmd_addr.command);
 		if (step > len)
@@ -143,33 +158,33 @@ ZUNO_ERROR_TYPE SpiFlashClass::writeBuffer(uint32_t addr, const void *data, size
 		digitalWrite(this->_ss, LOW);//We inform slave about receiving data
 		ret = this->_writeBuffer_add(&cmd_addr, cmd_addr_len, data, len);
 		digitalWrite(this->_ss, HIGH);//We inform slave about receiving data
-		if (ret != ZUNO_ERROR_SUCCESS)
+		if (ret != true)
 			break ;
-		if ((ret = this->waitBusy()) != ZUNO_ERROR_SUCCESS)
+		if ((ret = this->waitBusy()) != true)
 			break ;
 		len = len - step;
 		addr = addr + step;
 		step = page_size;
 	}
-	if (ret != ZUNO_ERROR_SUCCESS)
+	if (ret != true)
 		this->writeDisable();
 	return (ret);
 
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::read(uint32_t addr, void *data, size_t len) {
+bool SpiFlashClass::read(uint32_t addr, void *data, size_t len) {
 	const SpiFlashClassDevice_t						*device;
 	SpiFlashClassCmdRead_t							cmd_read;
 	size_t											cmd_read_len;
 	size_t											command;
-	ZUNO_ERROR_TYPE									ret;
+	bool											ret;
 
 	if ((device = this->_device) == 0x0)
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_NOT_INITILIZATION);
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_NOT_INITILIZATION), false));
 	if (device->total_size < (addr + len))
-		return (ZUNO_ERROR_SPI_FLASH_CLASS_INVALID_ARGUMENT);
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_BAD_ARGUMENTS), false));
 	if (len == 0x0)
-		return (ZUNO_ERROR_SUCCESS);
+		return (this->_last_status(STATUS_SUCCESS, true));
 	cmd_read_len = this->_fillAddress(&cmd_read.addr[0x0], addr) + sizeof(cmd_read.command);
 	if (device->supports_fast_read == true) {
 		command = SPI_FLASH_CLASS_CMD_FAST_READ;
@@ -184,35 +199,34 @@ ZUNO_ERROR_TYPE SpiFlashClass::read(uint32_t addr, void *data, size_t len) {
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::readStatus(uint32_t *status) {
+bool SpiFlashClass::readStatus(uint32_t *status) {
 	SpiFlashClassCmdReadStatus_t					read_status;
-	ZUNO_ERROR_TYPE									ret;
 
-	if ((ret = this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_STATUS, &read_status, sizeof(read_status))) != ZUNO_ERROR_SUCCESS)
-		return (ret);
+	if (this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_STATUS, &read_status, sizeof(read_status)) != true)
+		return (false);
 	status[0x0] = read_status.status[0x0];
-	return (ZUNO_ERROR_SUCCESS);
+	return (this->_last_status(STATUS_SUCCESS, true));
 }
 
 
-ZUNO_ERROR_TYPE SpiFlashClass::writeEnable(void) {
+bool SpiFlashClass::writeEnable(void) {
 	return (this->_sendCommand(SPI_FLASH_CLASS_CMD_WRITE_ENABLE, 0x0, 0x0));
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::writeDisable(void) {
+bool SpiFlashClass::writeDisable(void) {
 	return (this->_sendCommand(SPI_FLASH_CLASS_CMD_WRITE_DISABLE, 0x0, 0x0));
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::sleep(void) {
-	ZUNO_ERROR_TYPE						ret;
+bool SpiFlashClass::sleep(void) {
+	bool						ret;
 
 	ret = this->_sendCommand(SPI_FLASH_CLASS_CMD_SLEEP, 0x0, 0x0);
 	delay(0x1);
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::wakeUp(void) {
-	ZUNO_ERROR_TYPE						ret;
+bool SpiFlashClass::wakeUp(void) {
+	bool						ret;
 
 	ret = this->_sendCommand(SPI_FLASH_CLASS_CMD_WAKE_UP, 0x0, 0x0);
 	delay(0x1);
@@ -220,26 +234,65 @@ ZUNO_ERROR_TYPE SpiFlashClass::wakeUp(void) {
 }
 
 /* Private Methods */
-ZUNO_ERROR_TYPE SpiFlashClass::_writeBuffer_add(const SpiFlashClassCmdRead_t *cmd_addr, size_t cmd_addr_len, const void *data, size_t len) {
-	if (this->_spi->beginTransaction(this->_clock, MSBFIRST, SPI_MODE0) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
-	if (this->_spi->transfer(cmd_addr, cmd_addr_len) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
-	if (this->_spi->transfer(data, len) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
-	this->_spi->endTransaction();
-	return (ZUNO_ERROR_SUCCESS);
+bool SpiFlashClass::_init(SpiFlashClassCmdJedec_t *cmd_jedec) {
+	if (this->_spi->begin(SCK, MISO, MOSI, UNKNOWN_PIN) != ZunoErrorOk)
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	pinMode(this->_ss, OUTPUT_UP);
+	if (this->wakeUp() != true)
+		return (false);
+	if ( this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_JEDEC_ID, cmd_jedec, sizeof(cmd_jedec[0x0])) != true)
+		return (false);
+	// For simplicity with commonly used device, we only check for continuation code at 2nd byte (e.g Fujitsu FRAM devices)
+	if (cmd_jedec->ids[0x1] == 0x7F) {
+		cmd_jedec->ids[0x1] = cmd_jedec->ids[0x2];
+		cmd_jedec->ids[0x2] = cmd_jedec->ids[0x3];
+	}
+	return (true);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::_read_add(const SpiFlashClassCmdRead_t *cmd_read, size_t cmd_read_len, void *data, size_t len) {
+bool SpiFlashClass::_init_end(const SpiFlashClassDevice_t *device, SpiFlashClassCmdJedec_t *cmd_jedec) {
+	size_t									manufacturer_id;
+	size_t									memory_type;
+	size_t									capacity;
+	uint32_t								refFreq;
+	uint32_t								clock;
+
+	manufacturer_id = cmd_jedec->ids[0x0];
+	memory_type = cmd_jedec->ids[0x1];
+	capacity = cmd_jedec->ids[0x2];
+	if (manufacturer_id != device->manufacturer_id || memory_type != device->memory_type || capacity != device->capacity)
+		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_ID_NOT_MATCH), false));
+	this->_device = device;
+	refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;//CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;
+	clock = device->max_clock_speed_mhz * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
+	if (clock > refFreq)
+		clock = refFreq;
+	this->_clock = clock;
+	if (device->total_size > (64 * 1024))
+		this->_addr_byte = 0x3;
+	return (this->_last_status(STATUS_SUCCESS, true));
+}
+
+bool SpiFlashClass::_writeBuffer_add(const SpiFlashClassCmdRead_t *cmd_addr, size_t cmd_addr_len, const void *data, size_t len) {
 	if (this->_spi->beginTransaction(this->_clock, MSBFIRST, SPI_MODE0) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
-	if (this->_spi->transfer(cmd_read, cmd_read_len) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	if (this->_spi->transfer(cmd_addr, cmd_addr_len) != ZunoErrorOk)
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	if (this->_spi->transfer(data, len) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	this->_spi->endTransaction();
-	return (ZUNO_ERROR_SUCCESS);
+	return (this->_last_status(STATUS_SUCCESS, true));
+}
+
+bool SpiFlashClass::_read_add(const SpiFlashClassCmdRead_t *cmd_read, size_t cmd_read_len, void *data, size_t len) {
+	if (this->_spi->beginTransaction(this->_clock, MSBFIRST, SPI_MODE0) != ZunoErrorOk)
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	if (this->_spi->transfer(cmd_read, cmd_read_len) != ZunoErrorOk)
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	if (this->_spi->transfer(data, len) != ZunoErrorOk)
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	this->_spi->endTransaction();
+	return (this->_last_status(STATUS_SUCCESS, true));
 }
 
 
@@ -256,9 +309,8 @@ size_t SpiFlashClass::_fillAddress(uint8_t *buff, uint32_t addr) {
 	return (addr_byte);
 }
 
-
-ZUNO_ERROR_TYPE SpiFlashClass::_sendCommand(size_t command, void *response, size_t len) {
-	ZUNO_ERROR_TYPE									ret;
+bool SpiFlashClass::_sendCommand(size_t command, void *response, size_t len) {
+	bool									ret;
 
 	digitalWrite(this->_ss, LOW);//We inform slave about receiving data
 	ret = this->_sendCommandAdd(command, response, len);
@@ -266,11 +318,11 @@ ZUNO_ERROR_TYPE SpiFlashClass::_sendCommand(size_t command, void *response, size
 	return (ret);
 }
 
-ZUNO_ERROR_TYPE SpiFlashClass::_sendCommandAdd(size_t command, void *response, size_t len) {
+bool SpiFlashClass::_sendCommandAdd(size_t command, void *response, size_t len) {
 	SpiFlashClassCmd_t					*cmd;
 
 	if (this->_spi->beginTransaction(this->_clock, MSBFIRST, SPI_MODE0) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	if (len == 0x0) {
 		response = &command;
 		len = 0x1;
@@ -280,7 +332,12 @@ ZUNO_ERROR_TYPE SpiFlashClass::_sendCommandAdd(size_t command, void *response, s
 		cmd->command = command;
 	}
 	if (this->_spi->transfer(response, len) != ZunoErrorOk)
-		return (ZUNO_ERROR_SYSTEM_TMP_FOR_REPLACE);
+		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	this->_spi->endTransaction();
-	return (ZUNO_ERROR_SUCCESS);
+	return (this->_last_status(STATUS_SUCCESS, true));
+}
+
+bool SpiFlashClass::_last_status(uint32_t status, bool ret) {
+	SetLastStatus(status);
+	return (ret);
 }

@@ -2,17 +2,16 @@
 
 #define MY_SERIAL							Serial
 
-SpiFlashClass spi_flash(&SPI, SS);
+SpiFlashClass spi_flash = SpiFlashClass();
 
 void setup(void) {
-	ZUNO_ERROR_TYPE						ret;
-	uint32_t							JEDEC_ID;
+	uint32_t					JEDEC_ID;
 
 	MY_SERIAL.begin(115200);
-	MY_SERIAL.println("Setup");
-	SPI.begin(SCK, MISO, MOSI, UNKNOWN_PIN);
-	if ((ret = spi_flash.begin(0x0, &JEDEC_ID)) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot initilzed device - %08lX\n", ret);
+	MY_SERIAL.println();
+	MY_SERIAL.println("SPI Flash Info Example");
+	if (spi_flash.begin(&JEDEC_ID) != true) {
+		MY_SERIAL.print("Error: cannot initilzed device\n");
 		while (0xFF)
 			delay(0x10);
 	}

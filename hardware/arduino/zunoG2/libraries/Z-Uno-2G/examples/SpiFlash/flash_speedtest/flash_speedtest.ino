@@ -2,7 +2,7 @@
 
 #define MY_SERIAL							Serial
 
-SpiFlashClass spi_flash(&SPI, SS);
+SpiFlashClass spi_flash = SpiFlashClass();
 
 const SpiFlashClassDevice_t device = SPI_FLASH_CLASS_M25PE40;
 
@@ -13,17 +13,17 @@ uint8_t bufwrite[BUFSIZE] __attribute__ ((aligned(4)));
 uint8_t bufread[BUFSIZE] __attribute__ ((aligned(4)));
 
 void setup(void) {
-	ZUNO_ERROR_TYPE						ret;
 	uint32_t							JEDEC_ID;
 
 	MY_SERIAL.begin(115200);
+	MY_SERIAL.println();
 	MY_SERIAL.println("SPI Flash Speed Test example");
-	SPI.begin(SCK, MISO, MOSI, UNKNOWN_PIN);
-	if ((ret = spi_flash.begin(&device, &JEDEC_ID)) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot initilzed device - %08lX\n", ret);
+	if (spi_flash.begin(&device) != true) {
+		MY_SERIAL.print("Error: cannot initilzed device\n");
 		while (0xFF)
 			delay(0x10);
 	}
+	spi_flash.getJEDECID(&JEDEC_ID);
 	MY_SERIAL.print("JEDEC ID: 0x");
 	MY_SERIAL.println(JEDEC_ID, HEX);
 	MY_SERIAL.print("Flash size: ");
@@ -47,15 +47,14 @@ void print_speed(const char* text, uint32_t count, uint32_t ms) {
 }
 
 bool write_and_compare(uint8_t pattern) {
-	ZUNO_ERROR_TYPE						ret;
 	uint32_t							ms;
 	uint32_t							ms_write;
 	uint32_t							ms_read;
 	static const uint32_t				flash_sz = device.total_size;
 
 	MY_SERIAL.println("Erase chip");
-	if ((ret = spi_flash.eraseChip()) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot erase chip device - %08lX\n", ret);
+	if (spi_flash.eraseChip() != true) {
+		MY_SERIAL.print("Error: cannot erase chip device.\n");
 		while (0xFF)
 			delay(0x10);
 	}
@@ -64,8 +63,8 @@ bool write_and_compare(uint8_t pattern) {
 	MY_SERIAL.printf("Write flash with 0x%02X\n", pattern);
 	ms = millis();
 	for(uint32_t addr = 0; addr < flash_sz; addr += sizeof(bufwrite)) {
-		if ((ret = spi_flash.writeBuffer(addr, bufwrite, sizeof(bufwrite))) != ZUNO_ERROR_SUCCESS) {
-			MY_SERIAL.printf("Error: cannot write - %08lX\n", ret);
+		if (spi_flash.writeBuffer(addr, bufwrite, sizeof(bufwrite)) != true) {
+			MY_SERIAL.print("Error: cannot write.\n");
 			while (0xFF)
 				delay(0x10);
 		}
@@ -78,8 +77,8 @@ bool write_and_compare(uint8_t pattern) {
 	for(uint32_t addr = 0; addr < flash_sz; addr += sizeof(bufread)) {
 		memset(bufread, 0, sizeof(bufread));
 		ms = millis();
-		if ((ret = spi_flash.read(addr, bufread, sizeof(bufread))) != ZUNO_ERROR_SUCCESS) {
-			MY_SERIAL.printf("Error: cannot read - %08lX\n", ret);
+		if (spi_flash.read(addr, bufread, sizeof(bufread)) != true) {
+			MY_SERIAL.print("Error: cannot read.\n");
 			while (0xFF)
 				delay(0x10);
 		}

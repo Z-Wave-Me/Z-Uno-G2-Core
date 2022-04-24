@@ -2,23 +2,23 @@
 
 #define MY_SERIAL							Serial
 
-SpiFlashClass spi_flash(&SPI, SS);
+SpiFlashClass spi_flash = SpiFlashClass();
 
 const SpiFlashClassDevice_t device = SPI_FLASH_CLASS_M25PE40;
 
 void setup(void) {
-	ZUNO_ERROR_TYPE						ret;
 	uint32_t							ms;
 	uint32_t							JEDEC_ID;
 
 	MY_SERIAL.begin(115200);
+	MY_SERIAL.println();
 	MY_SERIAL.println("SPI Flash Total Erase Example");
-	SPI.begin(SCK, MISO, MOSI, UNKNOWN_PIN);
-	if ((ret = spi_flash.begin(&device, &JEDEC_ID)) != ZUNO_ERROR_SUCCESS) {
-		MY_SERIAL.printf("Error: cannot initilzed device - %08lX\n", ret);
+	if (spi_flash.begin(&device) != true) {
+		MY_SERIAL.print("Error: cannot initilzed device\n");
 		while (0xFF)
 			delay(0x10);
 	}
+	spi_flash.getJEDECID(&JEDEC_ID);
 	MY_SERIAL.print("JEDEC ID: 0x");
 	MY_SERIAL.println(JEDEC_ID, HEX);
 	MY_SERIAL.print("Flash size: ");
@@ -37,7 +37,7 @@ void setup(void) {
 	MY_SERIAL.println("Let it run until the flash erase is finished.");
 	MY_SERIAL.println("An error or success message will be printed when complete.");
 	ms = millis();
-	if (spi_flash.eraseChip() != ZUNO_ERROR_SUCCESS) {
+	if (spi_flash.eraseChip() != true) {
 		MY_SERIAL.println("Failed to erase chip!");
 	}
 	else {

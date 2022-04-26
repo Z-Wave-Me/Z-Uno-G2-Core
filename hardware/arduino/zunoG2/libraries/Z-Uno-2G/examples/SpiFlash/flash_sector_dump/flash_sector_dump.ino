@@ -56,7 +56,8 @@ void loop()
 	while(!MY_SERIAL.available())
 		delay(10);
 	uint32_t sector = MY_SERIAL.parseInt();
-
+	while(MY_SERIAL.available())
+		MY_SERIAL.read();
 	MY_SERIAL.println(sector); // echo
 
 	if (sector < device.total_size / 4096)

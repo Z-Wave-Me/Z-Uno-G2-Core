@@ -238,9 +238,8 @@ bool SpiFlashClass::_init(SpiFlashClassCmdJedec_t *cmd_jedec) {
 	if (this->_spi->begin(this->_sck, this->_miso, this->_mosi, UNKNOWN_PIN) != ZunoErrorOk)
 		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	pinMode(this->_ss, OUTPUT_UP);
+	this->wakeUp();
 	if (this->waitBusy() != true)
-		return (false);
-	if (this->wakeUp() != true)
 		return (false);
 	if ( this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_JEDEC_ID, cmd_jedec, sizeof(cmd_jedec[0x0])) != true)
 		return (false);

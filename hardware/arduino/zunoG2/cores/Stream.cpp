@@ -48,6 +48,7 @@ int Stream::timedPeek()
   do {
     c = peek();
     if (c >= 0) return c;
+	delay(0x1);
   } while(millis() - _startMillis < _timeout);
   return -1;     // -1 indicates timeout
 }

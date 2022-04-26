@@ -238,6 +238,8 @@ bool SpiFlashClass::_init(SpiFlashClassCmdJedec_t *cmd_jedec) {
 	if (this->_spi->begin(this->_sck, this->_miso, this->_mosi, UNKNOWN_PIN) != ZunoErrorOk)
 		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	pinMode(this->_ss, OUTPUT_UP);
+	if (this->waitBusy() != true)
+		return (false);
 	if (this->wakeUp() != true)
 		return (false);
 	if ( this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_JEDEC_ID, cmd_jedec, sizeof(cmd_jedec[0x0])) != true)
@@ -263,7 +265,7 @@ bool SpiFlashClass::_init_end(const SpiFlashClassDevice_t *device, SpiFlashClass
 	if (manufacturer_id != device->manufacturer_id || memory_type != device->memory_type || capacity != device->capacity)
 		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_ID_NOT_MATCH), false));
 	this->_device = device;
-	refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;//CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;
+	CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;//refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
 	clock = device->max_clock_speed_mhz * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
 	if (clock > refFreq)
 		clock = refFreq;

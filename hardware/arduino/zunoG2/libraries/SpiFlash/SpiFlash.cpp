@@ -235,7 +235,7 @@ bool SpiFlashClass::wakeUp(void) {
 
 /* Private Methods */
 bool SpiFlashClass::_init(SpiFlashClassCmdJedec_t *cmd_jedec) {
-	if (this->_spi->begin(SCK, MISO, MOSI, UNKNOWN_PIN) != ZunoErrorOk)
+	if (this->_spi->begin(this->_sck, this->_miso, this->_mosi, UNKNOWN_PIN) != ZunoErrorOk)
 		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	pinMode(this->_ss, OUTPUT_UP);
 	if (this->wakeUp() != true)

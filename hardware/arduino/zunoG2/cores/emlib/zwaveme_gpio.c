@@ -46,6 +46,20 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
 		GPIO_PinOutClear(real_port, real_pin);
 }
 
+void digitalToggle(uint8_t pin) {
+  uint8_t real_port;
+  uint8_t real_pin;
+
+  real_port = getRealPort(pin);
+  real_pin = getRealPin(pin);
+  int value = GPIO_PinInGet(real_port, real_pin);
+
+  if (value == true)
+    GPIO_PinOutClear(real_port, real_pin);
+  else
+    GPIO_PinOutSet(real_port, real_pin);
+}
+
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin) {
 	size_t				i;
 

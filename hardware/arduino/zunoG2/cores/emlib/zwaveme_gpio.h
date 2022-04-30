@@ -47,6 +47,7 @@ static inline uint8_t getRealPort(uint8_t pin) {extern const PinDef_t ZUNO_PIN_D
 static inline uint8_t getRealPin(uint8_t pin) {extern const PinDef_t ZUNO_PIN_DEFS[]; return(ZUNO_PIN_DEFS[pin].pin);};
 void pinMode(uint8_t pin, int mode);
 void digitalWrite(uint8_t pin, uint8_t val);
+void digitalToggle(uint8_t pin);
 uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 int digitalRead(uint8_t pin);
 

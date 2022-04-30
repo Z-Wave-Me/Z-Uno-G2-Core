@@ -1,5 +1,4 @@
-# Z-Uno 2 Core
-Core files for Z-Uno 2
+# Core files for Z-Uno 2
 
 Arduino Board Manager or VS Code is used to install these files. Installation guide: https://z-uno.z-wave.me/install
 

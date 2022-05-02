@@ -665,7 +665,7 @@ dword micros(void){
 	return (dword)(rtcc_micros());
 }
 
-void delayMicroseconds(word tdelay){
+void delayMicroseconds(dword tdelay){
     while(tdelay--){
         asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
         asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");

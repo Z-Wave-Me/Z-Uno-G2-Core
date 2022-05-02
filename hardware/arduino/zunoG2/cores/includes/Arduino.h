@@ -152,7 +152,7 @@ inline void zunoSetProductID(uint16_t product_id){
 void delay(dword ms);
 dword millis(void);
 dword micros(void);
-void delayMicroseconds(word tdelay);
+void delayMicroseconds(dword tdelay);
 inline void yield() { delay(1); }
 
 

@@ -4,6 +4,7 @@
 #include "Arduino.h"
 #include "SPI.h"
 
+#define SPI_FLASH_CLASS_CMD_WRTE_STATUS											0x01
 #define SPI_FLASH_CLASS_CMD_PAGE_PROGRAM										0x02
 #define SPI_FLASH_CLASS_CMD_READ												0x03
 #define SPI_FLASH_CLASS_CMD_WRITE_DISABLE										0x04
@@ -55,6 +56,12 @@ typedef struct						SpiFlashClassCmdJedec_s
 	uint8_t							ids[4];
 }									SpiFlashClassCmdJedec_t;
 
+typedef struct						SpiFlashClassCmdWriteStatus_s
+{
+	uint8_t							command;
+	uint8_t							value;
+}									SpiFlashClassCmdWriteStatus_t;
+
 class SpiFlashClass {
 	public:
 		SpiFlashClass(void);
@@ -75,6 +82,7 @@ class SpiFlashClass {
 		bool														getJEDECID(uint32_t *JEDEC_ID);
 
 	private:
+		inline bool													writeStatus(uint32_t status);
 		inline bool													waitBusy(void);
 		inline bool													_init(SpiFlashClassCmdJedec_t *cmd_jedec);
 		inline bool													_init_end(const SpiFlashClassDevice_t *device, SpiFlashClassCmdJedec_t *cmd_jedec);

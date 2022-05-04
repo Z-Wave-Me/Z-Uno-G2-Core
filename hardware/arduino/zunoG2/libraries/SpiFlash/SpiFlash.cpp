@@ -160,6 +160,7 @@ bool SpiFlashClass::writeBuffer(uint32_t addr, const void *data, size_t len) {
 		digitalWrite(this->_ss, HIGH);//We inform slave about receiving data
 		if (ret != true)
 			break ;
+		delay(0x3);//Почему то M25PE40 статус записи сразу сбрасываеться и тем самым не закончив запись начинаем новую, что нельзя делать;Причем только при использовании DMA возможно из-за этого слишком ыстро работает или еще что
 		if ((ret = this->waitBusy()) != true)
 			break ;
 		len = len - step;
@@ -208,6 +209,14 @@ bool SpiFlashClass::readStatus(uint32_t *status) {
 	return (this->_last_status(STATUS_SUCCESS, true));
 }
 
+bool SpiFlashClass::writeStatus(uint32_t status) {
+	SpiFlashClassCmdWriteStatus_t					write_status;
+
+	write_status.value = status;
+	if (this->_sendCommand(SPI_FLASH_CLASS_CMD_WRTE_STATUS, &write_status, sizeof(write_status)) != true)
+		return (false);
+	return (this->_last_status(STATUS_SUCCESS, true));
+}
 
 bool SpiFlashClass::writeEnable(void) {
 	return (this->_sendCommand(SPI_FLASH_CLASS_CMD_WRITE_ENABLE, 0x0, 0x0));
@@ -239,6 +248,7 @@ bool SpiFlashClass::_init(SpiFlashClassCmdJedec_t *cmd_jedec) {
 		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
 	pinMode(this->_ss, OUTPUT_UP);
 	this->wakeUp();
+	this->writeDisable();
 	if (this->waitBusy() != true)
 		return (false);
 	if ( this->_sendCommand(SPI_FLASH_CLASS_CMD_READ_JEDEC_ID, cmd_jedec, sizeof(cmd_jedec[0x0])) != true)
@@ -264,7 +274,8 @@ bool SpiFlashClass::_init_end(const SpiFlashClassDevice_t *device, SpiFlashClass
 	if (manufacturer_id != device->manufacturer_id || memory_type != device->memory_type || capacity != device->capacity)
 		return (this->_last_status(STATUS_CONSTRUCTOR(STATUS_SEV_ERROR, STATUS_FACILITY_SPI_FLASH, STATUS_ID_NOT_MATCH), false));
 	this->_device = device;
-	CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;//refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
+	// refFreq = CMU_ClockFreqGet(cmuClock_HFPER) - 0x1 / 0x2;
+	refFreq = 8 * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
 	clock = device->max_clock_speed_mhz * SPI_FLASH_CLASS_CLOCK_MULTIPLIER;
 	if (clock > refFreq)
 		clock = refFreq;

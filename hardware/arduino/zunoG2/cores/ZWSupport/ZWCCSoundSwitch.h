@@ -147,9 +147,10 @@ typedef struct						ZunoSoundSwitchParameter_s
 
 typedef struct						ZunoSoundSwitchParameterPlay_s
 {
-	uint64_t							time_stamp;
+	uint64_t						time_stamp;
 	uint8_t							toneIdentifier;
 	uint8_t							playCommandToneVolume;
+	uint8_t							bReport;
 }									ZunoSoundSwitchParameterPlay_t;
 
 typedef struct								ZunoSoundSwitchParameterArray_s
@@ -184,7 +185,8 @@ const ZunoSoundSwitchParameterArray_t *zunoSoundSwitchGetParameterArray(size_t c
 		{ \
 			.time_stamp = 0x0,														\
 			.toneIdentifier = 0x0,													\
-			.playCommandToneVolume = 0x0											\
+			.playCommandToneVolume = 0x0,											\
+			.bReport = false														\
 		};\
 		static const ZunoSoundSwitchParameterArray_t _switch_parameter_array_##CHANNEL = \
 		{ \

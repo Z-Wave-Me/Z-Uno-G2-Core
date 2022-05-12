@@ -140,7 +140,7 @@ const char *zunoAssociationGroupName(uint8_t groupIndex) {
 }
 
 static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
-	static char								group_name_default[] = ASSOCIATION_GROUP_NAME_DEFAULT;
+	char									group_name_default[sizeof(ASSOCIATION_GROUP_NAME_DEFAULT)];
 	ZwAssociationGroupNameReportFrame_t		*lp;
 	uint8_t									groupIndex;
 	char									*group_name;
@@ -153,10 +153,14 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd) {
 		group_name = (char *)ASSOCIATION_GROUP_NAME_LIFE_LINE;
 		len = (sizeof(ASSOCIATION_GROUP_NAME_LIFE_LINE) - 1);
 	}
-	else if ((group_name = (char *)zunoAssociationGroupName(groupIndex - 1)) != NULL && ((len = strlen(group_name)) < ASSOCIATION_GROUP_NAME_MAX) && len != 0)
-		;
+	else if ((group_name = (char *)zunoAssociationGroupName(groupIndex - 1)) != NULL) {
+		len = strlen(group_name);
+		if (len > ASSOCIATION_GROUP_NAME_MAX)
+			len = ASSOCIATION_GROUP_NAME_MAX;
+	}
 	else {
 		group_name = &group_name_default[0];
+		memcpy(group_name, ASSOCIATION_GROUP_NAME_DEFAULT, sizeof(ASSOCIATION_GROUP_NAME_DEFAULT));
 		len = (sizeof(ASSOCIATION_GROUP_NAME_DEFAULT)- 1);
 		group_name[len - 1] = groupIndex % 10 + 0x30;
 		group_name[len - 2] = groupIndex / 10 + 0x30;

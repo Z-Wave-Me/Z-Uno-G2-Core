@@ -54,7 +54,7 @@ typedef struct ZUNOOTAFWDescr_s{
 }ZUNOOTAFWDescr_t;
 // Z-Wave packet
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN						300
-#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						46//(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP) - должно так но
 #define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 						4
 typedef struct ZUNOCommandPacket_s{
 	uint8_t * cmd;   // 4B

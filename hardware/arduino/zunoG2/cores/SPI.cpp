@@ -262,13 +262,14 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 	return (ZunoErrorOk);
 }
 
-void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode) {
+ZunoError_t SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMode) {
 	USART_TypeDef						*usart;
 	const ZunoSpiUsartTypeConfig_t		*config;
+	ZunoError_t							ret;
 
 	config = this->_config;
-	if (zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey) != ZunoErrorOk)
-		return ;
+	if ((ret = zunoSyncLockWrite(config->lpLock, SyncMasterSpi, &this->_lpKey)) != ZunoErrorOk)
+		return (ret);
 	usart = config->usart;
 	usart->CTRL = (usart->CTRL & ~(USART_CTRL_MSBF | usartClockMode0 | usartClockMode1 | usartClockMode2 | usartClockMode3)) | (bitOrder ? USART_CTRL_MSBF : 0) | this->_convertMode(dataMode);
 	if (clock != this->_baudrate) {
@@ -278,6 +279,7 @@ void SPIClass::beginTransaction(uint32_t clock, uint8_t bitOrder, uint8_t dataMo
 	if(_ss_pin != UNKNOWN_PIN)
 		digitalWrite(this->_ss_pin, LOW);//We inform slave about receiving data
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
+	return (ZunoErrorOk);
 }
 
 void SPIClass::setBitOrder(uint8_t order) {

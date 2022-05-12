@@ -53,7 +53,7 @@ typedef struct							ZunoWireI2CInit_s
 
 
 /* Public Constructors */
-TwoWire::TwoWire(uint8_t numberConfig): _user_onRequest(0x0), _user_onReceive(0x0), _adress(0x0), _timout_ms(0x19), _flagErrorLong(false), _bFree(false), _lpKey(false), _address(0x0) {
+TwoWire::TwoWire(uint8_t numberConfig): _user_onRequest(0x0), _user_onReceive(0x0), _freqScl(0x0), _adress(0x0), _timout_ms(0x19), _flagErrorLong(false), _bFree(false), _lpKey(false), _address(0x0) {
 	const ZunoWireI2CTypeConfig_t				*config;
 
 	switch (numberConfig) {

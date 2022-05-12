@@ -8,7 +8,7 @@
 /*                                                                     */
 /* Version 0.0.1                                                       */
 /*                                                                     */
-
+ENTRY(_Z5setupv)
 
 MEMORY
 {

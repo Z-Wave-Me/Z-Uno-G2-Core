@@ -20,38 +20,39 @@ typedef struct				ZauxiliaryDiv_s
 	};
 }							ZauxiliaryDiv_t;
 
-static uint64_t _div(ZauxiliaryDiv_t dividend, ZauxiliaryDiv_t divisor) {
-	uint32_t					offset;
-	ZauxiliaryDiv_t				out;
-	ZauxiliaryDiv_t				saveDivisor;
+// Чуть не правильно делит и самое главное - нужно ВСЕ div подменять
+// static uint64_t _div(ZauxiliaryDiv_t dividend, ZauxiliaryDiv_t divisor) {
+// 	uint32_t					offset;
+// 	ZauxiliaryDiv_t				out;
+// 	ZauxiliaryDiv_t				saveDivisor;
 
-	if (dividend.major == 0) 
-		return (dividend.minor / divisor.minor);
-	saveDivisor.minor = divisor.minor;
-	out.value = 0;
-	offset = (31 - __builtin_clz(dividend.major)) + __builtin_clz(divisor.minor) + 1;
-	divisor.value = divisor.value << offset;
-	while (dividend.major != 0) {
-		out.minor = out.minor << 1;
-		if (dividend.value >= divisor.value) {
-			dividend.value -= divisor.value;
-			out.minor = out.minor | 1;
-		}
-		divisor.value = divisor.value >> 1;
-	}
-	out.value = out.value << (offset - 31 + __builtin_clz(out.minor));
-	out.minor |= dividend.minor / saveDivisor.minor;
-	return (out.value);
-}
+// 	if (dividend.major == 0) 
+// 		return (dividend.minor / divisor.minor);
+// 	saveDivisor.minor = divisor.minor;
+// 	out.value = 0;
+// 	offset = (31 - __builtin_clz(dividend.major)) + __builtin_clz(divisor.minor) + 1;
+// 	divisor.value = divisor.value << offset;
+// 	while (dividend.major != 0) {
+// 		out.minor = out.minor << 1;
+// 		if (dividend.value >= divisor.value) {
+// 			dividend.value -= divisor.value;
+// 			out.minor = out.minor | 1;
+// 		}
+// 		divisor.value = divisor.value >> 1;
+// 	}
+// 	out.value = out.value << (offset - 31 + __builtin_clz(out.minor));
+// 	out.minor |= dividend.minor / saveDivisor.minor;
+// 	return (out.value);
+// }
 
-static uint64_t zdiv(uintmax_t dividend, uintmax_t divisor) {
-	ZauxiliaryDiv_t				dividendTwo;
-	ZauxiliaryDiv_t				divisorTwo;
+// static uint64_t zdiv(uintmax_t dividend, uintmax_t divisor) {
+// 	ZauxiliaryDiv_t				dividendTwo;
+// 	ZauxiliaryDiv_t				divisorTwo;
 
-	dividendTwo.value = dividend;
-	divisorTwo.value = divisor;
-	return (_div(dividendTwo, divisorTwo));
-}
+// 	dividendTwo.value = dividend;
+// 	divisorTwo.value = divisor;
+// 	return (_div(dividendTwo, divisorTwo));
+// }
 
 #define SECSPERMIN	60L
 #define MINSPERHOUR	60L
@@ -103,8 +104,8 @@ struct tm *gmtime_r(const time_t *tim_p, struct tm *res) {
 	unsigned erayear, yearday, month, day;
 	unsigned long eraday;
 
-	days = zdiv(lcltime, SECSPERDAY);
-	rem = (lcltime - (days * SECSPERDAY));
+	days = lcltime / SECSPERDAY;
+	rem = lcltime % SECSPERDAY;
 	days = days + EPOCH_ADJUSTMENT_DAYS;
 	if (rem < 0) {
 		rem += SECSPERDAY;

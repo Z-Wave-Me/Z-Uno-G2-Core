@@ -160,6 +160,7 @@ inline void yield() { delay(1); }
 void pinMode(uint8_t pin, int mode);
 uint8_t pin2HWPin(uint8_t pin);
 void digitalWrite(uint8_t pin, uint8_t val);
+void digitalToggle(uint8_t pin);
 uint8_t getPin(uint8_t port, uint8_t pin);
 inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
 inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};

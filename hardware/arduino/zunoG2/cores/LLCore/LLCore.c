@@ -693,7 +693,13 @@ void digitalWrite(uint8_t pin, uint8_t mode) {
     else
         GPIO_PinOutClear((GPIO_Port_TypeDef)real_port, real_pin);
 }
-
+void digitalToggle(uint8_t pin) {
+   uint8_t real_port;
+   uint8_t real_pin;
+   real_port = getRealPort(pin);
+   real_pin = getRealPin(pin);
+   GPIO_PinOutToggle((GPIO_Port_TypeDef)real_port, real_pin);
+}
 uint8_t getPin(uint8_t port, uint8_t pin) {
     const PinDef_t			*lp_b;
     const PinDef_t			*lp_e;

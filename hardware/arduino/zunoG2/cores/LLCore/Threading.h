@@ -100,6 +100,9 @@ inline void zunoEnterCritical(){
 inline void zunoExitCritical(){
 	zunoSysCall(ZUNO_SYSFUNC_EXIT_CRITICAL, 0);
 }
+inline void * zunoThreadDataPtr(void *handle){
+	return zunoSysCall(ZUNO_SYSFUNC_THREAD_DATA, 1, handle);
+}
 //disable interrupts
 inline void noInterrupts(){
 	zunoEnterCritical();

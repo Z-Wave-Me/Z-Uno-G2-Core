@@ -607,9 +607,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
-		#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-		zunoReportHandler(cmd);
-		#endif
 		// Check if command fits to any existing channel
 		if(_multiinstance(cmd, &result) == true) {
 			byte zuno_ch = zuno_findTargetChannel(cmd);
@@ -1346,6 +1343,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
 			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
 			zunoSendZWPackage(&frame.packet);
+			zunoReportHandler(&frame.packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);

@@ -1387,7 +1387,7 @@ void zunoAwakeUsrCode(){
     #ifdef LOGGING_DBG
     uint8_t val = zunoThreadIsRunning(g_zuno_sys->hMainThread);
     LOGGING_UART.print("Tread running:");
-    LOGGING_UART.print(val);
+    LOGGING_UART.println(val);
     #endif
     //if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
         zunoResumeThread(g_zuno_sys->hMainThread);

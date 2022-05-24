@@ -11,11 +11,6 @@
 #define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
 #define ZUNO_BOOTLOADER			3//Для тип чего собираеться - загрузчик
 
-#ifndef ZUNO_ASSEMBLY_TYPE
-	#define ZUNO_ASSEMBLY_TYPE		1//Текущий тип сборки
-#endif
-
-
 typedef enum
 {
 	ZunoErrorOk,//Good!!!

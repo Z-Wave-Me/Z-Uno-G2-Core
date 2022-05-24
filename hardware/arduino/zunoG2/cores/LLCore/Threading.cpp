@@ -89,6 +89,9 @@ znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queu
 // -----------------------------------------------------------------------
 //Thread
 znThread::znThread(threadcodefunc_t  func, uint32_t stack_size, uint32_t *stack, void *param ) {
+	stack[0x0] = 0x0;
+	stack++;
+	stack_size--;
 	_handle = zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, stack_size, stack, &_th_data, param);
 }
 

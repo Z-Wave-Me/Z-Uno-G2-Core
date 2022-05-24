@@ -1,11 +1,16 @@
 #include "Status.h"
-
-static uint32_t _last_status = STATUS_SUCCESS;
+#include "Threading.h"
 
 uint32_t GetLastStatus(void) {
-	return (_last_status);
+	uint32_t					*data;
+
+	data = (uint32_t *)zunoThreadDataPtr(zunoGetCurrentThreadHandle());
+	return (data[0x0]);
 }
 
 void SetLastStatus (uint32_t status) {
-	_last_status = status;
+	uint32_t					*data;
+
+	data = (uint32_t *)zunoThreadDataPtr(zunoGetCurrentThreadHandle());
+	data[0x0] = status;
 }

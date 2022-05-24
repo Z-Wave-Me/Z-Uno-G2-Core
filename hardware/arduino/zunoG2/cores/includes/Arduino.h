@@ -253,8 +253,6 @@ void zunoSetCustomWUPTimer(uint32_t timeout);
 #include "Tone.h"
 #include "Threading.h"
 
-#if ZUNO_ASSEMBLY_TYPE == ZUNO_UNO
-	#include "ReportHandler.h"
-#endif
+#include "ReportHandler.h"
 
 #endif // ZUNO_ARDUINOH

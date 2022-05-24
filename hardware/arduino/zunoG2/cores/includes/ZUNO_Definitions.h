@@ -110,6 +110,9 @@ typedef enum
 #define MAX_NODEID										232
 #define BOOTLOADER_STORAGE_AREA_START					0x3a000
 
+#define ZUNO_SWITCHED_ON 					0xFF
+#define ZUNO_SWITCHED_OFF 					0
+
 // ANALOG Refs
 #define DEFAULT											adcRef5V
 #define INTERNAL                                        adcRef1V25

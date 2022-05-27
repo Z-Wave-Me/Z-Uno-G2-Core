@@ -51,11 +51,6 @@ typedef struct ZUnoChannelDtaHandler_s{
 }ZUnoChannelDtaHandler_t;
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
-ZUNOCommandPacket_t g_outgoing_main_packet;
-uint8_t             g_outgoing_main_data[MAX_ZW_PACKAGE];
-// Report data
-//-------------------------------------------------------------------------------------------------
-
 
 typedef struct ZUNOChannelsData_s{
 	uint32_t update_map;
@@ -246,14 +241,14 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 								 // In most cases it uses highest avaliable level
 	return res;
 }
-void fillOutgoingPacket(ZUNOCommandPacket_t * cmd) {
+static void _fillOutgoingPacket(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	
-	fillOutgoingRawPacket(&g_outgoing_main_packet, g_outgoing_main_data, 0, 0, cmd->src_node);
-	g_outgoing_main_packet.cmd[0] = cmd->cmd[0];  // the same command class
-	g_outgoing_main_packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
+	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], 0, 0, cmd->src_node);
+	frame_report->packet.cmd[0] = cmd->cmd[0];  // the same command class
+	frame_report->packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
 	// Reply as we were asked
-	g_outgoing_main_packet.src_zw_channel    = cmd->dst_zw_channel;
-	g_outgoing_main_packet.dst_zw_channel    = cmd->src_zw_channel;
+	frame_report->packet.src_zw_channel    = cmd->dst_zw_channel;
+	frame_report->packet.dst_zw_channel    = cmd->src_zw_channel;
 
 }
 
@@ -301,67 +296,67 @@ uint8_t *zuno_AddCommonClass(uint8_t *b) {
 }
 
 // Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
-static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
+static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPacketReport_t *frame_report) {
 	int result = ZUNO_UNKNOWN_CMD;
 
 	switch(ZW_CMD_CLASS) {
 			case COMMAND_CLASS_SECURITY:
-				result = zuno_CCSecurity(cmd);
+				result = zuno_CCSecurity(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_SECURITY_2:
-				result = zuno_CCSecurity2(cmd);
+				result = zuno_CCSecurity2(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_CONFIGURATION:
-				result = zuno_CCConfigurationHandler(cmd);
+				result = zuno_CCConfigurationHandler(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_INDICATOR:
-				result = zuno_CCIndicatorHandler(cmd);
+				result = zuno_CCIndicatorHandler(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_ASSOCIATION:
-				result = zuno_CCAssociationHandler(cmd);
+				result = zuno_CCAssociationHandler(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
-				result = zuno_CCMultiAssociationHandler(cmd);
+				result = zuno_CCMultiAssociationHandler(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_ZWAVEPLUS_INFO:
-				result = zuno_CCZWavePlusInfoHandler(cmd);
+				result = zuno_CCZWavePlusInfoHandler(cmd, frame_report);
 				break ;
 			case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
-				result = zuno_CCAssociationGprInfoHandler(cmd);
+				result = zuno_CCAssociationGprInfoHandler(cmd, frame_report);
 				break ;
 			#ifdef WITH_CC_CENTRAL_SCENE
 			case COMMAND_CLASS_CENTRAL_SCENE:
-				result = zuno_CCCentralSceneHandler(cmd);
+				result = zuno_CCCentralSceneHandler(cmd, frame_report);
 				break;
 			#endif
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
-				result = zuno_CCTimerParametrsHandler(cmd);
+				result = zuno_CCTimerParametrsHandler(cmd, &frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_AUTHENTICATION
 			case COMMAND_CLASS_AUTHENTICATION:
-				result = zuno_CCAuthenticationHandler(cmd);
+				result = zuno_CCAuthenticationHandler(cmd, frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_ENTRY_CONTROL
 			case COMMAND_CLASS_ENTRY_CONTROL:
-				result = zuno_CCEntryControlHandler(cmd);
+				result = zuno_CCEntryControlHandler(cmd, frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_USER_CODE
 			case COMMAND_CLASS_USER_CODE:
-				result = zuno_CCUserCodeHandler(cmd);
+				result = zuno_CCUserCodeHandler(cmd, frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_BATTERY
 			case COMMAND_CLASS_BATTERY:
-				result = zuno_CCBattery(cmd);
+				result = zuno_CCBattery(cmd, frame_report);
 				break;
 			#endif
 			#ifdef WITH_CC_WAKEUP
 			case COMMAND_CLASS_WAKE_UP:
-				result = zuno_CCWakeupHandler(cmd);
+				result = zuno_CCWakeupHandler(cmd, frame_report);
 				break;
 			#endif
 			default:
@@ -369,6 +364,7 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out) {
 	}
 	*out = result;
 	return (false);
+	(void)frame_report;
 }
 
 static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
@@ -562,6 +558,8 @@ int __zuno_CommandHandler_Out(int rs){
 	return rs;
 }
 int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
+	ZUNOCommandPacketReport_t							frame_report;
+
 	int result = ZUNO_UNKNOWN_CMD;
 	
 	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;
@@ -581,12 +579,12 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
 		return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 	// prepare packet for report
-	fillOutgoingPacket(cmd);
+	_fillOutgoingPacket(cmd, &frame_report);
 	// If we have multichannel support enabled.
 	// Pass the data through it first
 	#ifdef WITH_CC_MULTICHANNEL
 	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTI_CHANNEL){
-		result = zuno_CCMultichannel(cmd);
+		result = zuno_CCMultichannel(cmd, &frame_report);
 		if(result == ZUNO_COMMAND_BLOCKED){
 			return __zuno_CommandHandler_Out(result);
 		}
@@ -596,25 +594,25 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			LOGGING_UART.print("UNPACKED:  "); 
 			zuno_dbgdumpZWPacakge(cmd);
 			#endif
-			fillOutgoingPacket(cmd);
+			_fillOutgoingPacket(cmd,  &frame_report);
 			if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
-				return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd));
+				return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd, &frame_report));
 			}
 		}
 	}
 	#endif
-	result = zuno_CCSupervisionUnpack(result, cmd);
+	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		// Check if command fits to any existing channel
-		if(_multiinstance(cmd, &result) == true) {
+		if(_multiinstance(cmd, &result, &frame_report) == true) {
 			byte zuno_ch = zuno_findTargetChannel(cmd);
 			if(zuno_ch == UNKNOWN_CHANNEL){
 				#ifdef LOGGING_DBG
 				LOGGING_UART.println("**** Can't find channel for last cmd!"); 
 				#endif
-				return __zuno_CommandHandler_Out(zuno_CCSupervisionReport(result, 0x0, 0x0)); // Command doesn't fit => forward it to firmware CommandHandler
+				return __zuno_CommandHandler_Out(zuno_CCSupervisionReport(result, 0x0, 0x0, &frame_report)); // Command doesn't fit => forward it to firmware CommandHandler
 			}
 			#ifdef LOGGING_DBG
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
@@ -623,71 +621,71 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			switch(ZW_CMD_CLASS) {
 				#ifdef WITH_CC_BASIC
 				case COMMAND_CLASS_BASIC:
-					result = zuno_CCBasicHandler(zuno_ch, cmd);
+					result = zuno_CCBasicHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_SWITCH_BINARY
 				case COMMAND_CLASS_SWITCH_BINARY:
-					result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd);
+					result = zuno_CCSwitchBinaryHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_NOTIFICATION
 				case COMMAND_CLASS_NOTIFICATION:
-					result = zuno_CCNotificationHandler(zuno_ch, cmd);
+					result = zuno_CCNotificationHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_SWITCH_MULTILEVEL
 				case COMMAND_CLASS_SWITCH_MULTILEVEL:
-					result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd);
+					result = zuno_CCSwitchMultilevelHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_METER
 				case COMMAND_CLASS_METER:
-					result = zuno_CCMeterHandler(zuno_ch, cmd);
+					result = zuno_CCMeterHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_METER_TBL_MONITOR
 				case COMMAND_CLASS_METER_TBL_MONITOR:
-					result = zuno_CCMeterTblMonitorHandler(zuno_ch, cmd);
+					result = zuno_CCMeterTblMonitorHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_DOORLOCK
 				case COMMAND_CLASS_DOOR_LOCK:
-					result = zuno_CCDoorLockHandler(zuno_ch, cmd);
+					result = zuno_CCDoorLockHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_SENSOR_MULTILEVEL
 				case COMMAND_CLASS_SENSOR_MULTILEVEL:
-					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd);
+					result = zuno_CCSensorMultilevelHandler(zuno_ch, cmd, &frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:
-					result = zuno_CCSwitchColorHandler(zuno_ch, cmd);
+					result = zuno_CCSwitchColorHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_SOUND_SWITCH
 				case COMMAND_CLASS_SOUND_SWITCH:
-					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd);
+					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_MODE
 				case COMMAND_CLASS_THERMOSTAT_MODE:
-					result = zuno_CCThermostatModeHandler(zuno_ch, cmd);
+					result = zuno_CCThermostatModeHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_SETPOINT
 				case COMMAND_CLASS_THERMOSTAT_SETPOINT:
-					result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd);
+					result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 			}
 		}
 	}
-	result = zuno_CCSupervisionReport(result, 0x0, 0x0);
+	result = zuno_CCSupervisionReport(result, 0x0, 0x0, &frame_report);
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
-		zunoSendZWPackage(&g_outgoing_main_packet);
+		zunoSendZWPackage(&frame_report.packet);
 	}
 	return __zuno_CommandHandler_Out(result);
 }

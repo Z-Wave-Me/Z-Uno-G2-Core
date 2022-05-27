@@ -2,6 +2,7 @@
 #define ZWCC_SWITCH_COLOR_H
 
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 /* Switch Color command class commands */
 #define SWITCH_COLOR_VERSION                                                             0x03
@@ -95,7 +96,7 @@ typedef struct					ZwSwitchColorStopLevelChange_s {
 	uint8_t						colorComponentId;/**/
 }								ZwSwitchColorStopLevelChange_t;//ZW_SWITCH_COLOR_STOP_LEVEL_CHANGEV3Frame
 
-int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet);
 
 #endif // ZWCC_SWITCH_COLOR_H

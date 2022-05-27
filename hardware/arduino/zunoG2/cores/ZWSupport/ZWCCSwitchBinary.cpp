@@ -37,7 +37,7 @@ int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
+static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	size_t							value;
 	size_t							duration;
 	ZunoTimerBasic_t				*lp;
@@ -64,7 +64,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 				lp->ticksEnd = millis() + duration;
 				lp->targetValue = value;
 				zunoExitCritical();
-				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration, lp);
+				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration, lp, frame_report);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
@@ -78,16 +78,16 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
+int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report){
 	int							rs;
 
 	switch(ZW_CMD) {
 		case SWITCH_BINARY_GET:
-			rs = zuno_CCSwitchBinaryReport(channel, &g_outgoing_main_packet);
+			rs = zuno_CCSwitchBinaryReport(channel, &frame_report->packet);
 			_zunoMarkChannelRequested(channel);
 			break;
 		case SWITCH_BINARY_SET:
-			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel);
+			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel, frame_report);
 			break;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
@@ -96,7 +96,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd){
 	return (rs);
 }
 
-void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp) {
+void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report) {
 	size_t									channel;
 	size_t									ticks;
 
@@ -109,6 +109,6 @@ void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp) {
 	lp->channel = 0x0;
 	if (lp->bMode == ZUNO_TIMER_SWITCH_SUPERVISION) {
 		__cc_supervision._unpacked = true;
-		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
+		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 	}
 }

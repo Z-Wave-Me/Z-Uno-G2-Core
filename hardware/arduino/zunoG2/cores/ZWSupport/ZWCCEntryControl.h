@@ -1,6 +1,8 @@
 #ifndef ZWCC_ENTRY_CONTROL_H
 #define ZWCC_ENTRY_CONTROL_H
 
+#include "ZWSupport.h"
+
 #define ENTRY_CONTROL_NOTIFICATION_DATA_NA												ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_NA
 #define ENTRY_CONTROL_NOTIFICATION_DATA_RAW												ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_RAW
 #define ENTRY_CONTROL_NOTIFICATION_DATA_ASCII											ENTRY_CONTROL_NOTIFICATION_DATA_TYPE_ASCII
@@ -228,6 +230,6 @@ typedef struct										ZwEntryControlKeySupportedReportFrame_s
 									} \
 
 bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint8_t *b, size_t len);
-int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_ENTRY_CONTROL_H

@@ -80,18 +80,18 @@ static int _reset(size_t channel, const ZwMeterResetFrame_t *cmd, size_t len) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
 		case METER_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCMeterReport(channel, cmd, &g_outgoing_main_packet);
+			rs = zuno_CCMeterReport(channel, cmd, &frame_report->packet);
 			break ;
 		case METER_SUPPORTED_GET://v6
-			CMD_REPLY_DATA(0) = ZUNO_CFG_CHANNEL(channel).sub_type | (METER_SUPPORTED_REPORT_RATE_TYPE_IMPORT_ONLY << METER_SUPPORTED_REPORT_PROPERTIES1_RATE_TYPE_SHIFT);
-			CMD_REPLY_DATA(1) = 1 << (ZUNO_CFG_CHANNEL(channel).params[0] & 0x07);
-			CMD_REPLY_LEN = 4;
+			frame_report->packet.cmd[0+2] = ZUNO_CFG_CHANNEL(channel).sub_type | (METER_SUPPORTED_REPORT_RATE_TYPE_IMPORT_ONLY << METER_SUPPORTED_REPORT_PROPERTIES1_RATE_TYPE_SHIFT);
+			frame_report->packet.cmd[1+2] = 1 << (ZUNO_CFG_CHANNEL(channel).params[0] & 0x07);
+			frame_report->packet.len = 4;
 			rs = ZUNO_COMMAND_ANSWERED;
 			break ;
 		case METER_RESET:

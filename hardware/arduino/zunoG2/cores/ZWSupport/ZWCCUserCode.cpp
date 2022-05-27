@@ -148,11 +148,11 @@ void __g_zuno_user_code_init(void) {
 	}
 }
 
-static int _users_number_report(ZW_USERS_NUMBER_GET_FRAME *paket) {
+static int _users_number_report(ZW_USERS_NUMBER_GET_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_USERS_NUMBER_REPORT_FRAME_t			*report;
 	size_t									count;
 
-	report = (ZW_USERS_NUMBER_REPORT_FRAME_t *)&CMD_REPLY_CC;
+	report = (ZW_USERS_NUMBER_REPORT_FRAME_t *)frame_report->packet.cmd;
 	// // report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// // report->cmd = USERS_NUMBER_REPORT; //set in - fillOutgoingPacket
 	if ((count = __g_zuno_user_code_param_count) > 0xFF)
@@ -160,17 +160,17 @@ static int _users_number_report(ZW_USERS_NUMBER_GET_FRAME *paket) {
 	else
 		report->v2.supportedUsers = count;
 	_zme_memcpy(&report->v2.extendedSupportedUsers1, (uint8_t *)&count, sizeof(__g_zuno_user_code_param_count));
-	CMD_REPLY_LEN = sizeof(report->v2);
+	frame_report->packet.len = sizeof(report->v2);
 	return (ZUNO_COMMAND_ANSWERED);
 	(void)paket;
 }
 
-static int _user_code_capabilities_report(ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME *paket) {
+static int _user_code_capabilities_report(ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_USER_CODE_CAPABILITIES_REPORT_1BYTE_V2_FRAME						*report;
 	uint8_t																*tmp;
 	uint32_t															len;
 
-	report = (ZW_USER_CODE_CAPABILITIES_REPORT_1BYTE_V2_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_USER_CODE_CAPABILITIES_REPORT_1BYTE_V2_FRAME *)frame_report->packet.cmd;
 	// // report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// // report->cmd = USER_CODE_CAPABILITIES_REPORT_V2; //set in - fillOutgoingPacket
 	len = ((((sizeof(__g_zuno_user_code_status_mask) * 0x8) - __builtin_clz(__g_zuno_user_code_status_mask)) >> 0x3) + 0x1);
@@ -186,18 +186,18 @@ static int _user_code_capabilities_report(ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME
 	tmp[0x0] = sizeof(__g_zuno_user_code_asii_mask);//properties3
 	tmp++;
 	memcpy(tmp, &__g_zuno_user_code_asii_mask[0x0], sizeof(__g_zuno_user_code_asii_mask));
-	CMD_REPLY_LEN = tmp - &CMD_REPLY_CC + sizeof(__g_zuno_user_code_asii_mask);
+	frame_report->packet.len = tmp - frame_report->packet.cmd + sizeof(__g_zuno_user_code_asii_mask);
 	return (ZUNO_COMMAND_ANSWERED);
 	(void)paket;
 }
 
-static int _user_code_report(ZW_USER_CODE_GET_FRAME *paket) {
+static int _user_code_report(ZW_USER_CODE_GET_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
 	size_t										userIdentifier;
 	ZwUserCodeReportFrame_t						*report;
 	ZwUserCodeParametr_t						parametr;
 	size_t										count;
 
-	report = (ZwUserCodeReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwUserCodeReportFrame_t *)frame_report->packet.cmd;
 	// // report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// // report->cmd = USER_CODE_REPORT_V2; //set in - fillOutgoingPacket
 	userIdentifier = paket->userIdentifier;
@@ -205,18 +205,18 @@ static int _user_code_report(ZW_USER_CODE_GET_FRAME *paket) {
 	if (userIdentifier == 0x0 || userIdentifier > __g_zuno_user_code_param_count) {
 		report->userIdStatus = EXTENDED_USER_CODE_REPORT_STATUS_NOT_AVAILABLE_V2;
 		memset(&report->userCode[0x0], 0x0, 0x4);
-		CMD_REPLY_LEN = sizeof(ZwUserCodeReportFrame_t) + 0x4;
+		frame_report->packet.len = sizeof(ZwUserCodeReportFrame_t) + 0x4;
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	_user_code_get(&parametr, userIdentifier);
 	report->userIdStatus = parametr.userIdStatus;
 	count = parametr.userCodeLen;
 	memcpy(&report->userCode[0x0], &parametr.userCode[0x0], count);
-	CMD_REPLY_LEN = sizeof(ZwUserCodeReportFrame_t) + count;
+	frame_report->packet.len = sizeof(ZwUserCodeReportFrame_t) + count;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket) {
+static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
 	size_t										userIdentifier;
 	ZwExtendedUserCodeReportFrameStart_t		*start;
 	ZwExtendedUserCodeReportFrameEnd_t			*end;
@@ -226,8 +226,8 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 	size_t										len;
 	size_t										userIdStatus;
 
-	start = (ZwExtendedUserCodeReportFrameStart_t *)&CMD_REPLY_CC;
-	vg = (ZwExtendedUserCodeReportFrameVg_t *)(&CMD_REPLY_CC + sizeof(ZwExtendedUserCodeReportFrameStart_t));
+	start = (ZwExtendedUserCodeReportFrameStart_t *)frame_report->packet.cmd;
+	vg = (ZwExtendedUserCodeReportFrameVg_t *)(frame_report->packet.cmd + sizeof(ZwExtendedUserCodeReportFrameStart_t));
 	start->numberOfUserCodes = 0x1;
 	// // start->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// // start->cmd = EXTENDED_USER_CODE_REPORT_V2; //set in - fillOutgoingPacket
@@ -240,7 +240,7 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 		end = (ZwExtendedUserCodeReportFrameEnd_t *)((uint8_t *)vg + sizeof(ZwExtendedUserCodeReportFrameVg_t));
 		end->nextUserIdentifier1 = 0x0;
 		end->nextUserIdentifier2 = 0x0;
-		CMD_REPLY_LEN = (sizeof(ZwExtendedUserCodeReportFrameStart_t) + sizeof(ZwExtendedUserCodeReportFrameEnd_t) + sizeof(ZwExtendedUserCodeReportFrameVg_t));
+		frame_report->packet.len = (sizeof(ZwExtendedUserCodeReportFrameStart_t) + sizeof(ZwExtendedUserCodeReportFrameEnd_t) + sizeof(ZwExtendedUserCodeReportFrameVg_t));
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	_user_code_get(&parametr, userIdentifier);
@@ -287,7 +287,7 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket)
 	end = (ZwExtendedUserCodeReportFrameEnd_t *)vg;
 	end->nextUserIdentifier1 = userIdentifier >> 0x8;
 	end->nextUserIdentifier2 = userIdentifier;
-	CMD_REPLY_LEN = len;
+	frame_report->packet.len = len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -382,14 +382,14 @@ static int _user_code_set(ZwUserCodeSetFrame_t *paket, size_t len) {
 	return (_user_code_set_universal(paket->userIdentifier, paket->userIdStatus, &paket->userCode[0x0], (len - sizeof(ZwUserCodeSetFrame_t))));
 }
 
-static int _user_code_keypad_mode_report(void) {
+static int _user_code_keypad_mode_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_USER_CODE_KEYPAD_MODE_REPORT_V2_FRAME			*report;
 
-	report = (ZW_USER_CODE_KEYPAD_MODE_REPORT_V2_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_USER_CODE_KEYPAD_MODE_REPORT_V2_FRAME *)frame_report->packet.cmd;
 	// // report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// // report->cmd = USER_CODE_KEYPAD_MODE_REPORT_V2; //set in - fillOutgoingPacket
 	report->keypadMode = ZUNO_USER_CODE_KEYPAD_MODE_GET();
-	CMD_REPLY_LEN = sizeof(ZW_USER_CODE_KEYPAD_MODE_REPORT_V2_FRAME);
+	frame_report->packet.len = sizeof(ZW_USER_CODE_KEYPAD_MODE_REPORT_V2_FRAME);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -423,7 +423,7 @@ static int _extended_user_code_set(ZwExtendedUserCodeSetFrameStart_t *paket) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _user_code_checksum_report(void) {
+static int _user_code_checksum_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME		*report;
 	ZwUserCodeParametr_t						parametr;
 	uint16_t									userIdentifier;
@@ -432,7 +432,7 @@ static int _user_code_checksum_report(void) {
 	size_t										i;
 	uint16_t									crc16;
 
-	report = (ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// report->cmd = USER_CODE_CHECKSUM_REPORT_V2; //set in - fillOutgoingPacket
 	i = 0x0;
@@ -453,20 +453,20 @@ static int _user_code_checksum_report(void) {
 		crc16 = 0x0;
 	report->userCodeChecksum1 = crc16 >> 0x8;
 	report->userCodeChecksum2 = crc16;
-	CMD_REPLY_LEN = sizeof(ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME);
+	frame_report->packet.len = sizeof(ZW_USER_CODE_CHECKSUM_REPORT_V2_FRAME);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _user_code_master_report(void) {
+static int _user_code_master_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwMasterCodeReportFrame_t		*report;
 	size_t							masterCodeLen;
 
-	report = (ZwMasterCodeReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwMasterCodeReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_USER_CODE; //set in - fillOutgoingPacket
 	// report->cmd = MASTER_CODE_REPORT_V2; //set in - fillOutgoingPacket
 	masterCodeLen = _master_get(&report->masterCode[0x0]);
 	report->properties1 = masterCodeLen;
-	CMD_REPLY_LEN = sizeof(ZwMasterCodeReportFrame_t) + masterCodeLen;
+	frame_report->packet.len = sizeof(ZwMasterCodeReportFrame_t) + masterCodeLen;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -487,7 +487,7 @@ static int _user_code_master_set(ZwMasterCodeSetFrame_t *paket) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
@@ -495,34 +495,34 @@ int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _user_code_master_set((ZwMasterCodeSetFrame_t *)&cmd->cmd[0x0]);
 			break ;
 		case MASTER_CODE_GET_V2:
-			rs = _user_code_master_report();
+			rs = _user_code_master_report(frame_report);
 			break ;
 		case USER_CODE_CHECKSUM_GET_V2:
-			rs = _user_code_checksum_report();
+			rs = _user_code_checksum_report(frame_report);
 			break ;
 		case USER_CODE_KEYPAD_MODE_SET_V2:
 			rs = _user_code_keypad_mode_set((ZW_USER_CODE_KEYPAD_MODE_SET_V2_FRAME *)&cmd->cmd[0x0]);
 			break ;
 		case USER_CODE_KEYPAD_MODE_GET_V2:
-			rs = _user_code_keypad_mode_report();
+			rs = _user_code_keypad_mode_report(frame_report);
 			break ;
 		case EXTENDED_USER_CODE_GET_V2:
-			rs = _extended_user_code_report((ZW_EXTENDED_USER_CODE_GET_V2_FRAME *)&cmd->cmd[0x0]);
+			rs = _extended_user_code_report((ZW_EXTENDED_USER_CODE_GET_V2_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		case EXTENDED_USER_CODE_SET_V2:
 			rs = _extended_user_code_set((ZwExtendedUserCodeSetFrameStart_t *)&cmd->cmd[0x0]);
 			break ;
 		case USER_CODE_GET_V2:
-			rs = _user_code_report((ZW_USER_CODE_GET_FRAME *)&cmd->cmd[0x0]);
+			rs = _user_code_report((ZW_USER_CODE_GET_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		case USER_CODE_SET_V2:
 			rs = _user_code_set((ZwUserCodeSetFrame_t *)&cmd->cmd[0x0], cmd->len);
 			break ;
 		case USER_CODE_CAPABILITIES_GET_V2:
-			rs = _user_code_capabilities_report((ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME *)&cmd->cmd[0x0]);
+			rs = _user_code_capabilities_report((ZW_USER_CODE_CAPABILITIES_GET_V2_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		case USERS_NUMBER_GET_V2:
-			rs = _users_number_report((ZW_USERS_NUMBER_GET_FRAME *)&cmd->cmd[0x0]);
+			rs = _users_number_report((ZW_USERS_NUMBER_GET_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

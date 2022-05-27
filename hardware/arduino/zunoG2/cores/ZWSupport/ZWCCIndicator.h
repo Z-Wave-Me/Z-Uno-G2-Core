@@ -1,6 +1,8 @@
 #ifndef ZWCC_INDICATOR_H
 #define ZWCC_INDICATOR_H
 
+#include "ZWSupport.h"
+
 /* Indicator IDs */
 #define INDICATOR_ID_NA											INDICATOR_SET_NA_V4
 #define INDICATOR_ID_CODE_ACCEPTED								INDICATOR_SET_OK_V4
@@ -547,7 +549,7 @@ typedef struct						ZunoIndicatorTimer_s
 	.indicatorId = INDICATORID\
 }\
 
-int zuno_CCIndicatorHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCIndicatorHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_t on_off_cycles, uint8_t on_time);
 
 #endif // ZWCC_INDICATOR_H

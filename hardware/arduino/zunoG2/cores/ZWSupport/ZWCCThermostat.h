@@ -2,6 +2,7 @@
 #define ZWCC_SWITCH_THERMOSTAT_H
 
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 /* Switch Thermostat command class commands */
 #define COMMAND_CLASS_THERMOSTAT_FAN_MODE                                                0x44
@@ -531,7 +532,7 @@ typedef struct							ZwThermostatSetpointCapabilitiesReportFrame_s
 	uint8_t								data[];
 }										ZwThermostatSetpointCapabilitiesReportFrame_t;
 
-int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCThermostatModeHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet);
-int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // ZWCC_SWITCH_THERMOSTAT_H

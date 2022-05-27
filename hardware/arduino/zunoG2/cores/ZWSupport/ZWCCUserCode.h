@@ -1,6 +1,8 @@
 #ifndef ZWCC_USER_CODE_H
 #define ZWCC_USER_CODE_H
 
+#include "ZWSupport.h"
+
 /* User Code command class commands */
 #define USER_CODE_VERSION                                                                USER_CODE_VERSION_V2
 #define USER_CODE_GET                                                                    0x02
@@ -407,7 +409,7 @@ typedef struct									ZwUserCodeMasterFlash_s
 }\
 
 
-int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len);
 
 #endif// ZWCC_TIMER_PARAMETERS_H

@@ -23,26 +23,26 @@ static uint8_t __g_zuno_entry_control_cached_size = ENTRY_CONTROL_CACHED_SIZE_SU
 
 static uint8_t __g_zuno_entry_control_cached_timout = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_DEFAULT;
 
-static int _entry_control_key_supported_report(void) {
+static int _entry_control_key_supported_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwEntryControlKeySupportedReportFrame_t		*report;
 	size_t										len;
 
-	report = (ZwEntryControlKeySupportedReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwEntryControlKeySupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// report->cmd = ENTRY_CONTROL_KEY_SUPPORTED_REPORT; //set in - fillOutgoingPacket
 	len = zuno_CCEntryControlAsiiMask(&report->keySupportedBitMask[0x0]);
 	report->keySupportedBitMaskLength = len;
-	CMD_REPLY_LEN = sizeof(ZwEntryControlKeySupportedReportFrame_t) + len;
+	frame_report->packet.len = sizeof(ZwEntryControlKeySupportedReportFrame_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _entry_control_event_supported_report(void) {
+static int _entry_control_event_supported_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwEntryControlKeySupportedReportFrameStart_t		*start;
 	ZwEntryControlKeySupportedReportFrameMidle_t		*midle;
 	ZwEntryControlKeySupportedReportFrameEnd_t			*end;
 	size_t												len;
 
-	start = (ZwEntryControlKeySupportedReportFrameStart_t *)&CMD_REPLY_CC;
+	start = (ZwEntryControlKeySupportedReportFrameStart_t *)frame_report->packet.cmd;
 	// start->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// start->cmd = ENTRY_CONTROL_EVENT_SUPPORTED_REPORT; //set in - fillOutgoingPacket
 	len = ((((sizeof(__g_zuno_entry_control_data_type_mask) * 0x8) - __builtin_clz(__g_zuno_entry_control_data_type_mask)) >> 0x3) + 0x1);
@@ -57,19 +57,19 @@ static int _entry_control_event_supported_report(void) {
 	end->keyCachedSizeSupportedMaximum = ENTRY_CONTROL_CACHED_SIZE_SUPPORTED_MAXMIMUM;
 	end->keyCachedTimeoutSupportedMinimum = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_MINIMUM;
 	end->keyCachedTimeoutSupportedMaximum = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_MAXMIMUM;
-	CMD_REPLY_LEN = (uint8_t *)end - &CMD_REPLY_CC + sizeof(end[0x0]);
+	frame_report->packet.len = (uint8_t *)end - frame_report->packet.cmd + sizeof(end[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _entry_control_configuration_report(void) {
+static int _entry_control_configuration_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME		*report;
 
-	report = (ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// report->cmd = ENTRY_CONTROL_CONFIGURATION_REPORT; //set in - fillOutgoingPacket
 	report->keyCacheSize = __g_zuno_entry_control_cached_size;
 	report->keyCacheTimeout = __g_zuno_entry_control_cached_timout;
-	CMD_REPLY_LEN = sizeof(report[0x0]);
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -90,18 +90,18 @@ static int _entry_control_configuration_set(ZW_ENTRY_CONTROL_CONFIGURATION_SET_F
 	return (rs);
 }
 
-int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
 		case ENTRY_CONTROL_KEY_SUPPORTED_GET:
-			rs = _entry_control_key_supported_report();
+			rs = _entry_control_key_supported_report(frame_report);
 			break ;
 		case ENTRY_CONTROL_EVENT_SUPPORTED_GET:
-			rs = _entry_control_event_supported_report();
+			rs = _entry_control_event_supported_report(frame_report);
 			break ;
 		case ENTRY_CONTROL_CONFIGURATION_GET:
-			rs = _entry_control_configuration_report();
+			rs = _entry_control_configuration_report(frame_report);
 			break ;
 		case ENTRY_CONTROL_CONFIGURATION_SET:
 			rs = _entry_control_configuration_set((ZW_ENTRY_CONTROL_CONFIGURATION_SET_FRAME *)&cmd->cmd[0x0]);

@@ -1,6 +1,8 @@
 #ifndef ZWCC_CONFIGURATION_H
 #define ZWCC_CONFIGURATION_H
 
+#include "ZWSupport.h"
+
 #define CONFIGPARAM_MIN_PARAM			0x40
 #define CONFIGPARAM_MAX_PARAM			0x60
 
@@ -435,7 +437,7 @@ typedef struct										ZwConfigurationBuilkReportFrame_s
 	uint8_t											parameter[];/* MSB  LSB */
 }													ZwConfigurationBuilkReportFrame_t;
 
-int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 typedef enum{
 	PARAM_SV_SYSTEM_OK,
 	PARAM_SV_USER_OK,

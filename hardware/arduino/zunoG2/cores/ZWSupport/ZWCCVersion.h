@@ -1,6 +1,7 @@
 #ifndef VERSION_CC_H
 #define VERSION_CC_H
 
+#include "ZWSupport.h"
 
 /* Version command class commands */
 #define VERSION_VERSION                                                                  0x03
@@ -41,5 +42,5 @@ typedef struct _ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME_
     uint8_t   commandClassVersion;          /**/
 } ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME;
 
-int zuno_CCVersionHandler(ZUNOCommandPacket_t * cmd);
+int zuno_CCVersionHandler(ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // VERSION_CC_H

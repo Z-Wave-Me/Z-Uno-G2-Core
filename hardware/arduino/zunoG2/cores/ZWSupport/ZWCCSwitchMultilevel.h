@@ -138,7 +138,7 @@ typedef struct									ZwSwitchMultilevelSupportedReportFrame_s
 
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet);
-int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value);
 int32_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch);

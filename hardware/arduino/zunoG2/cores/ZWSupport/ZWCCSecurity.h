@@ -1,6 +1,8 @@
 #ifndef ZWCC_SECURITY_H
 #define ZWCC_SECURITY_H
 
+#include "ZWSupport.h"
+
 /* Security 2 command class commands */
 #define SECURITY_2_VERSION                                                               0x01
 #define SECURITY_2_NONCE_GET                                                             0x01
@@ -50,7 +52,7 @@ typedef struct										ZwSecurityCommandsSupportedFrame_s
 	uint8_t											commandClassSupport[];
 }													ZwSecurityCommandsSupportedFrame_t;
 
-int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd);
-int zuno_CCSecurity(ZUNOCommandPacket_t *cmd);
+int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSecurity(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif//ZWCC_SECURITY_H

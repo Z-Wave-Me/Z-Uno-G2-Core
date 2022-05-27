@@ -1,6 +1,8 @@
 #ifndef ZWCC_BATTERY
 #define ZWCC_BATTERY
+
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 #define BATTERY_GET                                                                      0x02
 #define BATTERY_REPORT                                                                   0x03
@@ -17,6 +19,6 @@ typedef struct								ZwBatteryReportFrame_s
 
 bool zunoSendBatteryReportHandler();
 void    zunoSendBatteryReport();
-int     zuno_CCBattery(ZUNOCommandPacket_t * cmd);
+int     zuno_CCBattery(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void    zuno_CCBattery_OnSetup();
 #endif // ZWCC_BATTERY

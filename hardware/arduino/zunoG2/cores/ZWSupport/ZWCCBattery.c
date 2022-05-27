@@ -64,27 +64,27 @@ bool zunoSendBatteryReportHandler() {
 	return (true);
 }
 
-static int _battery_report(void) {
+static int _battery_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwBatteryReportFrame_t							*report;
 	size_t											batteryLevel;
 
 	_zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
-	report = (ZwBatteryReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwBatteryReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BATTERY; set in - fillOutgoingPacket
 	// report->cmd = BATTERY_REPORT; set in - fillOutgoingPacket
 	batteryLevel = batteryReportValue();
 	_save_batteryLevel = batteryLevel;
 	report->batteryLevel = batteryLevel;
-	CMD_REPLY_LEN = sizeof(report[0x0]);
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCBattery(ZUNOCommandPacket_t * cmd){
+int zuno_CCBattery(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch(ZW_CMD) {
 		case BATTERY_GET:
-			rs = _battery_report();
+			rs = _battery_report(frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

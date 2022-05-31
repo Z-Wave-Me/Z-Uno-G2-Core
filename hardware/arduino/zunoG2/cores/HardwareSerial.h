@@ -59,6 +59,8 @@ class HardwareSerial : public Stream {
 		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);
 		virtual size_t							write(const uint8_t *b, size_t count);
 
+		size_t									countWaitingMs(size_t n);
+
 	private:
 		inline int								_readLock(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree);

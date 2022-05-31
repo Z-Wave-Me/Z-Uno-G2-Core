@@ -110,28 +110,19 @@ int HardwareSerial::read(void) {
 	return (this->_readLock(true));
 }
 
-// V_uart — скорость UART (например: 9600, 115200), бод;
-// d — количество бит данных;
-// D — количество байт всех данных;
-// s — количество стоповых бит;
-// p — количество бит четности, p = 1 если бит четности присутствует, или p = 0 если бит четности отсутствует;
-// t = 8 * D * (d + 1 + s + p) * 1000 / (d * V_uart) - мс
 size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
 	const uint8_t								*e;
 	ssize_t										channel;
 	LdmaClassTransferSingle_t					array;
-	uint32_t									frame;
 	uint32_t									ms;
 
 	config = &this->_configTable[this->_numberConfig];
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return (0);
 	usart = config->usart;
-	frame = usart->FRAME;
-	ms = 1000 * 0x8 * count * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
-	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
+	ms = this->countWaitingMs(count);
 	if (count <= HARDWARE_SERIAL_MIN_WRITE_ZDMA) {
 		e = b + count;
 		ms = ms / count;
@@ -152,23 +143,36 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	return (count);
 }
 
+// V_uart — скорость UART (например: 9600, 115200), бод;
+// d — количество бит данных;
+// D — количество байт всех данных;
+// s — количество стоповых бит;
+// p — количество бит четности, p = 1 если бит четности присутствует, или p = 0 если бит четности отсутствует;
+// t = 8 * D * (d + 1 + s + p) * 1000 / (d * V_uart) - мс
+size_t HardwareSerial::countWaitingMs(size_t n) {
+	const ZunoHardwareSerialConfig_t			*config;
+	uint32_t									ms;
+	uint32_t									frame;
+
+	config = &this->_configTable[this->_numberConfig];
+	frame = config->usart->FRAME;
+	ms = 1000 * 0x8 * n * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
+	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
+	return (ms);
+}
+
 void HardwareSerial::memset(uint8_t c, size_t n) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
 	ssize_t										channel;
 	LdmaClassTransferSingle_t					array;
-	uint32_t									frame;
-	uint32_t									ms;
 
 	config = &this->_configTable[this->_numberConfig];
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return ;
 	usart = config->usart;
-	frame = usart->FRAME;
-	ms = 1000 * 0x8 * n * ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) + 0x1 + ((frame & _USART_FRAME_STOPBITS_MASK) == USART_FRAME_STOPBITS_TWO ? 0x2 : 0x1) + ((frame & _USART_FRAME_PARITY_MASK) == USART_FRAME_PARITY_EVEN ? 0x1 : 0x0)) / ((((frame & _USART_FRAME_DATABITS_MASK) >> _USART_FRAME_DATABITS_SHIFT) + 0x3) * this->_baudrate);
-	ms = ms + ms / 100;//intercharacter spacing takes into account, or rather its absence
 	if ((channel = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array)) > 0x0) {
-		delay(ms);
+		delay(this->countWaitingMs(n));
 		while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
 		LdmaClass::transferStop(channel);

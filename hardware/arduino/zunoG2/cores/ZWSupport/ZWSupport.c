@@ -603,6 +603,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	#endif
 	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
+		zunoReportHandler(cmd);
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		// Check if command fits to any existing channel
@@ -1013,7 +1014,7 @@ bool zunoStartDeviceConfiguration() {
 	memset(g_zuno_sys->zwave_cfg, 0, sizeof(ZUNODeviceConfiguation_t));
 	g_zuno_sys->zwave_cfg->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zwave_cfg->product_id = DEFAULT_PRODUCT_ID;
-	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
+	// g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
 	return  true;
 }
 byte getMaxChannelTypes() {
@@ -1341,7 +1342,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
 			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
 			zunoSendZWPackage(&frame.packet);
-			zunoReportHandler(&frame.packet);
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);

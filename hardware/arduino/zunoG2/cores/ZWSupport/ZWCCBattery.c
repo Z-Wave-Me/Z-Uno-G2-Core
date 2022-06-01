@@ -60,7 +60,6 @@ bool zunoSendBatteryReportHandler() {
 	report->batteryLevel = batteryLevel;
 	frame.packet.len = sizeof(report[0x0]);
 	zunoSendZWPackage(&frame.packet);
-	zunoReportHandler(&frame.packet);
 	return (true);
 }
 

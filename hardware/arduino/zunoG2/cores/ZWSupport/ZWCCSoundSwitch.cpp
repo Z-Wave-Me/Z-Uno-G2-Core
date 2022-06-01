@@ -53,27 +53,27 @@ static const ZunoSoundSwitchParameter_t *_soundSwitchParameter(const ZunoSoundSw
 	return (&parameter_array->parametr[index - 0x1]);
 }
 
-static int _soundSwitchTonesNumberReport(size_t channel) {
+static int _soundSwitchTonesNumberReport(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	const ZunoSoundSwitchParameterArray_t					*parameter_array;
 	ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME			*report;
 
-	report = (ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_SOUND_SWITCH; set in - fillOutgoingPacket
 	// report->cmd = SOUND_SWITCH_TONES_NUMBER_REPORT; set in - fillOutgoingPacket
 	parameter_array = _soundSwitchGetParameterArray(channel);
 	report->supportedTones = parameter_array->count;
-	CMD_REPLY_LEN = sizeof(report[0x0]);
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRAME *frame, size_t channel) {
+static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRAME *frame, size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwSoundSwitchInfoReportFrame_t						*report;
 	const ZunoSoundSwitchParameter_t					*parametr;
 	size_t												toneIdentifier;
 	size_t												toneDuration;
 	size_t												len;
 
-	report = (ZwSoundSwitchInfoReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwSoundSwitchInfoReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_SOUND_SWITCH; set in - fillOutgoingPacket
 	// report->cmd = SOUND_SWITCH_TONE_INFO_REPORT; set in - fillOutgoingPacket
 	toneIdentifier = frame->toneIdentifier;
@@ -82,7 +82,7 @@ static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRA
 		report->toneDuration1 = 0x0;
 		report->toneDuration2 = 0x0;
 		report->nameLength = 0x0;
-		CMD_REPLY_LEN = sizeof(report[0x0]);
+		frame_report->packet.len = sizeof(report[0x0]);
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	toneDuration = parametr->toneDuration;
@@ -93,19 +93,19 @@ static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRA
 		len = (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(report[0x0]));
 	report->nameLength = len;
 	memcpy(&report->name[0x0], parametr->name, len);
-	CMD_REPLY_LEN = sizeof(report[0x0]) + len;
+	frame_report->packet.len = sizeof(report[0x0]) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _soundSwitchConfigurationReport(size_t channel) {
+static int _soundSwitchConfigurationReport(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_SOUND_SWITCH_CONFIGURATION_REPORT_V2_FRAME						*report;
 
-	report = (ZW_SOUND_SWITCH_CONFIGURATION_REPORT_V2_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_SOUND_SWITCH_CONFIGURATION_REPORT_V2_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_SOUND_SWITCH; set in - fillOutgoingPacket
 	// report->cmd = SOUND_SWITCH_CONFIGURATION_REPORT; set in - fillOutgoingPacket
 	report->volume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
 	report->defaultToneIdentifer = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel);
-	CMD_REPLY_LEN = sizeof(report[0x0]);
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -239,14 +239,14 @@ static int _soundSwitchTonePlaySet(const ZwSoundSwitchTonePlayFrame_t *frame, si
 	return (_soundSwitchTonePlaySetAdd(channel, toneIdentifier, playCommandToneVolume, true));
 }
 
-int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	_soundSwitchDefault(channel);
 	switch (ZW_CMD) {
 		case SOUND_SWITCH_TONE_PLAY_GET_V2:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCSoundSwitchReport(channel, &g_outgoing_main_packet);
+			rs = zuno_CCSoundSwitchReport(channel, &frame_report->packet);
 			break ;
 		case SOUND_SWITCH_TONE_PLAY_SET_V2:
 			rs = _soundSwitchTonePlaySet((const ZwSoundSwitchTonePlayFrame_t *)&cmd->cmd[0x0], channel, cmd->len);
@@ -255,13 +255,13 @@ int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd) {
 			rs = _soundSwitchConfigurationSet((const ZW_SOUND_SWITCH_CONFIGURATION_SET_V2_FRAME *)&cmd->cmd[0x0], channel);
 			break ;
 		case SOUND_SWITCH_CONFIGURATION_GET_V2:
-			rs = _soundSwitchConfigurationReport(channel);
+			rs = _soundSwitchConfigurationReport(channel, frame_report);
 			break ;
 		case SOUND_SWITCH_TONES_NUMBER_GET_V2:
-			rs = _soundSwitchTonesNumberReport(channel);
+			rs = _soundSwitchTonesNumberReport(channel, frame_report);
 			break ;
 		case SOUND_SWITCH_TONE_INFO_GET_V2:
-			rs = _soundSwitchToneInfoReport((const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRAME *)&cmd->cmd[0x0], channel);
+			rs = _soundSwitchToneInfoReport((const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRAME *)&cmd->cmd[0x0], channel, frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

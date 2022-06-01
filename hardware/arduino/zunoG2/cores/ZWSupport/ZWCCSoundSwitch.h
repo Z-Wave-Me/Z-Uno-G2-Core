@@ -1,6 +1,7 @@
 #ifndef ZWCC_SOUND_SWITCH_H
 #define ZWCC_SOUND_SWITCH_H
 
+#include "ZWSupport.h"
 
 /* Sound Switch command class commands */
 #define SOUND_SWITCH_VERSION                                                             SOUND_SWITCH_VERSION_V2
@@ -203,7 +204,7 @@ const ZunoSoundSwitchParameterArray_t *zunoSoundSwitchGetParameterArray(size_t c
 	.toneDuration = DURATION\
 }\
 
-int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 

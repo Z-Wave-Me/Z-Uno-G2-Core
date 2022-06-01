@@ -1,6 +1,8 @@
 #ifndef ZWCC_ZWAVE_PLUS_INFO
 #define ZWCC_ZWAVE_PLUS_INFO
 
+#include "ZWSupport.h"
+
 /* Zwaveplus Info command class commands */
 #define ZWAVEPLUS_INFO_VERSION                                                           0x02
 #define ZWAVEPLUS_INFO_GET                                                               0x01
@@ -51,6 +53,6 @@ typedef union								ZwZwavePlusInfoReportFrame_u {//For more convenient support
 	ZwZwavePlusInfoReportV2Frame_t			v2;
 }											ZwZwavePlusInfoReportFrame_t;
 
-int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif//ZWCC_ZWAVE_PLUS_INFO

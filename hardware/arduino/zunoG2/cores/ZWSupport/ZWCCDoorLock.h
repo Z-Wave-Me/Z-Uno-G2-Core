@@ -2,6 +2,7 @@
 #define ZWCC_DOOOR_LOCK_H
 
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 /* Door Lock command class commands */
 #define DOOR_LOCK_VERSION                                                                0x04
@@ -190,7 +191,7 @@ typedef union							ZwDoorLockConfigurationSetFrame_u {//For more convenient sup
 	ZW_DOOR_LOCK_CONFIGURATION_SET_V4_FRAME	v4;
 }										ZwDoorLockConfigurationSetFrame_t;
 
-int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 
 #endif // ZWCC_DOOOR_LOCK_H

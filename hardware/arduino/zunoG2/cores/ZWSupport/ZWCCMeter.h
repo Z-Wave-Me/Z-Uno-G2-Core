@@ -1,6 +1,7 @@
 #ifndef __ZWCC_METER_H__
 #define __ZWCC_METER_H__
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 #define METER_GET               0x01
 #define METER_REPORT            0x02
@@ -346,7 +347,7 @@ typedef union								ZwMeterReportFrame_u {//For more convenient support, severa
 	ZwMeterReportV3Frame_t					v3;
 }											ZwMeterReportFrame_t;
 
-int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket);
 
 #endif // __ZWCC_METER_H__

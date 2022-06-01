@@ -1,6 +1,8 @@
 #ifndef ZWCC_CENTRAL_SCENE_H
 #define ZWCC_CENTRAL_SCENE_H
 
+#include "ZWSupport.h"
+
 #define CENTRAL_SCENE_VERSION															CENTRAL_SCENE_VERSION_V3
 #define CENTRAL_SCENE_NOTIFICATION														CENTRAL_SCENE_NOTIFICATION_V3
 #define CENTRAL_SCENE_CONFIGURATION_SET													CENTRAL_SCENE_CONFIGURATION_SET_V3
@@ -146,7 +148,7 @@ const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArray(size_t
 }\
 
 
-int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event);
 
 #endif// ZWCC_CENTRAL_SCENE_H

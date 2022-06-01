@@ -280,6 +280,6 @@ inline void zuno_CCNotificationInitData() {
 };
 
 int  zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacket_t *packet);
-int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif // NOTIFICATION_CC_H

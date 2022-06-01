@@ -18,13 +18,13 @@ static uint8_t _slow_mode = true;
 
 uint64_t rtcc_micros(void);
 
-static int _central_scene_supported_report(void) {
+static int _central_scene_supported_report(ZUNOCommandPacketReport_t *frame_report) {
 	const ZunoCentralSceneParameterArray_t						*parametr_array;
 	ZwCentralSceneSupportedReportFrame_t						*report;
 	uint32_t													support_prop_mask;
 	size_t														len;
 
-	report = (ZwCentralSceneSupportedReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwCentralSceneSupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE; set in - fillOutgoingPacket
 	// report->cmd = CENTRAL_SCENE_SUPPORTED_REPORT_V3; set in - fillOutgoingPacket
 	parametr_array = zunoCentralSceneGetParameterArrayUser();
@@ -33,15 +33,15 @@ static int _central_scene_supported_report(void) {
 	report->supportedScenes = parametr_array->count;
 	report->properties1 = CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_SLOW_REFRESH_SUPPORT_BIT_MASK_V3 | CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_IDENTICAL_BIT_MASK_V3 |((len << CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_SHIFT_V3) & CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_MASK_V3);
 	memcpy(&report->supportedKeyAttributesForScene[0x0], (uint8_t *)&support_prop_mask, len);
-	CMD_REPLY_LEN = sizeof(report[0x0]) + len;
+	frame_report->packet.len = sizeof(report[0x0]) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _central_scene_configuration_report(void) {
+static int _central_scene_configuration_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_CENTRAL_SCENE_CONFIGURATION_REPORT_V3_FRAME				*report;
 	size_t														properties1;
 
-	report = (ZW_CENTRAL_SCENE_CONFIGURATION_REPORT_V3_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_CENTRAL_SCENE_CONFIGURATION_REPORT_V3_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE; set in - fillOutgoingPacket
 	// report->cmd = CENTRAL_SCENE_CONFIGURATION_REPORT_V3; set in - fillOutgoingPacket
 	if (_slow_mode == true)
@@ -49,7 +49,7 @@ static int _central_scene_configuration_report(void) {
 	else
 		properties1 = 0x0;
 	report->properties1 = properties1;
-	CMD_REPLY_LEN = sizeof(report[0x0]);
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -66,7 +66,7 @@ static int _central_scene_configuration_set(const ZW_CENTRAL_SCENE_CONFIGURATION
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
@@ -74,10 +74,10 @@ int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd) {
 			rs = _central_scene_configuration_set((const ZW_CENTRAL_SCENE_CONFIGURATION_SET_V3_FRAME *)&cmd->cmd[0x0]);
 			break ;
 		case CENTRAL_SCENE_CONFIGURATION_GET_V3:
-			rs = _central_scene_configuration_report();
+			rs = _central_scene_configuration_report(frame_report);
 			break ;
 		case CENTRAL_SCENE_SUPPORTED_GET_V3:
-			rs = _central_scene_supported_report();
+			rs = _central_scene_supported_report(frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

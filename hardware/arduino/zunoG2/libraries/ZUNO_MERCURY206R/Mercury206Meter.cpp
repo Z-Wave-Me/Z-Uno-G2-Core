@@ -63,10 +63,7 @@ Mercury206Meter::Mercury206Meter(uint32_t serialnumber, uint8_t dir_pin): _dir_p
 
 /* Public Methods */
 ZunoError_t Mercury206Meter::begin() {
-	ZunoError_t						ret;
-
-	if ((ret = MERCURY_SERIAL.begin(MERCURY_BAUDRATE)) != ZunoErrorOk)
-		return (ret);
+	MERCURY_SERIAL.begin(MERCURY_BAUDRATE);
 	CMU_ClockEnable(cmuClock_GPCRC, true);
 	pinMode(this->_dir_pin, OUTPUT_UP);
 	return (ZunoErrorOk);

@@ -1,6 +1,7 @@
 #ifndef ZWCC_METER_TBL_H
 #define ZWCC_METER_TBL_H
 
+#include "ZWSupport.h"
 #include "ZWCCTimerParametrs.h"
 
 /* Meter Tbl Monitor command class commands */
@@ -149,6 +150,6 @@ typedef struct												ZwMeterTblHistoricalDataReport_s
 	uint8_t													historicalValue[4];/* MSB to LSB */
 }															ZwMeterTblHistoricalDataReport_t;
 
-int zuno_CCMeterTblMonitorHandler(byte channel, ZUNOCommandPacket_t *cmd);
+int zuno_CCMeterTblMonitorHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif // ZWCC_METER_TBL_H

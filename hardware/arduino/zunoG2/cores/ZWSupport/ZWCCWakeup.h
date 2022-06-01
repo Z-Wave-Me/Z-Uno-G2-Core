@@ -1,6 +1,7 @@
 #ifndef ZWCC_WAKEUP
 #define ZWCC_WAKEUP
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 #define WAKE_UP_INTERVAL_CAPABILITIES_GET                                             0x09
 #define WAKE_UP_INTERVAL_CAPABILITIES_REPORT                                          0x0A
@@ -114,7 +115,7 @@ void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();
 void zuno_CCWakeup_OnDefault();
 bool zuno_CCWakeup_BeforeSleep();
-int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd);
+int zuno_CCWakeupHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCWakeup_OnAnyRx();
 void zuno_sendWUP_NotificationReport();
 

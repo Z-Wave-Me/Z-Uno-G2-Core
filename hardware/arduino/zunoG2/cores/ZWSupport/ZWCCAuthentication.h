@@ -1,6 +1,8 @@
 #ifndef ZWCC_AUTHENTICATION_H
 #define ZWCC_AUTHENTICATION_H
 
+#include "ZWSupport.h"
+
 /* Authentication command class commands */
 #define AUTHENTICATION_VERSION                                                           0x01
 #define AUTHENTICATION_CAPABILITY_GET                                                    0x01
@@ -299,6 +301,6 @@ typedef struct												ZwAuthenticationData_s
 	.authenticationData = {0x0} \
 }\
 
-int zuno_CCAuthenticationHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCAuthenticationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_AUTHENTICATION_H

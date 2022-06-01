@@ -3,7 +3,7 @@
 #include "ZWCCZWavePlusInfo.h"
 
 
-static int _report(ZUNOCommandPacket_t *cmd) {
+static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwavePlusInfoReportFrame_t		*report;
 	size_t								installerIconType;
 	size_t								userIconType;
@@ -19,7 +19,7 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	#endif
 	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(cmd->dst_zw_channel);
 	uint8_t type_index = ch_data->type -1;
-	report = (ZwZwavePlusInfoReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
@@ -42,18 +42,18 @@ static int _report(ZUNOCommandPacket_t *cmd) {
 	report->v2.installerIconType2 = installerIconType & 0xFF;
 	report->v2.userIconType1 = userIconType >> 8;
 	report->v2.userIconType2 = userIconType & 0xFF;
-	CMD_REPLY_LEN = sizeof(report->v2);
+	frame_report->packet.len = sizeof(report->v2);
 	// Use security policy as we were asked. It fixes some controllers S2 problems...
-	g_outgoing_main_packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
+	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
  
 	switch (ZW_CMD) {
 		case ZWAVEPLUS_INFO_GET:
-			rs = _report(cmd);
+			rs = _report(cmd, frame_report);
 			break ;
 		default:
 			rs = ZUNO_UNKNOWN_CMD;

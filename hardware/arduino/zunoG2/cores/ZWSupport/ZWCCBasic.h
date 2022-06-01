@@ -1,6 +1,8 @@
 #ifndef BASIC_CC_H
 #define BASIC_CC_H
 
+#include "ZWSupport.h"
+
 /* Basic command class commands */
 #define BASIC_VERSION                                                                    0x02
 #define BASIC_GET                                                                        0x02
@@ -52,5 +54,5 @@ typedef union								ZwBasicReportFrame_u {//For more convenient support, severa
 	#define ZWCC_BASIC_GETTER_1P(zuno_ch)									zuno_universalGetter1P(zuno_ch)
 #endif
 
-int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // BASIC_CC_H

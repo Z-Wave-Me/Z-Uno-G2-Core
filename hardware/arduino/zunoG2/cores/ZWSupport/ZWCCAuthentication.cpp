@@ -35,12 +35,12 @@ __WEAK uint16_t __g_zuno_authentication_data_count = 1;
 static const uint32_t __g_zuno_authentication_technology_mask = ((0x1 << AUTHENTICATION_TECHNOLOGY_TYPE_RFID_TAG) | (0x1 << AUTHENTICATION_TECHNOLOGY_TYPE_MAGNETIC_CARD));
 static const uint32_t __g_zuno_authentication_status_mask = ((0x1 << AUTHENTICATION_STATUS_AVAILABLE) | (0x1 << AUTHENTICATION_STATUS_ENABLED_GRANT_ACCESS) | (0x1 << AUTHENTICATION_STATUS_DISABLED));
 
-static int _authentication_capability_report(void) {
+static int _authentication_capability_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwAuthenticationCapabilityReportFrameStart_t						*start;
 	ZwAuthenticationCapabilityReportFrameEnd_t							*end;
 	uint32_t															len;
 
-	start = (ZwAuthenticationCapabilityReportFrameStart_t *)&CMD_REPLY_CC;
+	start = (ZwAuthenticationCapabilityReportFrameStart_t *)frame_report->packet.cmd;
 	// start->cmdClass = COMMAND_CLASS_AUTHENTICATION; //set in - fillOutgoingPacket
 	// start->cmd = AUTHENTICATION_CAPABILITY_REPORT; //set in - fillOutgoingPacket
 	_zme_memcpy(&start->supportedAuthenticationIdEntries1, (uint8_t *)&__g_zuno_authentication_id_count, sizeof(__g_zuno_authentication_id_count));
@@ -53,7 +53,7 @@ static int _authentication_capability_report(void) {
 	len = ((((sizeof(__g_zuno_authentication_status_mask) * 0x8) - __builtin_clz(__g_zuno_authentication_status_mask)) >> 0x3) + 0x1);
 	end->properties2 = len;
 	memcpy(&end->supportedFallbackStatusBitMask[0x0], (uint8_t *)&__g_zuno_authentication_status_mask, len);
-	CMD_REPLY_LEN = ((uint8_t *)end - (uint8_t *)start) + sizeof(ZwAuthenticationCapabilityReportFrameEnd_t) + len;
+	frame_report->packet.len = ((uint8_t *)end - (uint8_t *)start) + sizeof(ZwAuthenticationCapabilityReportFrameEnd_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -158,7 +158,7 @@ static void _authentication_technologies_combination_get_set(ZwAuthenticationTec
 	memcpy(&middle->variantgroup, tmp, count);
 }
 
-static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNOLOGIES_COMBINATION_GET_FRAME *packet) {
+static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNOLOGIES_COMBINATION_GET_FRAME *packet, ZUNOCommandPacketReport_t *frame_report) {
 	size_t																authenticationId;
 	ZwAuthenticationTechnologiesCombinationReportFrameStart_t			*start;
 	ZwAuthenticationTechnologiesCombinationReportFrameMiddle_t			*middle;
@@ -168,7 +168,7 @@ static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNO
 	size_t																count;
 
 
-	start = (ZwAuthenticationTechnologiesCombinationReportFrameStart_t *)&CMD_REPLY_CC;
+	start = (ZwAuthenticationTechnologiesCombinationReportFrameStart_t *)frame_report->packet.cmd;
 	// start->cmdClass = COMMAND_CLASS_AUTHENTICATION; //set in - fillOutgoingPacket
 	// start->cmd = AUTHENTICATION_TECHNOLOGIES_COMBINATION_REPORT; //set in - fillOutgoingPacket
 	authenticationId = (packet->authenticationId1 << 0x8) | packet->authenticationId2;
@@ -178,7 +178,7 @@ static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNO
 		end = (ZwAuthenticationTechnologiesCombinationReportFrameEnd_t *)(middle);
 		end->nextAuthenticationId1 = 0x0;
 		end->nextAuthenticationId2 = 0x0;
-		CMD_REPLY_LEN = (sizeof(start[0x0]) + sizeof(end[0x0]));
+		frame_report->packet.len = (sizeof(start[0x0]) + sizeof(end[0x0]));
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	lp_id = &__g_zuno_authentication_id[authenticationId - 0x1];
@@ -216,7 +216,7 @@ static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNO
 	end = (ZwAuthenticationTechnologiesCombinationReportFrameEnd_t *)middle;
 	end->nextAuthenticationId1 = authenticationId >> 0x8;
 	end->nextAuthenticationId2 = authenticationId;
-	CMD_REPLY_LEN = len;
+	frame_report->packet.len = len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -293,7 +293,7 @@ static void _authentication_date_report_set(ZwAuthenticationDataReportFrameMiddl
 	memcpy(&middle->authenticationData[0x0], tmp, count);
 }
 
-static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet) {
+static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet, ZUNOCommandPacketReport_t *frame_report) {
 	ZwAuthenticationDataReportFrameStart_t									*start;
 	ZwAuthenticationDataReportFrameEnd_t									*end;
 	ZwAuthenticationDataReportFrameMiddle_t									*middle;
@@ -302,7 +302,7 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet)
 	size_t																	len;
 	ZwAuthenticationData_t													*lp_data;
 
-	start = (ZwAuthenticationDataReportFrameStart_t *)&CMD_REPLY_CC;
+	start = (ZwAuthenticationDataReportFrameStart_t *)frame_report->packet.cmd;
 	// start->cmdClass = COMMAND_CLASS_AUTHENTICATION; //set in - fillOutgoingPacket
 	// start->cmd = AUTHENTICATION_DATA_REPORT; //set in - fillOutgoingPacket
 	authenticationDataId = (packet->authenticationDataId1 << 0x8) | packet->authenticationDataId2;
@@ -312,7 +312,7 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet)
 		end = (ZwAuthenticationDataReportFrameEnd_t *)(middle);
 		end->nextAuthenticationDataId1 = 0x0;
 		end->nextAuthenticationDataId2 = 0x0;
-		CMD_REPLY_LEN = (sizeof(start[0x0]) + sizeof(end[0x0]));
+		frame_report->packet.len = (sizeof(start[0x0]) + sizeof(end[0x0]));
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	lp_data = &__g_zuno_authentication_data[authenticationDataId - 0x1];
@@ -351,7 +351,7 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet)
 	end = (ZwAuthenticationDataReportFrameEnd_t *)middle;
 	end->nextAuthenticationDataId1 = authenticationDataId >> 0x8;
 	end->nextAuthenticationDataId2 = authenticationDataId;
-	CMD_REPLY_LEN = len;
+	frame_report->packet.len = len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -382,7 +382,7 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet)
 // 	return (tmp);
 // }
 
-static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME *packet) {
+static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME *packet, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_AUTHENTICATION_CHECKSUM_REPORT_FRAME									*report;
 	size_t																	type;
 	size_t																	properties1;
@@ -398,10 +398,10 @@ static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME 
 	ZwAuthenticationId_t													*e_id;
 	ZwAuthenticationChecksumTypeCombination_t								combination;
 
-	report = (ZW_AUTHENTICATION_CHECKSUM_REPORT_FRAME *)&CMD_REPLY_CC;
+	report = (ZW_AUTHENTICATION_CHECKSUM_REPORT_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_AUTHENTICATION; //set in - fillOutgoingPacket
 	// report->cmd = AUTHENTICATION_CHECKSUM_REPORT; //set in - fillOutgoingPacket
-	CMD_REPLY_LEN = sizeof(ZW_AUTHENTICATION_CHECKSUM_REPORT_FRAME);
+	frame_report->packet.len = sizeof(ZW_AUTHENTICATION_CHECKSUM_REPORT_FRAME);
 	properties1 = packet->properties1;
 	report->properties1 = properties1;
 	type = properties1 & AUTHENTICATION_CHECKSUM_GET_PROPERTIES1_AUTHENTICATION_TECHNOLOGY_TYPE_MASK;
@@ -467,27 +467,27 @@ static int _authentication_checksum_report(ZW_AUTHENTICATION_CHECKSUM_GET_FRAME 
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCAuthenticationHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCAuthenticationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
 		case AUTHENTICATION_CAPABILITY_GET:
-			rs = _authentication_capability_report();
+			rs = _authentication_capability_report(frame_report);
 			break ;
 		case AUTHENTICATION_TECHNOLOGIES_COMBINATION_SET:
 			rs = _authentication_technologies_combination_set((ZwAuthenticationTechnologiesCombinationSet_t *)&cmd->cmd[0x0]);
 			break ;
 		case AUTHENTICATION_TECHNOLOGIES_COMBINATION_GET:
-			rs = _authentication_technologies_combination_get((ZW_AUTHENTICATION_TECHNOLOGIES_COMBINATION_GET_FRAME *)&cmd->cmd[0x0]);
+			rs = _authentication_technologies_combination_get((ZW_AUTHENTICATION_TECHNOLOGIES_COMBINATION_GET_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		case AUTHENTICATION_DATA_SET:
 			rs = _authentication_date_set((ZwAuthenticationDataSetFrame_t *)&cmd->cmd[0x0]);
 			break ;
 		case AUTHENTICATION_DATA_GET:
-			rs = _authentication_date_report((ZW_AUTHENTICATION_DATA_GET_FRAME *)&cmd->cmd[0x0]);
+			rs = _authentication_date_report((ZW_AUTHENTICATION_DATA_GET_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		case AUTHENTICATION_CHECKSUM_GET:
-			rs = _authentication_checksum_report((ZW_AUTHENTICATION_CHECKSUM_GET_FRAME *)&cmd->cmd[0x0]);
+			rs = _authentication_checksum_report((ZW_AUTHENTICATION_CHECKSUM_GET_FRAME *)&cmd->cmd[0x0], frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

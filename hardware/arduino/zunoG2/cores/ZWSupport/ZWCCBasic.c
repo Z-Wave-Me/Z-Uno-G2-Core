@@ -66,7 +66,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 
 int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report);
 
-static int _basic_get(byte channel) {
+static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwBasicReportV2Frame_t					*report;
 	ZunoTimerBasic_t						*lp;
 	size_t									currentValue;
@@ -74,10 +74,10 @@ static int _basic_get(byte channel) {
 	size_t									duration;
 	size_t									type;
 
-	report = (ZwBasicReportV2Frame_t *)&CMD_REPLY_CC;
+	report = (ZwBasicReportV2Frame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
-	CMD_REPLY_LEN = sizeof(ZwBasicReportV2Frame_t);
+	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
 	type = ZUNO_CFG_CHANNEL(channel).type;
 	#if defined(WITH_CC_SOUND_SWITCH)
 	switch (type) {
@@ -124,12 +124,12 @@ static int _basic_get(byte channel) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t * cmd) {
+int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int										rs;
 
 	switch(ZW_CMD){
 		case BASIC_GET:
-			rs = _basic_get(channel);
+			rs = _basic_get(channel, frame_report);
 			break ;
 		case BASIC_SET:
 			rs = _basic_set(channel, (const ZwBasicSetFrame_t *)cmd->cmd);

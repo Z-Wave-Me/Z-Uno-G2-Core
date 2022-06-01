@@ -1,6 +1,8 @@
 #ifndef __SENSOR_MULTILEVEL_H__
 #define __SENSOR_MULTILEVEL_H__
 
+#include "ZWSupport.h"
+
 /* Sensor Multilevel command class commands */
 #define SENSOR_MULTILEVEL_VERSION                                                    0x0B
 #define SENSOR_MULTILEVEL_GET                                                        0x04
@@ -88,7 +90,7 @@ typedef struct												ZwSensorMultilevelSupportedSensorReportFrame_s
 	uint8_t													bitMask[];/* MSB  LSB */
 }															ZwSensorMultilevelSupportedSensorReportFrame_t;
 
-int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t * cmd);
+int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSensorMultilevelReport(byte channel, ZUNOCommandPacket_t *packet);
 
 #endif // __SENSOR_MULTILEVEL_H__

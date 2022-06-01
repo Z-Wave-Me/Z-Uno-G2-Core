@@ -38,12 +38,15 @@ void SetLastStatus (uint32_t status);
 
 #define STATUS_CODE_MASK											0x3FFF
 #define STATUS_CODE_SHIFT											0x0
+#define STATUS_CODE_EXTENDED										0x2000
 
 #define STATUS_CONSTRUCTOR(SEV, FACILITY, CODE)						((uint32_t)(((SEV << STATUS_SEV_SHIFT) & STATUS_SEV_MASK) | ((FACILITY << STATUS_FACILITY_SHIFT) & STATUS_FACILITY_MASK) | ((CODE << STATUS_CODE_SHIFT) & STATUS_CODE_MASK)))
+#define STATUS_CONSTRUCTOR_EXTENDED(SEV, FACILITY, CODE)			((uint32_t)(((SEV << STATUS_SEV_SHIFT) & STATUS_SEV_MASK) | ((FACILITY << STATUS_FACILITY_SHIFT) & STATUS_FACILITY_MASK) | (((CODE << STATUS_CODE_SHIFT) | STATUS_CODE_EXTENDED) & STATUS_CODE_MASK)))
 
 #define STATUS_FACILITY_NULL										0x0
 #define STATUS_FACILITY_DS_1307_RTC									0x1
 #define STATUS_FACILITY_SPI_FLASH									0x2
+#define STATUS_FACILITY_MOD_BUS										0x3
 
 
 /* The operation completed successfully. */
@@ -60,6 +63,18 @@ void SetLastStatus (uint32_t status);
 
 /* Can't find a suitable device. */
 #define STATUS_DEVICE_NOT_FOUND										((uint32_t)0x4)
+
+/* The wait operation timed out. */
+#define STATUS_WAIT_TIMEOUT											((uint32_t)0x5)
+
+/* Crc doesn't match. */
+#define STATUS_CRC_NOT_MATCH										((uint32_t)0x6)
+
+/* Buffer overlow. */
+#define STATUS_BUFFER_OVERFLOW										((uint32_t)0x7)
+
+/* Not enough data*/
+#define STATUS_NOT_ENOUGH_DATA										((uint32_t)0x8)
 
 #define STATUS_TMP_FOR_REPLACE										((uint32_t)0xFFFFFFFF)
 

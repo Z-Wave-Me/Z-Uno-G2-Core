@@ -65,9 +65,9 @@ size_t zuno_CCTimerTicksTable7(size_t duration) {// Get the step for dimming in 
 }
 
 void zunoSendReportHandler(uint32_t ticks);
-void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp);
-void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp);
-void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp);
+void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
+void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
+void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
 void zuno_CCSoundSwitchTimer(void);
 void zuno_CCIndicatorTimer(void);
@@ -77,7 +77,7 @@ void zuno_CCCentralSceneTimer(void);
 ZunoTimer_t g_zuno_timer;
 
 #if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
-static void _exe(void) {
+static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
 	size_t							channel;
@@ -89,17 +89,17 @@ static void _exe(void) {
 			switch (ZUNO_CFG_CHANNEL(channel - 1).type) {
 				#ifdef WITH_CC_SWITCH_BINARY
 				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-					zuno_CCSwitchBinaryTimer(lp_b);
+					zuno_CCSwitchBinaryTimer(lp_b, frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_MULTILEVEL
 				case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-					zuno_CCSwitchMultilevelTimer(lp_b);
+					zuno_CCSwitchMultilevelTimer(lp_b, frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-					zuno_CCSwitchColorTimer(lp_b);
+					zuno_CCSwitchColorTimer(lp_b, frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_DOORLOCK
@@ -118,7 +118,8 @@ static void _exe(void) {
 
 void zuno_CCTimer(uint32_t ticks) {
 	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
-	_exe();
+	ZUNOCommandPacketReport_t frame_report;
+	_exe(&frame_report);
 	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)
 	if((ticks & 0x7) == 0) // Once in ~80ms 

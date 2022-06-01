@@ -2,6 +2,7 @@
 #define ZWCC_ASSOCIATION_H
 
 #include "Arduino.h"
+#include "ZWSupport.h"
 
 /* Association command class commands */
 #define ASSOCIATION_VERSION                                                              0x02
@@ -32,9 +33,9 @@
 #define ASSOCIATION_GROUP_COMMAND_LIST_GET                                               0x05
 #define ASSOCIATION_GROUP_COMMAND_LIST_REPORT                                            0x06
 
-int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd);
-int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd);
-int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 
 /* Device Reset Locally command class commands */

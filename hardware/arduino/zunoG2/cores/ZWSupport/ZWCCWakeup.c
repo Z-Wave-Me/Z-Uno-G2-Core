@@ -106,10 +106,10 @@ void zuno_CCWakeup_OnDefault(){
 	__zunoSetupWUPTimeout();
 }
 
-static int _up_interval_capabilities_report(void) {
+static int _up_interval_capabilities_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwaveWakeUpIntervalCapabilitiesReportFrame_t		*report;
 
-	report = (ZwZwaveWakeUpIntervalCapabilitiesReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwZwaveWakeUpIntervalCapabilitiesReportFrame_t *)frame_report->packet.cmd;
 	// report->v3.cmdClass = COMMAND_CLASS_WAKE_UP; //set in - fillOutgoingPacket
 	// report->v3.cmd = WAKE_UP_INTERVAL_CAPABILITIES_REPORT; //set in - fillOutgoingPacket
 	report->v3.minimumWakeUpIntervalSeconds1 = (WAKEUP_INTERVAL_MIN >> 16) & 0xFF;
@@ -125,17 +125,17 @@ static int _up_interval_capabilities_report(void) {
 	report->v3.wakeUpIntervalStepSeconds2 = (WAKEUP_INTERVAL_STEP >> 8) & 0xFF;
 	report->v3.wakeUpIntervalStepSeconds3 = (WAKEUP_INTERVAL_STEP & 0xFF);
 	report->v3.properties1 = 0x0;
-	CMD_REPLY_LEN = sizeof(report->v3);
+	frame_report->packet.len = sizeof(report->v3);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _up_interval_get(void) {
+static int _up_interval_get(ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwaveWakeUpIntervalReportFrame_t		*report;
 	ZunoWakeUpSave_t						save;
 	uint32_t								wakeup_data;
 
 	zunoEEPROMRead(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (uint8_t *)&save);
-	report = (ZwZwaveWakeUpIntervalReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwZwaveWakeUpIntervalReportFrame_t *)frame_report->packet.cmd;
 	// report->v3.cmdClass = COMMAND_CLASS_WAKE_UP; //set in - fillOutgoingPacket
 	// report->v3.cmd = WAKE_UP_INTERVAL_REPORT; //set in - fillOutgoingPacket
 	wakeup_data = save.wakeUpIntervalStepSeconds;
@@ -143,7 +143,7 @@ static int _up_interval_get(void) {
 	report->v3.seconds2 = (wakeup_data >> 8) & 0xFF;
 	report->v3.seconds3 = (wakeup_data & 0xFF);
 	report->v3.nodeid = save.nodeId;
-	CMD_REPLY_LEN = sizeof(report->v3);
+	frame_report->packet.len = sizeof(report->v3);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -163,15 +163,15 @@ static int _up_interval_set(const ZwZwaveWakeUpIntervalSetFrame_t *cmd) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd) {
+int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch(ZW_CMD) {
 		case WAKE_UP_INTERVAL_CAPABILITIES_GET:
-			rs = _up_interval_capabilities_report();
+			rs = _up_interval_capabilities_report(frame_report);
 			break ;
 		case WAKE_UP_INTERVAL_GET:
-			rs = _up_interval_get();
+			rs = _up_interval_get(frame_report);
 			break ;
 		case WAKE_UP_INTERVAL_SET:
 			rs = _up_interval_set((const ZwZwaveWakeUpIntervalSetFrame_t *)cmd->cmd);

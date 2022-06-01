@@ -1,6 +1,7 @@
 #ifndef ZWCC_SUPER_VISION_H
 #define ZWCC_SUPER_VISION_H
 
+#include "ZWSupport.h"
 #include "ZWCCTimer.h"
 
 typedef struct zuno_cc_supervision_data_s{
@@ -54,9 +55,9 @@ typedef struct								ZwCSuperVisionReportFrame_s
 	uint8_t									duration;/**/
 }											ZwCSuperVisionReportFrame_t;
 
-uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd);
-uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer);
-int zuno_CCSupervisionApp(int result);
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report);
 node_id_t zunoGetSupervisionHost();
 
 #endif//ZWCC_SUPER_VISION_H

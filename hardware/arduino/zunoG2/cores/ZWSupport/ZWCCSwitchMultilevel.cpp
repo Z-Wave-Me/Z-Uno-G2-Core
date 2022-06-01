@@ -34,7 +34,7 @@ int32_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {
 	return (value);
 }
 
-static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare the structure for dimming
+static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
 	ZwSwitchMultilevelStartLevelChangeFrame_t			*pk;
 	ZunoTimerBasic_t									*lp;
 	uint32_t											step;
@@ -97,7 +97,7 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd) {// Prepare t
 		lp->channel = channel + 1;
 	}
 	zunoExitCritical();
-	zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp);
+	zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp, frame_report);
 }
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
@@ -135,7 +135,7 @@ int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
+static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	size_t							value;
 	size_t							tempos;
 	size_t							duration;
@@ -185,7 +185,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 				lp->ticks = ticks;
 				lp->targetValue = value;
 				zunoExitCritical();
-				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v4.dimmingDuration, lp);
+				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v4.dimmingDuration, lp, frame_report);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
@@ -200,15 +200,15 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _supported(void) {
+static int _supported(ZUNOCommandPacketReport_t *frame_report) {
 	ZwSwitchMultilevelSupportedReportFrame_t		*report;
 
-	report = (ZwSwitchMultilevelSupportedReportFrame_t *)&CMD_REPLY_CC;
+	report = (ZwSwitchMultilevelSupportedReportFrame_t *)frame_report->packet.cmd;
 	report->cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	report->cmd = SWITCH_MULTILEVEL_SUPPORTED_REPORT;
 	report->properties1 = 0x2;/* A supporting device MUST implement the Primary Switch type. The Primary Switch Type SHOULD be 0x02 (Up/Down).The Primary Switch Type MUST NOT be 0x00 (Undefined). */
 	report->properties2 = 0x0;
-	CMD_REPLY_LEN = sizeof(ZwSwitchMultilevelSupportedReportFrame_t);
+	frame_report->packet.len = sizeof(ZwSwitchMultilevelSupportedReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -222,26 +222,26 @@ static int _stop_level(uint8_t channel) {// Stop Dimming
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
+int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int									rs;
 
 	switch(ZW_CMD) {
 		case SWITCH_MULTILEVEL_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCSwitchMultilevelReport(channel, &g_outgoing_main_packet);
+			rs = zuno_CCSwitchMultilevelReport(channel, &frame_report->packet);
 			break;
 		case SWITCH_MULTILEVEL_SET:
-			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel);
+			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel, frame_report);
 			break ;
 		case SWITCH_MULTILEVEL_START_LEVEL_CHANGE:
-			_start_level(channel, cmd);
+			_start_level(channel, cmd, frame_report);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE:
 			rs = _stop_level(channel);
 			break ;
 		case SWITCH_MULTILEVEL_SUPPORTED_GET:
-			rs = _supported();
+			rs = _supported(frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;
@@ -250,7 +250,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd) {
 	return rs;
 }
 
-void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp) {
+void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report) {
 	size_t									channel;
 	size_t									value;
 	size_t									step;
@@ -281,7 +281,7 @@ void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp) {
 			lp->channel = 0x0;
 			if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
 				__cc_supervision._unpacked = true;
-				zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0);
+				zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 			}
 		}
 	}

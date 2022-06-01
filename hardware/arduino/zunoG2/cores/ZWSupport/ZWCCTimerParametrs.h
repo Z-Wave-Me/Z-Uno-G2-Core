@@ -1,6 +1,8 @@
 #ifndef ZWCC_TIMER_PARAMETERS_H
 #define ZWCC_TIMER_PARAMETERS_H
 
+#include "ZWSupport.h"
+
 /* Time Parameters command class commands */
 #define TIME_PARAMETERS_VERSION                                                          0x01
 #define TIME_PARAMETERS_GET                                                              0x02
@@ -38,7 +40,7 @@ typedef struct									ZwTimerParametrsSetFrame_s
 	ZwTimerParametrs_t							time;
 }												ZwTimerParametrsSetFrame_t;
 
-int zuno_CCTimerParametrsHandler(ZUNOCommandPacket_t *cmd);
+int zuno_CCTimerParametrsHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 size_t zuno_CCTimerParametrsGet(const ZwTimerParametrs_t *packet, time_t *timeUnix);
 void zuno_CCTimerParametrsSet(ZwTimerParametrs_t *packet, time_t time);
 

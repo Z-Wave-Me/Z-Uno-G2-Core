@@ -1014,7 +1014,7 @@ bool zunoStartDeviceConfiguration() {
 	memset(g_zuno_sys->zwave_cfg, 0, sizeof(ZUNODeviceConfiguation_t));
 	g_zuno_sys->zwave_cfg->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zwave_cfg->product_id = DEFAULT_PRODUCT_ID;
-	// g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
+	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
 	return  true;
 }
 byte getMaxChannelTypes() {

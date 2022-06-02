@@ -52,7 +52,8 @@
 		"ReportsHandler_SwitchBinary":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"SwitchBinary"},
 		"ReportsHandler_SwitchMultilevel":   {"type":"ZUNO_HANDLER_REPORT","sub_type":"SwitchMultilevel"},
 		"ReportsHandler_SensorBinary":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"SensorBinary"},
-		"ReportsHandler_Meter":              {"type":"ZUNO_HANDLER_REPORT","sub_type":"Meter"},
+		"ReportsHandler_SensorMultilevel":   {"type":"ZUNO_HANDLER_REPORT","sub_type":"SensorMultilevel"},
+        "ReportsHandler_Meter":              {"type":"ZUNO_HANDLER_REPORT","sub_type":"Meter"},
 		"ReportsHandler_Notification":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"Notification"}
     },
     "associations":[

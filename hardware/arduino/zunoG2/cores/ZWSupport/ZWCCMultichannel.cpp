@@ -140,7 +140,8 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *fra
 
 	zuno_initMchData();
 	// We have only one channel => there is no need to expose multichannel
-	if(!g_mch_aux_data.num_channels)
+	if((!g_mch_aux_data.num_channels)  && 
+		(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP))
 		return (ZUNO_COMMAND_BLOCKED);
 	/// Mutichannel is always secure command class and availiably ONLY on the highest S2 level
 	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))

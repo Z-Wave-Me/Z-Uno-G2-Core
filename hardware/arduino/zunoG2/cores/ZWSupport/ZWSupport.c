@@ -551,6 +551,56 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 	return (false);
 }
 
+static bool _zmeIsS2LevelGreater(uint8_t l1, uint8_t l2){
+    if(l1 == SECURITY_KEY_S0){
+        if(l2 == SECURITY_KEY_NONE)
+          return true;
+        return false;
+    }
+    if(l2 == SECURITY_KEY_S0){
+        if(l1 == SECURITY_KEY_NONE)
+          return false;
+        return true;
+    }
+    return l1 > l2;
+}
+
+static bool _isCCinList(uint8_t cc, uint8_t * cmds, uint8_t count){
+    for(int i=0;i<count;i++){
+      if(cmds[i] == cc)
+        return true;
+    }
+    return false;
+
+}
+
+static uint8_t zuno_cmdClassListNSIS_Def[] =
+{
+  COMMAND_CLASS_ZWAVEPLUS_INFO,
+  COMMAND_CLASS_TRANSPORT_SERVICE,
+  COMMAND_CLASS_SECURITY,
+  COMMAND_CLASS_SECURITY_2,
+  COMMAND_CLASS_SUPERVISION
+};
+
+static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
+	uint8_t								s2level;
+	uint8_t								rx_s2level;
+
+	s2level = zunoSecurityStatus();
+	if(s2level == SECURITY_KEY_NONE)// Включены без Security - нет смысла фильтровать
+		return (false);
+	if(s2level == SECURITY_KEY_S0)
+		if(ZW_CMD_CLASS == COMMAND_CLASS_MANUFACTURER_SPECIFIC)// Для обратной совместимости
+			return (false);
+	rx_s2level = cmd->zw_rx_secure_opts;
+	if(s2level == rx_s2level)// Запрос пришел на высшем уровне безопасности
+		return (false);
+	if (_zmeIsS2LevelGreater(s2level, rx_s2level))// Запрос пришел с тем, что меньше нашего уровня безопасности
+		if (_isCCinList(ZW_CMD_CLASS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
+			return (false);
+	return (true);
+}
 
 // Main command handler for incoming z-wave commands
 int __zuno_CommandHandler_Out(int rs){
@@ -559,9 +609,12 @@ int __zuno_CommandHandler_Out(int rs){
 }
 int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	ZUNOCommandPacketReport_t							frame_report;
+	int													result;
 
-	int result = ZUNO_UNKNOWN_CMD;
-	
+	zunoReportHandler(cmd);
+	if (_zunoS2PkgFilter(cmd) == true)
+		return (ZUNO_COMMAND_BLOCKED);
+	result = ZUNO_UNKNOWN_CMD;
 	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;
 	g_rcv_context.bBroadcast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0;
 	g_rcv_context.source_node_id = cmd->src_node;
@@ -603,7 +656,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	#endif
 	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
-		zunoReportHandler(cmd);
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
 			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		// Check if command fits to any existing channel

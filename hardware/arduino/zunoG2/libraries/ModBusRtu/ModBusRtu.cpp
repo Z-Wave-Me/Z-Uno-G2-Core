@@ -223,16 +223,17 @@ bool ModBusRtuClass::_writeMultipleRegisters(uint8_t addr, uint16_t reg, uint8_t
 	send.len = 0x2 * count;
 	dest = &send.data[0x0];
 	data = (const uint8_t *)src;
+	count = 2 * count;
 	if (bMemcpy == false) {
 		i = 0x0;
 		while (i < count) {
-			dest[i] = data[0x1];
-			dest[i + 0x1] = data[0x0];
+			dest[i] = data[i + 0x1];
+			dest[i + 0x1] = data[i + 0x0];
 			i = i + 0x2;
 		}
 	}
 	else
-		memcpy(dest, data, 2 * count);
+		memcpy(dest, data, count);
 	return (this->_sendRtu(&buffer[0x0], sizeof(send) + 0x2 + send.len, sizeof(receive)));
 }
 

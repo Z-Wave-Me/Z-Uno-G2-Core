@@ -47,6 +47,7 @@ void SetLastStatus (uint32_t status);
 #define STATUS_FACILITY_DS_1307_RTC									0x1
 #define STATUS_FACILITY_SPI_FLASH									0x2
 #define STATUS_FACILITY_MOD_BUS										0x3
+#define STATUS_FACILITY_PN160										0x4
 
 
 /* The operation completed successfully. */
@@ -73,8 +74,11 @@ void SetLastStatus (uint32_t status);
 /* Buffer overlow. */
 #define STATUS_BUFFER_OVERFLOW										((uint32_t)0x7)
 
-/* Not enough data*/
+/* Not enough data */
 #define STATUS_NOT_ENOUGH_DATA										((uint32_t)0x8)
+
+/* Not enough memory */
+#define STATUS_NOT_ENOUGH_MEMORY									((uint32_t)0x9)
 
 #define STATUS_TMP_FOR_REPLACE										((uint32_t)0xFFFFFFFF)
 

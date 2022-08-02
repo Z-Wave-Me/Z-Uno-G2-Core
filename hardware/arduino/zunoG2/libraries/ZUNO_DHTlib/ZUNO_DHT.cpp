@@ -34,10 +34,12 @@ typedef struct							ZunoDhtTypeConfig_s
 typedef struct							ZunoDhtTypeInit_s
 {
 	const ZunoDhtTypeConfig_t			*config;
-	DHT									*dht;
 }										ZunoDhtTypeInit_t;
 
 static const ZunoDhtTypeConfig_t		*g_config = 0;
+
+ZunoDhtList_t *DHT::_list = NULL;
+uint8_t DHT::_freq = 0x0;
 
 const ZunoDhtTypeConfig_t gconfigTable[] = {
 	{
@@ -66,14 +68,18 @@ ZunoError_t DHT::begin(void) {
 	ZunoError_t							ret;
 	ZunoDhtTypeInit_t					init;
 
-	init.dht = this;
+	if (this->_findList() != NULL)
+		return (ZunoErrorOk);
 	gconfigTable_b = &gconfigTable[0];
 	gconfigTable_e = &gconfigTable_b[(sizeof(gconfigTable) / sizeof(ZunoDhtTypeConfig_t))];
 	while (gconfigTable_b < gconfigTable_e) {
 		init.config = gconfigTable_b;
 		ret = zunoSyncOpen(gconfigTable_b->lpLock, SyncMasterDht, this->_init, (size_t)&init, &this->_lpKey);
-		if (ret == ZunoErrorOk)
+		if (ret == ZunoErrorOk) {
+			if (this->_addList() == false)
+				ret = ZunoErrorMemory;
 			break ;
+		}
 		else if (ret != ZunoErrorResourceAlready)
 			return (ret);
 		gconfigTable_b++;
@@ -84,8 +90,14 @@ ZunoError_t DHT::begin(void) {
 
 void DHT::end(void) {
 	const ZunoDhtTypeConfig_t			*config;
+	ZunoDhtList_t						*list;
 
 	if ((config = g_config) == 0)
+		return ;
+	if ((list = this->_findList()) == NULL)
+		return ;
+	this->_cutList(list);
+	if (DHT::_list != NULL)
 		return ;
 	zunoSyncClose(config->lpLock, SyncMasterDht, this->_deInit, (size_t)config, &this->_lpKey);
 }
@@ -183,6 +195,51 @@ float DHT::readHumidity(uint8_t bForce) {
 }
 
 /* Private Methods */
+ZunoDhtList_t *DHT::_findList(void) {
+	ZunoDhtList_t	*list;
+
+	list = this->_list;
+	while (list != NULL) {
+		if (list->dht == this)
+			break ;
+		list = list->next;
+	}
+	return (list);
+}
+
+bool DHT::_addList(void) {
+	ZunoDhtList_t		*list_next;
+	ZunoDhtList_t		*list_tmp;
+	ZunoDhtList_t		*list;
+
+	if ((list = (ZunoDhtList_t *)malloc(sizeof(list[0x0]))) == NULL)
+		return (false);
+	list->next = NULL;
+	list->dht = this;
+	if ((list_next = this->_list) != 0) {
+		while ((list_tmp = list_next->next) != 0)
+			list_next = list_tmp;
+		list_next->next = list;
+	}
+	else
+		this->_list = list;
+	return (true);
+}
+
+void DHT::_cutList(ZunoDhtList_t *list) {
+	ZunoDhtList_t		*list_prev;
+	ZunoDhtList_t		*list_tmp;
+
+	list_prev = this->_list;
+	if (list == list_prev)
+		this->_list = list->next;
+	else {
+		while ((list_tmp = list_prev->next) != list)
+			list_prev = list_tmp;
+		list_prev->next = list->next;
+	}
+}
+
 inline ZunoError_t DHT::_read(uint8_t bForce) {
 	ZunoError_t								ret;
 	const ZunoDhtTypeConfig_t				*config;
@@ -216,7 +273,6 @@ ZunoError_t DHT::_init(size_t param) {
 	TIMER_Init_TypeDef					init;
 	ZunoDhtTypeInit_t					*initDht;
 	TIMER_InitCC_TypeDef				initCC;
-	DHT									*dht;
 	size_t								freq;
 
 	initDht = (ZunoDhtTypeInit_t *)param;
@@ -237,9 +293,7 @@ ZunoError_t DHT::_init(size_t param) {
 	TIMER_InitCC(timer, DHT_CHANNEL, &initCC);
 	freq = CMU_ClockFreqGet(config->bus_clock) / 1000000;
 	TIMER_TopSet(timer, freq * DHT_TOP_FREQ);
-	dht = initDht->dht;
-	dht->_freq = freq;
-	timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(dht->_pin, DHT_CHANNEL);
+	DHT::_freq = freq;
 	return (ZunoErrorOk);
 }
 
@@ -289,7 +343,10 @@ inline ZunoError_t DHT::_readBody(const void *lpConfig, uint8_t bForce) {
 	ssize_t									channel;
 	LdmaClassTransferSingle_t				array;
 
+	if (this->_findList() == NULL)
+		return (ZunoErrorNotInit);
 	config = (ZunoDhtTypeConfig_t *)lpConfig;
+	config->timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(this->_pin, DHT_CHANNEL);
 	currenttime = millis();
 	if (bForce == false && ((currenttime - this->_lastreadtime) < DHT_MIN_INTERVAL)) {// Чтобы не опрашивать сенсор слишком часто
 		if ((ret = this->_result) == ZunoErrorOk || ret == ZunoErrorDhtResultPrevisous)

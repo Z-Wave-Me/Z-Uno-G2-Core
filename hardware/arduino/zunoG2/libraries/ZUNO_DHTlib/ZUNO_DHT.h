@@ -31,6 +31,14 @@ typedef union			DHT_TYPE_VALUE_u
 	};
 }						DHT_TYPE_VALUE_t;
 
+class DHT;
+
+typedef struct							ZunoDhtList_s
+{
+	struct ZunoDhtList_s				*next;
+	DHT									*dht;
+}										ZunoDhtList_t;
+
 class DHT {
 	public:
 		DHT(uint8_t pin, DHT_TYPE_SENSORS_t type = DHT22);
@@ -51,10 +59,15 @@ class DHT {
 			ptr[4] = _crc;
 		};
 	private:
+		static ZunoDhtList_t					*_list;
+		static uint8_t							_freq;
 		static ZunoError_t						_init(size_t param);
 		static ZunoError_t						_deInit(size_t param);
 		ZunoError_t								_read(uint8_t bForce);
 		inline ZunoError_t						_readBody(const void *lpConfig, uint8_t bForce);
+		inline ZunoDhtList_t					*_findList(void);
+		inline bool								_addList(void);
+		inline void								_cutList(ZunoDhtList_t *list);
 		bool                             		_find_startmarker(uint16_t * &b, uint8_t max_size);
 		bool                             		_extract_value(uint16_t * &b, uint32_t &value, uint8_t bits=32);
 		
@@ -64,7 +77,6 @@ class DHT {
 		uint8_t									_pin;
 		DHT_TYPE_SENSORS_t						_type;
 		uint8_t									_lpKey;
-		uint8_t									_freq;
 		ZunoError_t								_result;//last resultat
 };
 

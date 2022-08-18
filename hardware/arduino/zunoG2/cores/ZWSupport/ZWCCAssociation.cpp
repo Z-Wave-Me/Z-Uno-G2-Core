@@ -179,16 +179,12 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 	uint8_t									groupIndex;
 	uint8_t									groupIndex_end;
 	ZwAssociationGroupInfoReportFrame_t		*lp;
+	size_t									count;
 
 	lp = (ZwAssociationGroupInfoReportFrame_t *)frame_report->packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
 	// lp->cmd = ASSOCIATION_GROUP_INFO_REPORT; set in - fillOutgoingPacket
-	lp->properties1 = 1;
-	lp->variantgroup.mode = 0;
-	lp->variantgroup.reserved = 0;
-	lp->variantgroup.eventCode1 = 0;
-	lp->variantgroup.eventCode2 = 0;
-	frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t);
+	lp->properties1 = 0x0;
 	if ((in->properties1 & (1 << 6)) != 0) {
 		lp->properties1 |= (1 << 7);//If List Mode is 1, a sending node is advertising the properties of all association groups. The sending node MAY return several Reports.
 		groupIndex = ZUNO_LIFELINE_GRP;
@@ -205,21 +201,37 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 		else
 			groupIndex_end = groupIndex;
 	}
+	count = 0x0;
 	while (groupIndex <= groupIndex_end) {
 		switch (groupIndex) {
-			case 1:
-				lp->variantgroup.groupingIdentifier = ZUNO_LIFELINE_GRP;
-				lp->variantgroup.profile1 = 0;
-				lp->variantgroup.profile2 = 1;
+			case ZUNO_LIFELINE_GRP:
+				lp->variantgroup[count].groupingIdentifier = ZUNO_LIFELINE_GRP;
+				lp->variantgroup[count].profile1 = 0;
+				lp->variantgroup[count].profile2 = 1;
 				break ;
 			default:
-				lp->variantgroup.groupingIdentifier = groupIndex;
-				lp->variantgroup.profile1 = 0x20;
-				lp->variantgroup.profile2 = ZUNO_CFG_ASSOCIATION(groupIndex - 2).type;
+				lp->variantgroup[count].groupingIdentifier = groupIndex;
+				lp->variantgroup[count].profile1 = 0x20;
+				lp->variantgroup[count].profile2 = ZUNO_CFG_ASSOCIATION(groupIndex - 2).type;
 				break ;
 		}
-		zunoSendZWPackage(&frame_report->packet);
+		lp->variantgroup[count].mode = 0x0;
+		lp->variantgroup[count].reserved = 0x0;
+		lp->variantgroup[count].eventCode1 = 0x0;
+		lp->variantgroup[count].eventCode2 = 0x0;
+		count++;
 		groupIndex++;
+		if (count == ((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(lp[0x0])) / sizeof(lp->variantgroup[0x0]))) {
+			lp->properties1 = (lp->properties1 & (~0x3F) ) | count;
+			frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
+			zunoSendZWPackage(&frame_report->packet);
+			count = 0x0;
+		}
+	}
+	if (count != 0x0) {
+		lp->properties1 = (lp->properties1 & (~0x3F) ) | count;
+		frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
+		zunoSendZWPackage(&frame_report->packet);
 	}
 	return (ZUNO_COMMAND_PROCESSED);
 }

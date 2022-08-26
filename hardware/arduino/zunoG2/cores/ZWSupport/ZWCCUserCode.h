@@ -411,5 +411,6 @@ typedef struct									ZwUserCodeMasterFlash_s
 
 int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len);
+uint16_t zuno_CCUserCodeCount(void);
 
 #endif// ZWCC_TIMER_PARAMETERS_H

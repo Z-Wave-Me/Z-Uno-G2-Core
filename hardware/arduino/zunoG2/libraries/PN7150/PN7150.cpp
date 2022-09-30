@@ -777,6 +777,8 @@ PN7150ClassStatus_t PN7150Class::discovery(void (*userFunc)(void)) {
 		return (ret);
 	if (attachInterrupt(this->_irq, userFunc, RISING) != ZunoErrorOk)
 		return (PN7150ClassStatusIrq);
+	if (digitalRead(this->_irq) == HIGH)
+		userFunc();
 	return (PN7150ClassStatusOk);
 }
 

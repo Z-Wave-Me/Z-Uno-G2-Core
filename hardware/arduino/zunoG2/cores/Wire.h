@@ -4,7 +4,9 @@
 
 #define Wire				Wire0
 
-#define WIRE_BUFFER_LENGTH				(32)
+#ifndef WIRE_BUFFER_LENGTH
+	#define WIRE_BUFFER_LENGTH				(32)
+#endif
 
 #define I2C_ADDR_TIMEOUT_US              2000
 #define I2C_ADDR_TIMEOUT_US_DIV          10

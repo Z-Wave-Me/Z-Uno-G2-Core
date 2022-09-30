@@ -551,3 +551,19 @@ uint8_t zuno_CCUserCodeAccess(uint8_t *code, uint8_t len) {
 	}
 	return (false);
 }
+
+uint16_t zuno_CCUserCodeCount(void) {
+	const ZwUserCodeParametr_t						*b;
+	const ZwUserCodeParametr_t						*e;
+	uint16_t										count;
+
+	b = __g_zuno_user_code_user_array_get_function();
+	e = &b[__g_zuno_user_code_param_count];
+	count = 0x0;
+	while (b < e) {
+		if (b->userIdStatus != USER_CODE_STATUS_AVAILABLE)
+			count++;
+		b++;
+	}
+	return (count);
+}

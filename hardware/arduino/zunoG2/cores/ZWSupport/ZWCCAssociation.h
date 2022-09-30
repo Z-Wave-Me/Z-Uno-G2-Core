@@ -122,7 +122,7 @@ typedef struct								ZwAssociationGroupInfoReportFrame_s
 	uint8_t									cmdClass;/* The command class */
 	uint8_t									cmd;/* The command */
 	uint8_t									properties1;/* masked byte */
-	ZwAssociationGroupInfoReportVg_t		variantgroup;/**/
+	ZwAssociationGroupInfoReportVg_t		variantgroup[];/**/
 }											ZwAssociationGroupInfoReportFrame_t;
 
 /************************************************************/

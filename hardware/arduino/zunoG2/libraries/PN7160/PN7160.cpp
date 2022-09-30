@@ -750,6 +750,8 @@ bool PN7160Class::discovery(void (*userFunc)(void)) {
 		return (false);
 	if (attachInterrupt(this->_irq, userFunc, RISING) != ZunoErrorOk)
 		return (this->_lastStatus(STATUS_TMP_FOR_REPLACE, false));
+	if (digitalRead(this->_irq) == HIGH)
+		userFunc();
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 

@@ -134,8 +134,8 @@ const PinDef_t ZUNO_PIN_DEFS[] = {
     {3, 12},//10 - PD12 - 10
     {3, 14},//11 - PD14 - 11
     {3, 15},//12 - PD15 - 12
-    {0, 0},//13 - PA0 - PWM1 and ARDURINO LED
-    {0, 1},//14 - PA1 - PWM2
+    {3, 11},//13 - PA0 - PWM1 and ARDURINO LED
+    {3, 12},//14 - PA1 - PWM2
     {0, 2},//15 - PA2 - PWM3
     {0, 3},//16 - PA3 - PWM4
     {0, 4},//17 - PA4 - 17
@@ -143,13 +143,13 @@ const PinDef_t ZUNO_PIN_DEFS[] = {
     {1, 12},//19 - PB12 - 19 
     {1, 11},//20 - PB11 - 20 
     {2, 6},//21 - PC6 - 21
-    {0, 0},//22 - PC7 - 22
+    {0, 5},//22 - PC7 - 22
     {5, 7},//23 - PF7 - BTN
     {2, 7},//24 - PD13 - TX0
     {2, 11},//25 - PC11 - RX0
     // DO NOT USE !!!
-    {0, 1},//26 - PA5 - USB Serial rx
-    {0, 0},//27 - PF3 - USB Serial tx
+    {0, 1},//26 - PA1 - USB Serial rx
+    {0, 0},//27 - PA0 - USB Serial tx
     {5, 4},//28 - PB15 - green
     {5, 5}//29 - PB14 - red
 };

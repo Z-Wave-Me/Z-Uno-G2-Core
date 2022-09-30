@@ -72,7 +72,7 @@
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
         },
@@ -86,7 +86,7 @@
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE", "CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
         },
@@ -142,7 +142,7 @@
             "ccs":[
                 {"name":"COMMAND_CLASS_DOOR_LOCK","version":"DOOR_LOCK_VERSION"}
             ],
-            "flags":["0"],
+            "flags":["CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":["S2_ENTRY_CONTROL"],
             "cluster_rule":"${type}"
         },
@@ -153,7 +153,7 @@
             "specific_type":"SPECIFIC_TYPE_VALVE_OPEN_CLOSE",
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
@@ -167,7 +167,7 @@
             "specific_type":"SPECIFIC_TYPE_SIREN",
             "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
@@ -198,7 +198,7 @@
             "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
         },
@@ -224,7 +224,7 @@
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_COLOR","version":"SWITCH_COLOR_VERSION"},

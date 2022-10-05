@@ -331,7 +331,7 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPac
 			#endif
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
-				result = zuno_CCTimerParametrsHandler(cmd, &frame_report);
+				result = zuno_CCTimerParametrsHandler(cmd, frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_AUTHENTICATION

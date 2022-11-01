@@ -253,7 +253,7 @@ static void _fillOutgoingPacket(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketRepor
 }
 
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) {
-	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
+	fillOutgoingRawPacket(&frame->packet, frame->data, ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
 }
 
 #ifdef LOGGING_UART
@@ -1397,7 +1397,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
 			node_id_t					node;
-
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
 			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
 			zunoSendZWPackage(&frame.packet);
@@ -1456,4 +1455,42 @@ int _zunoTransposeSecurityLevel(uint8_t sec) {
 			return sec;
 	}
 	return sec;
+}
+static uint8_t DEPRECATED_RF_EVENTS[] = {
+											ZUNO_SYS_EVENT_START, 
+											ZUNO_SYS_EVENT_GOSLEEP,
+											ZUNO_SYS_EVENT_QUICKWAKEUP,
+											ZUNO_SYS_EVENT_EEPROMRESET,
+											ZUNO_SYS_EVENT_LEARNSTARTED,
+											ZUNO_SYS_EVENT_SLEEP_MODEEXC,
+											ZUNO_SYS_EVENT_QUEUE_OVERLOAD,
+											ZUNO_SYS_EVENT_INVALID_TX_REQUEST
+
+										}; 
+void zunoRFLogger(ZUNOSysEvent_t * ev){
+	int i;
+	ZUNOCommandPacketReport_t			frame;
+	if((g_zuno_sys->cfg_flags & ZUNO_CFGFILE_FLAG_RFLOG) == 0)
+		return; // RF logging switched off
+	if(zunoNID() == 0)
+        return; // Z-Uno is not in network
+	// Filter some events to avoid deadlocks
+	for(i=0;i<sizeof(DEPRECATED_RF_EVENTS);i++)
+		if(ev->event == DEPRECATED_RF_EVENTS[i])
+			return;
+	fillOutgoingReportPacketAsync(&frame, 0);
+    frame.packet.cmd[0] = 0x72;
+    frame.packet.cmd[1] = 0x05 + 0x10;
+	frame.packet.len = 2 + 13;
+    uint8_t * p_data  = &frame.packet.cmd[2];
+    uint32_t systime_data  = millis();
+    p_data++;
+	_zme_memcpy(p_data, (uint8_t*)&systime_data, sizeof(systime_data));
+	p_data += sizeof(systime_data);
+    *p_data = ev->event;
+	p_data++;
+	_zme_memcpy(p_data, (uint8_t*)&ev->params[0], sizeof(ev->params[0]));
+	p_data += sizeof(ev->params[0]);
+	_zme_memcpy(p_data, (uint8_t*)&ev->params[1], sizeof(ev->params[1]));
+	zunoSendZWPackage(&frame.packet);
 }

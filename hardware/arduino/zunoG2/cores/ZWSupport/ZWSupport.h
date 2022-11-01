@@ -143,6 +143,7 @@ byte getMaxChannelTypes();
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void ZWCCSetup();
+void zunoRFLogger(ZUNOSysEvent_t * ev);
 
 bool _zunoHasPendingReports();
 void _zunoMarkChannelRequested(uint8_t ch);

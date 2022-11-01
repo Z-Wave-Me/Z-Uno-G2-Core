@@ -548,7 +548,7 @@ void * zunoJumpTable(int vec, void * data) {
                 LOGGING_UART.print(" ");
                 LOGGING_UART.println(evnt->params[1], HEX);
                 #endif
-                (void)evnt;
+                zunoRFLogger(evnt);
             }
             break;
        

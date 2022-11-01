@@ -1285,11 +1285,11 @@ bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
 	ZUNOCommandPacketReport_t									frame;
 
-	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	// Check if device is included to network
 	if(zunoNID() == 0)
         return; // it doesn't => go away
 	#ifdef WITH_CC_BATTERY
+	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	if(__zunoDispatchPendingBatteryReport()){
 		if (zunoSendBatteryReportHandler() == true) {
 			if((--max_report_count) == 0)
@@ -1475,7 +1475,7 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 	if(zunoNID() == 0)
         return; // Z-Uno is not in network
 	// Filter some events to avoid deadlocks
-	for(i=0;i<sizeof(DEPRECATED_RF_EVENTS);i++)
+	for(i=0;i<(int)sizeof(DEPRECATED_RF_EVENTS);i++)
 		if(ev->event == DEPRECATED_RF_EVENTS[i])
 			return;
 	fillOutgoingReportPacketAsync(&frame, 0);

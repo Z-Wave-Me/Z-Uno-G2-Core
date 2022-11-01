@@ -186,6 +186,12 @@ typedef struct ZUNOSleepData_s{
     bool     indicator_latch:1;
 }ZUNOSleepData_t;
 
+typedef struct ZUnoAssocNode_s{
+    uint16_t   dest_nodeid;
+    uint8_t    dest_channel;
+    uint8_t    security_level;
+}ZUnoAssocNode_t;
+
 extern ZUNOSleepData_t g_sleep_data;
 
 #endif // __ZUNO_SYS_TYPES__

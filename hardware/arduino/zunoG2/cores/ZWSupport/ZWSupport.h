@@ -505,6 +505,10 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define NEXT_ML_REPORTDELAY 3000UL
 #endif
 
+#define QUEUE_CHANNEL_SYNC 0x00
+#define QUEUE_CHANNEL_CONTROL 0x01
+#define QUEUE_CHANNEL_LLREPORT 0x02
+
 typedef struct ZUnoDevTypeDef_s{
 	byte gen_type;
 	byte spec_type;

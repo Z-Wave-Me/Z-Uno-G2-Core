@@ -11,6 +11,7 @@
 #include "em_rtcc.h"
 #include "em_adc.h"
 #include "em_gpio.h"
+#include <CommandQueue.h>
 
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
@@ -1262,6 +1263,11 @@ static void _zunoSleepingUpd(){
         //LOGGING_UART.println("CAN'T SLEEP: PENDING REPORTS");
         #endif
         return;
+    }
+    if(!ZWQIsEmpty()){
+        #ifdef LOGGING_DBG
+        LOGGING_UART.println("CAN'T SLEEP: QUEUE is mot EMPTY!");
+        #endif
     }
     if(g_sleep_data.wup_latch){
         if(millis() > g_sleep_data.wup_timeout){

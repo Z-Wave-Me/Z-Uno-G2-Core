@@ -28,7 +28,7 @@
 #include "ZWCCSoundSwitch.h"
 #include "ZWCCIndicator.h"
 #include "ZWCCCentralScene.h"
-
+#include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
 
 enum {
@@ -253,7 +253,7 @@ static void _fillOutgoingPacket(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketRepor
 }
 
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) {
-	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], ch, ZUNO_PACKETFLAGS_GROUP, ZUNO_LIFELINE_GRP);
+	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
 }
 
 #ifdef LOGGING_UART
@@ -1330,6 +1330,13 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			continue;
 		}
+		if(zunoCheckSystemQueueStatus(QUEUE_CHANNEL_LLREPORT)){
+			#ifdef LOGGING_DBG
+			LOGGING_UART.print("Report queue is busy. ZNChannel: ");
+			LOGGING_UART.println(ch);
+			#endif
+			continue;
+		}
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);
@@ -1397,8 +1404,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 		}
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);
-			if((--max_report_count) == 0)
-				return; // Limit number of reports 
 		}
 	}
 }
@@ -1427,36 +1432,9 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 		return;
 	arr[byte_index] |= 1 << bit_index;
 }
+
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
-	if(zunoNID() == 0) { // We are out of network - don't send anything
-		#ifdef LOGGING_DBG
-		LOGGING_UART.print(millis());
-		LOGGING_UART.println(" Package was dropped! NodeID==0");
-		#endif
-		return;
-		
-	}
-	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
-	zunoKickSleepTimeout(ZUNO_SLEEP_TX_TIMEOUT);
-	#endif
-    #ifdef LOGGING_DBG
-	LOGGING_UART.print("\n >>> (");
-	LOGGING_UART.print(millis());
-	LOGGING_UART.print(") OUTGOING PACKAGE: ");
-	zuno_dbgdumpZWPacakge(pkg);
-	#endif
-	// DBG
-	//g_outgoing_packet.src_zw_channel    = 0;
-	//g_outgoing_packet.dst_zw_channel    = 0;
-	// If the channel "mapped to" main channel => report twice
-	byte last_ch = pkg->src_zw_channel;
-    if(pkg->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
-		pkg->src_zw_channel = 0;
-		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, pkg);
-		pkg->src_zw_channel = last_ch & ~(ZWAVE_CHANNEL_MAPPED_BIT);
-	}
-    zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, pkg); // DBG
-	pkg->src_zw_channel = last_ch; // Bring it back!
+	ZWQPushPackage(pkg);
 }	
 uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
 	uint32_t res = 0;

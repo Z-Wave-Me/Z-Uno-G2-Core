@@ -4,6 +4,7 @@
 #include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSwitchBinary.h"
+#include "CommandQueue.h"
 
 size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
@@ -131,6 +132,8 @@ void zuno_CCTimer(uint32_t ticks) {
 	if((ticks & 0x7) == 0) // Once in ~80ms 
 		zuno_CCCentralSceneTimer();
 	#endif
-	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0) // Once in ~80ms - for 0x7
+	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0){// Once in ~80ms - for 0x7
 		zunoSendReportHandler(ticks);
+	}
+	ZWQProcess();
 }

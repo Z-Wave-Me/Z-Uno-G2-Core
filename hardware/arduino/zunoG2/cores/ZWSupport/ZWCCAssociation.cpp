@@ -437,7 +437,7 @@ void zunoAddAssociation(byte type, uint32_t params) {
 }
 
 static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {
-	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], 0x0, ZUNO_PACKETFLAGS_GROUP, groupIndex + 1);
+	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], 0x0, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_CONTROL, groupIndex + 1);
 }
 
 static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {

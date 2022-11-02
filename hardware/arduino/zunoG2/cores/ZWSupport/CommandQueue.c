@@ -34,9 +34,30 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
 	 return zunoSysCall(ZUNO_SYSFUNC_ASSOCIATION_NODE, 3, g, i, node) == 0;
 }
+bool zunoRadioStats(ZUNORadioStat_t * p_radio_stat){
+    uint32_t w = (uint32_t)zunoSysCall(ZUNO_SYSFUNC_RADIO_STAT, 1, p_radio_stat);
+    return w == 0;
+}
 bool zunoCheckSystemQueueStatus(uint8_t channel){
-    uint32_t w = (uint32_t)zunoSysCall(ZUNO_SYSFUNC_PENDING_MSG_STATUS, 0);
-    return (w & (1 << channel)) != 0;
+    ZUNORadioStat_t s;
+    if(zunoRadioStats(&s)){
+       return (s.queue_busy_flags & (1 << channel)) != 0;
+    }
+    if((channel > 0) && (s.pkgs_hp_time < SYSTEM_PKG_DOMINATION_TIME)){
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATOIN. INTERVAL:");
+        LOGGING_UART.println(s.pkgs_hp_time);
+        #endif
+        return true;
+    }
+    return false;
+}
+uint32_t zunoPendingRadioMessages(){
+    ZUNORadioStat_t s;
+    if(zunoRadioStats(&s)){
+        return s.pkgs_queued - s.pkgs_processed;
+    }
+    return 0;
 }
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
@@ -68,6 +89,7 @@ bool ZWQIsEmpty(){
 void ZWQProcess(){
     ZNLinkedList_t *e;
     ZUnoAssocNode_t node;
+    ZUNORadioStat_t s;
     // Walk through the queue
     int qi;
     int processed_indexes[MAX_PROCESSED_QUEUE_PKGS];
@@ -76,10 +98,19 @@ void ZWQProcess(){
     // Process the packages
     for(e=g_zwpkg_queue, qi=0;e; e=e->next, qi++){
         p = (ZUNOCommandPacket_t *) e->data;
+        zunoRadioStats(&s);
+        uint32_t system_queue_count = s.pkgs_queued - s.pkgs_processed;
+        if(system_queue_count >= MAX_SYS_QUEUE_PKGS){
+            #ifdef LOGGING_DBG
+		    LOGGING_UART.print("*** SYSTEM QUEUE IS FULL. CNT:");
+            LOGGING_UART.println(system_queue_count);
+            #endif
+            break;
+        }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
         // Check if we have a free channel to send the package
         if(zunoCheckSystemQueueStatus(q_ch))
-            continue; // The queue is full - just skip the package
+            continue; // Needed queue is full for this priority - just skip the package
         #ifdef LOGGING_DBG
 		LOGGING_UART.print("*** QCH:");
         LOGGING_UART.println(q_ch);

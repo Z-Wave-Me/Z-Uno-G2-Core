@@ -192,6 +192,14 @@ typedef struct ZUnoAssocNode_s{
     uint8_t    security_level;
 }ZUnoAssocNode_t;
 
+typedef struct ZUNORadioStat_s{
+	volatile uint8_t queue_busy_flags;
+	volatile uint32_t  pkgs_queued;
+	volatile uint32_t  pkgs_processed;
+	volatile uint32_t  pkgs_sent;
+	volatile uint32_t  pkgs_hp_time;
+}ZUNORadioStat_t;
+
 extern ZUNOSleepData_t g_sleep_data;
 
 #endif // __ZUNO_SYS_TYPES__

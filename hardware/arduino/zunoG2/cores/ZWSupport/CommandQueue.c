@@ -104,6 +104,10 @@ void ZWQProcess(){
             #ifdef LOGGING_DBG
 		    LOGGING_UART.print("*** SYSTEM QUEUE IS FULL. CNT:");
             LOGGING_UART.println(system_queue_count);
+            LOGGING_UART.print("  QUEUED:");
+            LOGGING_UART.print(s.pkgs_queued);
+            LOGGING_UART.print("  PROCESSED:");
+            LOGGING_UART.println(s.pkgs_processed);
             #endif
             break;
         }

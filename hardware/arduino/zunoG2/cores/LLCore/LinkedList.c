@@ -38,6 +38,7 @@ void * znllRemove(ZNLinkedList_t** l, int index){
     } else {
         *l = e->next;
     }
+    free(e);
     return d;
 }
 int znllCount(ZNLinkedList_t* l){

@@ -10,12 +10,13 @@
 #endif
 
 #ifndef SYSTEM_PKG_DOMINATION_TIME
-#define SYSTEM_PKG_DOMINATION_TIME 200
+#define SYSTEM_PKG_DOMINATION_TIME 1000
 #endif
 
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg);
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node);
 bool zunoCheckSystemQueueStatus(uint8_t channel);
+bool zunoRadioStats(ZUNORadioStat_t * p_radio_stat);
 void ZWQProcess();
 bool ZWQIsEmpty();
 

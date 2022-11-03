@@ -41,14 +41,15 @@ bool zunoRadioStats(ZUNORadioStat_t * p_radio_stat){
 bool zunoCheckSystemQueueStatus(uint8_t channel){
     ZUNORadioStat_t s;
     if(zunoRadioStats(&s)){
-       return (s.queue_busy_flags & (1 << channel)) != 0;
-    }
-    if((channel > 0) && (s.pkgs_hp_time < SYSTEM_PKG_DOMINATION_TIME)){
-        #ifdef LOGGING_DBG
-		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATOIN. INTERVAL:");
-        LOGGING_UART.println(s.pkgs_hp_time);
-        #endif
-        return true;
+        if((channel > 0) && (s.pkgs_hp_time < SYSTEM_PKG_DOMINATION_TIME)){
+            #ifdef LOGGING_DBG
+		    LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+            LOGGING_UART.println(s.pkgs_hp_time);
+            #endif
+            return true;
+        }
+        return (s.queue_busy_flags & (1 << channel)) != 0;
+   
     }
     return false;
 }

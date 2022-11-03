@@ -1215,6 +1215,7 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 				}
 				bool can_send = (ch_time == 0) || ((ticks -  ch_time) > dtime);
 				if(can_send){
+					/*
 					#ifdef LOGGING_DBG
 					LOGGING_UART.print("Time check ok. channel:");
 					LOGGING_UART.print(ch);
@@ -1222,7 +1223,7 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 					LOGGING_UART.print(ch_time);
 					LOGGING_UART.print(" current time:");
 					LOGGING_UART.print(ticks);
-					#endif
+					#endif*/
 					
 				}
 				return can_send; // We can't send too frequent for these CCs
@@ -1336,7 +1337,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			LOGGING_UART.println(ch);
 			#endif
 			continue;
-		}
+		} 
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);

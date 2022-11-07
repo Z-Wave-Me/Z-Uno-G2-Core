@@ -2,6 +2,9 @@
 #include "Debug.h"
 
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
+#ifdef LOGGING_UART
+void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
+#endif
 
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
     if(zunoNID() == 0) { // We are out of network - don't send anything
@@ -29,6 +32,12 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
     // copy command data from the ZAF offset
     memcpy(stored_pck->cmd , pkg->cmd, pkg->len);
     znllPushBack(&g_zwpkg_queue, (void*)stored_pck);
+    #ifdef LOGGING_DBG
+	LOGGING_UART.print("\n >>> (");
+	LOGGING_UART.print(millis());
+	LOGGING_UART.print(") ENQUEUED PACKAGE: ");
+	zuno_dbgdumpZWPacakge(pkg);
+	#endif
     return true;
 }
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
@@ -38,20 +47,20 @@ bool zunoRadioStats(ZUNORadioStat_t * p_radio_stat){
     uint32_t w = (uint32_t)zunoSysCall(ZUNO_SYSFUNC_RADIO_STAT, 1, p_radio_stat);
     return w == 0;
 }
-bool zunoCheckSystemQueueStatus(uint8_t channel){
-    ZUNORadioStat_t s;
-    if(zunoRadioStats(&s)){
-        if((channel > 0) && (s.pkgs_hp_time < SYSTEM_PKG_DOMINATION_TIME)){
-            #ifdef LOGGING_DBG
-		    LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
-            LOGGING_UART.println(s.pkgs_hp_time);
-            #endif
-            return true;
-        }
-        return (s.queue_busy_flags & (1 << channel)) != 0;
-   
+bool zunoCheckSystemQueueStatus(ZUNORadioStat_t * s, uint8_t channel){
+    if((channel > 0) && (s->pkgs_hp_time < SYSTEM_PKG_DOMINATION_TIME)){
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+        LOGGING_UART.println(s->pkgs_hp_time);
+        #endif
+        return true;
     }
-    return false;
+    bool  b_busy = ((s->queue_busy_flags & (1 << channel)) != 0);
+    #ifdef LOGGING_DBG
+	LOGGING_UART.print("*** QUEUE CHANNEL is BUSY:");
+    LOGGING_UART.println(channel);
+    #endif
+    return b_busy;
 }
 uint32_t zunoPendingRadioMessages(){
     ZUNORadioStat_t s;
@@ -60,9 +69,6 @@ uint32_t zunoPendingRadioMessages(){
     }
     return 0;
 }
-#ifdef LOGGING_UART
-void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
-#endif
 void _ZWQSend(ZUNOCommandPacket_t * p){
 
     #ifdef LOGGING_DBG
@@ -90,16 +96,25 @@ bool ZWQIsEmpty(){
 void ZWQProcess(){
     ZNLinkedList_t *e;
     ZUnoAssocNode_t node;
-    ZUNORadioStat_t s;
+    
     // Walk through the queue
     int qi;
     int processed_indexes[MAX_PROCESSED_QUEUE_PKGS];
     int processed_indexes_cnt = 0;
     ZUNOCommandPacket_t * p;
     // Process the packages
+    #ifdef LOGGING_DBG
+    int queue_sz = znllCount(g_zwpkg_queue);
+    if(queue_sz > 0){
+	    LOGGING_UART.print("CommandQueue Size:");
+        LOGGING_UART.println(queue_sz);
+    }
+    #endif
+    ZUNORadioStat_t s;
+    zunoRadioStats(&s);
     for(e=g_zwpkg_queue, qi=0;e; e=e->next, qi++){
         p = (ZUNOCommandPacket_t *) e->data;
-        zunoRadioStats(&s);
+       
         uint32_t system_queue_count = s.pkgs_queued - s.pkgs_processed;
         if(system_queue_count >= MAX_SYS_QUEUE_PKGS){
             #ifdef LOGGING_DBG
@@ -114,7 +129,7 @@ void ZWQProcess(){
         }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
         // Check if we have a free channel to send the package
-        if(zunoCheckSystemQueueStatus(q_ch))
+        if(zunoCheckSystemQueueStatus(&s, q_ch))
             continue; // Needed queue is full for this priority - just skip the package
         #ifdef LOGGING_DBG
 		LOGGING_UART.print("*** QCH:");

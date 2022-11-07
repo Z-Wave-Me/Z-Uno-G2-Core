@@ -1285,10 +1285,20 @@ void zunoSendWakeUpNotification(){
 bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
 	ZUNOCommandPacketReport_t									frame;
+	ZUNORadioStat_t s;
+    zunoRadioStats(&s);
+
+	if(zunoCheckSystemQueueStatus(&s, QUEUE_CHANNEL_LLREPORT)){
+		#ifdef LOGGING_DBG
+		LOGGING_UART.println("Report queue is busy.");
+		#endif
+		return;
+	}
 
 	// Check if device is included to network
 	if(zunoNID() == 0)
         return; // it doesn't => go away
+	
 	#ifdef WITH_CC_BATTERY
 	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	if(__zunoDispatchPendingBatteryReport()){
@@ -1331,13 +1341,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			continue;
 		}
-		if(zunoCheckSystemQueueStatus(QUEUE_CHANNEL_LLREPORT)){
-			#ifdef LOGGING_DBG
-			LOGGING_UART.print("Report queue is busy. ZNChannel: ");
-			LOGGING_UART.println(ch);
-			#endif
-			continue;
-		} 
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);
@@ -1396,15 +1399,17 @@ void zunoSendReportHandler(uint32_t ticks) {
 			default:
 				break;
 		}
+		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
+			__clearSyncMapChannel(&g_channels_data.report_map, ch);
+		}
 		if(rs == ZUNO_COMMAND_ANSWERED){
 			node_id_t					node;
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
 			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
 			zunoSendZWPackage(&frame.packet);
+			return; // Only one report along one call
 		}
-		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
-			__clearSyncMapChannel(&g_channels_data.report_map, ch);
-		}
+		
 	}
 }
 void zunoSendReport(byte ch){

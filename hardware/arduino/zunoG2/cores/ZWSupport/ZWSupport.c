@@ -1285,10 +1285,8 @@ void zunoSendWakeUpNotification(){
 bool _zunoIsWUPLocked();
 void zunoSendReportHandler(uint32_t ticks) {
 	ZUNOCommandPacketReport_t									frame;
-	ZUNORadioStat_t s;
-    zunoRadioStats(&s);
 
-	if(zunoCheckSystemQueueStatus(&s, QUEUE_CHANNEL_LLREPORT)){
+	if(zunoCheckSystemQueueStatus(QUEUE_CHANNEL_LLREPORT)){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("Report queue is busy.");
 		#endif

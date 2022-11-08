@@ -85,6 +85,11 @@ typedef struct ZUNOSetupSysState_s {
 	uint8_t	persistent_timer_map;
 	uint8_t cfg_flags;
 	uint8_t cfg_mlinterval;
+	volatile uint8_t   rstat_priority_counts[4];
+	volatile uint32_t  rstat_pkgs_queued;
+	volatile uint32_t  rstat_pkgs_processed;
+	volatile uint32_t  rstat_pkgs_sent;
+	volatile uint32_t  rstat_pkgs_hp_time;
 }ZUNOSetupSysState_t;
 
 // Handlers

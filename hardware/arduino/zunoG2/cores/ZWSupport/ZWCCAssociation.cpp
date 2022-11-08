@@ -12,6 +12,8 @@
 #include "ZWCCMeterTbl.h"
 #include "ZWCCSoundSwitch.h"
 #include "ZWCCCentralScene.h"
+#include "CommandQueue.h"
+#include "Debug.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -442,6 +444,33 @@ static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {
 
 static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 	frame->packet.len = len;
+	bool b_append = true;
+	// It's a user group (not LifeLine) and the queue is blocked
+	if((frame->packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
+		// Try to find the package for user group and substitude it to new one
+		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags);
+		if(p != NULL){
+			if(p->dst_zw_channel != 0){
+				// Processing has been started -  add a new one package
+			} else {
+			  // Substitute an existing package
+			  if(len == p->len){
+			  	memcpy(p->cmd, frame->packet.cmd, len);
+			  } else {
+				#ifdef LOGGING_DBG
+			  	LOGGING_UART.print(millis());
+			  	LOGGING_UART.println(" (*ASSOC*) Wrong pkg length!!!");  
+			  	#endif
+			  }
+			  #ifdef LOGGING_DBG
+			  LOGGING_UART.print(millis());
+			  LOGGING_UART.print(" (*ASSOC*) Replace pkg for grp:");
+			  LOGGING_UART.println(frame->packet.dst_node);	  
+		      #endif
+			  return;
+			}
+		}
+	}
 	zunoSendZWPackage(&frame->packet);
 }
 

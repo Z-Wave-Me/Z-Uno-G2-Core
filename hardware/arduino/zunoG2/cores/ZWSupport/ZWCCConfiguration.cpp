@@ -169,17 +169,19 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 		#endif
 		case 8:
 			return &SYSCFGPARAM8;
-		case 9:
-			return &SYSCFGPARAM9;
+		// case 9:
+		// 	return &SYSCFGPARAM9;
 		case 11:
 			return &SYSCFGPARAM11;
-		case 20:
-			return &SYSCFGPARAM20;
+		// case 20:
+		// 	return &SYSCFGPARAM20;
 	}
 
 	// Return user-defined callback result for user-defined parameters
 	return  zunoCFGParameter(param);
 }
+
+static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser);
 
 uint8_t checkConfigurationParameterSVSet(uint8_t * cmd){
 	const ZunoCFGParameter_t				*cfg;
@@ -267,8 +269,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	zunoSaveCFGParam(param, (int32_t)value);
-	zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
+	_zunoSaveCFGParam(param, (int32_t)value, false);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -371,7 +372,7 @@ static int _configuration_default_reset(void) {
 	for(int i=CONFIGPARAM_MIN_PARAM; i<=CONFIGPARAM_MAX_PARAM; i++){
 		cfg = zunoCFGParameter(i);
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN)
-			zunoSaveCFGParam(i, cfg->defaultValue);
+			_zunoSaveCFGParam(i, cfg->defaultValue, false);
 	}
 	return (ZUNO_UNKNOWN_CMD); // forward reset to main firmware
 }
@@ -432,7 +433,7 @@ ssize_t zunoLoadCFGParam(uint8_t param) {
 	return (out);
 }
 
-void zunoSaveCFGParam(uint8_t param, ssize_t value) {
+static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 	const ZunoCFGParameter_t							*cfg;
 	int32_t												result;
 	size_t												size;
@@ -474,5 +475,11 @@ void zunoSaveCFGParam(uint8_t param, ssize_t value) {
 	}
 	else
 		result = value;
+	if (bUser == false)
+		zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(result), (uint8_t *)&result);
+}
+
+void zunoSaveCFGParam(uint8_t param, ssize_t value) {
+	return (_zunoSaveCFGParam(param, value, true));
 }

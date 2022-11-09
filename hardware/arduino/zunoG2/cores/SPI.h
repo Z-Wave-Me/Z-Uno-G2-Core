@@ -3,6 +3,8 @@
 
 #include "Sync.h"
 #include "LdmaClass.h"
+#include "em_cmu.h"
+#include "em_usart.h"
 
 #define SPI_BUFFER_LENGTH				(64)
 

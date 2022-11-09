@@ -1,6 +1,8 @@
 #ifndef SYNC_H
 #define SYNC_H
 
+#include  "ZUNO_Definitions.h"
+
 typedef enum							SyncMaster_e
 {
 	SyncMasterFree,// do not use !!!

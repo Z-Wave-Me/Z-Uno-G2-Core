@@ -169,12 +169,12 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 		#endif
 		case 8:
 			return &SYSCFGPARAM8;
-		// case 9:
-		// 	return &SYSCFGPARAM9;
+		case 9:
+			return &SYSCFGPARAM9;
 		case 11:
 			return &SYSCFGPARAM11;
-		// case 20:
-		// 	return &SYSCFGPARAM20;
+		case 20:
+			return &SYSCFGPARAM20;
 	}
 
 	// Return user-defined callback result for user-defined parameters

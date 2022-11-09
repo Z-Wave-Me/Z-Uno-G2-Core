@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #define MAX_SKETCH_NAME  48
 
+#ifndef DBG_CONSOLE_BAUDRATE
+#define DBG_CONSOLE_BAUDRATE 230400
+#endif // DBG_CONSOLE_BAUDRATE
+
 typedef struct ZUNOCodeHeader_s{
     char        sign[8];
     uint8_t     version_major;
@@ -16,6 +20,7 @@ typedef struct ZUNOCodeHeader_s{
 	uint32_t    jumptable_offset;
 	uint32_t    build_timestamp;
 	uint8_t     console_pin;
+	uint32_t 	console_baud;	
 	uint16_t    sketch_version;
 	uint8_t     ota_firmwares_count;
 	ZUNOOTAFWDescr_t * ota_firmwares_descriptions;

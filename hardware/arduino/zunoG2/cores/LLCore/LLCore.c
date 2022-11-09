@@ -56,6 +56,8 @@ extern unsigned long __HeapLimit;
 #endif
 #ifndef DBG_CONSOLE_PIN
 #ifdef LOGGING_DBG
+#define DBG_CONSOLE_PIN 0xFE //  Use a default one for the board
+    /*
     #if ZUNO_PIN_V == 0
     #define DBG_CONSOLE_PIN 0x27 // C7
     #elif ZUNO_PIN_V == 1
@@ -70,7 +72,7 @@ extern unsigned long __HeapLimit;
     #define DBG_CONSOLE_PIN 0x3D // D13
     #else
     #define DBG_CONSOLE_PIN 0xFF
-    #endif 
+    #endif */
 #else
     #define DBG_CONSOLE_PIN 0xFF
 #endif // LOGGING_DBG
@@ -100,6 +102,7 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     (uint32_t)&zunoJumpTable, 
                                                                                     ZUNO_SKETCH_BUILD_TS,
                                                                                     DBG_CONSOLE_PIN,
+                                                                                    DBG_CONSOLE_BAUDRATE,
                                                                                     SKETCH_VERSION,
                                                                                     ZUNO_EXT_FIRMWARES_COUNT,
                                                                                     ZUNO_EXT_FIRMWARES_DESCR_PTR,
@@ -453,7 +456,7 @@ static void LLInit(void *data) {
     g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
 	g_zuno_sys = (ZUNOSetupSysState_t*)data;
 	#ifdef LOGGING_DBG
-	LOGGING_UART.begin(115200);
+	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
 	#endif
 	#ifdef WITH_AUTOSETUP
 	zuno_static_autosetup();

@@ -444,7 +444,6 @@ static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {
 
 static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 	frame->packet.len = len;
-	bool b_append = true;
 	// It's a user group (not LifeLine) and the queue is blocked
 	if((frame->packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
 		// Try to find the package for user group and substitude it to new one

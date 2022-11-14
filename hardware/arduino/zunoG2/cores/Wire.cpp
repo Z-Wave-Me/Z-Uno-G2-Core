@@ -377,7 +377,7 @@ inline size_t TwoWire::_transferSlaveToMaster(I2C_TypeDef *i2c, const uint8_t *b
 	if (quantity == 0x0)
 		return (0x0);
 	I2C_IntClear(i2c, I2C_IF_NACK);
-	if ((channel = LdmaClass::transferSingle(b, (void *)&i2c->TXDATA, quantity, this->_i2c_config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) == -1)
+	if ((channel = LdmaClass::transferSingle(b, (void *)&i2c->TXDATA, quantity, this->_i2c_config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) < 0x0)
 		return (0x0);
 	while (LdmaClass::transferDone(channel) == false && (i2c->IF & I2C_IF_NACK) == 0x0)
 		delay(0x1);

@@ -88,7 +88,7 @@ size_t LeUartClass::write(const uint8_t *b, size_t count) {
 		while (!(usart->STATUS & LEUART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
 	}
-	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, LdmaClassSignal_LEUART0_TXBL, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0) {
+	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, LdmaClassSignal_LEUART0_TXBL, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(ms);
 		while (!(usart->STATUS & LEUART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();

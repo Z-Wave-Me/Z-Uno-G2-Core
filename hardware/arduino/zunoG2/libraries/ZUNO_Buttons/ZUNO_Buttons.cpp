@@ -377,13 +377,13 @@ ZunoError_t ButtonsClass::_initCsen(size_t param) {
 		return (ZunoErrorMemory);
 	}
 	memset(blockBuffer, 0, BTN_TOUCH_BLOCK_PERIOD * sizeof(btn_touch_value));
-	if ((dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, blockBuffer, 0x1, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_data)) == -1)
+	if ((dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, blockBuffer, 0x1, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_data)) < 0x0)
 	{
 		free(dma);
 		free(blockBuffer);
 		return (ZunoErrorDmaLimitChannel);
 	}
-	if ((dma->channel_baseline = LdmaClass::transferCyclical(&ButtonsClass::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) == -1)
+	if ((dma->channel_baseline = LdmaClass::transferCyclical(&ButtonsClass::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) < 0x0)
 	{
 		LdmaClass::transferStop(dma->channel_data);
 		free(dma);

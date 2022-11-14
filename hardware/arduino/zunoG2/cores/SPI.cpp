@@ -369,7 +369,7 @@ void SPIClass::_USART_IRQHandler(uint32_t flags) {
 	slave = this->_slave;
 	if (slave->user_onRequest != 0x0)
 	{
-		if ((channel_w = slave->channel_w) == -1  || LdmaClass::transferDone(channel_w) == true)
+		if ((channel_w = slave->channel_w) < 0x0  || LdmaClass::transferDone(channel_w) == true)
 		{
 			if (channel_w != -1) {
 				LdmaClass::transferStop(channel_w);
@@ -381,7 +381,7 @@ void SPIClass::_USART_IRQHandler(uint32_t flags) {
 				slave->count = 0x0;
 				slave->user_onRequest();
 				if ((len = slave->count) != 0x0) {
-					if ((slave->channel_w = LdmaClass::transferSingle(&slave->buffer[0x0], (void*)&(config->usart->TXDATA), len, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &slave->array_w)) > 0x0) {
+					if ((slave->channel_w = LdmaClass::transferSingle(&slave->buffer[0x0], (void*)&(config->usart->TXDATA), len, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &slave->array_w)) >= 0x0) {
 						LdmaClass::transferStop(slave->channel);
 						slave->channel = -1;
 					}
@@ -535,7 +535,7 @@ ZunoError_t SPIClass::memset(uint8_t c, size_t n) {
 	usart->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
 	ms = n;
 	ms = ms * 8 * 1000 / USART_BaudrateGet(usart);
-	if ((channel_w = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array_w)) > 0x0) {
+	if ((channel_w = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array_w)) >= 0x0) {
 		delay(ms);
 		while (!(usart->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
 			__NOP();

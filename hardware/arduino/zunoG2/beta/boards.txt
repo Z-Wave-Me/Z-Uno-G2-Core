@@ -3,8 +3,10 @@
 menu.cpu=Processor
 menu.Frequency=Frequency
 menu.Security=Security
-menu.TXPower=TXPower
-menu.RFLogging=RFLogging
+menu.TXPower=TX Power
+menu.RFLogging=RF Logging
+menu.CleanNVM=Clean NVM
+menu.UpdateLicense=License update
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno2
 
@@ -83,11 +85,12 @@ zuno2.menu.RFLogging.On.build.rflog = 1
 
 zuno2.menu.CleanNVM.Off    = Disabled
 zuno2.menu.CleanNVM.On     = Enabled
-zuno2.menu.CleanNVM.Off.clean    = 0
-zuno2.menu.CleanNVM.On.clean     = 1
-zuno2.menu.UpdateLicense.Off    = Disabled
+zuno2.menu.CleanNVM.Off.build.clean    = 0
+zuno2.menu.CleanNVM.On.build.clean     = 1
+
 zuno2.menu.UpdateLicense.On     = Enabled
-zuno2.menu.UpdateLicense.Off.lic    = 0
-zuno2.menu.UpdateLicense.On.lic     = 1
+zuno2.menu.UpdateLicense.Off    = Disabled
+zuno2.menu.UpdateLicense.On.build.lic     = 1
+zuno2.menu.UpdateLicense.Off.build.lic    = 0
 
 

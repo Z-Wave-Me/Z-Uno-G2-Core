@@ -25,10 +25,10 @@ tools.zprog.bootloader.pattern="{runtime.tools.zme_make.path}/zme_make" boot -c 
 # For Z-Wave Plus V2 devices this parameter MUST be always ON
 # ----------------------------------------------------------------------------------------------
 # tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -O "arduino_ide" -i
-# tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -p "main_pow={build.pow}" -p "flag_rflog={build.rflog}" -O "arduino_ide" -i
+# tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec={build.security}" -p "main_pow={build.pow}" -p "flag_rflog={build.rflog}"  -lu "{build.lic}" -c "{build.clean}" -O "arduino_ide" -i
 # ----------------------------------------------------------------------------------------------
 tools.zprog.program.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec=1" -O "arduino_ide" -i
-tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec=1" -p "main_pow={build.pow}" -p "flag_rflog={build.rflog}" -O "arduino_ide" -i
+tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{build.path}/sketch/{build.project_name}" -B "{build.path}" -fr "{build.rf_freq}" -d "{serial.port}" -p "sec=1" -p "main_pow={build.pow}" -p "flag_rflog={build.rflog}"  -lu "{build.lic}" -c "{build.clean}" -O "arduino_ide" -i
 
 # ZUNO compile patterns
 # ----------------------

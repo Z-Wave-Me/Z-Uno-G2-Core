@@ -60,24 +60,33 @@ zuno2.menu.Frequency.Jp.build.rf_freq = JP
 zuno2.menu.Frequency.Kr.build.rf_freq = KR
 zuno2.menu.Frequency.LR_US1.build.rf_freq = US_LR 
 
-
-zuno2.menu.Security.Off = Disabled
-zuno2.menu.Security.On = Enabled
-
-zuno2.menu.Security.Off.build.security = 0
-zuno2.menu.Security.On.build.security = 1
+# -----------------------------------------------
+# removed due to certification issue
+# -----------------------------------------------
+#zuno2.menu.Security.Off = Disabled
+#zuno2.menu.Security.On = Enabled
+#zuno2.menu.Security.Off.build.security = 0
+#zuno2.menu.Security.On.build.security = 1
+# -----------------------------------------------
 
 zuno2.menu.TXPower.Normal       = Normal +0dBm
 zuno2.menu.TXPower.Magnified    = Magnified +5dBm
 zuno2.menu.TXPower.Ultra        = Ultra +10dBm
-zuno2.menu.TXPower.Normal.build.pow       = 5
-zuno2.menu.TXPower.Magnified.build.pow    = 10
-zuno2.menu.TXPower.Ultra.build.pow        = 18
+zuno2.menu.TXPower.Normal.build.pow       = 45
+zuno2.menu.TXPower.Magnified.build.pow    = 80
+zuno2.menu.TXPower.Ultra.build.pow        = 140
 
 zuno2.menu.RFLogging.Off = Disabled
 zuno2.menu.RFLogging.On = Enabled
-
 zuno2.menu.RFLogging.Off.build.rflog = 0
 zuno2.menu.RFLogging.On.build.rflog = 1
 
+zuno2.menu.CleanNVM.Off    = Disabled
+zuno2.menu.CleanNVM.On     = Enabled
+zuno2.menu.CleanNVM.Off.clean    = 0
+zuno2.menu.CleanNVM.On.clean     = 1
 
+zuno2.menu.UpdateLicense.Off    = Disabled
+zuno2.menu.UpdateLicense.On     = Enabled
+zuno2.menu.UpdateLicense.Off.lic    = 0
+zuno2.menu.UpdateLicense.On.lic     = 1

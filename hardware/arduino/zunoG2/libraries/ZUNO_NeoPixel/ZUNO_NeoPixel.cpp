@@ -237,7 +237,7 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 				break;
 		}
 		delayMicroseconds(NEO_RESET_MICROSECONDS);
-		if ((channel = LdmaClass::transferSingle(&list->array[0], config->dst, len, config->dmaSignal, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0)
+		if ((channel = LdmaClass::transferSingle(&list->array[0], config->dst, len, config->dmaSignal, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0)
 			while (LdmaClass::transferDone(channel) == false)
 				delay(0x1);
 		switch (config->type) {

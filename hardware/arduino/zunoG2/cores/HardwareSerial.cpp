@@ -133,7 +133,7 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 				__NOP();
 		}
 	}
-	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) > 0x0) {
+	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(ms);
 		while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
@@ -171,7 +171,7 @@ void HardwareSerial::memset(uint8_t c, size_t n) {
 	if (zunoSyncLockWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey) != ZunoErrorOk)
 		return ;
 	usart = config->usart;
-	if ((channel = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array)) > 0x0) {
+	if ((channel = LdmaClass::transferSingle(&c, (void*)&(usart->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(this->countWaitingMs(n));
 		while (!(usart->STATUS & USART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();

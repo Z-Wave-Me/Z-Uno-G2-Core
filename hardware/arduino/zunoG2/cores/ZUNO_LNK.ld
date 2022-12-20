@@ -1,12 +1,13 @@
 /* Linker script for Z-Wave.Me Z-UnoG2 (cortex based)                  */
+/*     SDK 7.18.3+                                                     */
 /*                                                                     */
 /* This file is subject to the license terms as defined in ARM's       */
 /* CMSIS END USER LICENSE AGREEMENT.pdf, governing the use of          */
 /* Example Code.                                                       */
 /*                                                                     */
-/* Copyright 2019 Z-Wave.Me http://z-uno.z-wave.me                     */
+/* Copyright 2022 Z-Wave.Me http://z-uno.z-wave.me                     */
 /*                                                                     */
-/* Version 0.0.1                                                       */
+/* Version 0.0.2                                                       */
 /*                                                                     */
 ENTRY(_Z5setupv)
 
@@ -17,7 +18,7 @@ MEMORY
   SKETCH_STRUCT(rx): ORIGIN = 0x00034800, LENGTH = 0xC0
   SKETCH_JMPTBL(rx): ORIGIN = 0x000348C0, LENGTH = 0x40
   SKETCH_MAINCODE(rx): ORIGIN = 0x00034900, LENGTH = 0x5F800
-  SKETCH_RAM (rwx)  : ORIGIN = 0x2000C000, LENGTH = 16k
+  SKETCH_RAM (rwx)  : ORIGIN = 0x2000D000, LENGTH = 12k
 }
 
 SECTIONS

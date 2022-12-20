@@ -69,6 +69,8 @@ typedef struct ZUnoRcvContext_s {
 }ZUnoRcvContext_t;
 ZUnoRcvContext_t g_rcv_context;
 
+ZUNOZWConfiguation_t g_zuno_zw_cfg;
+
 inline void __setSyncVar16(node_id_t * var, node_id_t val){
 	zunoEnterCritical();
 	*var = val;
@@ -218,12 +220,14 @@ byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	LOGGING_UART.print("N_CH=");
 	LOGGING_UART.println(ZUNO_CFG_CHANNEL_COUNT);
 	#endif
+	// !!! FIX
+	/*
 	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel,cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
 			if(zuno_compare_channeltypeCC(&(ZUNO_CFG_CHANNEL(i)), cmd->cmd))
 				return i;
 		
-	}
+	}*/
 	return UNKNOWN_CHANNEL;
 }
 
@@ -1063,14 +1067,17 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
 		return false;
+	// !!! FIX
+	/*
 	memset(g_zuno_sys->zwave_cfg, 0, sizeof(ZUNODeviceConfiguation_t));
 	g_zuno_sys->zwave_cfg->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zwave_cfg->product_id = DEFAULT_PRODUCT_ID;
 	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
+	*/
 	return  true;
 }
 byte getMaxChannelTypes() {
-	return sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
+	return 0; //sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
 }
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count) {
 	byte i;
@@ -1126,14 +1133,18 @@ void initCCSDataDefault() {
 }
 // Adds user-defined command class support to main end-point NIF and Secure NIF. Be careful with that! 
 bool zunoAddBaseCCS(byte ccs, byte version){
+	// !!! FIX
+	/*
 	if(ZUNO_CFG_BASE_CCS_NUM >= ZUNO_MAX_CUSTOM_CCS)
 		return false;
 	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).cc = ccs;
 	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).version = version;
-	ZUNO_CFG_BASE_CCS_NUM++;
+	ZUNO_CFG_BASE_CCS_NUM++;*/
 	return true;
 }
 byte zunoAddChannel(byte type, byte subtype, byte options) {
+	// !!! FIX
+	/*
 	#ifdef LOGGING_DBG
 	// dbgCCTypes();
 	#endif
@@ -1173,7 +1184,9 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 	ZUNO_CFG_CHANNEL(ch_i).sub_type     =   subtype;
 	ZUNO_CFG_CHANNEL(ch_i).params[0]    =   options;
 	ZUNO_CFG_CHANNEL_COUNT++;
-	return ch_i;
+
+	return ch_i;*/
+	return 0;
 }
 
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
@@ -1181,6 +1194,9 @@ void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handle
 	g_zuno_channelhandlers_map[ch].p_handler = handler;
 }
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
+
+	// !!! FIX
+	/*
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(zw_ch == 0) {
 			if(ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT)
@@ -1191,8 +1207,8 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 				return &(ZUNO_CFG_CHANNEL(i));
 		}
 		
-	}
-	return &(ZUNO_CFG_CHANNEL(0));
+	}*/
+	return NULL;//&(ZUNO_CFG_CHANNEL(0));
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
@@ -1342,12 +1358,15 @@ void zunoSendReportHandler(uint32_t ticks) {
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);
-		LOGGING_UART.print(" TYPE:");
-		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
+		//LOGGING_UART.print(" TYPE:");
+		//LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
-		fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
+		// !!! FIX
+		// fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
 		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
 		rs = ZUNO_UNKNOWN_CMD;
+		// !!! FIX
+		/*
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
@@ -1396,7 +1415,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			default:
 				break;
-		}
+		}*/
+
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);
 		}

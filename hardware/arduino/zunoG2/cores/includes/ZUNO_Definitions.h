@@ -7,9 +7,9 @@
 	#include "Custom_defs.h"
 #endif
 
-#define ZUNO_UNO				1//Для тип чего собираеться - зуно
-#define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
-#define ZUNO_BOOTLOADER			3//Для тип чего собираеться - загрузчик
+#define ZUNO_UNO				1
+#define ZUNO_RASBERI			2
+#define ZUNO_BOOTLOADER			3
 
 typedef enum
 {
@@ -68,7 +68,9 @@ typedef enum
 } ZunoError_t;
 
 #include "ZUNO_AutoDef.h"
-
+#define MAX_CMDCLASES_NSNI								48
+#define MAX_CMDCLASES_SECURED							48
+#define MAX_CMDCLASES_CROPPED							8
 #define MAX_CHANNEL_PARAMS                              4
 #define ZUNO_MAX_MULTI_CHANNEL_NUMBER 					32
 #define ZUNO_MAX_ASSOC_NUMBER 							32
@@ -81,6 +83,10 @@ typedef enum
 #define MAX_ZUNO_PWMS           						4
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN				300
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT				(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
+#define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 				4
+#define MAX_FWHEADER_SIGN 16
 
 
 #define MAX_SLEEP_DELAY 								60000
@@ -117,6 +123,14 @@ typedef enum
 
 
 
+enum{
+	SYSFAULT_HARDWARE = 0x01,
+	SYSFAULT_MEMORY = 0x02,
+	SYSFAULT_USAGE = 0x04,
+	SYSFAULT_BUS = 0x08,
+	SYSFAULT_SUPERVISOR_CALL= 0x10,
+	SYSFAULT_HANG= 0x20
+};
 enum { 
 	ZUNO_EEPROM_OK,
 	ZUNO_EEPROM_NOTALIGNED,

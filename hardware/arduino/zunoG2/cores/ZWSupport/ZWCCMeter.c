@@ -2,6 +2,8 @@
 #include "ZWSupport.h"
 #include "Arduino.h"
 
+#ifdef WITH_CC_METER
+
 int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket) {//v6
 	ZwMeterReportFrame_t				*report;
 	uint32_t							params;
@@ -31,7 +33,8 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 	report = (ZwMeterReportFrame_t *)&report_paket->cmd[0x0];
 	report->v3.byte1.cmdClass = COMMAND_CLASS_METER;
 	report->v3.byte1.cmd = METER_REPORT;
-	report->v3.byte1.properties1 = (ZUNO_CFG_CHANNEL(channel).sub_type & METER_REPORT_PROPERTIES1_METER_TYPE_MASK) | (len == sizeof(ZW_METER_GET_FRAME) ? 0x0  : (METER_REPORT_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | GET_SCALE2(params));
+	uint8_t subtype = ZUNO_CFG_CHANNEL(channel).sub_type;
+	report->v3.byte1.properties1 = (subtype & METER_REPORT_PROPERTIES1_METER_TYPE_MASK) | (len == sizeof(ZW_METER_GET_FRAME) ? 0x0  : (METER_REPORT_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | GET_SCALE2(params));
 	report->v3.byte1.properties2 = COMBINE_PARAMS(params);
 	channel_size = GET_SIZE(params);
 	value = zuno_universalGetter1P(channel);
@@ -103,3 +106,4 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacke
 	}
 	return (rs);
 }
+#endif

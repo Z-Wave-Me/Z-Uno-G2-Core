@@ -4,6 +4,7 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSuperVision.h"
 
+#ifdef WITH_CC_SWITCHCOLOR
 typedef struct					ZunoColorDuration_s {
 	uint8_t						targetValue;
 	uint8_t						currentValue;
@@ -365,3 +366,4 @@ void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *fr
 		}
 	}
 }
+#endif

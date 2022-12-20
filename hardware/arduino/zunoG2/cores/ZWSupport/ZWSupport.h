@@ -153,18 +153,17 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ZW_CMD_CLASS          (cmd->cmd[0])
 #define ZW_CMD                (cmd->cmd[1])
 #define ZW_CMD_BPARAM(N)      (cmd->cmd[2+N])
+// !!! FIX
 
-#define ZUNO_CFG_CHANNEL_COUNT  (g_zuno_sys->zwave_cfg->num_channels)
-#define ZUNO_CFG_CHANNEL(N)     g_zuno_sys->zwave_cfg->channels[N]
-#define ZUNO_CFG_TYPE_COUNT     (g_zuno_sys->zwave_cfg->num_channel_types)
-#define ZUNO_CFG_TYPE(N)        g_zuno_sys->zwave_cfg->channel_types[N]
-#define ZUNO_CFG_TYPES          g_zuno_sys->zwave_cfg->channel_types
-#define ZUNO_CFG_BASECCS(N)     g_zuno_sys->zwave_cfg->custom_base_ccs[N]
-#define ZUNO_CFG_BASE_CCS_NUM  g_zuno_sys->zwave_cfg->num_custom_base_ccs
-
-
-#define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_sys->zwave_cfg->num_associations)
-#define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_sys->zwave_cfg->associations[N])
+#define ZUNO_CFG_CHANNEL_COUNT  (g_zuno_zw_cfg.num_channels)
+#define ZUNO_CFG_CHANNEL(N)     (g_zuno_zw_cfg.channels[N])
+//#define ZUNO_CFG_TYPE_COUNT     0//(g_zuno_sys->zwave_cfg->num_channel_types)
+//#define ZUNO_CFG_TYPE(N)        0//g_zuno_sys->zwave_cfg->channel_types[N]
+//#define ZUNO_CFG_TYPES          NULL//g_zuno_sys->zwave_cfg->channel_types
+//#define ZUNO_CFG_BASECCS(N)     g_zuno_sys->zwave_cfg->custom_base_ccs[N]
+//#define ZUNO_CFG_BASE_CCS_NUM   0//g_zuno_sys->zwave_cfg->num_custom_base_ccs
+#define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_zw_cfg.num_associations)
+#define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_zw_cfg.associations[N])
 
 /* Device class Av Control Point */
 #define GENERIC_TYPE_AV_CONTROL_POINT                                                    0x03 /*AV Control Point*/
@@ -519,6 +518,7 @@ typedef struct ZUnoDevTypeDef_s{
 
 extern  const ZUNOChannelCCS_t ZUNO_CC_TYPES[];
 extern  const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[];
+extern ZUNOZWConfiguation_t g_zuno_zw_cfg;
 uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz);
 uint8_t *zuno_AddCommonClassMinimal(uint8_t *b);
 uint8_t *zuno_AddCommonClass(uint8_t *b);

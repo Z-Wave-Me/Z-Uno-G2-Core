@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "ZWCCThermostat.h"
-
+#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 static int _supported_report_mode(uint8_t channel, ZUNOCommandPacketReport_t *frame_report) {//Processed to get the value of the thermostatmode components
 	ZwThermostatModeSupportedReportFrame_t		*lp;
 	uint8_t										sub_type;
@@ -266,7 +266,7 @@ int zuno_CCThermostatSetPointHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, 
 	return (rs);
 }
 
-#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+
 int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet) {
 	int				rs;
 

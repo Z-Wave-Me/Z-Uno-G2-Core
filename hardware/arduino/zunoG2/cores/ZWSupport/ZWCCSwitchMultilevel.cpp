@@ -6,7 +6,8 @@
 #include "ZWCCSuperVision.h"
 
 void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
-	switch (ZUNO_CFG_CHANNEL(zuno_ch).type) {
+	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+	switch (type) {
 		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			ZWCC_BASIC_SAVE_COLOR(zuno_ch) = value;
@@ -20,8 +21,8 @@ void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
 
 int32_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {
 	int32_t								value;
-
-	switch (ZUNO_CFG_CHANNEL(zuno_ch).type) {
+	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+	switch (type) {
 		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			value = ZWCC_BASIC_SAVE_COLOR(zuno_ch);
@@ -48,8 +49,10 @@ static void _start_level(size_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 	if ((pk->v1.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
 		if ((current_level = pk->v1.startLevel) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
+		/*
 		if (current_level != 0x0)
 			ZWCC_BASIC_SAVE_LAST(channel) = current_level;
+		*/
 		ZWCC_BASIC_SETTER_1P(channel, current_level);
 		zunoSendReport(channel + 1);
 	} else {// Otherwise, get the current
@@ -147,13 +150,16 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel, ZUN
 	if ((value = cmd->v4.value) > ZUNO_TIMER_SWITCH_MAX_VALUE && value < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (value == 0xFF) {
+		/*
 		if ((tempos = ZWCC_BASIC_SAVE_LAST(channel)) != 0)
 			value = tempos;
-		else
+		else*/
 			value = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	}
+	/*
 	if (value != 0x0)
 		ZWCC_BASIC_SAVE_LAST(channel) = value;
+	*/
 	currentValue = ZWCC_BASIC_GETTER_1P(channel) ? 0xFF : 0x00;
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;

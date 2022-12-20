@@ -2,7 +2,7 @@
 #include "ZWCCTimer.h"
 #include "ZWCCDoorLock.h"
 
-
+#ifdef WITH_CC_DOORLOCK
 typedef union							ZwDoorLockProperties_u
 {
 	uint8_t								properties;
@@ -292,3 +292,4 @@ void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp) {
 	zunoSendReport(channel);
 	lp->channel = 0x0;
 }
+#endif // WITH_CC_DOORLOCK

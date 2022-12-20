@@ -11,7 +11,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	size_t							value;
 	size_t							type;
 
-	type = ZUNO_CFG_CHANNEL(channel).type;
+	type = 0;//ZUNO_CFG_CHANNEL(channel).type;
 	value = paket->value;
 	#if defined(WITH_CC_SOUND_SWITCH)
 	switch (type) {
@@ -46,14 +46,15 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			if (value > 0x63 && value < 0xFF)
 				return (ZUNO_COMMAND_BLOCKED_FAILL);
 			if (value == 0xFF) {
+				/*
 				size_t							tempos;
 				if ((tempos = ZWCC_BASIC_SAVE_LAST(channel)) != 0)
 					value = tempos;
-				else
-					value = 0x63;
+				else*/
+				value = 0x63;
 			}
-			else if (value != 0x0)
-				ZWCC_BASIC_SAVE_LAST(channel) = value;
+			//else if (value != 0x0)
+			//	ZWCC_BASIC_SAVE_LAST(channel) = value;
 			break;
 		#endif
 		default:

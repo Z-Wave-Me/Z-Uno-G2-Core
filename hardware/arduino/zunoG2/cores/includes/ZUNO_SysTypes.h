@@ -28,6 +28,18 @@ typedef struct ZUNOChannelCCS_s {
 typedef struct ZUNOAssociation_s {
 	uint8_t type;
 } ZUNOAssociation_t;
+typedef struct ZUNOZWConfiguation_s {
+	uint32_t            flags;
+	ZUNOChannel_t 		channels[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
+	uint8_t 			num_channels;
+	ZUNOAssociation_t	associations[ZUNO_MAX_ASSOC_NUMBER];
+	uint8_t 			num_associations;
+	uint16_t            product_id;
+	uint16_t			device_icon;
+	uint16_t			device_app_icon;
+	uint16_t            crc16;
+} ZUNOZWConfiguation_t;
+/*
 typedef struct ZUNODeviceConfiguation_s {
 	uint32_t            flags;
 	ZUNOChannel_t 		channels[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
@@ -48,14 +60,27 @@ typedef struct ZUNODeviceConfiguation_s {
 	uint16_t            __reserved;
 	uint16_t            crc16;
 }__attribute__((aligned(1),packed)) ZUNODeviceConfiguation_t;
+*/
+typedef struct ZUNOZWaveProtocolData_s{
+	uint8_t  CCLstNSNI[MAX_CMDCLASES_NSNI];
+	uint8_t  CCLstNSIS[MAX_CMDCLASES_CROPPED];
+	uint8_t  CCLstSec[MAX_CMDCLASES_SECURED];
+	uint8_t  CCLstNSNI_cnt;
+	uint8_t  CCLstNSIS_cnt;
+	uint8_t  CCLstSec_cnt;
+	uint8_t  req_s2_keys;
+	uint8_t  option_mask;
+	uint8_t  generic_type;
+	uint8_t  specific_type;
+	uint8_t  association_count;
+	uint16_t device_icon;
+	uint16_t crc16; 
+}ZUNOZWaveProtocolData_t;
 typedef struct ZUNOOTAFWDescr_s{
 	uint16_t id;
 	uint16_t version;
 }ZUNOOTAFWDescr_t;
 // Z-Wave packet
-#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN						300
-#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT						(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
-#define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 						4
 typedef struct ZUNOCommandPacket_s{
 	uint8_t * cmd;   // 4B
 	uint8_t   flags; // 5B
@@ -77,7 +102,8 @@ typedef struct ZUNOSetupSysState_s {
 	uint8_t highest_security_level;
 	uint32_t gpio_em4flags;
 	uint32_t flags;
-	ZUNODeviceConfiguation_t * zwave_cfg;
+	// ZUNODeviceConfiguation_t * zwave_cfg;
+	ZUNOZWaveProtocolData_t * zw_protocol_data;
 	void *  hIOThread;
 	void *  hMainThread;
 	uint8_t sleep_latches;
@@ -90,7 +116,32 @@ typedef struct ZUNOSetupSysState_s {
 	volatile uint32_t  rstat_pkgs_processed;
 	volatile uint32_t  rstat_pkgs_sent;
 	volatile uint32_t  rstat_pkgs_hp_time;
+	void *   fw_static_header;
+	uint32_t  start_error_code;
+	uint32_t  error_cnt;
+	uint32_t  error_pc_value;
 }ZUNOSetupSysState_t;
+
+typedef struct ZUNOFWHeader_s{
+	uint8_t 	sign[MAX_FWHEADER_SIGN];
+	uint8_t     size;
+	uint32_t	build_timestamp;
+	uint32_t    build_sequence;
+	uint16_t    hw_id;
+	uint16_t    version;
+	uint8_t     hw_button_pin;
+	uint8_t     hw_led1_pin;
+	uint8_t     hw_led2_pin;
+	uint8_t     hw_uled_pin;
+	uint8_t     hw_sapi_tx_pin;
+	uint8_t     hw_sapi_rx_pin;
+	uint8_t     hw_sapi_uart_number;
+	uint8_t     hw_console_tx_pin;
+	uint8_t     hw_console_rx_pin;
+	uint8_t     hw_console_uart_number;
+	uint32_t    flags;
+	uint32_t    crc32;
+} __attribute__((aligned(1),packed)) ZUNOFWHeader_t ;
 
 // Handlers
 typedef struct zuno_handler_single_gettersetter_s{

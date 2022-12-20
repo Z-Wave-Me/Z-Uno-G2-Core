@@ -132,19 +132,24 @@ void zunoSendWakeUpNotification();
 void zunoSendBatteryReport();
 #endif
 inline void zunoSetSleepingMode(byte mode) {
-	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+  g_zuno_zw_cfg.flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
-	g_zuno_sys->zwave_cfg->flags |= mode;
+	g_zuno_zw_cfg.flags |= mode;
 }
-inline uint8_t zunoGetSleepingMode(void) {return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);};
+inline uint8_t zunoGetSleepingMode(void) {
+  return (g_zuno_zw_cfg.flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+};
 inline void zunoEnableSmartStart(bool en){
+  /*
 	if(en)
 		g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
 	else
 		g_zuno_sys->zwave_cfg->flags |= (DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
+  */
 }
 inline void zunoSetProductID(uint16_t product_id){
-	g_zuno_sys->zwave_cfg->product_id = product_id;
+  // !!! FIX 
+	//g_zuno_sys->zwave_cfg->product_id = product_id;
 }
 
 
@@ -206,14 +211,20 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ER
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
-inline void zunoSetZWChannel(byte ch, byte zw_channel) {ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;};
+inline void zunoSetZWChannel(byte ch, byte zw_channel) {
+  // !!! FIX
+  // ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
+};
 byte zunoAddChannel(byte type, byte subtype, byte options);
 bool zunoAddBaseCCS(byte ccs, byte version);
 void zunoSendReport(byte ch);
 void zunoResetLocally();
 void zunoSendNIF();
 bool zunoStartDeviceConfiguration();
-inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
+inline void zunoSetS2Keys(byte keys) {
+  // !!! FIX
+  // g_zuno_sys->zwave_cfg->security_keys = keys;  
+};
 void zunoStartLearn(byte timeout, bool secured);
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
 // Backward compatibility macro

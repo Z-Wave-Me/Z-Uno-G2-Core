@@ -12,6 +12,8 @@
 #include "em_adc.h"
 #include "em_gpio.h"
 #include <CommandQueue.h>
+#include <SysService.h>
+
 
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
@@ -498,6 +500,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_LOOP:
             if(!g_sketch_inited){
+                SysServiceInit();
                 ZWCCSetup();
                 setup();
                 g_sketch_inited = true;
@@ -514,6 +517,7 @@ void * zunoJumpTable(int vec, void * data) {
         
         case ZUNO_JUMPTBL_SYSEVENT:{
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+                SysServiceEvent(evnt);
                 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
                 if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
                     zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
@@ -556,6 +560,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
        
         case ZUNO_JUMPTBL_SYSTIMER:
+            SysServiceTimer();
             zuno_CCTimer((uint32_t)data);
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             _zunoSleepingUpd();
@@ -570,6 +575,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+            SysServiceSleep();
             _zunoSysSleep();
             #endif
             #ifdef LOGGING_DBG
@@ -1396,9 +1402,11 @@ void zunoSendDeviceToSleep(uint8_t mode) {
   // we inform the system that device is ready for sleep
   zunoMarkDeviceToSleep(mode);
   // suspend the main tread
+  /*
+  // !!! FIX
   if((g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) != 0){
     zunoSuspendThread(g_zuno_sys->hMainThread);
-  }
+  }*/
 }
 void zunoMarkDeviceToSleep(uint8_t mode){
     // Store time mark

@@ -12,6 +12,7 @@ typedef enum				ZunoCFGTypeHandler_e
 	ZunoCFGTypeHandlerName
 }							ZunoCFGTypeHandler_t;
 
+const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param) __attribute__ ((weak));
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
 // DEFAULT metada for configuration parameters
 const ZunoCFGParameter_t CFGPARAM_DEFAULT =

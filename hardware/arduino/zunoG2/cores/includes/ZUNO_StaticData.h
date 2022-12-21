@@ -225,6 +225,13 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
 
+
+#define ZUNO_SETUP_CONFIGPARAMETERS_DISABLE_SYS_PARAMETR()			\
+const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){		\
+	const ZunoCFGParameter_t *zunoCFGParameter(size_t param);		\
+	return  zunoCFGParameter(param);								\
+}																	\
+
 #define ZUNO_SETUP_CONFIGPARAMETERS(...) 	\
 							    static const ZunoCFGParameter_t __g_zuno_lp_param[]= \
 								{ \

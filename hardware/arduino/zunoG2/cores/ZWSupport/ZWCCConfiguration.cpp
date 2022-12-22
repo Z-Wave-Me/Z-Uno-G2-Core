@@ -12,7 +12,6 @@ typedef enum				ZunoCFGTypeHandler_e
 	ZunoCFGTypeHandlerName
 }							ZunoCFGTypeHandler_t;
 
-const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param) __attribute__ ((weak));
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
 // DEFAULT metada for configuration parameters
 const ZunoCFGParameter_t CFGPARAM_DEFAULT =
@@ -158,7 +157,7 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.advanced = true
 }; 
 const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
-
+	#if !defined(ZUNO_SETUP_CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
 	switch(param){
 		case 1:
 			return &SYSCFGPARAM1;
@@ -177,7 +176,7 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 		case 20:
 			return &SYSCFGPARAM20;
 	}
-
+	#endif
 	// Return user-defined callback result for user-defined parameters
 	return  zunoCFGParameter(param);
 }

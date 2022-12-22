@@ -157,7 +157,7 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.advanced = true
 }; 
 const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
-	#if !defined(ZUNO_SETUP_CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
+	#if !defined(CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
 	switch(param){
 		case 1:
 			return &SYSCFGPARAM1;

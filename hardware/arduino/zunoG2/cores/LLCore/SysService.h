@@ -17,6 +17,7 @@ enum{
     SYSLED_LEARN_MODE_INCLUSION = 0,
     SYSLED_LEARN_MODE_SUBMENU_READY,
     SYSLED_LEARN_MODE_IDENTITY,
+    SYSLED_LEARN_MODE_WAITING_RST,
     SYSLED_LEARN_MODE_SYSERROR_MEMORY,
     SYSLED_LEARN_MODE_SYSERROR_HW,
     SYSLED_LEARN_MODE_SYSERROR_WDOG,
@@ -29,6 +30,7 @@ enum{
 
 void SysServiceInit();
 void SysServiceTimer();
+void SysReconfigLeds();
 void SysServiceEvent(ZUNOSysEvent_t * ev);
 void SysServiceSleep();
 void SysSetLearnLedMode(uint8_t mode, uint32_t timeout);

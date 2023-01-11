@@ -4,7 +4,9 @@
 #include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSwitchBinary.h"
+#include "ZWCCResetLocally.h"
 #include "CommandQueue.h"
+
 
 size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
@@ -136,4 +138,5 @@ void zuno_CCTimer(uint32_t ticks) {
 		zunoSendReportHandler(ticks);
 	}
 	ZWQProcess();
+	RSTLocallyTick();
 }

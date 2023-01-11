@@ -28,8 +28,13 @@
 #include "ZWCCSoundSwitch.h"
 #include "ZWCCIndicator.h"
 #include "ZWCCCentralScene.h"
+#include "ZWCCResetLocally.h"
 #include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
+#include "CrcClass.h"
+
+
+CrcClass mCrc; 
 
 enum {
 	HADLER_ARGTYPE_1UB,
@@ -43,6 +48,139 @@ enum {
 #define HANDLER_DESCRIPTOR_LEN_SHIFT     0x04
 #define HANDLER_DESCRIPTOR_LEN_MASK      0x03
 #define HANDLER_DESCRIPTOR_SIGNED_BIT    0x80
+
+static const uint8_t FREQ_TBL_CONV[][2] = { {ZME_FREQ_EU, REGION_EU},
+		 	 	 	 	 	 	 	 	 	{ZME_FREQ_RU, REGION_RU},
+											{ZME_FREQ_IN, REGION_IN},
+											{ZME_FREQ_US, REGION_US},
+											{ZME_FREQ_ANZ, REGION_ANZ},
+											{ZME_FREQ_HK, REGION_HK},
+											{ZME_FREQ_CN, REGION_CN},
+											{ZME_FREQ_JP, REGION_JP},
+											{ZME_FREQ_KR, REGION_KR},
+											{ZME_FREQ_IL, REGION_IL},
+                      						{ZME_FREQ_MY, REGION_KR},
+                      						{ZME_FREQ_LR_US, REGION_US_LR}};
+// -----------------------------------------------------------------
+// STATIC NIF
+// -----------------------------------------------------------------
+static const uint8_t zuno_cmdClassListNSIS_Def[] =
+{
+  COMMAND_CLASS_ZWAVEPLUS_INFO,
+  COMMAND_CLASS_TRANSPORT_SERVICE,
+  COMMAND_CLASS_SECURITY,
+  COMMAND_CLASS_SECURITY_2,
+  COMMAND_CLASS_SUPERVISION
+};
+static const uint8_t zuno_cmdClassListSec_Def[] =
+{
+  COMMAND_CLASS_VERSION,
+  COMMAND_CLASS_ASSOCIATION,
+  COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION,
+  COMMAND_CLASS_ASSOCIATION_GRP_INFO,
+  COMMAND_CLASS_MANUFACTURER_SPECIFIC,
+  COMMAND_CLASS_DEVICE_RESET_LOCALLY,
+  COMMAND_CLASS_INDICATOR,
+  COMMAND_CLASS_POWERLEVEL,
+  COMMAND_CLASS_CONFIGURATION,
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
+  #ifndef DYNAMIC_CCS_SUPPORT
+  #ifdef WITH_CC_SWITCH_BINARY
+  COMMAND_CLASS_SWITCH_BINARY, 
+  #endif
+  #ifdef WITH_CC_SWITCH_MULTILEVEL
+  COMMAND_CLASS_SWITCH_MULTILEVEL, 
+  #endif
+  #ifdef WITH_CC_NOTIFICATION
+  COMMAND_CLASS_NOTIFICATION, 
+  #endif
+  #ifdef WITH_CC_SENSOR_MULTILEVEL
+  COMMAND_CLASS_SENSOR_MULTILEVEL, 
+  #endif
+  #ifdef WITH_CC_METER
+  COMMAND_CLASS_METER, 
+  #endif
+  #ifdef WITH_CC_METER_TBL_MONITOR
+  COMMAND_CLASS_METER_TBL_MONITOR, 
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_MODE
+  COMMAND_CLASS_THERMOSTAT_MODE,
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_SETPOINT
+  COMMAND_CLASS_THERMOSTAT_SETPOINT,
+  #endif
+  #ifdef WITH_CC_SWITCH_COLOR
+  COMMAND_CLASS_SWITCH_COLOR,
+  #endif
+  #ifdef WITH_CC_SOUND_SWITCH
+  COMMAND_CLASS_SOUND_SWITCH,
+  #endif
+  #ifdef WITH_CC_WAKEUP
+  COMMAND_CLASS_WAKE_UP,
+  #endif
+  #ifdef WITH_CC_BATTERY
+  COMMAND_CLASS_BATTERY,
+  #endif
+  #ifdef WITH_CC_MULTICHANNEL
+  COMMAND_CLASS_MULTI_CHANNEL,
+  #endif
+  #endif // DYNAMIC_CCS_SUPPORT
+  
+};
+static const uint8_t zuno_cmdClassListNSNI_Def[] =
+{
+  COMMAND_CLASS_ZWAVEPLUS_INFO,
+  COMMAND_CLASS_ASSOCIATION,
+  COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION,
+  COMMAND_CLASS_ASSOCIATION_GRP_INFO,
+  COMMAND_CLASS_TRANSPORT_SERVICE,
+  COMMAND_CLASS_VERSION,
+  COMMAND_CLASS_MANUFACTURER_SPECIFIC,
+  COMMAND_CLASS_DEVICE_RESET_LOCALLY,
+  COMMAND_CLASS_INDICATOR,
+  COMMAND_CLASS_POWERLEVEL,
+  COMMAND_CLASS_SUPERVISION,
+  COMMAND_CLASS_CONFIGURATION,
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
+  #ifndef DYNAMIC_CCS_SUPPORT
+  #ifdef WITH_CC_SWITCH_BINARY
+  COMMAND_CLASS_SWITCH_BINARY, 
+  #endif
+  #ifdef WITH_CC_SWITCH_MULTILEVEL
+  COMMAND_CLASS_SWITCH_MULTILEVEL, 
+  #endif
+  #ifdef WITH_CC_NOTIFICATION
+  COMMAND_CLASS_NOTIFICATION, 
+  #endif
+  #ifdef WITH_CC_SENSOR_MULTILEVEL
+  COMMAND_CLASS_SENSOR_MULTILEVEL, 
+  #endif
+  #ifdef WITH_CC_METER
+  COMMAND_CLASS_METER, 
+  #endif
+  #ifdef WITH_CC_METER_TBL_MONITOR
+  COMMAND_CLASS_METER_TBL_MONITOR, 
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_MODE
+  COMMAND_CLASS_THERMOSTAT_MODE,
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_SETPOINT
+  COMMAND_CLASS_THERMOSTAT_SETPOINT,
+  #endif
+  #ifdef WITH_CC_SWITCH_COLOR
+  COMMAND_CLASS_SWITCH_COLOR,
+  #endif
+  #ifdef WITH_CC_SOUND_SWITCH
+  COMMAND_CLASS_SOUND_SWITCH,
+  #endif
+  #ifdef WITH_CC_DOORLOCK
+  COMMAND_CLASS_DOOR_LOCK, 
+  #endif
+  #ifdef WITH_CC_MULTICHANNEL
+  COMMAND_CLASS_MULTI_CHANNEL,
+  #endif
+  #endif // DYNAMIC_CCS_SUPPORT
+};
 
 typedef struct ZUnoChannelDtaHandler_s{
 	void * p_handler;     
@@ -121,7 +259,9 @@ inline bool __isSyncMapChannelAndClear(uint32_t * map, uint8_t ch){
 	return res;
 }
 //-------------------------------------------------------------------------------------------------
+void _zunoLoadUserChannels();
 void ZWCCSetup(){
+	_zunoLoadUserChannels();
 	memset(&g_channels_data, 0, sizeof(g_channels_data));
 	#ifdef WITH_CC_BATTERY
 	zuno_CCBattery_OnSetup();
@@ -220,14 +360,12 @@ byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	LOGGING_UART.print("N_CH=");
 	LOGGING_UART.println(ZUNO_CFG_CHANNEL_COUNT);
 	#endif
-	// !!! FIX
-	/*
 	for(i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(compare_zw_channel(ZUNO_CFG_CHANNEL(i).zw_channel,cmd->dst_zw_channel)) //ZUNO_CFG_CHANNEL(N).zw_channel == cmd->dst_zw_channel)
 			if(zuno_compare_channeltypeCC(&(ZUNO_CFG_CHANNEL(i)), cmd->cmd))
 				return i;
 		
-	}*/
+	}
 	return UNKNOWN_CHANNEL;
 }
 
@@ -577,16 +715,109 @@ static bool _isCCinList(uint8_t cc, uint8_t * cmds, uint8_t count){
     return false;
 
 }
+static int _appendCC(uint8_t * cc_list, uint8_t &cc_list_sz, uint8_t cc, uint8_t max_sz){
+  int i;
+  if(_isCCinList(cc, cc_list, cc_list_sz))
+	return cc_list_sz;
+  if(cc_list_sz >= max_sz){
+	// Error HANDLING
+    return cc_list_sz;
+  }
+  cc_list[cc_list_sz++] = cc;
+  return cc_list_sz;
+}
 
-static uint8_t zuno_cmdClassListNSIS_Def[] =
-{
-  COMMAND_CLASS_ZWAVEPLUS_INFO,
-  COMMAND_CLASS_TRANSPORT_SERVICE,
-  COMMAND_CLASS_SECURITY,
-  COMMAND_CLASS_SECURITY_2,
-  COMMAND_CLASS_SUPERVISION
-};
-
+uint8_t dynamicCCVersion(uint8_t cc){
+	if((cc == COMMAND_CLASS_MULTI_CHANNEL) && (ZUNO_CFG_CHANNEL_COUNT > 1))
+		return MULTI_CHANNEL_VERSION;
+	// Loop over all user-defined channels
+	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
+		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
+		uint8_t f = ZUNO_CC_TYPES[type].flags;
+		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
+			uint8_t c = ZUNO_CC_TYPES[type].ccs[j].cc;
+			if((cc == COMMAND_CLASS_BASIC) && (f&CHANNEL_TYPE_FLAGS_BASIC_MAPPER)){
+				return BASIC_VERSION;
+			}
+			if(c == cc){
+				return ZUNO_CC_TYPES[type].ccs[j].version;
+			}
+		}
+	}
+	return 0;
+}
+void _fillZWaveData(uint8_t secure_param){
+	// Fill base CCs into NIF
+	memcpy(g_zuno_sys->zw_protocol_data->CCLstNSIS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def));
+	g_zuno_sys->zw_protocol_data->CCLstNSIS_cnt = sizeof(zuno_cmdClassListNSIS_Def);
+	memcpy(g_zuno_sys->zw_protocol_data->CCLstNSNI, zuno_cmdClassListNSNI_Def, sizeof(zuno_cmdClassListNSNI_Def));
+	g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt = sizeof(zuno_cmdClassListNSNI_Def);
+	memcpy(g_zuno_sys->zw_protocol_data->CCLstSec, zuno_cmdClassListSec_Def, sizeof(zuno_cmdClassListSec_Def));
+	g_zuno_sys->zw_protocol_data->CCLstSec_cnt = sizeof(zuno_cmdClassListSec_Def);
+	if((g_zuno_sys->p_config->secure_mode) && 
+	   (secure_param != ZUNO_SECUREPARAM_OFF) && 
+	   (g_zuno_sys->zw_protocol_data->req_s2_keys != 0)){
+			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY, MAX_CMDCLASES_NSNI);
+			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY_2, MAX_CMDCLASES_NSNI);
+	   }
+	#ifdef DYNAMIC_CCS_SUPPORT
+	// DYNAMIC COMMAND CLASS VERSION
+	// Add MULTICHANNEL CC only if we need it
+	if(ZUNO_CFG_CHANNEL_COUNT > 1){
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_MULTI_CHANNEL, MAX_CMDCLASES_NSNI);
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt, COMMAND_CLASS_MULTI_CHANNEL, MAX_CMDCLASES_SECURED);
+	}
+	// Loop over all user-defined channels
+	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
+		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
+		uint8_t f = ZUNO_CC_TYPES[type].flags;
+		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
+			uint8_t cc = ZUNO_CC_TYPES[type].ccs[j].cc;
+			if(f & CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE)
+				_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, cc, MAX_CMDCLASES_NSNI);
+			_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,cc, MAX_CMDCLASES_SECURED);
+		}
+	}
+	#endif
+	if(ZUNO_CFG_CHANNEL_COUNT == 0){
+		// It's just a control device, only associations
+		g_zuno_sys->zw_protocol_data->generic_type = GENERIC_TYPE_GENERIC_CONTROLLER;
+		g_zuno_sys->zw_protocol_data->specific_type = SPECIFIC_TYPE_REMOTE_CONTROL_SIMPLE;
+		g_zuno_sys->zw_protocol_data->device_icon = ICON_TYPE_GENERIC_REMOTE_CONTROL_SIMPLE;
+	} else {
+		uint8_t type = ZUNO_CFG_CHANNEL(0).type-1;
+		g_zuno_sys->zw_protocol_data->generic_type = ZUNO_DEV_TYPES[type].gen_type;
+		g_zuno_sys->zw_protocol_data->specific_type = ZUNO_DEV_TYPES[type].spec_type;
+		g_zuno_sys->zw_protocol_data->device_icon = ZUNO_DEV_TYPES[type].icon;
+	}
+	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
+  	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
+	  g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+  	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
+	  g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+  	}
+}
+uint16_t _calcCfg16Crc(){
+	uint16_t crc16_pos = offsetof(ZUNOZWConfiguation_t, crc16);
+	uint16_t crc16 = mCrc.crc16_a(&g_zuno_zw_cfg, crc16_pos);
+	return crc16;
+}
+void _zunoLoadUserChannels(){
+	zunoEEPROMRead(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
+	uint16_t crc16 = _calcCfg16Crc();
+	if(crc16 != g_zuno_zw_cfg.crc16){
+		memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
+	}
+}
+void _zunoSaveUserChannels(){
+	g_zuno_zw_cfg.crc16 = _calcCfg16Crc();
+	zunoEEPROMWrite(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
+}
+void zunoCommitCfg(){
+	_zunoSaveUserChannels();
+	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
+    zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
+}
 static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	uint8_t								s2level;
 	uint8_t								rx_s2level;
@@ -601,7 +832,7 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	if(s2level == rx_s2level)// Запрос пришел на высшем уровне безопасности
 		return (false);
 	if (_zmeIsS2LevelGreater(s2level, rx_s2level))// Запрос пришел с тем, что меньше нашего уровня безопасности
-		if (_isCCinList(ZW_CMD_CLASS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
+		if (_isCCinList(ZW_CMD_CLASS, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
 			return (false);
 	return (true);
 }
@@ -652,12 +883,12 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 			zuno_dbgdumpZWPacakge(cmd);
 			#endif
 			_fillOutgoingPacket(cmd,  &frame_report);
-			if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
-				return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd, &frame_report));
-			}
 		}
 	}
 	#endif
+	if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
+		return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd, &frame_report));
+	}
 	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
 		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
@@ -1067,17 +1298,17 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
 		return false;
-	// !!! FIX
-	/*
-	memset(g_zuno_sys->zwave_cfg, 0, sizeof(ZUNODeviceConfiguation_t));
-	g_zuno_sys->zwave_cfg->flags = DEFAULT_CONFIG_FLAGS;
-	g_zuno_sys->zwave_cfg->product_id = DEFAULT_PRODUCT_ID;
-	g_zuno_sys->zwave_cfg->security_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
-	*/
+	// System-side protocol data
+	memset(g_zuno_sys->zw_protocol_data, 0, sizeof(ZUNOZWaveProtocolData_t));
+	g_zuno_sys->zw_protocol_data->flags = DEFAULT_CONFIG_FLAGS;
+	g_zuno_sys->zw_protocol_data->product_id = DEFAULT_PRODUCT_ID;
+	g_zuno_sys->zw_protocol_data->req_s2_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
+	// User-side data
+	memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
 	return  true;
 }
 byte getMaxChannelTypes() {
-	return 0; //sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
+	return sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
 }
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count) {
 	byte i;
@@ -1143,50 +1374,16 @@ bool zunoAddBaseCCS(byte ccs, byte version){
 	return true;
 }
 byte zunoAddChannel(byte type, byte subtype, byte options) {
-	// !!! FIX
-	/*
-	#ifdef LOGGING_DBG
-	// dbgCCTypes();
-	#endif
-	//initCCSData();
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;
-	// 
-	byte type_index = zuno_findChannelType(type, ZUNO_CFG_TYPES, ZUNO_CFG_TYPE_COUNT);
-	// We have to add new type to device
-	if(type_index == UNKNOWN_CHANNEL) {
-		// Do we have space for the new CC type?
-		if(ZUNO_CFG_TYPE_COUNT >= ZUNO_MAX_CCTYPES)
-			return UNKNOWN_CHANNEL;
-		// Fill the type structure from predefined array.
-		// type index starts from 1, so we have to decrement it
-		int const_type_index =  zuno_findChannelType(type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
-		if(const_type_index == UNKNOWN_CHANNEL){
-			#ifdef LOGGING_DBG
-			LOGGING_UART.print("***ERROR: Can't find CCTYPE for:");
-			LOGGING_UART.println(type, HEX);
-			#endif
-			return UNKNOWN_CHANNEL;
-		}
-		memcpy(&ZUNO_CFG_TYPE(ZUNO_CFG_TYPE_COUNT), &ZUNO_CC_TYPES[const_type_index], sizeof(ZUNOChannelCCS_t));
-		ZUNO_CFG_TYPE_COUNT++;
-	}
-	byte ch_i = ZUNO_CFG_CHANNEL_COUNT;
-	if(ch_i == 0){
-		g_zuno_sys->zwave_cfg->device_generic_type      =   ZUNO_DEV_TYPES[type-1].gen_type;
-		g_zuno_sys->zwave_cfg->device_specific_type     =   ZUNO_DEV_TYPES[type-1].spec_type;
-		g_zuno_sys->zwave_cfg->device_icon              =   ZUNO_DEV_TYPES[type-1].icon;
-		g_zuno_sys->zwave_cfg->device_app_icon          =   ZUNO_DEV_TYPES[type-1].app_icon;
-	}
 	// Create new channel
+	uint8_t ch_i = ZUNO_CFG_CHANNEL_COUNT;
 	ZUNO_CFG_CHANNEL(ch_i).type         =   type;
 	ZUNO_CFG_CHANNEL(ch_i).sub_type     =   subtype;
 	ZUNO_CFG_CHANNEL(ch_i).params[0]    =   options;
 	ZUNO_CFG_CHANNEL_COUNT++;
-
-	return ch_i;*/
-	return 0;
+	return ch_i;
 }
 
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
@@ -1194,9 +1391,6 @@ void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handle
 	g_zuno_channelhandlers_map[ch].p_handler = handler;
 }
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
-
-	// !!! FIX
-	/*
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(zw_ch == 0) {
 			if(ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT)
@@ -1207,8 +1401,8 @@ ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
 				return &(ZUNO_CFG_CHANNEL(i));
 		}
 		
-	}*/
-	return NULL;//&(ZUNO_CFG_CHANNEL(0));
+	}
+	return &(ZUNO_CFG_CHANNEL(0));
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
@@ -1361,12 +1555,10 @@ void zunoSendReportHandler(uint32_t ticks) {
 		//LOGGING_UART.print(" TYPE:");
 		//LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
-		// !!! FIX
-		// fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
+		fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
 		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
 		rs = ZUNO_UNKNOWN_CMD;
-		// !!! FIX
-		/*
+		
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
@@ -1415,7 +1607,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			default:
 				break;
-		}*/
+		}
 
 		if(rs == ZUNO_COMMAND_ANSWERED || rs == ZUNO_COMMAND_PROCESSED){
 			__clearSyncMapChannel(&g_channels_data.report_map, ch);
@@ -1494,7 +1686,7 @@ static uint8_t DEPRECATED_RF_EVENTS[] = {
 void zunoRFLogger(ZUNOSysEvent_t * ev){
 	int i;
 	ZUNOCommandPacketReport_t			frame;
-	if((g_zuno_sys->cfg_flags & ZUNO_CFGFILE_FLAG_RFLOG) == 0)
+	if((g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_RFLOG) == 0)
 		return; // RF logging switched off
 	if(zunoNID() == 0)
         return; // Z-Uno is not in network
@@ -1517,4 +1709,10 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 	p_data += sizeof(ev->params[0]);
 	_zme_memcpy(p_data, (uint8_t*)&ev->params[1], sizeof(ev->params[1]));
 	zunoSendZWPackage(&frame.packet);
+}
+uint8_t zunoZMEFrequency2Region(uint8_t freqi){
+  return zmeMapDict((uint8_t*)FREQ_TBL_CONV, sizeof(FREQ_TBL_CONV), freqi, false);
+}
+uint8_t zunoRegion2ZMEFrequency(uint8_t freqi){
+  return zmeMapDict((uint8_t*)FREQ_TBL_CONV, sizeof(FREQ_TBL_CONV), freqi, true);
 }

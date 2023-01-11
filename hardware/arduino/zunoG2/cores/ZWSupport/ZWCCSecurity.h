@@ -29,7 +29,7 @@
 #define SECURITY_SCHEME_GET                                                              0x04
 #define SECURITY_SCHEME_INHERIT                                                          0x08
 #define SECURITY_SCHEME_REPORT                                                           0x05
-
+#define SECURITY_VERSION                                                                 0x01
 /************************************************************/
 /* Security 2 Commands Supported Report command class structs */
 /************************************************************/

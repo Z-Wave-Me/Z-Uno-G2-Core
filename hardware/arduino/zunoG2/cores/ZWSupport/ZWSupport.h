@@ -1,5 +1,7 @@
 #ifndef ZW_COMMAND_CLASS_SUPPORT
 #define ZW_COMMAND_CLASS_SUPPORT
+
+#define USER_CHANNELS_EEPROM_ADDR    0x0E90
 #define MAX_ZW_PACKAGE 54
 #define ZUNO_LIFELINE_GRP 1
 #ifndef ZUNO_REPORTTIME_DIVIDER
@@ -30,6 +32,41 @@ typedef struct											ZwApplicationRejectedRequestFrame_s
 	uint8_t												status;/**/
 }														ZwApplicationRejectedRequestFrame_t;
 
+enum{
+	ZME_FREQ_EU,
+	ZME_FREQ_RU,
+	ZME_FREQ_IN,
+	ZME_FREQ_US,
+	ZME_FREQ_ANZ,
+	ZME_FREQ_HK,
+	ZME_FREQ_CN,
+	ZME_FREQ_JP,
+	ZME_FREQ_KR,
+	ZME_FREQ_IL,
+	ZME_FREQ_MY,
+	ZME_FREQ_LR_US=0x011
+};
+enum
+{
+  REGION_EU = 0,                                          ///< Radio is located in Region EU. 2 Channel region.
+  REGION_US,                                              ///< Radio is located in Region US. 2 Channel region.
+  REGION_ANZ,                                             ///< Radio is located in Region Australia/New Zealand. 2 Channel region.
+  REGION_HK,                                              ///< Radio is located in Region Hong Kong. 2 Channel region.
+  REGION_IN = 5,                                          ///< Radio is located in Region India. 2 Channel region.
+  REGION_IL,                                              ///< Radio is located in Region Israel. 2 Channel region.
+  REGION_RU,                                              ///< Radio is located in Region Russia. 2 Channel region.
+  REGION_CN,                                              ///< Radio is located in Region China. 2 Channel region.
+  REGION_US_LR,                                           ///< Radio is located in Region US. 2 Channel LR region.
+  REGION_US_LR_BACKUP,                                    ///< Radio is located in Region US. 2 Channel LR Backup region.
+  REGION_2CH_NUM = (REGION_US_LR_BACKUP - REGION_EU) + 1, ///< Number of 2 channel region values. For checking if value is out of range.
+  REGION_JP = 32,                                         ///< Radio is located in Region Japan. 3 Channel region.
+  REGION_KR,                                              ///< Radio is located in Region Korea. 3 Channel region.
+  REGION_3CH_NUM = (REGION_KR - REGION_JP) + 1,           ///< Number of 3 channel region values. For checking if value is out of range.
+  REGION_US_LR_END_DEVICE = 48,                           ///< Radio is located in Region US Long Range End Device. 2 Long Range Channel Region.
+  REGION_LR_END_DEVICE_NUM = 1,
+  REGION_UNDEFINED = 0xFE,
+  REGION_DEFAULT = 0xFF, ///< Radio is located in Library Default Region EU. 2 Channel region.
+};
 enum
 {
 	COMMAND_CLASS_BASIC = 0x20,
@@ -58,6 +95,7 @@ enum
 	COMMAND_CLASS_MANUFACTURER_SPECIFIC = 0x72,
 	COMMAND_CLASS_POWERLEVEL = 0x73,
 	COMMAND_CLASS_SOUND_SWITCH = 0x79,
+	COMMAND_CLASS_FIRMWARE_UPDATE_MD=0x7A,
 	COMMAND_CLASS_BATTERY = 0x80,
 	COMMAND_CLASS_WAKE_UP = 0x84,
 	COMMAND_CLASS_ASSOCIATION = 0x85,
@@ -69,7 +107,10 @@ enum
 	COMMAND_CLASS_SECURITY_2 = 0x9F,
 	COMMAND_CLASS_AUTHENTICATION = 0xA1
 };
-
+// Versions of some system-side command classes
+#define FIRMWARE_UPDATE_MD_VERSION                               5
+#define TRANSPORT_SERVICE_VERSION                                2
+#define MANUFACTURER_SPECIFIC_VERSION                            2
 enum{
 	SYSREPORT_MAP_BATTERY_BIT = 0x01,
 	SYSREPORT_MAP_WAKEUP_BIT = 0x02
@@ -139,7 +180,7 @@ uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value);
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
-byte getMaxChannelTypes();
+//byte getMaxChannelTypes();
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void ZWCCSetup();
@@ -164,6 +205,12 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 //#define ZUNO_CFG_BASE_CCS_NUM   0//g_zuno_sys->zwave_cfg->num_custom_base_ccs
 #define ZUNO_CFG_ASSOCIATION_COUNT		(g_zuno_zw_cfg.num_associations)
 #define ZUNO_CFG_ASSOCIATION(N)			(g_zuno_zw_cfg.associations[N])
+
+
+#define APPLICATION_NODEINFO_NOT_LISTENING            0x00
+#define APPLICATION_NODEINFO_LISTENING                0x01
+#define APPLICATION_FREQ_LISTENING_MODE_1000ms        0x10
+#define APPLICATION_FREQ_LISTENING_MODE_250ms         0x20
 
 /* Device class Av Control Point */
 #define GENERIC_TYPE_AV_CONTROL_POINT                                                    0x03 /*AV Control Point*/
@@ -523,5 +570,9 @@ uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz);
 uint8_t *zuno_AddCommonClassMinimal(uint8_t *b);
 uint8_t *zuno_AddCommonClass(uint8_t *b);
 int _zunoTransposeSecurityLevel(uint8_t sec);
+uint8_t dynamicCCVersion(uint8_t cc);
 #define MAX(A, B) (A>B ? A : B)
+uint8_t zunoZMEFrequency2Region(uint8_t freqi);
+uint8_t zunoRegion2ZMEFrequency(uint8_t freqi);
+byte getMaxChannelTypes();
 #endif // ZW_COMMAND_CLASS_SUPPORT

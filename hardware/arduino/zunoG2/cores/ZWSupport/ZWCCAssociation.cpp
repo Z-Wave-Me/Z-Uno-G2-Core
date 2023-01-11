@@ -447,7 +447,7 @@ static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 	// It's a user group (not LifeLine) and the queue is blocked
 	if((frame->packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
 		// Try to find the package for user group and substitude it to new one
-		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags);
+		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags, 0xFF, 0xFF);
 		if(p != NULL){
 			if(p->dst_zw_channel != 0){
 				// Processing has been started -  add a new one package

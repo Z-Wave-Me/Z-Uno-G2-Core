@@ -1,11 +1,21 @@
 #include "Arduino.h"
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
+#include "SysService.h"
 
 #define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
+enum{
+	ZUNO_SYSCFGPARAM_DBG = 1,
+	ZUNO_SYSCFGPARAM_ACTIVITY_LED = 2,
+	ZUNO_SYSCFGPARAM_SECURITY = 7,
+	ZUNO_SYSCFGPARAM_LOGGING = 8,
+	ZUNO_SYSCFGPARAM_FREQUENCY = 9,
+	ZUNO_SYSCFGPARAM_REPORT_TIME = 11,
+	ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN = 20
+};
 typedef enum				ZunoCFGTypeHandler_e
 {
 	ZunoCFGTypeHandlerInfo,
@@ -159,21 +169,21 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 
 	switch(param){
-		case 1:
+		case ZUNO_SYSCFGPARAM_DBG:
 			return &SYSCFGPARAM1;
-		case 2:
+		case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
 			return &SYSCFGPARAM2;
 		#ifdef SECURITY_CONFIG_PARAM
-		case 7:
+		case ZUNO_SYSCFGPARAM_SECURITY:
 			return &SYSCFGPARAM7;
 		#endif
-		case 8:
+		case ZUNO_SYSCFGPARAM_LOGGING:
 			return &SYSCFGPARAM8;
-		case 9:
+		case ZUNO_SYSCFGPARAM_FREQUENCY:
 			return &SYSCFGPARAM9;
-		case 11:
+		case ZUNO_SYSCFGPARAM_REPORT_TIME:
 			return &SYSCFGPARAM11;
-		case 20:
+		case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
 			return &SYSCFGPARAM20;
 	}
 
@@ -207,6 +217,108 @@ uint8_t checkConfigurationParameterSVSet(uint8_t * cmd){
 	}
 	return (param < CONFIGPARAM_MIN_PARAM) ? PARAM_SV_SYSTEM_OK : PARAM_SV_USER_OK;
 }
+
+uint32_t g_ota_pin;
+static void _loadSysParam(size_t param, uint32_t & value){
+	switch(param){
+		    case ZUNO_SYSCFGPARAM_DBG:
+                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_DBG ? 1 : 0;
+                    break;
+            case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
+                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF? 0 : 1;
+                    break;
+            case ZUNO_SYSCFGPARAM_LOGGING:
+                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_RFLOG ? 1 : 0;
+                    break;
+            case ZUNO_SYSCFGPARAM_SECURITY:
+                    value = g_zuno_sys->p_config->secure_mode;
+                    break;
+            case ZUNO_SYSCFGPARAM_FREQUENCY:{
+                      // Encode region index 
+                      uint8_t freq_i = zunoRegion2ZMEFrequency(g_zuno_sys->p_config->ifreq_deffered);
+                      value = freq_i;
+                      value <<= 8;
+                      value |= freq_i ^ 0xFF;
+                    }
+                    break;
+            case ZUNO_SYSCFGPARAM_REPORT_TIME:
+                    value = g_zuno_sys->p_config->ml_interval;
+                    break;
+            case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
+                    if((g_zuno_codeheader.flags & HEADER_FLAGS_REBOOT_CFG) != 0){
+                      value =  g_zuno_sys->fw_update_accepted ? 1 : 0; 
+                    } else {
+                      value = g_ota_pin;
+                    }
+               		break;
+	}
+}
+void _saveFlag8b(uint8_t & bits, uint8_t f, bool on_off){
+	if(on_off){
+		bits |= f; 
+	} else {
+		bits &= ~f;
+	}
+}
+static void _saveSysParam(size_t param, uint32_t  value){
+	bool update = false;
+	bool reboot = false;
+	switch(param){
+		    case ZUNO_SYSCFGPARAM_DBG:
+					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_DBG, value != 0);
+					update = true;
+					break;
+            case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
+					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value != 0);
+					#ifndef NO_SYS_SVC
+					SysReconfigLeds();
+					#endif
+					update = true;
+                	break;
+            case ZUNO_SYSCFGPARAM_LOGGING:
+                    _saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value != 0);
+					update = true;
+                    break;
+            case ZUNO_SYSCFGPARAM_SECURITY:
+                    g_zuno_sys->p_config->secure_mode = value;
+					update = true;
+                    break;
+            case ZUNO_SYSCFGPARAM_FREQUENCY:{
+                      // Encode region index 
+					  uint8_t freq_i = value >> 8;
+                      if(value == 0){
+						reboot = true;
+					  } else if (value == 256){
+						// Apply deferred frequency right now!
+						g_zuno_sys->p_config->ifreq = g_zuno_sys->p_config->ifreq_deffered;
+						g_zuno_sys->p_config->b_sketch_valid = 0x0F;
+						update = true;
+						reboot = true;
+					  } else if ((freq_i ^ 0xFF) == (value & 0xFF)){
+						// Setup DEFFERED frequency code. It will be active only after exclusion
+                        g_zuno_sys->p_config->ifreq_deffered = zunoZMEFrequency2Region(freq_i);
+						update = true;
+					  }
+                    }
+                    break;
+            case ZUNO_SYSCFGPARAM_REPORT_TIME:
+                    g_zuno_sys->p_config->ml_interval = value;
+					update = true;
+                    break;
+            case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
+					g_zuno_sys->fw_update_accepted = (value == g_zuno_codeheader.ota_pincode); 
+                    if((g_zuno_codeheader.flags & HEADER_FLAGS_REBOOT_CFG) == 0){
+                      g_ota_pin = value;
+                    }
+               		break;
+	}
+	if(update){
+		zunoUpdateSysConfig(true, false);
+	}
+	if(reboot && (g_zuno_codeheader.flags & HEADER_FLAGS_REBOOT_CFG)){
+		zunoReboot(false);
+	}
+}
 static int _configuration_get(ZwConfigurationGetFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwConfigurationReportFrame_t			*lp;
 	uint32_t								value;
@@ -223,9 +335,11 @@ static int _configuration_get(ZwConfigurationGetFrame_t *cmd, ZUNOCommandPacketR
 		if (param > CONFIGPARAM_MAX_PARAM)
 			return (ZUNO_COMMAND_BLOCKED_FAILL); // There are no user-side parameters 
 	}
-	if (param < CONFIGPARAM_MIN_PARAM)
-		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
-	value = zunoLoadCFGParam(param);
+	if (param < CONFIGPARAM_MIN_PARAM){
+		_loadSysParam(param, value); 
+	} else {
+		value = zunoLoadCFGParam(param);
+	}
 	lp = (ZwConfigurationReportFrame_t *)frame_report->packet.cmd;
 	// lp->byte4.cmdClass = COMMAND_CLASS_CONFIGURATION; set in -  fillOutgoingPacket
 	// lp->byte4.cmd = CONFIGURATION_REPORT; set in - fillOutgoingPacket
@@ -245,8 +359,6 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
-	if (param < CONFIGPARAM_MIN_PARAM)
-		return (ZUNO_UNKNOWN_CMD); // Forward this parameter to main firmware
 	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
@@ -269,7 +381,11 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 	}
-	_zunoSaveCFGParam(param, (int32_t)value, false);
+	if (param < CONFIGPARAM_MIN_PARAM){
+		_saveSysParam(param, value);
+	} else {
+		_zunoSaveCFGParam(param, (int32_t)value, false);
+	}
 	return (ZUNO_COMMAND_PROCESSED);
 }
 

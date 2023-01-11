@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #define MAX_SKETCH_NAME  48
+#define INVALID_VALUE    0xFF
 
 #ifndef DBG_CONSOLE_BAUDRATE
 #define DBG_CONSOLE_BAUDRATE 230400

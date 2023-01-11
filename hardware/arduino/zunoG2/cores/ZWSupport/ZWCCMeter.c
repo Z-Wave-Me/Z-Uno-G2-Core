@@ -1,7 +1,4 @@
 #include "ZWCCMeter.h"
-#include "ZWSupport.h"
-#include "Arduino.h"
-
 #ifdef WITH_CC_METER
 
 int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket) {//v6

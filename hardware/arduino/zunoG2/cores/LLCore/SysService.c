@@ -1,6 +1,7 @@
 #include <SysService.h>
 #include "ZUNO_LEDS.h"
 #include "ZUNO_Buttons.h"
+#include "ZWCCResetLocally.h"
 #include "Debug.h"
 
 ZunoLedMode_t SYSLED_ACTIVITY_MODES[] = {
@@ -10,6 +11,7 @@ ZunoLedMode_t SYSLED_ACTIVITY_MODES[] = {
 ZunoLedMode_t SYSLED_LEARN_MODES[] = {  {10, 0x55555555},  // SYSLED_LEARN_MODE_INCLUSION
                                         {10, 0x35353535},  // SYSLED_LEARN_MODE_SUBMENU_READY
                                         {20, 0x00FF0F35},  // SYSLED_LEARN_MODE_IDENTITY
+                                        {20, 0x00AA00AA},  // SYSLED_LEARN_MODE_WAITING_RST
                                         {100,0x00010001},  // SYSLED_LEARN_MODE_SYSERROR_MEMORY
                                         {100,0x00050005},  // SYSLED_LEARN_MODE_SYSERROR_HW
                                         {100,0x00150015},  // SYSLED_LEARN_MODE_SYSERROR_WDOG
@@ -24,6 +26,17 @@ typedef struct ServiceData_s{
 ServiceData_t g_service_data;
 ButtonsClass  serviceBtn;
 ZunoLed       serviceLeds;
+void SysReconfigLeds(){
+    if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
+        serviceLeds.off(SYSLED_ACTIVITY);
+    } else {
+        if(zunoGetSleepingMode()){
+            serviceLeds.on(SYSLED_ACTIVITY);
+        } else {
+            serviceLeds.setMode(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODE_BLINK);
+        }
+    }
+}
 void SysSetLearnLedMode(uint8_t mode, uint32_t timeout){
     #ifdef LOGGING_DBG
     LOGGING_UART.print("***LEARN LED MODE:");
@@ -44,7 +57,7 @@ void SysServiceInit(){
     serviceBtn.addButton(SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
-    serviceLeds.setMode(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODE_BLINK);
+    SysReconfigLeds();
     if(g_zuno_sys->start_error_code != 0){
         #ifdef LOGGING_DBG
         LOGGING_UART.print("(!) HARDWARE FAULT CODE:");
@@ -79,7 +92,7 @@ void SysServiceTimer(){
             break;
         case SYS_SVC_MODE_SUBMENU:
             if(serviceBtn.isTripleClick(SYSBUTTON)){
-                // ResetLocally()
+                zunoResetLocally();
             }
             if(serviceBtn.isSingleClick(SYSBUTTON)){
                 zunoStartLearn(SYS_LEARN_TIMEOUT, false);
@@ -87,7 +100,7 @@ void SysServiceTimer(){
             break;
         case SYS_SVC_MODE_LEARN:
             if(serviceBtn.isSingleClick(SYSBUTTON)){
-                zunoStartLearn(0xFF, true); // Abort learn mode
+                zunoStartLearn(0xFF, true); // Cancel learn mode
             }
             break;
     }

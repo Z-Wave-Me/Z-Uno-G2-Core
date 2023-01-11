@@ -1,34 +1,163 @@
 #include "Arduino.h"
 #include "ZWSupport.h"
+#include "ZWCCBasic.h"
+#include "ZWCCSwitchBinary.h"
+#include "ZWCCSwitchColor.h"
+#include "ZWCCThermostat.h"
+#include "ZWCCSwitchMultilevel.h"
+#include "ZWCCMultichannel.h"
+#include "ZWCCMeter.h"
+#include "ZWCCSensorMultilevel.h"
+#include "ZWCCNotification.h"
+#include "ZWCCDoorLock.h"
+#include "ZWCCConfiguration.h"
+#include "ZWCCAssociation.h"
+#include "ZWCCBattery.h"
+#include "ZWCCWakeup.h"
+#include "ZWCCZWavePlusInfo.h"
+#include "ZWCCTimer.h"
+#include "ZWCCSecurity.h"
+#include "ZWCCTimerParametrs.h"
+#include "ZWCCMeterTbl.h"
 #include "ZWCCVersion.h"
+#include "Debug.h"
+#include "ZWCCSuperVision.h"
+#include "ZWCCUserCode.h"
+#include "ZWCCEntryControl.h"
+#include "ZWCCAuthentication.h"
+#include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
+#include "ZWCCCentralScene.h"
+#include "ZWCCResetLocally.h"
+
 
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd);
 
+static const uint8_t zuno_CCVesrions[] = {
+  COMMAND_CLASS_ZWAVEPLUS_INFO, ZWAVEPLUS_INFO_VERSION,
+  COMMAND_CLASS_ASSOCIATION,  ASSOCIATION_VERSION,
+  COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION, MULTI_CHANNEL_ASSOCIATION_VERSION,
+  COMMAND_CLASS_ASSOCIATION_GRP_INFO, ASSOCIATION_GRP_INFO_VERSION,
+  COMMAND_CLASS_TRANSPORT_SERVICE, TRANSPORT_SERVICE_VERSION,
+  COMMAND_CLASS_VERSION, VERSION_VERSION,
+  COMMAND_CLASS_MANUFACTURER_SPECIFIC,MANUFACTURER_SPECIFIC_VERSION, 
+  COMMAND_CLASS_DEVICE_RESET_LOCALLY,DEVICE_RESET_LOCALLY_VERSION,
+  COMMAND_CLASS_INDICATOR, INDICATOR_VERSION,
+  COMMAND_CLASS_CONFIGURATION, CONFIGURATION_VERSION, 
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD,FIRMWARE_UPDATE_MD_VERSION, 
+  COMMAND_CLASS_SUPERVISION, SUPERVISION_VERSION,
+  COMMAND_CLASS_SECURITY, SECURITY_VERSION,
+  COMMAND_CLASS_SECURITY_2, SECURITY_2_VERSION,
+  #ifndef DYNAMIC_CCS_SUPPORT
+  #ifdef WITH_CC_BASIC
+  COMMAND_CLASS_BASIC, BASIC_VERSION, 
+  #endif
+  #ifdef WITH_CC_SWITCH_BINARY
+  COMMAND_CLASS_SWITCH_BINARY, SWITCH_BINARY_VERSION, 
+  #endif
+  #ifdef WITH_CC_SWITCH_MULTILEVEL
+  COMMAND_CLASS_SWITCH_MULTILEVEL,  SWITCH_MULTILEVEL_VERSION,
+  #endif
+  #ifdef WITH_CC_NOTIFICATION
+  COMMAND_CLASS_NOTIFICATION, NOTIFICATION_VERSION,
+  #endif
+  #ifdef WITH_CC_SENSOR_MULTILEVEL
+  COMMAND_CLASS_SENSOR_MULTILEVEL, SENSOR_MULTILEVEL_VERSION,
+  #endif
+  #ifdef WITH_CC_METER
+  COMMAND_CLASS_METER, METER_VERSION,
+  #endif
+  #ifdef WITH_CC_METER_TBL_MONITOR
+  COMMAND_CLASS_METER_TBL_MONITOR, METER_TBL_VERSION,
+  #endif
+  #ifdef WITH_CC_DOORLOCK
+  COMMAND_CLASS_DOOR_LOCK, DOOR_LOCK_VERSION,
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_MODE
+  COMMAND_CLASS_THERMOSTAT_MODE, THERMOSTAT_MODE_VERSION,
+  #endif
+  #ifdef WITH_CC_THERMOSTAT_SETPOINT
+  COMMAND_CLASS_THERMOSTAT_SETPOINT, THERMOSTAT_SETPOINT_VERSION,
+  #endif
+  #ifdef WITH_CC_SWITCH_COLOR
+  COMMAND_CLASS_SWITCH_COLOR, SWITCH_COLOR_VERSION,
+  #endif
+  #ifdef WITH_CC_SOUND_SWITCH
+  COMMAND_CLASS_SOUND_SWITCH, SOUND_SWITCH_VERSION,
+  #endif
+  #ifdef WITH_CC_WAKEUP
+  COMMAND_CLASS_WAKE_UP, WAKE_UP_VERSION, 
+  #endif
+  #ifdef WITH_CC_BATTERY
+  COMMAND_CLASS_BATTERY, BATTERY_VERSION,
+  #endif
+  #ifdef WITH_CC_MULTICHANNEL
+  COMMAND_CLASS_MULTI_CHANNEL, MULTI_CHANNEL_VERSION,
+  #endif
+  #endif // DYNAMIC_CCS_SUPPORT
+};
+static uint8_t extractVersionFromCCList(uint8_t cc, uint8_t * ccs, uint8_t ccs_len){
+	for(int i=0;i<ccs_len;i+=2){
+		if(ccs[i] == cc)
+			return ccs[i+1];
+	}
+	return 0;
+}
 static int _class_get(ZUNOCommandPacket_t *packet, ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME		*report;
-	
-	if((zuno_findTargetChannel(packet)) != UNKNOWN_CHANNEL)
-		return (ZUNO_UNKNOWN_CMD);
 	report = (ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME *)frame_report->packet.cmd;
-	// report->cmdClass = COMMAND_CLASS_VERSION; set in - fillOutgoingPacket
-	// report->cmd = VERSION_COMMAND_CLASS_REPORT; set in - fillOutgoingPacket
+	
 	report->requestedCommandClass = cmd->requestedCommandClass;
-	report->commandClassVersion = 0x0;
+	report->commandClassVersion = 0;
+	#ifdef DYNAMIC_CCS_SUPPORT
+	report->commandClassVersion = dynamicCCVersion(report->requestedCommandClass);
+	if(report->commandClassVersion == 0)
+	#endif
+	{
+		report->commandClassVersion = extractVersionFromCCList(report->requestedCommandClass, (uint8_t*)zuno_CCVesrions, sizeof(zuno_CCVesrions));
+	}
 	frame_report->packet.len = sizeof(ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME);
 	zunoSendZWPackage(&frame_report->packet);
 	return (ZUNO_COMMAND_PROCESSED);
 }
-
+extern ZUNOCodeHeader_t g_zuno_codeheader;
 int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int										rs;
 
 	switch(ZW_CMD){
 		case VERSION_COMMAND_CLASS_GET:
-			rs = _class_get(cmd, (ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *)cmd->cmd, frame_report);
-			break ;
+			return _class_get(cmd, (ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *)cmd->cmd, frame_report);
+    case VERSION_GET:{
+      frame_report->packet.cmd[2] = VERSION_LIBRARY_TYPE_SLAVE;
+      frame_report->packet.cmd[3] = VERSION_PROTOCOL_VERSION_MAJ;
+      frame_report->packet.cmd[4] = VERSION_PROTOCOL_VERSION_MIN;
+      frame_report->packet.cmd[5] = g_zuno_codeheader.version_major;
+      frame_report->packet.cmd[6] = g_zuno_codeheader.version_minor;
+      frame_report->packet.cmd[7] = g_zuno_sys->fw_static_header->hw_id & 0xFF;
+      frame_report->packet.cmd[8] = g_zuno_codeheader.ota_firmwares_count;
+      uint8_t * p_versions = frame_report->packet.cmd+9;
+      if((g_zuno_codeheader.flags & HEADER_FLAGS_NOSKETCH_OTA) == 0){
+        frame_report->packet.cmd[8] += 1;
+        p_versions[0] = g_zuno_codeheader.sketch_version >> 8;
+        p_versions[1] = g_zuno_codeheader.sketch_version & 0xFF;
+        p_versions += 2;
+      }
+      for(int i=0;i<g_zuno_codeheader.ota_firmwares_count;i++, p_versions += 2){
+        uint16_t v = g_zuno_codeheader.ota_firmwares_descriptions[i].version;
+        p_versions[0] = v >> 8;
+        p_versions[1] = v & 0xFF;
+      }
+      frame_report->packet.len = p_versions - frame_report->packet.cmd;
+      zunoSendZWPackage(&frame_report->packet);
+      return ZUNO_COMMAND_PROCESSED;
+    }
+    case VERSION_CAPABILITIES_GET:
+      frame_report->packet.cmd[2] = VERSION_CAPABILITIES_REPORT_PROPERTIES1_VERSION_BIT_MASK | VERSION_CAPABILITIES_REPORT_PROPERTIES1_COMMAND_CLASS_BIT_MASK;
+      frame_report->packet.len = 3;
+      zunoSendZWPackage(&frame_report->packet);
+      return ZUNO_COMMAND_PROCESSED;
 		default:
-			rs = ZUNO_UNKNOWN_CMD;
-			break ;
+			return ZUNO_UNKNOWN_CMD;
 	}
-	return (rs);
+	return ZUNO_UNKNOWN_CMD;
 }

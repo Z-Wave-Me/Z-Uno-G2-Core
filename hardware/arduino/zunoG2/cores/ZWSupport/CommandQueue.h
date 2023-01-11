@@ -16,7 +16,7 @@
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg);
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node);
 bool zunoCheckSystemQueueStatus(uint8_t channel);
-ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags);
+ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd);
 void ZWQProcess();
 bool ZWQIsEmpty();
 

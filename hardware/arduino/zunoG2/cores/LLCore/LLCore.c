@@ -500,7 +500,9 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_LOOP:
             if(!g_sketch_inited){
+                #ifndef NO_SYS_SVC
                 SysServiceInit();
+                #endif
                 ZWCCSetup();
                 setup();
                 g_sketch_inited = true;
@@ -517,7 +519,9 @@ void * zunoJumpTable(int vec, void * data) {
         
         case ZUNO_JUMPTBL_SYSEVENT:{
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+                #ifndef NO_SYS_SVC
                 SysServiceEvent(evnt);
+                #endif
                 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
                 if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
                     zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
@@ -560,7 +564,9 @@ void * zunoJumpTable(int vec, void * data) {
             break;
        
         case ZUNO_JUMPTBL_SYSTIMER:
+            #ifndef NO_SYS_SVC  
             SysServiceTimer();
+            #endif
             zuno_CCTimer((uint32_t)data);
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             _zunoSleepingUpd();
@@ -575,7 +581,9 @@ void * zunoJumpTable(int vec, void * data) {
             break;
         case ZUNO_JUMPTBL_SLEEP:
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+            #ifndef NO_SYS_SVC 
             SysServiceSleep();
+            #endif
             _zunoSysSleep();
             #endif
             #ifdef LOGGING_DBG
@@ -610,14 +618,17 @@ void zunoSetCustomWUPTimer(uint32_t timeout){
     g_sleep_data.sleep_timers[1] = timeout;
     //zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 1,  timeout);
 }
+void _fillZWaveData(uint8_t secure_param);
 void zunoStartLearn(byte timeout, bool secured){
+    uint8_t secure_param = secured ? ZUNO_SECUREPARAM_ON : ZUNO_SECUREPARAM_OFF;
+    _fillZWaveData(secure_param);
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
-}
-void zunoResetLocally(){
-    zunoSysCall(ZUNO_SYSFUNC_SETDEFAULT, 1, 0);   
 }
 void zunoSendNIF(){
     zunoSysCall(ZUNO_SYSFUNC_SENDNIF, 0);   
+}
+void zunoReboot(bool force){
+    zunoSysCall(ZUNO_SYSFUNC_REBOOT, 0);   
 }
 
 /* time */
@@ -1102,18 +1113,6 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
     return loopsToMcs(width);
 }
 
-void zunoCommitCfg(){
-    zunoSysCall(ZUNO_SYSFUNC_COMMIT_CONFIG, 0);
-}
-
-/*
-bool 	 b_write = va_arg(lst, uint32_t) > 0;
-            uint16_t addr  	 = va_arg(lst, uint32_t)&0x0ffff;
-            uint16_t size  	 = va_arg(lst, uint32_t)&0x0ffff;
-            uint8_t * p_data = va_arg(lst,uint8_t *);
-            zme_EEPROM_io(g_zuno_state.file_system, addr, p_data, size, b_write);
-*/
-
 
 void _zme_memcpy(byte * dst, byte * src, byte count)
 {
@@ -1483,7 +1482,26 @@ bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
 void zunoPTIDisable(){
     zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, NULL);
 }
-
+uint8_t zmeMapDict(uint8_t * dict, uint8_t size, uint8_t key, bool back){
+	for(int i=0;i<size;i+=2){
+		if(back){
+			if(dict[i+1] == key)
+				return dict[i];
+		} else {
+			if(dict[i] == key)
+				return dict[i+1];
+		}
+	}
+	return INVALID_VALUE;
+}
+void zunoUpdateSysConfig(bool deffered, bool force){
+	uint32_t flags = 0;
+	if(deffered)
+		flags |= 0x01;
+	if(force)
+		flags |= 0x02;
+	zunoSysCall(ZUNO_SYSFUNC_COMMIT_DEVCFG, 1, flags);
+}
 extern "C" void __cxa_pure_virtual() { 
     #ifdef LOGGING_DBG
     LOGGING_UART.println("ZUNO:PURE VIRTUAL CALL!");

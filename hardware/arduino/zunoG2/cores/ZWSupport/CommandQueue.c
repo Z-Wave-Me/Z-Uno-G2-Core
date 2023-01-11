@@ -40,16 +40,18 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 	#endif
     return true;
 }
-ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags){
+ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd){
     ZNLinkedList_t *e;
     ZUNOCommandPacket_t * p;
     for(e=g_zwpkg_queue;e; e=e->next){
         p = (ZUNOCommandPacket_t *) e->data;
-        if(flags != 0xFF){
-            if((p->flags & flags)  !=  flags)
-                continue;
-        }
-        if(p->dst_node != dst_id)
+        if((flags != 0xFF) && ((p->flags & flags)  !=  flags))
+            continue;
+        if((dst_id != 0xFF) && (p->dst_node != dst_id))
+            continue;
+        if((cc != 0xFF) && (p->cmd[0]!= cc))
+            continue;
+        if((cmd != 0xFF) && (p->cmd[1]!= cmd))
             continue;
         return p;
     }

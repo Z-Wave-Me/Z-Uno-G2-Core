@@ -62,6 +62,11 @@ enum{
     INPUT_UP = 0x100 | GPIOMODE_INPUT,
     INPUT_DOWN = GPIOMODE_INPUT
 };
+enum{
+  ZUNO_SECUREPARAM_OFF = 0,
+  ZUNO_SECUREPARAM_ON = 1,
+  ZUNO_SECUREPARAM_UNDEFINED = 0xFF,
+};
 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
@@ -132,12 +137,12 @@ void zunoSendWakeUpNotification();
 void zunoSendBatteryReport();
 #endif
 inline void zunoSetSleepingMode(byte mode) {
-  g_zuno_zw_cfg.flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+  g_zuno_sys->zw_protocol_data->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
-	g_zuno_zw_cfg.flags |= mode;
+	g_zuno_sys->zw_protocol_data->flags |= mode;
 }
 inline uint8_t zunoGetSleepingMode(void) {
-  return (g_zuno_zw_cfg.flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+  return (g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 };
 inline void zunoEnableSmartStart(bool en){
   /*
@@ -148,8 +153,7 @@ inline void zunoEnableSmartStart(bool en){
   */
 }
 inline void zunoSetProductID(uint16_t product_id){
-  // !!! FIX 
-	//g_zuno_sys->zwave_cfg->product_id = product_id;
+	g_zuno_sys->zw_protocol_data->product_id = product_id;
 }
 
 
@@ -212,8 +216,7 @@ void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {
-  // !!! FIX
-  // ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
+  ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 };
 byte zunoAddChannel(byte type, byte subtype, byte options);
 bool zunoAddBaseCCS(byte ccs, byte version);
@@ -222,8 +225,7 @@ void zunoResetLocally();
 void zunoSendNIF();
 bool zunoStartDeviceConfiguration();
 inline void zunoSetS2Keys(byte keys) {
-  // !!! FIX
-  // g_zuno_sys->zwave_cfg->security_keys = keys;  
+  g_zuno_sys->zw_protocol_data->req_s2_keys = keys;
 };
 void zunoStartLearn(byte timeout, bool secured);
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
@@ -249,8 +251,11 @@ inline void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_clos
 
 /* Misc */
 void WDOG_Feed();
+void zunoUpdateSysConfig(bool deffered=true, bool force=false);
+void zunoReboot(bool force=true);
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout=20000);
 void _zme_memcpy(byte *dst, byte *src, byte count);
+uint8_t zmeMapDict(uint8_t * dict, uint8_t size, uint8_t key, bool back);
 
 
 /* Sleep & PowerDown mode */
@@ -259,11 +264,12 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin);
 void zunoSetWUPTimer(uint32_t timeout);
 void zunoSetCustomWUPTimer(uint32_t timeout);
 
+
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
 #include "Tone.h"
 #include "Threading.h"
-
 #include "ReportHandler.h"
 
+extern ZUNOCodeHeader_t g_zuno_codeheader;
 #endif // ZUNO_ARDUINOH

@@ -60,7 +60,7 @@ void ZunoLed::_updateTimer(void) {
 	ZunoLedListGroups_t			*list;
 	ZunoLedList_t				*b;
 	ZunoLedList_t				*e;
-	uint8_t						patt_index;
+	static uint32_t				patt_index = 0;
 	uint8_t						current_mode;
 	uint8_t						i;
 	uint8_t						divider;
@@ -71,21 +71,24 @@ void ZunoLed::_updateTimer(void) {
 			b = &list->array[0];
 			e = &b[list->num_groups];
 			current_mode = current_mode - LED_MODE_OFFSET;
-			patt_index = list->patt_index;
+			//patt_index = list->patt_index;
 			while (b < e) {
 				divider = b->led_modes[current_mode].divider;
+				uint32_t pat = b->led_modes[current_mode].pattern;
 				if (patt_index % divider == 0) {
-					i = (patt_index / divider) % 32;
-					i = ((uint8_t *)&b->led_modes[current_mode].pattern)[(i >> 3)] & (1 << (i & 0x07));
-					i = (i != 0);
-					digitalWrite(b->led_pin, ((b->bInverted == true) ? !i : i));
+					i = (patt_index / divider) & 0x1F;
+					i = (pat & (1 << i)) != 0;
+					if(b->bInverted)
+						i = !i;
+					digitalWrite(b->led_pin, i);
 				}
 				b++;
 			}
-			list->patt_index++;
+			//list->patt_index++;
 		}
 		list = list->next;
 	}
+	patt_index++;
 }
 
 void ZunoLed::_deleteLed(size_t name) {

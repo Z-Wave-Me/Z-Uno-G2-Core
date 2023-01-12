@@ -33,7 +33,7 @@
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
 
-
+#define DYNAMIC_CCS_SUPPORT 1
 CrcClass mCrc; 
 
 enum {
@@ -83,49 +83,7 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   COMMAND_CLASS_INDICATOR,
   COMMAND_CLASS_POWERLEVEL,
   COMMAND_CLASS_CONFIGURATION,
-  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
-  #ifndef DYNAMIC_CCS_SUPPORT
-  #ifdef WITH_CC_SWITCH_BINARY
-  COMMAND_CLASS_SWITCH_BINARY, 
-  #endif
-  #ifdef WITH_CC_SWITCH_MULTILEVEL
-  COMMAND_CLASS_SWITCH_MULTILEVEL, 
-  #endif
-  #ifdef WITH_CC_NOTIFICATION
-  COMMAND_CLASS_NOTIFICATION, 
-  #endif
-  #ifdef WITH_CC_SENSOR_MULTILEVEL
-  COMMAND_CLASS_SENSOR_MULTILEVEL, 
-  #endif
-  #ifdef WITH_CC_METER
-  COMMAND_CLASS_METER, 
-  #endif
-  #ifdef WITH_CC_METER_TBL_MONITOR
-  COMMAND_CLASS_METER_TBL_MONITOR, 
-  #endif
-  #ifdef WITH_CC_THERMOSTAT_MODE
-  COMMAND_CLASS_THERMOSTAT_MODE,
-  #endif
-  #ifdef WITH_CC_THERMOSTAT_SETPOINT
-  COMMAND_CLASS_THERMOSTAT_SETPOINT,
-  #endif
-  #ifdef WITH_CC_SWITCH_COLOR
-  COMMAND_CLASS_SWITCH_COLOR,
-  #endif
-  #ifdef WITH_CC_SOUND_SWITCH
-  COMMAND_CLASS_SOUND_SWITCH,
-  #endif
-  #ifdef WITH_CC_WAKEUP
-  COMMAND_CLASS_WAKE_UP,
-  #endif
-  #ifdef WITH_CC_BATTERY
-  COMMAND_CLASS_BATTERY,
-  #endif
-  #ifdef WITH_CC_MULTICHANNEL
-  COMMAND_CLASS_MULTI_CHANNEL,
-  #endif
-  #endif // DYNAMIC_CCS_SUPPORT
-  
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD
 };
 static const uint8_t zuno_cmdClassListNSNI_Def[] =
 {
@@ -141,45 +99,7 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   COMMAND_CLASS_POWERLEVEL,
   COMMAND_CLASS_SUPERVISION,
   COMMAND_CLASS_CONFIGURATION,
-  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
-  #ifndef DYNAMIC_CCS_SUPPORT
-  #ifdef WITH_CC_SWITCH_BINARY
-  COMMAND_CLASS_SWITCH_BINARY, 
-  #endif
-  #ifdef WITH_CC_SWITCH_MULTILEVEL
-  COMMAND_CLASS_SWITCH_MULTILEVEL, 
-  #endif
-  #ifdef WITH_CC_NOTIFICATION
-  COMMAND_CLASS_NOTIFICATION, 
-  #endif
-  #ifdef WITH_CC_SENSOR_MULTILEVEL
-  COMMAND_CLASS_SENSOR_MULTILEVEL, 
-  #endif
-  #ifdef WITH_CC_METER
-  COMMAND_CLASS_METER, 
-  #endif
-  #ifdef WITH_CC_METER_TBL_MONITOR
-  COMMAND_CLASS_METER_TBL_MONITOR, 
-  #endif
-  #ifdef WITH_CC_THERMOSTAT_MODE
-  COMMAND_CLASS_THERMOSTAT_MODE,
-  #endif
-  #ifdef WITH_CC_THERMOSTAT_SETPOINT
-  COMMAND_CLASS_THERMOSTAT_SETPOINT,
-  #endif
-  #ifdef WITH_CC_SWITCH_COLOR
-  COMMAND_CLASS_SWITCH_COLOR,
-  #endif
-  #ifdef WITH_CC_SOUND_SWITCH
-  COMMAND_CLASS_SOUND_SWITCH,
-  #endif
-  #ifdef WITH_CC_DOORLOCK
-  COMMAND_CLASS_DOOR_LOCK, 
-  #endif
-  #ifdef WITH_CC_MULTICHANNEL
-  COMMAND_CLASS_MULTI_CHANNEL,
-  #endif
-  #endif // DYNAMIC_CCS_SUPPORT
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD
 };
 
 typedef struct ZUnoChannelDtaHandler_s{
@@ -760,8 +680,6 @@ void _fillZWaveData(uint8_t secure_param){
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY, MAX_CMDCLASES_NSNI);
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY_2, MAX_CMDCLASES_NSNI);
 	   }
-	#ifdef DYNAMIC_CCS_SUPPORT
-	// DYNAMIC COMMAND CLASS VERSION
 	// Add MULTICHANNEL CC only if we need it
 	if(ZUNO_CFG_CHANNEL_COUNT > 1){
 		_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_MULTI_CHANNEL, MAX_CMDCLASES_NSNI);
@@ -771,6 +689,8 @@ void _fillZWaveData(uint8_t secure_param){
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
 		uint8_t f = ZUNO_CC_TYPES[type].flags;
+		if((ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT) == 0)
+			continue;
 		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
 			uint8_t cc = ZUNO_CC_TYPES[type].ccs[j].cc;
 			if(f & CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE)
@@ -778,7 +698,6 @@ void _fillZWaveData(uint8_t secure_param){
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,cc, MAX_CMDCLASES_SECURED);
 		}
 	}
-	#endif
 	if(ZUNO_CFG_CHANNEL_COUNT == 0){
 		// It's just a control device, only associations
 		g_zuno_sys->zw_protocol_data->generic_type = GENERIC_TYPE_GENERIC_CONTROLLER;
@@ -792,9 +711,15 @@ void _fillZWaveData(uint8_t secure_param){
 	}
 	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
   	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
-	  g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+	  	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+	  	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_WAKE_UP, MAX_CMDCLASES_NSNI);
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_WAKE_UP, MAX_CMDCLASES_SECURED);
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_BATTERY, MAX_CMDCLASES_NSNI);
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_BATTERY, MAX_CMDCLASES_SECURED);
   	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
-	  g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+	  	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+	  	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_BATTERY, MAX_CMDCLASES_NSNI);
+		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_BATTERY, MAX_CMDCLASES_SECURED);
   	}
 }
 uint16_t _calcCfg16Crc(){
@@ -1418,9 +1343,9 @@ static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 			{
 				uint32_t ch_time  = __getSyncVar(&(g_channels_data.last_report_time[ch]));
 				uint32_t dtime = NEXT_ML_REPORTDELAY; // Z-Wave specification requires 30second silence interval between SensorMultilevel/Meter reports 
-				if(g_zuno_sys->cfg_flags & ZUNO_CFGFILE_FLAG_DBG){ // Set param #1 (DBG) first
+				if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_DBG){ // Set param #1 (DBG) first
 					// We can dynamically modify report interval using parameter #11 for test pusposes
-					dtime = g_zuno_sys->cfg_mlinterval;
+					dtime = g_zuno_sys->p_config->ml_interval;
 					dtime *= 100; // We use seconds for param #11, so we have to convert it to sytem timer intervals 
 				}
 				bool can_send = (ch_time == 0) || ((ticks -  ch_time) > dtime);

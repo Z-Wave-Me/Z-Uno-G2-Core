@@ -57,6 +57,7 @@ enum{
 // ZUNO_ENABLE setups some global extra build flags
 ZUNO_ENABLE(
             LOGGING_DBG    // Uncomment for console output on TX0
+            DBG_CONSOLE_BAUDRATE=921600
             // SKETCH_VERSION=258 // OTA
             // MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
             // MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel

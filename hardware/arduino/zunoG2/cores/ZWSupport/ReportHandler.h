@@ -36,7 +36,7 @@ static inline void zunoSetReportHandler(ZunoReportHandlerType_t type, void(*hand
 }
 
 void zunoReportHandler(ZUNOCommandPacket_t *cmd);
-float zunoReportFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
+float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
 
 
 //#undef ZUNO_REPORTS_HANDLER
@@ -60,7 +60,7 @@ float zunoReportFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
 #define REPORT_SENSOR_MULTILEVEL_VALUE_1B(report_data)		(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue)
 #define REPORT_SENSOR_MULTILEVEL_VALUE_2B(report_data)		((uint16_t)(((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x0] << 0x8) | ((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x1])
 #define REPORT_SENSOR_MULTILEVEL_VALUE_4B(report_data)		((uint32_t)((((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x0] << 0x18) | (((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x1] << 0x10) | (((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x2] << 0x8) | ((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue[0x3]))
-#define REPORT_SENSOR_MULTILEVEL_VALUE(report_data)			zunoFixToFloat(REPORT_SENSOR_MULTILEVEL_SIZE(report_data), REPORT_SENSOR_MULTILEVEL_PRECISION(report_data), &((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->byte1.sensorValue1)
+#define REPORT_SENSOR_MULTILEVEL_VALUE(report_data)			(zunoFixToFloat(REPORT_SENSOR_MULTILEVEL_SIZE(report_data), REPORT_SENSOR_MULTILEVEL_PRECISION(report_data), ((ZwSensorMultilevelReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->sensorValue))
 
 #define REPORT_METER_TYPE(report_data)						(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v3.byte1.properties1 & METER_PROPERTIES_TYPE_MASK)
 #define REPORT_METER_SIZE(report_data)						(((ZwMeterReportFrame_t *)((ReportAuxData_t *)report_data)->rawReportData)->v3.byte1.properties2 & METER_PROPERTIES_SIZE_MASK)

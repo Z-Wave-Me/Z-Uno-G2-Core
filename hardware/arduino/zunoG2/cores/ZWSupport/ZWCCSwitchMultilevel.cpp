@@ -204,6 +204,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, size_t len, size_t channel, ZUN
 	ZWCC_BASIC_SETTER_1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
+	(void)tempos;
 }
 
 static int _supported(ZUNOCommandPacketReport_t *frame_report) {

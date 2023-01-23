@@ -629,6 +629,7 @@ void zunoSendNIF(){
 }
 void zunoReboot(bool force){
     zunoSysCall(ZUNO_SYSFUNC_REBOOT, 0);   
+	(void)force;
 }
 
 /* time */

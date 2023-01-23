@@ -46,15 +46,14 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			if (value > 0x63 && value < 0xFF)
 				return (ZUNO_COMMAND_BLOCKED_FAILL);
 			if (value == 0xFF) {
-				/*
 				size_t							tempos;
-				if ((tempos = ZWCC_BASIC_SAVE_LAST(channel)) != 0)
+				if ((tempos = zunoBasicSaveGet(channel)) != 0)
 					value = tempos;
-				else*/
+				else
 				value = 0x63;
 			}
-			//else if (value != 0x0)
-			//	ZWCC_BASIC_SAVE_LAST(channel) = value;
+			else if (value != 0x0)
+				zunoBasicSaveSet(channel, &value);
 			break;
 		#endif
 		default:
@@ -140,4 +139,22 @@ int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacke
 			break ;
 	}
 	return rs;
+}
+
+void zunoBasicSaveInit(void) {
+	uint8_t					buffer_basic[EEPROM_BASIC_SAVE_SIZE];
+
+	memset(&buffer_basic[0x0], 0x0, sizeof(buffer_basic));
+	zunoEEPROMWrite(EEPROM_BASIC_SAVE_ADDR, sizeof(buffer_basic), &buffer_basic[0x0]);
+}
+
+void zunoBasicSaveSet(uint8_t channel, void *value) {
+	zunoEEPROMWrite(EEPROM_BASIC_SAVE_ADDR + channel, 0x1, (uint8_t *)value);
+}
+
+uint8_t zunoBasicSaveGet(uint8_t channel) {
+	uint8_t								value;
+
+	zunoEEPROMRead(EEPROM_BASIC_SAVE_ADDR + channel, 0x1, &value);
+	return (value);
 }

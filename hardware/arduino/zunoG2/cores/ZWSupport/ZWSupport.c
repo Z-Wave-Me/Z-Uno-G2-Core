@@ -740,7 +740,10 @@ void _zunoSaveUserChannels(){
 	zunoEEPROMWrite(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
-	_zunoSaveUserChannels();
+	zunoBasicSaveInit();
+	#ifdef WITH_CC_SWITCHCOLOR
+	zunoSwitchColorSaveInit();
+	#endif
 	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }

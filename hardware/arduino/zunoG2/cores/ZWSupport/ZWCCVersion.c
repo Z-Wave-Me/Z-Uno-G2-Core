@@ -119,6 +119,7 @@ static int _class_get(ZUNOCommandPacket_t *packet, ZW_VERSION_COMMAND_CLASS_GET_
 	frame_report->packet.len = sizeof(ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME);
 	zunoSendZWPackage(&frame_report->packet);
 	return (ZUNO_COMMAND_PROCESSED);
+	(void)packet;
 }
 extern ZUNOCodeHeader_t g_zuno_codeheader;
 int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
@@ -160,4 +161,5 @@ int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *f
 			return ZUNO_UNKNOWN_CMD;
 	}
 	return ZUNO_UNKNOWN_CMD;
+	(void)rs;
 }

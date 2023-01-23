@@ -151,6 +151,7 @@ inline void zunoEnableSmartStart(bool en){
 	else
 		g_zuno_sys->zwave_cfg->flags |= (DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
   */
+ (void)en;
 }
 inline void zunoSetProductID(uint16_t product_id){
 	g_zuno_sys->zw_protocol_data->product_id = product_id;

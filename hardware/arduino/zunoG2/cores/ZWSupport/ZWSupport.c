@@ -645,6 +645,7 @@ static int _appendCC(uint8_t * cc_list, uint8_t &cc_list_sz, uint8_t cc, uint8_t
   }
   cc_list[cc_list_sz++] = cc;
   return cc_list_sz;
+  (void)i;
 }
 
 uint8_t dynamicCCVersion(uint8_t cc){
@@ -1297,6 +1298,8 @@ bool zunoAddBaseCCS(byte ccs, byte version){
 	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).version = version;
 	ZUNO_CFG_BASE_CCS_NUM++;*/
 	return true;
+	(void)ccs;
+	(void)version;
 }
 byte zunoAddChannel(byte type, byte subtype, byte options) {
 	// Do we have space for the new channel?

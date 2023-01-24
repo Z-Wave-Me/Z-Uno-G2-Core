@@ -154,6 +154,6 @@ znThread::znThread(uint32_t stack_size, uint32_t *stack) : _stack_size(stack_siz
 
 void znThread::start(threadcodefunc_t func, void *param ) {
 	if(_handle == NULL){
-		_handle = _handle = zunoCreateCustomThread(func, _stack_size, _stack, param, &_th_data);//zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, _stack_size, _stack, &_th_data, param);
+		_handle = zunoCreateCustomThread(func, _stack_size, _stack, param, &_th_data);//zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, _stack_size, _stack, &_th_data, param);
 	}
 }

@@ -25,7 +25,7 @@ typedef enum							SyncMode_e
 
 #define ZUNO_SYNC_SPIN_COUNT		0xA
 
-SysCryticalStat_t                  g_sys_crytical_stat={0};
+SysCryticalStat_t                  g_sys_crytical_stat={0, 0, 0, 0, 0};
 
 static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, volatile uint8_t *lpKey) {
 	volatile uint8_t		counter;
@@ -48,7 +48,7 @@ static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, vol
 static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey, SyncMode_t mode) {
 	size_t				out;
 	size_t				i;
-	uint32_t            start_wait = millis();
+	// uint32_t            start_wait = millis();
 	uint32_t            counter = 0; 
 	
 	if (zunoIsSystemThread())

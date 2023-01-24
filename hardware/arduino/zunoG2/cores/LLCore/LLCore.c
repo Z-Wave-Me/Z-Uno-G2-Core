@@ -475,25 +475,14 @@ static void LLInit(void *data) {
 	__g_zuno_indicator_init();
 	g_sketch_inited = false;
 }
-
+#ifdef LOGGING_DBG
+void checkSystemCriticalStat();
+#endif
+void _zunoRegisterTimerThread();
+void _zunoRegisterCommandThread();
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
-    /*
-    // DBG CODE
-    static uint32_t pl = 0;
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    //delay(100);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    //delay(100);
-    pl++;
-    return (void*)pl; // 
-    */
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit(data);
@@ -508,11 +497,15 @@ void * zunoJumpTable(int vec, void * data) {
                 g_sketch_inited = true;
             }
             loop();
+            #ifdef LOGGING_DBG
+            checkSystemCriticalStat(); // Self check after each loop
+            #endif
             #if (SKETCH_FLAGS_LOOP_DELAY>0)
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             #endif
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
+            _zunoRegisterCommandThread();
             // Awake code if user had sent device to sleep, but z-wave message has arrived
             zunoAwakeUsrCode();
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
@@ -564,6 +557,7 @@ void * zunoJumpTable(int vec, void * data) {
             break;
        
         case ZUNO_JUMPTBL_SYSTIMER:
+            _zunoRegisterTimerThread();
             #ifndef NO_SYS_SVC  
             SysServiceTimer();
             #endif
@@ -633,9 +627,60 @@ void zunoReboot(bool force){
 }
 
 /* time */
+extern SysCryticalStat_t  g_sys_crytical_stat;
+bool zunoIsSystemThread(void * handle);
 void delay(dword ms){
+    if(zunoIsSystemThread(NULL)){
+        g_sys_crytical_stat.systhread_delay_count++;
+        return;
+    }
     zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
 }
+#ifdef LOGGING_DBG
+void checkSystemCriticalStat(){
+    static uint32_t reported_delay_cnt = 0;
+    static uint32_t reported_lock_timeout_cnt = 0;
+    static uint32_t reported_open_timeout_cnt = 0;
+    static uint32_t reported_max_lock_wait = 0;
+    static uint32_t reported_max_open_wait = 0;
+    
+    if(g_sys_crytical_stat.systhread_delay_count != reported_delay_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) delay() call in system thread. Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.systhread_delay_count);
+        reported_delay_cnt = g_sys_crytical_stat.systhread_delay_count;
+    }
+    if(g_sys_crytical_stat.lock_timeout_count != reported_lock_timeout_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) Sync lock() timeout . Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.lock_timeout_count);
+        reported_lock_timeout_cnt = g_sys_crytical_stat.lock_timeout_count;
+    }
+    if(g_sys_crytical_stat.open_timeout_count != reported_open_timeout_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) zunoSyncOpen() timeout . Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.open_timeout_count);
+        reported_open_timeout_cnt = g_sys_crytical_stat.lock_timeout_count;
+    }
+    if(g_sys_crytical_stat.max_lock_wait != reported_max_lock_wait){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (INFO) max_lock_wait:");
+        LOGGING_UART.println(g_sys_crytical_stat.max_lock_wait);
+        reported_max_lock_wait = g_sys_crytical_stat.max_lock_wait;
+    }
+    if(g_sys_crytical_stat.max_open_wait != reported_max_open_wait){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (INFO) max_open_wait:");
+        LOGGING_UART.println(g_sys_crytical_stat.max_lock_wait);
+        reported_max_open_wait = g_sys_crytical_stat.max_open_wait;
+    }
+}
+#endif
 
 
 uint64_t rtcc_micros(void) {

@@ -64,8 +64,8 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;
     if((channel > 0) && (interval < SYSTEM_PKG_DOMINATION_TIME)){
         #ifdef LOGGING_DBG
-		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
-        LOGGING_UART.println(interval);
+		//LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+        //LOGGING_UART.println(interval);
         #endif
         return true;
     }

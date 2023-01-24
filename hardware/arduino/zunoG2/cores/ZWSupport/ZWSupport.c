@@ -1426,7 +1426,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 
 	if(zunoCheckSystemQueueStatus(QUEUE_CHANNEL_LLREPORT)){
 		#ifdef LOGGING_DBG
-		LOGGING_UART.println("Report queue is busy.");
+		//LOGGING_UART.println("Report queue is busy.");
 		#endif
 		return;
 	}

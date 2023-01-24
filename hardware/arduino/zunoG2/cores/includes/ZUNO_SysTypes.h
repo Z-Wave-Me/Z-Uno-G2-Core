@@ -274,6 +274,13 @@ typedef struct RadioTestFuncParams_s{
     uint8_t     power;
     uint32_t    timeout_ms;
 }RadioTestFuncParams_t;
+typedef struct SysCryticalStat_s{
+	uint32_t max_lock_wait;
+	uint32_t max_open_wait;
+	uint32_t lock_timeout_count;
+	uint32_t open_timeout_count;
+	uint32_t systhread_delay_count;
+}SysCryticalStat_t;
 
 extern ZUNOSleepData_t g_sleep_data;
 

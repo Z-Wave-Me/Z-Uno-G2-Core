@@ -3,6 +3,14 @@
 
 #include  "ZUNO_Definitions.h"
 
+#ifndef MAX_SYNC_WAIT_LOCK
+#define MAX_SYNC_WAIT_LOCK 5000
+#endif
+
+#ifndef MAX_SYNC_WAIT_OPEN
+#define MAX_SYNC_WAIT_OPEN  3000
+#endif
+
 typedef enum							SyncMaster_e
 {
 	SyncMasterFree,// do not use !!!

@@ -77,6 +77,14 @@ class znThread {
 };
 
 // C API
+// while (0xFF)
+void * zunoCreateCustomThread(threadcodefunc_t  func, uint32_t stack_size, uint32_t *stack, void *param, _znSysThData_t * thdata);
+bool zunoIsCustomThread(void * handle=NULL);
+bool zunoIsSystemThread(void * handle=NULL);
+bool zunoIsIOThread(void * handle=NULL);
+bool zunoIsMainThread(void * handle=NULL);
+
+
 inline void *zunoGetCurrentThreadHandle() {
 	return zunoSysCall(ZUNO_SYSFUNC_THREAD_GETCURRENTHANDLE, 0);
 }
@@ -91,9 +99,7 @@ inline void zunoResumeThread(void *handle) {
 inline bool zunoThreadIsRunning(void *handle){
     return (bool)zunoSysCall(ZUNO_SYSFUNC_THREAD_ISRUNNING, 1, handle);
 }
-inline bool zunoIsIOThread(){
-	return (g_zuno_sys->hIOThread == zunoSysCall(ZUNO_SYSFUNC_THREAD_GETCURRENTHANDLE, 0));
-}
+
 inline void zunoEnterCritical(){
 	zunoSysCall(ZUNO_SYSFUNC_ENTER_CRITICAL, 0);
 }

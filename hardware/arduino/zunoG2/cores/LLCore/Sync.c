@@ -25,6 +25,8 @@ typedef enum							SyncMode_e
 
 #define ZUNO_SYNC_SPIN_COUNT		0xA
 
+SysCryticalStat_t                  g_sys_crytical_stat={0};
+
 static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, volatile uint8_t *lpKey) {
 	volatile uint8_t		counter;
 
@@ -46,22 +48,33 @@ static size_t _wait(ZunoSync_t *lpLock, SyncMaster_t value, SyncMode_t mode, vol
 static ZunoError_t _lock(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey, SyncMode_t mode) {
 	size_t				out;
 	size_t				i;
+	uint32_t            start_wait = millis();
+	uint32_t            counter = 0; 
 	
-	if (zunoIsIOThread() == true)
+	if (zunoIsSystemThread())
 		return (ZunoErrorTredIo);
-	while (0xFF) {
+	//while ((millis() - start_wait) < MAX_SYNC_WAIT_LOCK) {
+ 	while (counter < MAX_SYNC_WAIT_LOCK) {
 		i = 0;
+		
 		while (i++ < ZUNO_SYNC_SPIN_COUNT) {
 			zunoEnterCritical();
 			out = _wait(lpLock, value, mode, lpKey);
 			zunoExitCritical();
-			if (out == ZUNO_SYNC_NO_TYPE)
+			if (out == ZUNO_SYNC_NO_TYPE){
+				g_sys_crytical_stat.max_lock_wait = max(g_sys_crytical_stat.max_lock_wait, counter);//millis() - start_wait);
 				return (ZunoErrorSyncInvalidType);
-			if (out == ZUNO_SYNC_TRUE)
+			}
+			if (out == ZUNO_SYNC_TRUE){
+				g_sys_crytical_stat.max_lock_wait = max(g_sys_crytical_stat.max_lock_wait, counter);//millis() - start_wait);
 				return (ZunoErrorOk);
+			}
 		}
 		delay(1);
+		counter ++;
 	}
+	g_sys_crytical_stat.lock_timeout_count++;
+	return ZunoErrorSyncTimeout;
 }
 
 ZunoError_t zunoSyncLockRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey) {
@@ -74,7 +87,7 @@ ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile u
 
 static void _relese(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey) {
 
-	if (zunoIsIOThread() == true)
+	if (zunoIsSystemThread())
 		return ;
 	zunoEnterCritical();
 	if (lpLock->master == value && lpKey[0] == true) {
@@ -96,11 +109,14 @@ void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_
 
 ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
 	SyncMaster_t		master;
-	ZunoError_t			ret;
-
-	if (zunoIsIOThread() == true)
+	ZunoError_t			ret = ZunoErrorSyncTimeout;
+	//uint32_t start_wait = millis();
+	uint32_t count = 0;
+	if (zunoIsSystemThread())
 		return (ZunoErrorTredIo);
-	while (0xFF) {
+	
+	//while ((millis() - start_wait) < MAX_SYNC_WAIT_OPEN){
+	while(count < MAX_SYNC_WAIT_OPEN) {
 		zunoEnterCritical();
 		if ((master = lpLock->master) == SyncMasterOpenClose) {
 			zunoExitCritical();
@@ -142,15 +158,21 @@ ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f
 			ret = ZunoErrorResourceAlready;
 			break ;
 		}
+		count ++;
 	}
 	zunoExitCritical();
+	if(ret == ZunoErrorSyncTimeout){
+		g_sys_crytical_stat.open_timeout_count++;
+	} else{
+		g_sys_crytical_stat.max_open_wait = max(g_sys_crytical_stat.max_open_wait,count); //millis() - start_wait);
+	}
 	return (ret);
 }
 
 ZunoError_t zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f)(size_t), size_t param, volatile uint8_t *lpKey) {
 	ZunoError_t			ret;
 
-	if (zunoIsIOThread() == true)
+	if (zunoIsSystemThread())
 		return (ZunoErrorTredIo);
 	if ((ret = _lock(lpLock, value, lpKey, SyncModeWrite)) != ZunoErrorOk)
 		return (ret);
@@ -172,4 +194,10 @@ ZunoError_t zunoSyncClose(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*
 	}
 	zunoExitCritical();
 	return (ret);
+}
+void zunoSysCriticalStatDump(SysCryticalStat_t * dump){
+	memcpy(dump, &g_sys_crytical_stat, sizeof(g_sys_crytical_stat));
+}
+void zunoSysCriticalStatReset(){
+	memset(&g_sys_crytical_stat,0, sizeof(g_sys_crytical_stat));
 }

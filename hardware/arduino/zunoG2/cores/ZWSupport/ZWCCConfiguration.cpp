@@ -184,18 +184,18 @@ const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 			return &SYSCFGPARAM1;
 		case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
 			return &SYSCFGPARAM2;
-		// #ifdef SECURITY_CONFIG_PARAM
-		// case ZUNO_SYSCFGPARAM_SECURITY:
-		// 	return &SYSCFGPARAM7;
-		// #endif
+		#ifdef SECURITY_CONFIG_PARAM
+		case ZUNO_SYSCFGPARAM_SECURITY:
+			return &SYSCFGPARAM7;
+		#endif
 		case ZUNO_SYSCFGPARAM_LOGGING:
 			return &SYSCFGPARAM8;
-		// case ZUNO_SYSCFGPARAM_FREQUENCY:
-		// 	return &SYSCFGPARAM9;
+		case ZUNO_SYSCFGPARAM_FREQUENCY:
+			return &SYSCFGPARAM9;
 		case ZUNO_SYSCFGPARAM_REPORT_TIME:
 			return &SYSCFGPARAM11;
-		// case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
-		// 	return &SYSCFGPARAM20;
+		case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
+			return &SYSCFGPARAM20;
 	}
 
 	// Return user-defined callback result for user-defined parameters

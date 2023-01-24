@@ -99,4 +99,8 @@ typedef struct					ZwSwitchColorStopLevelChange_s {
 int zuno_CCSwitchColorHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet);
 
+void zunoSwitchColorSaveInit(void);
+void zunoSwitchColorSaveSet(uint8_t channel, void *value);
+uint8_t zunoSwitchColorSaveGet(uint8_t channel);
+
 #endif // ZWCC_SWITCH_COLOR_H

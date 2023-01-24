@@ -366,4 +366,22 @@ void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *fr
 		}
 	}
 }
+void zunoSwitchColorSaveInit(void) {
+	uint8_t					buffer_basic[EEPROM_SWITCH_COLOR_SAVE_SIZE];
+
+	memset(&buffer_basic[0x0], 0x0, sizeof(buffer_basic));
+	zunoEEPROMWrite(EEPROM_SWITCH_COLOR_SAVE_ADDR, sizeof(buffer_basic), &buffer_basic[0x0]);
+}
+
+void zunoSwitchColorSaveSet(uint8_t channel, void *value) {
+	zunoEEPROMWrite(EEPROM_SWITCH_COLOR_SAVE_ADDR + channel, 0x1, (uint8_t *)value);
+}
+
+uint8_t zunoSwitchColorSaveGet(uint8_t channel) {
+	uint8_t								value;
+
+	zunoEEPROMRead(EEPROM_SWITCH_COLOR_SAVE_ADDR + channel, 0x1, &value);
+	return (value);
+}
+
 #endif

@@ -29,6 +29,7 @@
 #include "ZWCCIndicator.h"
 #include "ZWCCCentralScene.h"
 #include "ZWCCResetLocally.h"
+#include "ZWCCWindowCovering.h"
 
 
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd);
@@ -82,6 +83,9 @@ static const uint8_t zuno_CCVesrions[] = {
   #endif
   #ifdef WITH_CC_SWITCH_COLOR
   COMMAND_CLASS_SWITCH_COLOR, SWITCH_COLOR_VERSION,
+  #endif
+  #ifdef WITH_CC_WINDOW_COVERING
+  COMMAND_CLASS_WINDOW_COVERING, WINDOW_COVERING_VERSION,
   #endif
   #ifdef WITH_CC_SOUND_SWITCH
   COMMAND_CLASS_SOUND_SWITCH, SOUND_SWITCH_VERSION,

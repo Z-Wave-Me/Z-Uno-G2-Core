@@ -213,6 +213,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...);
 #define EEPROM_BASIC_SAVE_SIZE							(0x1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 #define EEPROM_SWITCH_COLOR_SAVE_ADDR					(EEPROM_BASIC_SAVE_ADDR + EEPROM_BASIC_SAVE_SIZE)
 #define EEPROM_SWITCH_COLOR_SAVE_SIZE					(0x1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
+#define EEPROM_USER_CHANNELS_EEPROM_ADDR				(EEPROM_SWITCH_COLOR_SAVE_ADDR + EEPROM_SWITCH_COLOR_SAVE_SIZE)
+#define EEPROM_USER_CHANNELS_EEPROM_SIZE				sizeof(g_zuno_zw_cfg)
 
 
 inline int zunoEEPROMWrite(word address, word size, byte * data) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, true, address, size, data);};
@@ -227,7 +229,7 @@ void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handle
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {
   ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 };
-byte zunoAddChannel(byte type, byte subtype, byte options);
+byte zunoAddChannel(byte type, byte subtype, uint32_t options);
 bool zunoAddBaseCCS(byte ccs, byte version);
 void zunoSendReport(byte ch);
 void zunoResetLocally();

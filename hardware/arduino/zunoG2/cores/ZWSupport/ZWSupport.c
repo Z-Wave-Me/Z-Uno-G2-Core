@@ -903,7 +903,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 					break;
 				#endif
 				#ifdef WITH_CC_WINDOW_COVERING
-				case COMMAND_CLASS_SWITCH_COLOR:
+				case COMMAND_CLASS_WINDOW_COVERING:
 					result = zuno_CCWindowCoveringHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
@@ -1533,6 +1533,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchColorReport(ch, NULL, &frame.packet);
+				break;
+			#endif
+			#ifdef WITH_CC_WINDOW_COVERING
+			case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+				rs = zuno_CCWindowCoveringReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SOUND_SWITCH

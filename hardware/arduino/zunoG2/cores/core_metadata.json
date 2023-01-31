@@ -251,8 +251,8 @@
             "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL"],
             "generic_type":"GENERIC_TYPE_WINDOW_COVERING",
             "specific_type":"SPECIFIC_TYPE_SIMPLE_WINDOW_COVERING",
-            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE",
+            "icon_app_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "ccs":[

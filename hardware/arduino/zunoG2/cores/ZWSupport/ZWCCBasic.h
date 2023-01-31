@@ -47,7 +47,7 @@ void zunoBasicSaveInit(void);
 void zunoBasicSaveSet(uint8_t channel, void *value);
 uint8_t zunoBasicSaveGet(uint8_t channel);
 
-#ifdef WITH_CC_SWITCH_COLOR
+#if defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_WINDOW_COVERING)
 	#define ZWCC_BASIC_SETTER_1P(zuno_ch, value)							zuno_SwitchMultilevelUniversalSetter1P(zuno_ch, value)
 	#define ZWCC_BASIC_GETTER_1P(zuno_ch)									zuno_SwitchMultilevelUniversalGetter1P(zuno_ch)
 #else

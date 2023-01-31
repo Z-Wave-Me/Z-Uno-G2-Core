@@ -14,6 +14,7 @@
 #include "ZWCCCentralScene.h"
 #include "CommandQueue.h"
 #include "Debug.h"
+#include "ZWCCWindowCovering.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -280,6 +281,11 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#ifdef WITH_CC_SWITCH_COLOR
 		case COMMAND_CLASS_SWITCH_COLOR:
 			cmd = SWITCH_COLOR_REPORT;
+			break ;
+		#endif
+		#ifdef WITH_CC_WINDOW_COVERING
+		case COMMAND_CLASS_WINDOW_COVERING:
+			cmd = WINDOW_COVERING_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_SOUND_SWITCH

@@ -91,6 +91,19 @@ znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queu
 static ZNLinkedList_t * g_user_threadlst = NULL;
 static void * g_timerThread = NULL;
 static void * g_commandThread = NULL;
+void * zunoGetSysThreadHandle(ZunoSysThreadType_t type){
+	switch(type){
+		case SYS_THREAD_MAIN:
+			return g_zuno_sys->hMainThread;
+		case SYS_THREAD_TIMER:
+			return g_timerThread;
+		case SYS_THREAD_COMMAND_HANDLER:
+			return g_commandThread;
+		case SYS_THREAD_IO:
+			return g_zuno_sys->hIOThread;
+	}
+	return NULL;
+}
 void _zunoRegisterTimerThread(){
 	g_timerThread = zunoGetCurrentThreadHandle();
 }

@@ -86,9 +86,10 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 	zuno_dbgdumpZWPacakge(p);
 	#endif
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
-		p->src_zw_channel = 0;
+		uint8_t mapped_channel = p->src_zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
+        p->src_zw_channel = 0;
 		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
-		p->src_zw_channel &= ~(ZWAVE_CHANNEL_MAPPED_BIT);
+		p->src_zw_channel = mapped_channel;
 	}
     zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }

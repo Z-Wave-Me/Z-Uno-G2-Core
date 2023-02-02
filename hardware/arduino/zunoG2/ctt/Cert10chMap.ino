@@ -112,6 +112,10 @@ void setup() {
    Serial0.print("*** START! ");
 }
 // OS calls loop() function repeatedly
+void my_test_func1(){
+    void * handle = zunoGetSysThreadHandle(SYS_THREAD_TIMER);
+   zunoSuspendThread(handle);
+}
 void loop() {
    // Switches
    digitalWrite(LedPin1, switchValue1 == 0);
@@ -162,4 +166,7 @@ void loop() {
        zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
    }
    delay(50);
+   //my_test_func1();
+   /*for(int i=0;i<10;i++)
+    delayMicroseconds(65000);*/
 }

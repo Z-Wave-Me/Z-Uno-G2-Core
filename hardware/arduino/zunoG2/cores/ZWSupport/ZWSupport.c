@@ -181,8 +181,8 @@ inline bool __isSyncMapChannelAndClear(uint32_t * map, uint8_t ch){
 //-------------------------------------------------------------------------------------------------
 void _zunoLoadUserChannels();
 void ZWCCSetup(){
-	_zunoLoadUserChannels();
 	memset(&g_channels_data, 0, sizeof(g_channels_data));
+	_zunoLoadUserChannels();
 	#ifdef WITH_CC_BATTERY
 	zuno_CCBattery_OnSetup();
 	#endif
@@ -740,6 +740,7 @@ void _zunoSaveUserChannels(){
 	zunoEEPROMWrite(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
+	_zunoSaveUserChannels();
 	zunoBasicSaveInit();
 	#ifdef WITH_CC_SWITCHCOLOR
 	zunoSwitchColorSaveInit();
@@ -774,7 +775,7 @@ int __zuno_CommandHandler_Out(int rs){
 int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	ZUNOCommandPacketReport_t							frame_report;
 	int													result;
-
+	delay(10); // TST!
 	zunoReportHandler(cmd);
 	if (_zunoS2PkgFilter(cmd) == true)
 		return (ZUNO_COMMAND_BLOCKED);

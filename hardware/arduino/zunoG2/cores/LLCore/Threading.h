@@ -6,7 +6,12 @@
 #define MAX_SEMAPHORE_COUNT         0x10 
 
 typedef void (*threadcodefunc_t) (void *param);
-
+typedef enum{
+	SYS_THREAD_MAIN,
+	SYS_THREAD_TIMER,
+	SYS_THREAD_COMMAND_HANDLER,
+	SYS_THREAD_IO
+} ZunoSysThreadType_t;
 // -----------------------------------------------------------------------
 // SYSTEM internal structs. Depend on RTOS release
 // Do not modify!!!
@@ -83,6 +88,7 @@ bool zunoIsCustomThread(void * handle=NULL);
 bool zunoIsSystemThread(void * handle=NULL);
 bool zunoIsIOThread(void * handle=NULL);
 bool zunoIsMainThread(void * handle=NULL);
+void * zunoGetSysThreadHandle(ZunoSysThreadType_t type);
 
 
 inline void *zunoGetCurrentThreadHandle() {

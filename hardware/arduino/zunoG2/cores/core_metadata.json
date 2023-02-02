@@ -245,6 +245,21 @@
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":14,
+            "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL"],
+            "generic_type":"GENERIC_TYPE_WINDOW_COVERING",
+            "specific_type":"SPECIFIC_TYPE_SIMPLE_WINDOW_COVERING",
+            "icon_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE",
+            "icon_app_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
+            "preproc_flags":[],
+            "ccs":[
+                {"name":"COMMAND_CLASS_WINDOW_COVERING","version":"WINDOW_COVERING_VERSION"},
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
+            ],
+            "cluster_rule":"${type}"
         }
     ]
 }

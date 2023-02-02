@@ -34,6 +34,8 @@ static uint8_t __zuno_CCSupervisionReportSend(uint8_t process_result, uint8_t du
 			process_result = SUPERVISION_REPORT_NO_SUPPORT;
 			break;
 	}
+	report->cmdClass = COMMAND_CLASS_SUPERVISION;
+	report->cmd = SUPERVISION_REPORT;
 	report->status = process_result;
 	report->duration = duration;
 	if (duration != 0x0 && (__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0) {

@@ -29,6 +29,7 @@
 #include "ZWCCIndicator.h"
 #include "ZWCCCentralScene.h"
 #include "ZWCCResetLocally.h"
+#include "ZWCCWindowCovering.h"
 #include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
@@ -217,6 +218,16 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_COLOR)
+				return true;
+			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
+				return true;
+			if(cmd_class == COMMAND_CLASS_BASIC)
+				return true;
+			break;
+		#endif
+		#ifdef WITH_CC_WINDOW_COVERING
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			if(cmd_class == COMMAND_CLASS_WINDOW_COVERING)
 				return true;
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
@@ -482,6 +493,15 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			return (true);
 			break ;
 		#endif
+		#ifdef WITH_CC_WINDOW_COVERING
+		case COMMAND_CLASS_WINDOW_COVERING:
+			if (cmd == WINDOW_COVERING_SUPPORTED_GET)
+				return (false);
+			if (cmd == WINDOW_COVERING_GET)
+				return (false);
+			return (true);
+			break ;
+		#endif
 		#ifdef WITH_CC_SOUND_SWITCH
 		case COMMAND_CLASS_SOUND_SWITCH:
 			if (cmd == SOUND_SWITCH_CONFIGURATION_SET)
@@ -729,7 +749,7 @@ uint16_t _calcCfg16Crc(){
 	return crc16;
 }
 void _zunoLoadUserChannels(){
-	zunoEEPROMRead(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
+	zunoEEPROMRead(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 	uint16_t crc16 = _calcCfg16Crc();
 	if(crc16 != g_zuno_zw_cfg.crc16){
 		memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
@@ -737,7 +757,7 @@ void _zunoLoadUserChannels(){
 }
 void _zunoSaveUserChannels(){
 	g_zuno_zw_cfg.crc16 = _calcCfg16Crc();
-	zunoEEPROMWrite(USER_CHANNELS_EEPROM_ADDR, sizeof(g_zuno_zw_cfg), (byte*)&g_zuno_zw_cfg);
+	zunoEEPROMWrite(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
 	_zunoSaveUserChannels();
@@ -880,6 +900,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:
 					result = zuno_CCSwitchColorHandler(zuno_ch, cmd, &frame_report);
+					break;
+				#endif
+				#ifdef WITH_CC_WINDOW_COVERING
+				case COMMAND_CLASS_WINDOW_COVERING:
+					result = zuno_CCWindowCoveringHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
 				#ifdef WITH_CC_SOUND_SWITCH
@@ -1305,7 +1330,7 @@ bool zunoAddBaseCCS(byte ccs, byte version){
 	(void)ccs;
 	(void)version;
 }
-byte zunoAddChannel(byte type, byte subtype, byte options) {
+byte zunoAddChannel(byte type, byte subtype, uint32_t options) {
 	// Do we have space for the new channel?
 	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return UNKNOWN_CHANNEL;
@@ -1314,6 +1339,9 @@ byte zunoAddChannel(byte type, byte subtype, byte options) {
 	ZUNO_CFG_CHANNEL(ch_i).type         =   type;
 	ZUNO_CFG_CHANNEL(ch_i).sub_type     =   subtype;
 	ZUNO_CFG_CHANNEL(ch_i).params[0]    =   options;
+	ZUNO_CFG_CHANNEL(ch_i).params[1]    =   (options >> 8);
+	ZUNO_CFG_CHANNEL(ch_i).params[2]    =   (options >> 16);
+	ZUNO_CFG_CHANNEL(ch_i).params[3]    =   (options >> 24);
 	ZUNO_CFG_CHANNEL_COUNT++;
 	return ch_i;
 }
@@ -1505,6 +1533,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchColorReport(ch, NULL, &frame.packet);
+				break;
+			#endif
+			#ifdef WITH_CC_WINDOW_COVERING
+			case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+				rs = zuno_CCWindowCoveringReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SOUND_SWITCH

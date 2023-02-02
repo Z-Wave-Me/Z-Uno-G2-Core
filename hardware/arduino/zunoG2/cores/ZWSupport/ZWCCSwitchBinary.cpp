@@ -109,6 +109,7 @@ void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *f
 	lp->channel = 0x0;
 	if (lp->bMode == ZUNO_TIMER_SWITCH_SUPERVISION) {
 		__cc_supervision._unpacked = true;
+		fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(channel - 1).zw_channel);
 		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 	}
 }

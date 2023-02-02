@@ -283,6 +283,7 @@ void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_
 			lp->channel = 0x0;
 			if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
 				__cc_supervision._unpacked = true;
+				fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(channel - 1).zw_channel);
 				zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 			}
 		}

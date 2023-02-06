@@ -62,7 +62,7 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 const ZunoCFGParameter_t SYSCFGPARAM1 =
 {
 	.name = "Debug mode",
-	.info = "Enables Z-Uno debug mode",
+	.info = "Enables Z-Uno debug mode.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
 	.defaultValue = 0x0,
@@ -71,11 +71,11 @@ const ZunoCFGParameter_t SYSCFGPARAM1 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t SYSCFGPARAM2 =
 {
-	.name = "ActivityLED",
-	.info = "Turns on/off activity led",
+	.name = "Activity LED",
+	.info = "Turns on/off activity led.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
 	.defaultValue = 0x1,
@@ -84,7 +84,7 @@ const ZunoCFGParameter_t SYSCFGPARAM2 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 #ifdef SECURITY_CONFIG_PARAM
 const ZunoCFGParameter_t SYSCFGPARAM7 =
 {
@@ -98,11 +98,11 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.readOnly = false,
 	.altering = true,
 	.advanced = true
-}; 
+};
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM8 =
 {
-	.name = "RFLogging",
+	.name = "RF logging",
 	.info = "Turns on/off exception logging.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
@@ -117,8 +117,8 @@ const ZunoCFGParameter_t SYSCFGPARAM8 =
 #pragma message "parameter 9 DEBUG version"
 const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
-	.name = "RFFrequency",
-	.info = "Changes Z-Wave region of Z-Uno",
+	.name = "Radio frequency",
+	.info = "Changes Z-Wave region of Z-Uno.",
 	.minValue = 0,
 	.maxValue = 0x11EE,
 	.defaultValue = 0x00FF,
@@ -128,11 +128,11 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.altering = false,
 	.advanced = true
 };
-#else 
+#else
 const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
-	.name = "RFFrequency",
-	.info = "Changes Z-Wave region of Z-Uno",
+	.name = "Radio frequency",
+	.info = "Changes Z-Wave region of Z-Uno.",
 	.minValue = 0x00FF,
 	.maxValue = 0x11EE,
 	.defaultValue = 0x00FF,
@@ -145,8 +145,8 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM11 =
 {
-	.name = "MultilevelReportInterval",
-	.info = "Minimal report interval.",
+	.name = "Multilevel report interval",
+	.info = "Minimal report interval. Debugging mode is required.",
 	.minValue = 0x0,
 	.maxValue = 255,
 	.defaultValue = 30,
@@ -155,10 +155,10 @@ const ZunoCFGParameter_t SYSCFGPARAM11 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t SYSCFGPARAM20 =
 {
-	.name = "OTAConfirmation",
+	.name = "OTA confirmation",
 	.info = "Accepts firmware update process.",
 	.minValue = 0x0,
 	.maxValue = 0x7FFFFFFF,
@@ -168,7 +168,7 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 	#if !defined(CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
 	switch(param){

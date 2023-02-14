@@ -799,7 +799,7 @@ int __zuno_CommandHandler_Out(int rs){
 int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	ZUNOCommandPacketReport_t							frame_report;
 	int													result;
-	delay(10); // TST!
+	// delay(10); // TST!
 	zunoReportHandler(cmd);
 	if (_zunoS2PkgFilter(cmd) == true)
 		return (ZUNO_COMMAND_BLOCKED);

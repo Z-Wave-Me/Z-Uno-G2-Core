@@ -710,7 +710,8 @@ void _fillZWaveData(uint8_t secure_param){
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
 		uint8_t f = ZUNO_CC_TYPES[type].flags;
-		if((ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT) == 0)
+		if( (ZUNO_CFG_CHANNEL(i).zw_channel != 0) && 
+			((ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT) == 0))
 			continue;
 		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
 			uint8_t cc = ZUNO_CC_TYPES[type].ccs[j].cc;
@@ -752,6 +753,9 @@ void _zunoLoadUserChannels(){
 	zunoEEPROMRead(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 	uint16_t crc16 = _calcCfg16Crc();
 	if(crc16 != g_zuno_zw_cfg.crc16){
+		#ifdef LOGGING_DBG
+		LOGGING_UART.println("*** Wrong channels CRC!. Clear data.");
+		#endif
 		memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
 	}
 }
@@ -1332,16 +1336,20 @@ bool zunoAddBaseCCS(byte ccs, byte version){
 }
 byte zunoAddChannel(byte type, byte subtype, uint32_t options) {
 	// Do we have space for the new channel?
-	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
+	if(ZUNO_CFG_CHANNEL_COUNT >= ZUNO_MAX_MULTI_CHANNEL_NUMBER){
+		#ifdef LOGGING_DBG
+		LOGGING_UART.println("(!) CHANNELS OVERFLOW");
+		#endif
 		return UNKNOWN_CHANNEL;
+	}
 	// Create new channel
 	uint8_t ch_i = ZUNO_CFG_CHANNEL_COUNT;
 	ZUNO_CFG_CHANNEL(ch_i).type         =   type;
 	ZUNO_CFG_CHANNEL(ch_i).sub_type     =   subtype;
-	ZUNO_CFG_CHANNEL(ch_i).params[0]    =   options;
-	ZUNO_CFG_CHANNEL(ch_i).params[1]    =   (options >> 8);
-	ZUNO_CFG_CHANNEL(ch_i).params[2]    =   (options >> 16);
-	ZUNO_CFG_CHANNEL(ch_i).params[3]    =   (options >> 24);
+	ZUNO_CFG_CHANNEL(ch_i).params[0]    =   options & 0xFF;
+	ZUNO_CFG_CHANNEL(ch_i).params[1]    =   (options >> 8)  & 0xFF;
+	ZUNO_CFG_CHANNEL(ch_i).params[2]    =   (options >> 16)  & 0xFF;
+	ZUNO_CFG_CHANNEL(ch_i).params[3]    =   (options >> 24)  & 0xFF;
 	ZUNO_CFG_CHANNEL_COUNT++;
 	return ch_i;
 }

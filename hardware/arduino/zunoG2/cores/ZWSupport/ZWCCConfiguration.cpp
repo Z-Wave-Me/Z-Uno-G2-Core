@@ -4,7 +4,7 @@
 #include "SysService.h"
 
 #define CONFIGPARAM_MIN_PARAM				0x40
-#define CONFIGPARAM_PARAM_COUNT_DEFAULT		(EEPROM_CONFIGURATION_SIZE / 0x4 - 0x1)
+#define CONFIGPARAM_PARAM_COUNT_DEFAULT		(EEPROM_CONFIGURATION_SIZE / 0x4)
 #define CONFIGPARAM_MAX_PARAM_DEFAULT		(CONFIGPARAM_MIN_PARAM + CONFIGPARAM_PARAM_COUNT_DEFAULT)
 
 #ifdef CONFIGPARAMETERS_MAX_COUNT
@@ -14,7 +14,7 @@
 #endif
 
 #define CONFIGPARAM_EEPROM_ADDR(param)		(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
-#define CONFIGPARAM_EEPROM_ADDR_ADD(param)	(((param - CONFIGPARAM_MAX_PARAM_DEFAULT - 0x1) * sizeof(int32_t)) + EEPROM_USER_CODE_ADDR)
+#define CONFIGPARAM_EEPROM_ADDR_ADD(param)	(((param - CONFIGPARAM_MAX_PARAM_DEFAULT) * sizeof(int32_t)) + EEPROM_USER_CODE_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
@@ -55,7 +55,7 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	memcpy(&param_data, &CFGPARAM_DEFAULT, sizeof(ZunoCFGParameter_t));
 	strcpy(alternative_name, param_data.name);
 	param_data.name = alternative_name;
-	if((param > CONFIGPARAM_MAX_PARAM) || 
+	if((param >= CONFIGPARAM_MAX_PARAM) || 
 		(param < CONFIGPARAM_MIN_PARAM))
 		return (ZUNO_CFG_PARAMETER_UNKNOWN);
 	char* p_nn  = strstr(param_data.name, "NN");
@@ -210,7 +210,7 @@ uint8_t checkConfigurationParameterSVSet(uint8_t * cmd){
 	uint16_t param = cmd[2];
 	uint8_t options =  cmd[3];
 	uint8_t size = options & CONFIGURATION_SET_LEVEL_SIZE_MASK;
-	if(param > CONFIGPARAM_MAX_PARAM)
+	if(param >= CONFIGPARAM_MAX_PARAM)
 		return PARAM_SV_UNKNOWN_PARAM;
 	cfg = zunoCFGParameterProxy(param);
 	if(cfg == ZUNO_CFG_PARAMETER_UNKNOWN)
@@ -339,11 +339,11 @@ static int _configuration_get(ZwConfigurationGetFrame_t *cmd, ZUNOCommandPacketR
 	param = cmd->parameterNumber;
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		// User asks about unknown parameter, lets return the first existed parameter
-		for(param = CONFIGPARAM_MIN_PARAM; param <= CONFIGPARAM_MAX_PARAM; param++){
+		for(param = CONFIGPARAM_MIN_PARAM; param < CONFIGPARAM_MAX_PARAM; param++){
 			if ((cfg = zunoCFGParameterProxy(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
 				break;
 		}
-		if (param > CONFIGPARAM_MAX_PARAM)
+		if (param >= CONFIGPARAM_MAX_PARAM)
 			return (ZUNO_COMMAND_BLOCKED_FAILL); // There are no user-side parameters 
 	}
 	if (param < CONFIGPARAM_MIN_PARAM){
@@ -370,7 +370,7 @@ static int _configuration_set(ZUNOCommandPacket_t *cmd) {
 
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
-	if (param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+	if (param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
@@ -436,11 +436,11 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 	}
 	report->v4.byte4.properties1 = properties1;
 	parameter++;
-	for(; parameter <= CONFIGPARAM_MAX_PARAM; parameter++){
+	for(; parameter < CONFIGPARAM_MAX_PARAM; parameter++){
 		if ((cfg = zunoCFGParameterProxy(parameter)) != ZUNO_CFG_PARAMETER_UNKNOWN)
 			break;
 	}
-	if (parameter > CONFIGPARAM_MAX_PARAM)
+	if (parameter >= CONFIGPARAM_MAX_PARAM)
 		parameter = 0;
 	end->nextParameterNumber1 = 0;
 	end->nextParameterNumber2 = parameter;
@@ -496,7 +496,7 @@ static int _configuration_info_get(ZwConfigurationInfoGetFrame_t *cmd, ZUNOComma
 
 static int _configuration_default_reset(void) {
 	const ZunoCFGParameter_t							*cfg;
-	for(int i=CONFIGPARAM_MIN_PARAM; i<=CONFIGPARAM_MAX_PARAM; i++){
+	for(int i=CONFIGPARAM_MIN_PARAM; i< CONFIGPARAM_MAX_PARAM; i++){
 		cfg = zunoCFGParameter(i);
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN)
 			_zunoSaveCFGParam(i, cfg->defaultValue, false);
@@ -545,10 +545,10 @@ ssize_t zunoLoadCFGParam(uint8_t param) {
 	ssize_t												maxValue;
 	uint32_t											addr;
 
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+	if (param < CONFIGPARAM_MIN_PARAM || param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
 	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
-		if (param > CONFIGPARAM_MAX_PARAM_DEFAULT)
+		if (param >= CONFIGPARAM_MAX_PARAM_DEFAULT)
 			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
 		else
 			addr = CONFIGPARAM_EEPROM_ADDR(param);
@@ -575,7 +575,7 @@ static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 	size_t												size;
 	uint32_t											addr;
 
-	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
+	if (param < CONFIGPARAM_MIN_PARAM || param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return ;
 	if ((cfg = zunoCFGParameter(param)) != ZUNO_CFG_PARAMETER_UNKNOWN) {
 		if (cfg->readOnly == true)
@@ -615,7 +615,7 @@ static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 	if (bUser == false)
 		zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
 	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
-		if (param > CONFIGPARAM_MAX_PARAM_DEFAULT)
+		if (param >= CONFIGPARAM_MAX_PARAM_DEFAULT)
 			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
 		else
 			addr = CONFIGPARAM_EEPROM_ADDR(param);

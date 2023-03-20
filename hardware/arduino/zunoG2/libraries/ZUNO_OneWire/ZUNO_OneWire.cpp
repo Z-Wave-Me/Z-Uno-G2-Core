@@ -436,7 +436,7 @@ inline void OneWire::_pinModeFast(uint8_t mode) {//pinMode with some cached valu
 
 	real_port = this->_real_port;
 	if((real_pin = this->_real_pin) < 8)
-		GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin))) | (mode << (real_pin << 2 ));
+		GPIO->P[real_port].MODEL = (GPIO->P[real_port].MODEL & ~(0xFu << (real_pin << 2))) | (mode << (real_pin << 2 ));
 	else 
 		GPIO->P[real_port].MODEH = (GPIO->P[real_port].MODEH & ~(0xFu << ((real_pin - 8) << 2))) | (mode << ((real_pin - 8) << 2));
 }

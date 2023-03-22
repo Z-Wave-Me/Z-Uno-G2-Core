@@ -128,15 +128,13 @@ static int _class_get(ZUNOCommandPacket_t *packet, ZW_VERSION_COMMAND_CLASS_GET_
 }
 extern ZUNOCodeHeader_t g_zuno_codeheader;
 int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
-	int										rs;
-
 	switch(ZW_CMD){
 		case VERSION_COMMAND_CLASS_GET:
 			return _class_get(cmd, (ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *)cmd->cmd, frame_report);
     case VERSION_GET:{
       frame_report->packet.cmd[2] = VERSION_LIBRARY_TYPE_SLAVE;
-      frame_report->packet.cmd[3] = VERSION_PROTOCOL_VERSION_MAJ;
-      frame_report->packet.cmd[4] = VERSION_PROTOCOL_VERSION_MIN;
+      frame_report->packet.cmd[3] = ZWAVE_SDK_VERSION_MAJOR;
+      frame_report->packet.cmd[4] = ZWAVE_SDK_VERSION_MINOR;
       frame_report->packet.cmd[5] = g_zuno_codeheader.version_major;
       frame_report->packet.cmd[6] = g_zuno_codeheader.version_minor;
       frame_report->packet.cmd[7] = g_zuno_sys->fw_static_header->hw_id & 0xFF;
@@ -166,5 +164,4 @@ int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *f
 			return ZUNO_UNKNOWN_CMD;
 	}
 	return ZUNO_UNKNOWN_CMD;
-	(void)rs;
 }

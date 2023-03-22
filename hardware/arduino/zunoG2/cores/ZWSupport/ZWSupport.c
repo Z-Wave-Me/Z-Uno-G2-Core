@@ -30,6 +30,7 @@
 #include "ZWCCCentralScene.h"
 #include "ZWCCResetLocally.h"
 #include "ZWCCWindowCovering.h"
+#include "ZWCCManufacturerSpecific.h"
 #include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
@@ -103,11 +104,7 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   COMMAND_CLASS_FIRMWARE_UPDATE_MD
 };
 
-typedef struct ZUnoChannelDtaHandler_s{
-	void * p_handler;     
-					   // |    7   | 6 |  5    |   4 | 3 |2|1|0|
-	byte   descriptor; // | SIGNED | - | 2^NUM_BYTES |  TYPE   |
-}ZUnoChannelDtaHandler_t;
+
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 
@@ -752,6 +749,13 @@ uint16_t _calcCfg16Crc(){
 void _zunoLoadUserChannels(){
 	zunoEEPROMRead(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 	uint16_t crc16 = _calcCfg16Crc();
+	/*
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("CRC16:");
+	LOGGING_UART.println(crc16, HEX);
+	LOGGING_UART.print("--- LOAD CHANNELS ---");
+	LOGGING_UART.dumpPrint(&g_zuno_zw_cfg, sizeof(g_zuno_zw_cfg));
+	#endif*/
 	if(crc16 != g_zuno_zw_cfg.crc16){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("*** Wrong channels CRC!. Clear data.");
@@ -761,6 +765,13 @@ void _zunoLoadUserChannels(){
 }
 void _zunoSaveUserChannels(){
 	g_zuno_zw_cfg.crc16 = _calcCfg16Crc();
+	/*
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("--- SAVE CHANNELS ---");
+	LOGGING_UART.dumpPrint(&g_zuno_zw_cfg, sizeof(g_zuno_zw_cfg));
+	LOGGING_UART.print("CRC16:");
+	LOGGING_UART.println(g_zuno_zw_cfg.crc16, HEX);
+	#endif*/
 	zunoEEPROMWrite(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
@@ -840,7 +851,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 		}
 	}
 	#endif
-	if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
+	if(ZW_CMD_CLASS == COMMAND_CLASS_MANUFACTURER_SPECIFIC) {
+		return __zuno_CommandHandler_Out(zuno_CCManufacturerSpecificHandler(cmd, &frame_report));
+	} else if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
 		return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd, &frame_report));
 	}
 	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
@@ -1055,6 +1068,13 @@ int32_t zuno_universalGetter1P(byte zuno_ch) {
 		return 0;
 	byte type = g_zuno_channelhandlers_map[zuno_ch].descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
 	byte val_type = (g_zuno_channelhandlers_map[zuno_ch].descriptor >> HANDLER_DESCRIPTOR_LEN_SHIFT);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("***Universal Getter T:");
+	LOGGING_UART.print(type);
+	LOGGING_UART.print(" H:");
+	LOGGING_UART.println((uint32_t)g_zuno_channelhandlers_map[zuno_ch].p_handler,HEX);
+	delay(10);
+	#endif
 	switch(type){
 		case CHANNEL_HANDLER_EMPTY:
 			return 0;
@@ -1355,6 +1375,12 @@ byte zunoAddChannel(byte type, byte subtype, uint32_t options) {
 }
 
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("SETUP CH:");
+	LOGGING_UART.print(ch);
+	LOGGING_UART.print(" HANDLER:");
+	LOGGING_UART.println((uint32_t)handler, HEX);
+	#endif
 	g_zuno_channelhandlers_map[ch].descriptor = (((value_size >> 1)&HANDLER_DESCRIPTOR_LEN_MASK) << HANDLER_DESCRIPTOR_LEN_SHIFT) | (type & HANDLER_DESCRIPTOR_TYPE_MASK);
 	g_zuno_channelhandlers_map[ch].p_handler = handler;
 }

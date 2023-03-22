@@ -58,6 +58,8 @@ void SysServiceInit(){
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     SysReconfigLeds();
+    /*
+    // !DBG
     if(g_zuno_sys->start_error_code != 0){
         #ifdef LOGGING_DBG
         LOGGING_UART.print("(!) HARDWARE FAULT CODE:");
@@ -73,7 +75,7 @@ void SysServiceInit(){
             SysSetLearnLedMode(SYSLED_LEARN_MODE_SYSERROR_WDOG, ERROR_IDENTITY_TIMEOUT);
         }
         delay(ERROR_IDENTITY_DELAY);
-    }
+    }*/
 }
 static void _setSysCntrlState(uint8_t mode, uint32_t timeout){
     g_service_data.cntrl_mode = mode;

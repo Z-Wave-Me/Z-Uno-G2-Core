@@ -281,6 +281,11 @@ typedef struct SysCryticalStat_s{
 	uint32_t open_timeout_count;
 	uint32_t systhread_delay_count;
 }SysCryticalStat_t;
+typedef struct ZUnoChannelDtaHandler_s{
+	void * p_handler;     
+					   // |    7   | 6 |  5    |   4 | 3 |2|1|0|
+	uint8_t   descriptor; // | SIGNED | - | 2^NUM_BYTES |  TYPE   |
+}ZUnoChannelDtaHandler_t;
 
 extern ZUNOSleepData_t g_sleep_data;
 

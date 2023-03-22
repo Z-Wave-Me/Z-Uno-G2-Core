@@ -480,6 +480,7 @@ void checkSystemCriticalStat();
 #endif
 void _zunoRegisterTimerThread();
 void _zunoRegisterCommandThread();
+uint32_t g_sys_timer_counter = 0;
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -573,6 +574,11 @@ void * zunoJumpTable(int vec, void * data) {
                 zunoAwakeUsrCode();
             }
             break;
+        /*    
+        case ZUNO_JUMPTBL_SYSTIMER:
+            g_sys_timer_counter ++;
+            break;
+        */
         case ZUNO_JUMPTBL_SLEEP:
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             #ifndef NO_SYS_SVC 
@@ -597,7 +603,6 @@ void * zunoJumpTable(int vec, void * data) {
         default:
             break; // UNKNOWN VECTOR
     }
-    
     if(vec >= ZUNO_JUMPTBL_SYSTIMER){
         zunoSysHandlerCall(vec-ZUNO_JUMPTBL_SYSTIMER,sub_handler_type, data);
     }
@@ -1435,9 +1440,10 @@ void zunoKickSleepTimeout(uint32_t ms){
 void zunoAwakeUsrCode(){
     zunoLockSleep();
     #ifdef LOGGING_DBG
+    /*
     uint8_t val = zunoThreadIsRunning(g_zuno_sys->hMainThread);
     LOGGING_UART.print("Tread running:");
-    LOGGING_UART.println(val);
+    LOGGING_UART.println(val);*/
     #endif
     //if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
         zunoResumeThread(g_zuno_sys->hMainThread);

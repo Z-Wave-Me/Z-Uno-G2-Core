@@ -5,6 +5,7 @@
 #define SYNCTIMEOUT_IMMIDIATELY     0
 #define MAX_SEMAPHORE_COUNT         0x10 
 
+#define SYSTHREAD_INT_ONLY 
 typedef void (*threadcodefunc_t) (void *param);
 typedef enum{
 	SYS_THREAD_MAIN,

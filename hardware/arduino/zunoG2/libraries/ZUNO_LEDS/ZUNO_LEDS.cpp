@@ -115,13 +115,11 @@ void ZunoLed::_deleteLed(size_t name) {
 
 ZunoLedListGroups_t *ZunoLed::_addLedPre(size_t name, uint8_t num_groups, ZunoError_t *ret) {
 	ZunoLedListGroups_t			*list;
-	 ZunoError_t				tmp;
-
 	zunoEnterCritical();
 	if (this->bSysTimerInit++ == 0) {
-		if ((tmp = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer)) != ZunoErrorOk) {
+		if (!zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)this->_updateTimer)) {
 			this->bSysTimerInit--;
-			*ret = tmp;
+			*ret = ZunoErrorAttachSysHandler;
 			zunoExitCritical();
 			return (0);
 		}
@@ -146,7 +144,6 @@ ZunoLedListGroups_t *ZunoLed::_addLedPre(size_t name, uint8_t num_groups, ZunoEr
 void ZunoLed::_addList(ZunoLedListGroups_t *list) {
 	ZunoLedListGroups_t			*list_next;
 	ZunoLedListGroups_t			*list_tmp;
-
 	zunoEnterCritical();
 	if ((list_next = this->_list) != 0) {
 		while ((list_tmp = list_next->next) != 0)

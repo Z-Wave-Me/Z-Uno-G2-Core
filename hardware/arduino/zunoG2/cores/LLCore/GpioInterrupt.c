@@ -32,7 +32,7 @@ static void _IRQDispatcher(void * p) {
 	}
 }
 static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {
-	return (zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc));
+	return zunoAttachSysHandler(ZUNO_HANDLER_EXTINT, intNo, (void *)userFunc) ? ZunoErrorOk : ZunoErrorAttachSysHandler;
 }
 
 void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
@@ -49,12 +49,11 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 	uint8_t						pin;
 
 	if (g_zuno_odhw_cfg.bExtInit == false) {
-		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) != ZunoErrorOk) {
-			return (ret);
-		}
-		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQDispatcher)) != ZunoErrorOk) {
+		if (!zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) 
+			return ZunoErrorAttachSysHandler;
+		if (!zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQDispatcher)) {
 			zunoDetachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher);
-			return (ret);
+			return ZunoErrorAttachSysHandler;
 		}
 		NVIC_ClearPendingIRQ(GPIO_ODD_IRQn);
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);

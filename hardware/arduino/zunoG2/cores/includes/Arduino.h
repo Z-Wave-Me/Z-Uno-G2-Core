@@ -23,6 +23,7 @@
 #include <math.h>
 #include "WCharacter.h"
 #include "pgmspace.h"
+#include "SysHandlerMap.h"
 
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */
@@ -186,12 +187,6 @@ void analogWriteResolution(uint8_t bits);
 int  analogRead(uint8_t pin);
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 
-
-/* Handler */
-ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void * handler);
-ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler);
-ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type);
-void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...);
 
 
 /* EEPROM */

@@ -219,7 +219,7 @@ typedef struct ZUNOUARTOptions_s{
 typedef struct HandlerFunc_s{
 	uint8_t main_type;
 	uint8_t sub_type;
-	uint16_t code_offset;
+	uint32_t code_offset;
 }HandlerFunc_t;
 
 typedef struct ZUNOOnDemandHW_s {
@@ -234,7 +234,7 @@ typedef struct ZUNOOnDemandHW_s {
 	uint8_t		adc_acqtime;
 	uint8_t		pwm_resolution;
 	uint32_t 	pwm_freq;
-	HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
+	//HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 

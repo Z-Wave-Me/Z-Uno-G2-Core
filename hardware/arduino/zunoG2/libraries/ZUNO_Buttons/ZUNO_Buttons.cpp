@@ -330,15 +330,15 @@ inline ZunoError_t ButtonsClass::_active(uint8_t pin, ZunoBtnType_t type, ZunoBt
 }
 
 ZunoError_t ButtonsClass::_openTimer(void) {
-	ZunoError_t				ret;
-
+	ZunoError_t ret = ZunoErrorOk;
 	zunoEnterCritical();
-	if (ButtonsClass::_values.bSysTimerInit++ != 0)
-		ret = ZunoErrorOk;
-	else if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer)) != ZunoErrorOk) 
+	if ( (ButtonsClass::_values.bSysTimerInit++ == 0) && 
+		(!zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer))){ 
 		ButtonsClass::_values.bSysTimerInit--;
+		ret = ZunoErrorAttachSysHandler;
+	}
 	zunoExitCritical();
-	return (ret);
+	return ret;
 }
 
 static inline void _setPeriodCsen(CSEN_Init_TypeDef *csenInit, size_t ms) {

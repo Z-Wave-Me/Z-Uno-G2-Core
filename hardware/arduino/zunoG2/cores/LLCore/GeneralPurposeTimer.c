@@ -48,11 +48,9 @@ void zunoGPTDeInit(void) {
 }
 
 static ZunoError_t _init(size_t param) {
-	ZunoError_t					ret;
 	TIMER_Init_TypeDef			timerInit;
-
-	if((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler)) != ZunoErrorOk)
-		return (ret);
+	if(!zunoAttachSysHandler(ZUNO_HANDLER_IRQ, GPT_TIMER_HANDLER_ID, (void *)_timer_handler))
+		return ZunoErrorAttachSysHandler;
 	CMU_ClockEnable(GPT_TIMER_CLOCK, true);
 	gTopSetPrescale = CMU_ClockFreqGet(GPT_TIMER_CLOCK) / 4000000;//4MHz
 	timerInit = TIMER_INIT_DEFAULT;

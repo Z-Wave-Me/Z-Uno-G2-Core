@@ -740,6 +740,8 @@ void _fillZWaveData(uint8_t secure_param){
 	  	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_BATTERY, MAX_CMDCLASES_NSNI);
 		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_BATTERY, MAX_CMDCLASES_SECURED);
   	}
+	// Reflection of association count 
+	g_zuno_sys->zw_protocol_data->association_count = g_zuno_zw_cfg.num_associations;
 }
 uint16_t _calcCfg16Crc(){
 	uint16_t crc16_pos = offsetof(ZUNOZWConfiguation_t, crc16);

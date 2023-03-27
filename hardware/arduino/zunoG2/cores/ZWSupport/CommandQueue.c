@@ -17,14 +17,23 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 	}
     ZUNOCommandPacket_t * stored_pck;
     stored_pck = (ZUNOCommandPacket_t *)malloc(sizeof(ZUNOCommandPacket_t));
-    if (stored_pck == NULL)
+    if (stored_pck == NULL){
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print(millis());
+		LOGGING_UART.println(" Enqueue: Memory OVF1");
+		#endif
         return false;
+    }
     memcpy(stored_pck, pkg, sizeof(ZUNOCommandPacket_t));
     // We have to allocated command buffer dynamically too
     // add ZAF offset
     stored_pck->cmd = (uint8_t*)malloc(sizeof(uint8_t)*pkg->len + MAX_ZWTRANSPORT_ENCAP);
     if(stored_pck->cmd == NULL){
         free(stored_pck);
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print(millis());
+		LOGGING_UART.println(" Enqueue: Memory OVF1");
+		#endif
         return false;
     }
     memset(stored_pck->cmd, 0, MAX_ZWTRANSPORT_ENCAP);

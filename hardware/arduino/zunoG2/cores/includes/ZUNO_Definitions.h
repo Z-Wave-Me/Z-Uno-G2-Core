@@ -78,14 +78,14 @@ typedef enum
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
 #define ZUNO_MAX_CUSTOM_CCS								8
-#define ZUNO_CODE_START                                 0x34800L
+//#define ZUNO_CODE_START                                 0x30800L
 //#define USER_SPACE_FLASH_ADDR                           0x10000
-#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0x4000-0x800+0x8000+0x20000)
+#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0x10000-0x800+0x20000)
 #define MAX_ZUNO_PWMS           						4
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN				300
-#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT				(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT				32 // !!!(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
 #define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 				4
 #define MAX_FWHEADER_SIGN 16
 

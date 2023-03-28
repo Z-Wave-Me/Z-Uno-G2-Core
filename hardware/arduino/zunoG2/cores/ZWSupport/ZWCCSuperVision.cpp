@@ -97,38 +97,6 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	switch (ZW_CMD_CLASS) {
 		case COMMAND_CLASS_POWERLEVEL:
 			break;
-		case COMMAND_CLASS_CONFIGURATION:{
-				if(ZW_CMD == CONFIGURATION_BULK_SET){
-					return __zuno_CCSupervisionReportSend(ZUNO_COMMAND_BLOCKED_NO_SUPPORT, 0, NULL, frame_report);
-					//return zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
-				}
-				if(ZW_CMD == CONFIGURATION_DEFAULT_RESET){
-					//__unpackSV(cmd, frame);
-					return (ZUNO_UNKNOWN_CMD); // It will be unpacked in main firmware and then translate to user code
-				}
-				if(ZW_CMD != CONFIGURATION_SET){
-					// If controller tries to incapsulate any other command to supervision we will block it and return this report
-					return __zuno_CCSupervisionReportSend(ZUNO_COMMAND_BLOCKED_NO_SUPPORT, 0, NULL, frame_report);
-				}
-				uint8_t res = checkConfigurationParameterSVSet(cmd->cmd);
-				#ifdef LOGGING_DBG
-				LOGGING_UART.print("SV CFG CHECK RESULT:"); 
-				LOGGING_UART.println(res, HEX); 
-				#endif
-				switch(res){
-					case PARAM_SV_SYSTEM_OK:
-						// We have checked here only the matching to domain
-						return (ZUNO_UNKNOWN_CMD); // Main firmware has to process this command itself (including supervision)
-					case PARAM_SV_USER_OK:
-						__unpackSV(cmd, frame);
-						return (ZUNO_COMMAND_UNPACKED); // It will be processed in usercode
-					case PARAM_SV_WRONG_VALUE:
-					case PARAM_SV_WRONG_PARAM_SIZE:
-					case PARAM_SV_UNKNOWN_PARAM:
-						return __zuno_CCSupervisionReportSend(ZUNO_COMMAND_BLOCKED_FAILL, 0, NULL, frame_report);
-				}
-			}
-			break;
 		case COMMAND_CLASS_ASSOCIATION:
 		case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
 			if(cmd->dst_zw_channel == 0)

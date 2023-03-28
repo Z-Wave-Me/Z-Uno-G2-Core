@@ -9,7 +9,7 @@
 /*                                                                     */
 /* Version 0.0.2                                                       */
 /*                                                                     */
-ENTRY(_Z5setupv)
+ENTRY(_Z13zunoJumpTableiPv)
 
 MEMORY
 {

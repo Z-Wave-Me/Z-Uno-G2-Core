@@ -35,7 +35,7 @@
 #if defined(CMU_PRESENT) && defined(FPGA)
 
 #include "em_cmu.h"
-#include "em_assert.h"
+#include "sl_assert.h"
 
 /***************************************************************************//**
  * @addtogroup emlib
@@ -64,11 +64,11 @@ CMU_Select_TypeDef cmu_eusart0_clk_source = cmuSelect_HFRCO;
 CMU_Select_TypeDef cmu_eusart1_clk_source = cmuSelect_HFRCO;
 CMU_Select_TypeDef cmu_eusart2_clk_source = cmuSelect_HFRCO;
 CMU_Select_TypeDef cmu_eusart3_clk_source = cmuSelect_HFRCO;
+CMU_Select_TypeDef cmu_eusart4_clk_source = cmuSelect_HFRCO;
 
 uint32_t Get_Fpga_Core_freq(void)
 {
   if ((SYSCFG->FPGAIPOTHW & SYSCFG_FPGAIPOTHW_FPGA_FPGA) != 0U) {
-    // TODO dacabrer: accomodate other clocking configuration options
     if ((SYSCFG->FPGAIPOTHW & SYSCFG_FPGAIPOTHW_OTA_OTA) != 0U) {
       return 38400000U;
     } else {
@@ -173,6 +173,11 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
     case cmuClock_TIMER2:
     case cmuClock_TIMER3:
     case cmuClock_TIMER4:
+#if defined(cmuClock_TIMER7)
+    case cmuClock_TIMER5:
+    case cmuClock_TIMER6:
+    case cmuClock_TIMER7:
+#endif
     case cmuClock_BURAM:
     case cmuClock_KEYSCAN:
 #if defined(USART0)
@@ -204,6 +209,9 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
     case cmuClock_LESENSE:
       return LFRCO_CLK_FREQ;
     case cmuClock_BURTC:
+#if defined(ETAMPDET_PRESENT)
+    case cmuClock_ETAMPDET:
+#endif
 #if defined(WDOG1)
     case cmuClock_WDOG1:
 #endif
@@ -237,15 +245,19 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
           freq = Get_Fpga_Core_freq();
           break;
         case cmuSelect_EM23GRPACLK:       // This is for Lynx
+#if defined(LFRCO_PRESENT)
         case cmuSelect_LFRCO:             // This is for Ocelot/Bobcat
           freq = LFRCO_CLK_FREQ;
           break;
+#endif
         case cmuSelect_ULFRCO:
           freq = ULFRCO_CLK_FREQ;
           break;
         case cmuSelect_HFRCO:
         case cmuSelect_HFRCODPLL:
+#if defined(HFRCOEM23_PRESENT)
         case cmuSelect_HFRCOEM23:
+#endif
           freq = Get_Fpga_Core_freq();
           break;
         default:
@@ -267,7 +279,6 @@ CMU_Select_TypeDef CMU_ClockSelectGet(CMU_Clock_TypeDef clock)
   switch (clock) {
 #if defined(EUART0)
     case cmuClock_EUART0:
-//      clock_source = cmu_euart0_clk_source;
       if (cmu_euart0_clk_source == cmuSelect_EM01GRPACLK) {
         clock_source = cmuSelect_HFRCO;
       } else if (cmu_euart0_clk_source == cmuSelect_EM23GRPACLK) {
@@ -293,6 +304,11 @@ CMU_Select_TypeDef CMU_ClockSelectGet(CMU_Clock_TypeDef clock)
 #if defined(EUSART3)
     case cmuClock_EUSART3:
       clock_source = cmu_eusart3_clk_source;
+      break;
+#endif
+#ifdef EUSART4
+    case cmuClock_EUSART4:
+      clock_source = cmu_eusart4_clk_source;
       break;
 #endif
     default:
@@ -333,6 +349,11 @@ void CMU_ClockSelectSet(CMU_Clock_TypeDef clock, CMU_Select_TypeDef ref)
       cmu_eusart3_clk_source = ref;
       break;
 #endif
+#ifdef EUSART4
+    case cmuClock_EUSART4:
+      cmu_eusart4_clk_source = ref;
+      break;
+#endif
     default:
       break;
   }
@@ -366,6 +387,26 @@ void CMU_HFRCODPLLBandSet(CMU_HFRCODPLLFreq_TypeDef setFreq)
 void CMU_HFXOInit(const CMU_HFXOInit_TypeDef *hfxoInit)
 {
   (void) hfxoInit;
+}
+
+void CMU_HFXOCTuneSet(uint32_t ctune)
+{
+  (void) ctune; /* Unused parameter */
+}
+
+uint32_t CMU_HFXOCTuneGet(void)
+{
+  return 0;
+}
+
+void CMU_HFXOCTuneDeltaSet(int32_t delta)
+{
+  (void) delta; /* Unused parameter */
+}
+
+int32_t CMU_HFXOCTuneDeltaGet(void)
+{
+  return 0;
 }
 
 uint32_t CMU_LCDClkFDIVGet(void)

@@ -33,28 +33,33 @@
 #include "em_emu.h"
 #if defined(EMU_PRESENT) && (EMU_COUNT > 0)
 
-#include "em_assert.h"
+#include "sl_assert.h"
 #include "em_cmu.h"
-#include "em_common.h"
+#include "sl_common.h"
 #include "em_core.h"
 #include "em_system.h"
 #include "em_ramfunc.h"
-
+#if defined(SYSCFG_PRESENT)
+#include "em_syscfg.h"
+#endif
 /* Consistency check, since restoring assumes similar bit positions in */
 /* CMU OSCENCMD and STATUS regs. */
-#if (CMU_STATUS_AUXHFRCOENS != CMU_OSCENCMD_AUXHFRCOEN)
+#if defined(CMU_STATUS_AUXHFRCOENS) && (CMU_STATUS_AUXHFRCOENS != CMU_OSCENCMD_AUXHFRCOEN)
 #error Conflict in AUXHFRCOENS and AUXHFRCOEN bitpositions
 #endif
-#if (CMU_STATUS_HFXOENS != CMU_OSCENCMD_HFXOEN)
+#if defined(CMU_STATUS_HFXOENS) && (CMU_STATUS_HFXOENS != CMU_OSCENCMD_HFXOEN)
 #error Conflict in HFXOENS and HFXOEN bitpositions
 #endif
-#if (CMU_STATUS_LFRCOENS != CMU_OSCENCMD_LFRCOEN)
+#if defined(CMU_STATUS_LFRCOENS) && (CMU_STATUS_LFRCOENS != CMU_OSCENCMD_LFRCOEN)
 #error Conflict in LFRCOENS and LFRCOEN bitpositions
 #endif
-#if (CMU_STATUS_LFXOENS != CMU_OSCENCMD_LFXOEN)
+#if defined(CMU_STATUS_LFXOENS) && (CMU_STATUS_LFXOENS != CMU_OSCENCMD_LFXOEN)
 #error Conflict in LFXOENS and LFXOEN bitpositions
 #endif
 
+/*******************************************************************************
+ ******************************   DEFINES   ************************************
+ ******************************************************************************/
 #if defined(_SILICON_LABS_32B_SERIES_0)
 /* Fix for errata EMU_E107 - non-WIC interrupt masks. */
 #if defined(_EFM32_GECKO_FAMILY)
@@ -196,13 +201,16 @@ static errataFixDcdcHs_TypeDef errataFixDcdcHsState = errataFixDcdcHsInit;
 #elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_1)
 #define RAM0_BLOCKS            6U
 #define RAM0_BLOCK_SIZE   0x4000U // 16 kB blocks
-#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)
-#define RAM0_BLOCKS            2U
-#define RAM0_BLOCK_SIZE   0x4000U // 16 kB blocks
 #elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_3)
 #define RAM0_BLOCKS            4U
 #define RAM0_BLOCK_SIZE   0x4000U // 16 kB blocks
 #elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_4)
+#define RAM0_BLOCKS           16U
+#define RAM0_BLOCK_SIZE   0x4000U // 16 kB blocks
+#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_5)
+#define RAM0_BLOCKS           16U
+#define RAM0_BLOCK_SIZE   0x8000U // 32 kB blocks
+#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8)
 #define RAM0_BLOCKS           16U
 #define RAM0_BLOCK_SIZE   0x4000U // 16 kB blocks
 #endif
@@ -220,7 +228,7 @@ static errataFixDcdcHs_TypeDef errataFixDcdcHsState = errataFixDcdcHsInit;
 #define HFXO_STATUS_READY_FLAGS  (CMU_STATUS_HFXOPEAKDETRDY)
 #endif
 
-#if defined(_EMU_DCDCCTRL_MASK)
+#if defined(EMU_SERIES1_DCDC_BUCK_PRESENT)
 #if !defined(PWRCFG_DCDCTODVDD_VMIN)
 /** DCDCTODVDD output range maximum. */
 #define PWRCFG_DCDCTODVDD_VMIN          1800U
@@ -231,17 +239,69 @@ static errataFixDcdcHs_TypeDef errataFixDcdcHsState = errataFixDcdcHsInit;
 #endif
 #endif
 
+#if defined(ERRATA_FIX_DCDC_FETCNT_SET_ENABLE) || defined(EMU_SERIES1_DCDC_BUCK_PRESENT)
+#define DCDC_LP_PFET_CNT        7
+#define DCDC_LP_NFET_CNT        7
+#endif
+
+#if defined(ERRATA_FIX_DCDC_LNHS_BLOCK_ENABLE)
+#define EMU_DCDCSTATUS  (*(volatile uint32_t *)(EMU_BASE + 0x7C))
+#endif
+
+#if defined(EMU_SERIES1_DCDC_BUCK_PRESENT)
+/* Translate fields with different names across platform generations to common names. */
+#if defined(_EMU_DCDCMISCCTRL_LPCMPBIAS_MASK)
+#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_MASK      _EMU_DCDCMISCCTRL_LPCMPBIAS_MASK
+#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT     _EMU_DCDCMISCCTRL_LPCMPBIAS_SHIFT
+#elif defined(_EMU_DCDCMISCCTRL_LPCMPBIASEM234H_MASK)
+#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_MASK      _EMU_DCDCMISCCTRL_LPCMPBIASEM234H_MASK
+#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT     _EMU_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT
+#endif
+#if defined(_EMU_DCDCLPCTRL_LPCMPHYSSEL_MASK)
+#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK      _EMU_DCDCLPCTRL_LPCMPHYSSEL_MASK
+#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT     _EMU_DCDCLPCTRL_LPCMPHYSSEL_SHIFT
+#elif defined(_EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK)
+#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK      _EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK
+#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT     _EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT
+#endif
+
+/* Disable LP mode hysteresis in the state machine control. */
+#define EMU_DCDCMISCCTRL_LPCMPHYSDIS (0x1UL << 1)
+/* Comparator threshold on the high side. */
+#define EMU_DCDCMISCCTRL_LPCMPHYSHI  (0x1UL << 2)
+#define EMU_DCDCSMCTRL  (*(volatile uint32_t *)(EMU_BASE + 0x44))
+
+#define DCDC_TRIM_MODES ((uint8_t)dcdcTrimMode_LN + 1)
+#endif
+
+#if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_80)
+#define EMU_TESTLOCK         (*(volatile uint32_t *) (EMU_BASE + 0x190))
+#define EMU_BIASCONF         (*(volatile uint32_t *) (EMU_BASE + 0x164))
+#define EMU_BIASTESTCTRL     (*(volatile uint32_t *) (EMU_BASE + 0x19C))
+#define CMU_ULFRCOCTRL       (*(volatile uint32_t *) (CMU_BASE + 0x03C))
+#endif
+
+#if defined(_EMU_TEMP_TEMP_MASK)
+/* As the energy mode at which a temperature measurement was taken at is
+ * not known, the chosen constant for the TEMPCO calculation is midway between
+ * the EM0/EM1 constant and the EM2/EM3/EM4 constant.
+ */
+#define EMU_TEMPCO_CONST (0.273f)
+#endif
+
+#define EMU_EM4_ENTRY_WAIT_LOOPS 200
+
 /*******************************************************************************
  ***************************  LOCAL VARIABLES   ********************************
  ******************************************************************************/
 
 /* Static user configuration. */
-#if defined(_EMU_DCDCCTRL_MASK)
+#if defined(EMU_SERIES1_DCDC_BUCK_PRESENT)
 static uint16_t dcdcMaxCurrent_mA;
 static uint16_t dcdcEm01LoadCurrent_mA;
 static EMU_DcdcLnReverseCurrentControl_TypeDef dcdcReverseCurrentControl;
 #endif
-#if defined(EMU_VSCALE_PRESENT)
+#if defined(EMU_VSCALE_EM01_PRESENT)
 static EMU_EM01Init_TypeDef vScaleEM01Config = { false };
 #endif
 
@@ -249,7 +309,7 @@ static EMU_EM01Init_TypeDef vScaleEM01Config = { false };
  **************************   LOCAL FUNCTIONS   ********************************
  ******************************************************************************/
 
-#if defined(EMU_VSCALE_PRESENT)
+#if defined(EMU_VSCALE_EM01_PRESENT)
 /* Convert from level to EM0/1 command bit */
 __STATIC_INLINE uint32_t vScaleEM01Cmd(EMU_VScaleEM01_TypeDef level)
 {
@@ -394,8 +454,36 @@ static void emState(emState_TypeDef action)
     }
 #endif
 
-    if (hfClock != cmuSelect_HFRCO) {
-      CMU_ClockSelectSet(cmuClock_HF, hfClock);
+    switch (hfClock) {
+      case cmuSelect_LFXO:
+        CMU_CLOCK_SELECT_SET(HF, LFXO);
+        break;
+      case cmuSelect_LFRCO:
+        CMU_CLOCK_SELECT_SET(HF, LFRCO);
+        break;
+      case cmuSelect_HFXO:
+        CMU_CLOCK_SELECT_SET(HF, HFXO);
+        break;
+#if defined(CMU_CMD_HFCLKSEL_USHFRCODIV2)
+      case cmuSelect_USHFRCODIV2:
+        CMU_CLOCK_SELECT_SET(HF, USHFRCODIV2);
+        break;
+#endif
+#if defined(CMU_HFCLKSTATUS_SELECTED_HFRCODIV2)
+      case cmuSelect_HFRCODIV2:
+        CMU_CLOCK_SELECT_SET(HF, HFRCODIV2);
+        break;
+#endif
+#if defined(CMU_HFCLKSTATUS_SELECTED_CLKIN0)
+      case cmuSelect_CLKIN0:
+        CMU_CLOCK_SELECT_SET(HF, CLKIN0);
+        break;
+#endif
+#if defined(CMU_HFCLKSTATUS_SELECTED_USHFRCO)
+      case cmuSelect_USHFRCO:
+        CMU_CLOCK_SELECT_SET(HF, USHFRCO);
+        break;
+#endif
     }
 
 #if defined(_CMU_OSCENCMD_MASK)
@@ -418,11 +506,15 @@ static void emState(emState_TypeDef action)
 /* Get enable conditions for errata EMU_E107 fix. */
 __STATIC_INLINE bool getErrataFixEmuE107En(void)
 {
-#if defined(_EFM32_ZERO_FAMILY) || defined(_EFM32_HAPPY_FAMILY)
+#if defined(_EFM32_HAPPY_FAMILY)   \
+  || defined(_EFM32_TINY_FAMILY)   \
+  || defined(_EFM32_WONDER_FAMILY) \
+  || defined(_EFM32_ZERO_FAMILY)
+  // all revisions have the errata
   return true;
 #else
-  /* SYSTEM_ChipRevisionGet could have been used here, but we would like a
-   * faster implementation in this case.
+  /* SYSTEM_ChipRevisionGet() could have been used here, but a faster implementation
+   * would be needed in this case.
    */
   uint16_t majorMinorRev;
 
@@ -439,13 +531,12 @@ __STATIC_INLINE bool getErrataFixEmuE107En(void)
                    >> _ROMTABLE_PID3_REVMINORLSB_SHIFT;
 
 #if defined(_EFM32_GECKO_FAMILY)
+  // all GECKO revisions except Revision E have the errata
   return (majorMinorRev <= 0x0103);
-#elif defined(_EFM32_TINY_FAMILY)
-  return (majorMinorRev <= 0x0102);
 #elif defined(_EFM32_GIANT_FAMILY)
-  return (majorMinorRev <= 0x0103) || (majorMinorRev == 0x0204);
-#elif defined(_EFM32_WONDER_FAMILY)
-  return (majorMinorRev == 0x0100);
+  // all LEOPARD GECKO (Major = 0x01 Or 0x02) revisions have the errata
+  // all GIANT GECKO (Major = 0x01) revisions except Revision E have the errata
+  return (majorMinorRev <= 0x0103) || (majorMinorRev == 0x0204) || (majorMinorRev == 0x0205);
 #else
   /* Invalid configuration. */
   EFM_ASSERT(false);
@@ -456,9 +547,45 @@ __STATIC_INLINE bool getErrataFixEmuE107En(void)
 }
 #endif /* #if defined(ERRATA_FIX_EMU_E107_ENABLE) */
 
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+/* Get enable conditions for errata EMU_E110 fix. */
+__STATIC_INLINE bool getErrataFixEmuE110En(void)
+{
+  /* SYSTEM_ChipRevisionGet() could have been used here, but a faster implementation
+   * would be needed in this case.
+   */
+  uint16_t majorMinorRev;
+
+  /* CHIP MAJOR bit [3:0]. */
+  majorMinorRev = ((ROMTABLE->PID0 & _ROMTABLE_PID0_REVMAJOR_MASK)
+                   >> _ROMTABLE_PID0_REVMAJOR_SHIFT)
+                  << 8;
+  /* CHIP MINOR bit [7:4]. */
+  majorMinorRev |= ((ROMTABLE->PID2 & _ROMTABLE_PID2_REVMINORMSB_MASK)
+                    >> _ROMTABLE_PID2_REVMINORMSB_SHIFT)
+                   << 4;
+  /* CHIP MINOR bit [3:0]. */
+  majorMinorRev |= (ROMTABLE->PID3 & _ROMTABLE_PID3_REVMINORLSB_MASK)
+                   >> _ROMTABLE_PID3_REVMINORLSB_SHIFT;
+
+#if defined(_SILICON_LABS_32B_SERIES_0) && defined(_EFM32_ZERO_FAMILY)
+  return (majorMinorRev == 0x0100);
+#elif defined(_SILICON_LABS_32B_SERIES_0) && defined(_EFM32_HAPPY_FAMILY)
+  return ((majorMinorRev == 0x0100 || majorMinorRev == 0x0101));
+#elif defined(_SILICON_LABS_32B_SERIES_0) && defined(_EFM32_WONDER_FAMILY)
+  return (majorMinorRev == 0x0100);
+#elif defined(_SILICON_LABS_32B_SERIES_0) && defined(_EFM32_GIANT_FAMILY)
+  return (majorMinorRev == 0x0204);
+#else
+  /* Invalid configuration. */
+  EFM_ASSERT(false);
+  /* Return when assertions are disabled. */
+  return false;
+#endif
+}
+#endif /* #if defined(ERRATA_FIX_EMU_E110_ENABLE) */
+
 /* LP prepare / LN restore P/NFET count. */
-#define DCDC_LP_PFET_CNT        7
-#define DCDC_LP_NFET_CNT        7
 #if defined(ERRATA_FIX_DCDC_FETCNT_SET_ENABLE)
 static void currentLimitersUpdate(void);
 static void dcdcFetCntSet(bool lpModeSet)
@@ -484,7 +611,6 @@ static void dcdcFetCntSet(bool lpModeSet)
 #if defined(ERRATA_FIX_DCDC_LNHS_BLOCK_ENABLE)
 static void dcdcHsFixLnBlock(void)
 {
-#define EMU_DCDCSTATUS  (*(volatile uint32_t *)(EMU_BASE + 0x7C))
   if ((errataFixDcdcHsState == errataFixDcdcHsTrimSet)
       || (errataFixDcdcHsState == errataFixDcdcHsBypassLn)) {
     /* Wait for LNRUNNING */
@@ -609,23 +735,52 @@ static void dpllState(dpllState_TypeDef action)
  * @{
  ******************************************************************************/
 
-#if defined(_SILICON_LABS_32B_SERIES_2) && defined(EMU_VSCALE_PRESENT)
+#if defined(EMU_VSCALE_EM01_PRESENT)
 /***************************************************************************//**
  * @brief
- *   Energy mode 01 voltage scaling hook function.
+ *   Update the EMU module with Energy Mode 0 and 1 configuration.
  *
- * @details
- *   This function is called by EMU_VScaleEM01 to let EFP know that voltage scaling
- *   is requested.
- *
- * @param[in] voltage
- *   Voltage to set in EFP.
+ * @param[in] em01Init
+ *    Energy Mode 0 and 1 configuration structure.
  ******************************************************************************/
-SL_WEAK void EMU_EFPEM01VScale(EMU_VScaleEM01_TypeDef voltage)
+void EMU_EM01Init(const EMU_EM01Init_TypeDef *em01Init)
 {
-  (void)voltage;
+  vScaleEM01Config.vScaleEM01LowPowerVoltageEnable =
+    em01Init->vScaleEM01LowPowerVoltageEnable;
+  EMU_VScaleEM01ByClock(0, true);
 }
 #endif
+
+/***************************************************************************//**
+ * @brief
+ *   Update the EMU module with Energy Mode 2 and 3 configuration.
+ *
+ * @param[in] em23Init
+ *    Energy Mode 2 and 3 configuration structure.
+ ******************************************************************************/
+void EMU_EM23Init(const EMU_EM23Init_TypeDef *em23Init)
+{
+#if defined(_EMU_CTRL_EMVREG_MASK)
+  EMU->CTRL = em23Init->em23VregFullEn ? (EMU->CTRL | EMU_CTRL_EMVREG)
+              : (EMU->CTRL & ~EMU_CTRL_EMVREG);
+#elif defined(_EMU_CTRL_EM23VREG_MASK)
+  EMU->CTRL = em23Init->em23VregFullEn ? (EMU->CTRL | EMU_CTRL_EM23VREG)
+              : (EMU->CTRL & ~EMU_CTRL_EM23VREG);
+#else
+  (void)em23Init;
+#endif
+
+#if defined(EMU_VSCALE_PRESENT)
+  EMU->CTRL = (EMU->CTRL & ~_EMU_CTRL_EM23VSCALE_MASK)
+              | ((uint32_t)em23Init->vScaleEM23Voltage << _EMU_CTRL_EM23VSCALE_SHIFT);
+#if defined(CMU_HFXOCTRL_AUTOSTARTSELEM0EM1)
+  if (em23Init->vScaleEM23Voltage == emuVScaleEM23_LowPower) {
+    /* Voltage scaling is not compatible with HFXO auto start and select. */
+    EFM_ASSERT((CMU->HFXOCTRL & CMU_HFXOCTRL_AUTOSTARTSELEM0EM1) == 0U);
+  }
+#endif
+#endif
+}
 
 /***************************************************************************//**
  * @brief
@@ -763,6 +918,10 @@ void EMU_EnterEM2(bool restore)
   uint32_t nonWicIntEn[2];
 #endif
 
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+  bool errataFixEmuE110En;
+#endif
+
 #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)
   if (restore) {
     dpllState(dpllState_Save);
@@ -808,7 +967,16 @@ void EMU_EnterEM2(bool restore)
   EMU_EFPEM23PresleepHook();
 #if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_205) \
   || defined(ERRATA_FIX_EMU_E110_ENABLE)
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+  errataFixEmuE110En = getErrataFixEmuE110En();
+  if (errataFixEmuE110En) {
+#endif
   CORE_CRITICAL_SECTION(ramWFI(); )
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+} else {
+  __WFI();
+}
+#endif
 #elif defined(ERRATA_FIX_EMU_E220_DECBOD_ENABLE)
   // Apply errata fix if voltage scaling in EM2 is used.
   if ((EMU->CTRL & EMU_CTRL_EM23VSCALEAUTOWSEN) != 0U) {
@@ -860,8 +1028,8 @@ void EMU_EnterEM2(bool restore)
 #endif
 
   if (!restore) {
-    /* If not restoring, and original clock was not HFRCO, we have to */
-    /* update CMSIS core clock variable since HF clock has changed */
+    /* If not restoring, and the original clock was not HFRCO, the CMSIS */
+    /* core clock variable must be updated since HF clock has changed */
     /* to HFRCO. */
     SystemCoreClockUpdate();
   }
@@ -928,6 +1096,10 @@ void EMU_EnterEM3(bool restore)
   uint32_t nonWicIntEn[2];
 #endif
 
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+  bool errataFixEmuE110En;
+#endif
+
 #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)
   if (restore) {
     dpllState(dpllState_Save);
@@ -986,7 +1158,16 @@ void EMU_EnterEM3(bool restore)
   EMU_EM23PresleepHook();
 #if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_205) \
   || defined(ERRATA_FIX_EMU_E110_ENABLE)
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+  errataFixEmuE110En = getErrataFixEmuE110En();
+  if (errataFixEmuE110En) {
+#endif
   CORE_CRITICAL_SECTION(ramWFI(); )
+#if defined(ERRATA_FIX_EMU_E110_ENABLE)
+} else {
+  __WFI();
+}
+#endif
 #elif defined(ERRATA_FIX_EMU_E220_DECBOD_ENABLE)
   // Apply errata fix if voltage scaling in EM2 is used.
   if ((EMU->CTRL & EMU_CTRL_EM23VSCALEAUTOWSEN) != 0U) {
@@ -1037,8 +1218,8 @@ void EMU_EnterEM3(bool restore)
 #endif
 
   if (!restore) {
-    /* If not restoring, and original clock was not HFRCO, we have to */
-    /* update CMSIS core clock variable since HF clock has changed */
+    /* If not restoring, and the original clock was not HFRCO, the CMSIS */
+    /* core clock variable must be updated since HF clock has changed */
     /* to HFRCO. */
     SystemCoreClockUpdate();
   }
@@ -1082,6 +1263,68 @@ void EMU_Restore(void)
   dpllState(dpllState_Restore);
 #endif
 }
+
+#if defined(_EMU_EM4CONF_MASK) || defined(_EMU_EM4CTRL_MASK)
+/***************************************************************************//**
+ * @brief
+ *   Update the EMU module with Energy Mode 4 configuration.
+ *
+ * @param[in] em4Init
+ *    Energy Mode 4 configuration structure.
+ ******************************************************************************/
+void EMU_EM4Init(const EMU_EM4Init_TypeDef *em4Init)
+{
+#if defined(_EMU_EM4CONF_MASK)
+  /* Initialization for platforms with EMU->EM4CONF register. */
+  uint32_t em4conf = EMU->EM4CONF;
+
+  /* Clear fields that will be reconfigured. */
+  em4conf &= ~(_EMU_EM4CONF_LOCKCONF_MASK
+               | _EMU_EM4CONF_OSC_MASK
+               | _EMU_EM4CONF_BURTCWU_MASK
+               | _EMU_EM4CONF_VREGEN_MASK
+               | _EMU_EM4CONF_BUBODRSTDIS_MASK);
+
+  /* Configure new settings. */
+  em4conf |= (em4Init->lockConfig << _EMU_EM4CONF_LOCKCONF_SHIFT)
+             | (em4Init->osc)
+             | (em4Init->buRtcWakeup << _EMU_EM4CONF_BURTCWU_SHIFT)
+             | (em4Init->vreg << _EMU_EM4CONF_VREGEN_SHIFT)
+             | (em4Init->buBodRstDis << _EMU_EM4CONF_BUBODRSTDIS_SHIFT);
+
+  /* Apply configuration. Note that lock can be set after this stage. */
+  EMU->EM4CONF = em4conf;
+
+#elif defined(_EMU_EM4CTRL_EM4STATE_MASK)
+  /* Initialization for platforms with EMU->EM4CTRL register and EM4H and EM4S. */
+
+  uint32_t em4ctrl = EMU->EM4CTRL;
+
+  em4ctrl &= ~(_EMU_EM4CTRL_RETAINLFXO_MASK
+               | _EMU_EM4CTRL_RETAINLFRCO_MASK
+               | _EMU_EM4CTRL_RETAINULFRCO_MASK
+               | _EMU_EM4CTRL_EM4STATE_MASK
+               | _EMU_EM4CTRL_EM4IORETMODE_MASK);
+
+  em4ctrl |= (em4Init->retainLfxo     ? EMU_EM4CTRL_RETAINLFXO : 0U)
+             | (em4Init->retainLfrco  ? EMU_EM4CTRL_RETAINLFRCO : 0U)
+             | (em4Init->retainUlfrco ? EMU_EM4CTRL_RETAINULFRCO : 0U)
+             | (em4Init->em4State == emuEM4Hibernate
+                ? EMU_EM4CTRL_EM4STATE_EM4H : 0U)
+             | ((uint32_t)em4Init->pinRetentionMode);
+
+  EMU->EM4CTRL = em4ctrl;
+#elif defined(_EMU_EM4CTRL_MASK)
+  EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
+                 | (uint32_t)em4Init->pinRetentionMode;
+#endif
+
+#if defined(_EMU_CTRL_EM4HVSCALE_MASK)
+  EMU->CTRL = (EMU->CTRL & ~_EMU_CTRL_EM4HVSCALE_MASK)
+              | ((uint32_t)em4Init->vScaleEM4HVoltage << _EMU_CTRL_EM4HVSCALE_SHIFT);
+#endif
+}
+#endif
 
 /***************************************************************************//**
  * @brief
@@ -1154,11 +1397,9 @@ void EMU_EnterEM4(void)
   }
 #endif
 
-#if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)  \
-  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_3) \
-  || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_4)
+#if defined(_SILICON_LABS_32B_SERIES_2_CONFIG) && (_SILICON_LABS_32B_SERIES_2_CONFIG >= 2)
   /* Workaround for bug that may cause a Hard Fault on EM4 entry */
-  CMU_ClockSelectSet(cmuClock_SYSCLK, cmuSelect_FSRCO);
+  CMU_CLOCK_SELECT_SET(SYSCLK, FSRCO);
   /* Switch from DCDC regulation mode to bypass mode before entering EM4. */
   EMU_DCDCModeSet(emuDcdcMode_Bypass);
 #endif
@@ -1223,6 +1464,32 @@ void EMU_EnterEM4(void)
   }
   EMU->CTRL = em4seq2;
 #endif
+
+#if defined(_DCDC_IF_EM4ERR_MASK)
+  EFM_ASSERT((DCDC->IF & _DCDC_IF_EM4ERR_MASK) == 0);
+#endif
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Enter energy mode 4 (EM4).
+ *
+ * @details
+ *   This function waits after the EM4 entry request to make sure the CPU
+ *   is properly shutdown or the EM4 entry failed.
+ *
+ * @note
+ *   Only a power on reset or external reset pin can wake the device from EM4.
+ ******************************************************************************/
+void EMU_EnterEM4Wait(void)
+{
+  EMU_EnterEM4();
+
+  // The EM4 entry waiting loop should take 4 cycles by loop minimally (Compiler dependent).
+  // We would then wait for (EMU_EM4_ENTRY_WAIT_LOOPS * 4) clock cycles.
+  for (uint16_t i = 0; i < EMU_EM4_ENTRY_WAIT_LOOPS; i++) {
+    __NOP();
+  }
 }
 
 #if defined(_EMU_EM4CTRL_MASK)
@@ -1346,8 +1613,21 @@ void EMU_RamPowerDown(uint32_t start, uint32_t end)
     mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20002000UL) << 1; // Block 2, 8 kB
     mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20004000UL) << 2; // Block 3, 8 kB
     mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20006000UL) << 3; // Block 4, 7 kB
+#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)
+    // Lynx has 2 blocks. We do no shut off block 0 because we dont want to disable all RAM0
+    mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20006000UL) << 1; // Block 1, 8 kB
+#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_7)
+    // Leopard has 3 blocks. We do no shut off block 0 because we dont want to disable all RAM0
+    mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20006000UL) << 1; // Block 1, 8 kB
+    mask |= ADDRESS_NOT_IN_BLOCK(start, 0x20008000UL) << 2; // Block 2, 32 kB
+#elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8)
+    // These platforms have equally-sized RAM blocks and block 0 can be powered down but should not.
+    // This condition happens when the block 0 disable bit flag is available in the retention control register.
+    for (unsigned i = 1; i < RAM0_BLOCKS; i++) {
+      mask |= ADDRESS_NOT_IN_BLOCK(start, RAM_MEM_BASE + (i * RAM0_BLOCK_SIZE)) << (i);
+    }
 #elif defined(RAM0_BLOCKS)
-    // These platforms have equally-sized RAM blocks.
+    // These platforms have equally-sized RAM blocks and block 0 cannot be powered down.
     for (unsigned i = 1; i < RAM0_BLOCKS; i++) {
       mask |= ADDRESS_NOT_IN_BLOCK(start, RAM_MEM_BASE + (i * RAM0_BLOCK_SIZE)) << (i - 1U);
     }
@@ -1363,11 +1643,7 @@ void EMU_RamPowerDown(uint32_t start, uint32_t end)
 #if defined(CMU_CLKEN0_SYSCFG)
   CMU->CLKEN0_SET = CMU_CLKEN0_SYSCFG;
 #endif
-#if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2)
-  SYSCFG->DMEM0RETNCTRL = SYSCFG->DMEM0RETNCTRL | (mask << 1);
-#else
-  SYSCFG->DMEM0RETNCTRL = SYSCFG->DMEM0RETNCTRL | mask;
-#endif
+  SYSCFG_maskDmem0RetnCtrl(mask);
 #else
   // These devices are unable to power down RAM blocks.
   (void) mask;
@@ -1420,7 +1696,7 @@ void EMU_RamPowerUp(void)
 #if defined(CMU_CLKEN0_SYSCFG)
   CMU->CLKEN0_SET = CMU_CLKEN0_SYSCFG;
 #endif
-  SYSCFG->DMEM0RETNCTRL = 0x0UL;
+  SYSCFG_zeroDmem0RetnCtrl();
 #endif
 }
 
@@ -1462,7 +1738,25 @@ void EMU_UpdateOscConfig(void)
 #endif
 }
 
-#if defined(EMU_VSCALE_PRESENT)
+#if defined(_SILICON_LABS_32B_SERIES_2) && defined(EMU_VSCALE_EM01_PRESENT)
+/***************************************************************************//**
+ * @brief
+ *   Energy mode 01 voltage scaling hook function.
+ *
+ * @param[in] voltage
+ *   Voltage scaling level requested.
+ *
+ * @details
+ *   This function is called by EMU_VScaleEM01 to let EFP know that voltage scaling
+ *   is requested.
+ ******************************************************************************/
+SL_WEAK void EMU_EFPEM01VScale(EMU_VScaleEM01_TypeDef voltage)
+{
+  (void)voltage;
+}
+#endif
+
+#if defined(EMU_VSCALE_EM01_PRESENT)
 /***************************************************************************//**
  * @brief
  *   Voltage scale in EM0 and 1 by clock frequency.
@@ -1511,7 +1805,7 @@ void EMU_VScaleEM01ByClock(uint32_t clockFrequency, bool wait)
 }
 #endif
 
-#if defined(EMU_VSCALE_PRESENT)
+#if defined(EMU_VSCALE_EM01_PRESENT)
 /***************************************************************************//**
  * @brief
  *   Force voltage scaling in EM0 and 1 to a specific voltage level.
@@ -1598,115 +1892,6 @@ void EMU_VScaleEM01(EMU_VScaleEM01_TypeDef voltage, bool wait)
     /* Update wait states after scaling up voltage. */
     CMU_UpdateWaitStates(hfFreq, VSCALE_EM01_HIGH_PERFORMANCE);
   }
-}
-#endif
-
-#if defined(EMU_VSCALE_PRESENT)
-/***************************************************************************//**
- * @brief
- *   Update the EMU module with Energy Mode 0 and 1 configuration.
- *
- * @param[in] em01Init
- *    Energy Mode 0 and 1 configuration structure.
- ******************************************************************************/
-void EMU_EM01Init(const EMU_EM01Init_TypeDef *em01Init)
-{
-  vScaleEM01Config.vScaleEM01LowPowerVoltageEnable =
-    em01Init->vScaleEM01LowPowerVoltageEnable;
-  EMU_VScaleEM01ByClock(0, true);
-}
-#endif
-
-/***************************************************************************//**
- * @brief
- *   Update the EMU module with Energy Mode 2 and 3 configuration.
- *
- * @param[in] em23Init
- *    Energy Mode 2 and 3 configuration structure.
- ******************************************************************************/
-void EMU_EM23Init(const EMU_EM23Init_TypeDef *em23Init)
-{
-#if defined(_EMU_CTRL_EMVREG_MASK)
-  EMU->CTRL = em23Init->em23VregFullEn ? (EMU->CTRL | EMU_CTRL_EMVREG)
-              : (EMU->CTRL & ~EMU_CTRL_EMVREG);
-#elif defined(_EMU_CTRL_EM23VREG_MASK)
-  EMU->CTRL = em23Init->em23VregFullEn ? (EMU->CTRL | EMU_CTRL_EM23VREG)
-              : (EMU->CTRL & ~EMU_CTRL_EM23VREG);
-#else
-  (void)em23Init;
-#endif
-
-#if defined(EMU_VSCALE_PRESENT)
-  EMU->CTRL = (EMU->CTRL & ~_EMU_CTRL_EM23VSCALE_MASK)
-              | ((uint32_t)em23Init->vScaleEM23Voltage << _EMU_CTRL_EM23VSCALE_SHIFT);
-#if defined(CMU_HFXOCTRL_AUTOSTARTSELEM0EM1)
-  if (em23Init->vScaleEM23Voltage == emuVScaleEM23_LowPower) {
-    /* Voltage scaling is not compatible with HFXO auto start and select. */
-    EFM_ASSERT((CMU->HFXOCTRL & CMU_HFXOCTRL_AUTOSTARTSELEM0EM1) == 0U);
-  }
-#endif
-#endif
-}
-
-#if defined(_EMU_EM4CONF_MASK) || defined(_EMU_EM4CTRL_MASK)
-/***************************************************************************//**
- * @brief
- *   Update the EMU module with Energy Mode 4 configuration.
- *
- * @param[in] em4Init
- *    Energy Mode 4 configuration structure.
- ******************************************************************************/
-void EMU_EM4Init(const EMU_EM4Init_TypeDef *em4Init)
-{
-#if defined(_EMU_EM4CONF_MASK)
-  /* Initialization for platforms with EMU->EM4CONF register. */
-  uint32_t em4conf = EMU->EM4CONF;
-
-  /* Clear fields that will be reconfigured. */
-  em4conf &= ~(_EMU_EM4CONF_LOCKCONF_MASK
-               | _EMU_EM4CONF_OSC_MASK
-               | _EMU_EM4CONF_BURTCWU_MASK
-               | _EMU_EM4CONF_VREGEN_MASK
-               | _EMU_EM4CONF_BUBODRSTDIS_MASK);
-
-  /* Configure new settings. */
-  em4conf |= (em4Init->lockConfig << _EMU_EM4CONF_LOCKCONF_SHIFT)
-             | (em4Init->osc)
-             | (em4Init->buRtcWakeup << _EMU_EM4CONF_BURTCWU_SHIFT)
-             | (em4Init->vreg << _EMU_EM4CONF_VREGEN_SHIFT)
-             | (em4Init->buBodRstDis << _EMU_EM4CONF_BUBODRSTDIS_SHIFT);
-
-  /* Apply configuration. Note that lock can be set after this stage. */
-  EMU->EM4CONF = em4conf;
-
-#elif defined(_EMU_EM4CTRL_EM4STATE_MASK)
-  /* Initialization for platforms with EMU->EM4CTRL register and EM4H and EM4S. */
-
-  uint32_t em4ctrl = EMU->EM4CTRL;
-
-  em4ctrl &= ~(_EMU_EM4CTRL_RETAINLFXO_MASK
-               | _EMU_EM4CTRL_RETAINLFRCO_MASK
-               | _EMU_EM4CTRL_RETAINULFRCO_MASK
-               | _EMU_EM4CTRL_EM4STATE_MASK
-               | _EMU_EM4CTRL_EM4IORETMODE_MASK);
-
-  em4ctrl |= (em4Init->retainLfxo     ? EMU_EM4CTRL_RETAINLFXO : 0U)
-             | (em4Init->retainLfrco  ? EMU_EM4CTRL_RETAINLFRCO : 0U)
-             | (em4Init->retainUlfrco ? EMU_EM4CTRL_RETAINULFRCO : 0U)
-             | (em4Init->em4State == emuEM4Hibernate
-                ? EMU_EM4CTRL_EM4STATE_EM4H : 0U)
-             | ((uint32_t)em4Init->pinRetentionMode);
-
-  EMU->EM4CTRL = em4ctrl;
-#elif defined(_EMU_EM4CTRL_MASK)
-  EMU->EM4CTRL = (EMU->EM4CTRL & ~_EMU_EM4CTRL_EM4IORETMODE_MASK)
-                 | (uint32_t)em4Init->pinRetentionMode;
-#endif
-
-#if defined(_EMU_CTRL_EM4HVSCALE_MASK)
-  EMU->CTRL = (EMU->CTRL & ~_EMU_CTRL_EM4HVSCALE_MASK)
-              | ((uint32_t)em4Init->vScaleEM4HVoltage << _EMU_CTRL_EM4HVSCALE_SHIFT);
-#endif
 }
 #endif
 
@@ -1988,24 +2173,8 @@ void EMU_BUEnableSet(bool enable)
 }
 #endif
 
-#if defined(_EMU_DCDCCTRL_MASK)
+#if defined(EMU_SERIES1_DCDC_BUCK_PRESENT)
 /** @cond DO_NOT_INCLUDE_WITH_DOXYGEN */
-/* Translate fields with different names across platform generations to common names. */
-#if defined(_EMU_DCDCMISCCTRL_LPCMPBIAS_MASK)
-#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_MASK      _EMU_DCDCMISCCTRL_LPCMPBIAS_MASK
-#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT     _EMU_DCDCMISCCTRL_LPCMPBIAS_SHIFT
-#elif defined(_EMU_DCDCMISCCTRL_LPCMPBIASEM234H_MASK)
-#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_MASK      _EMU_DCDCMISCCTRL_LPCMPBIASEM234H_MASK
-#define _GENERIC_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT     _EMU_DCDCMISCCTRL_LPCMPBIASEM234H_SHIFT
-#endif
-#if defined(_EMU_DCDCLPCTRL_LPCMPHYSSEL_MASK)
-#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK      _EMU_DCDCLPCTRL_LPCMPHYSSEL_MASK
-#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT     _EMU_DCDCLPCTRL_LPCMPHYSSEL_SHIFT
-#elif defined(_EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK)
-#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK      _EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_MASK
-#define _GENERIC_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT     _EMU_DCDCLPCTRL_LPCMPHYSSELEM234H_SHIFT
-#endif
-
 /* Internal DCDC trim modes. */
 typedef enum {
   dcdcTrimMode_EM234H_LP = 0,
@@ -2082,12 +2251,6 @@ static bool dcdcConstCalibrationLoad(void)
  ******************************************************************************/
 static void dcdcValidatedConfigSet(void)
 {
-/* Disable LP mode hysteresis in the state machine control. */
-#define EMU_DCDCMISCCTRL_LPCMPHYSDIS (0x1UL << 1)
-/* Comparator threshold on the high side. */
-#define EMU_DCDCMISCCTRL_LPCMPHYSHI  (0x1UL << 2)
-#define EMU_DCDCSMCTRL  (*(volatile uint32_t *)(EMU_BASE + 0x44))
-
   uint32_t lnForceCcm;
 
 #if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_80)
@@ -2452,159 +2615,6 @@ static void lpGetDevinfoVrefLowHigh(uint32_t *vrefL,
 
 /***************************************************************************//**
  * @brief
- *   Set DCDC regulator operating mode.
- *
- * @param[in] dcdcMode
- *   DCDC mode.
- ******************************************************************************/
-void EMU_DCDCModeSet(EMU_DcdcMode_TypeDef dcdcMode)
-{
-  bool dcdcLocked;
-  uint32_t currentDcdcMode;
-
-  dcdcLocked = (EMU->PWRLOCK == EMU_PWRLOCK_LOCKKEY_LOCKED);
-  EMU_PowerUnlock();
-
-  /* Wait for any previous write sync to complete and read DCDC mode. */
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
-  }
-  currentDcdcMode = (EMU->DCDCCTRL & _EMU_DCDCCTRL_DCDCMODE_MASK);
-
-  /* Enable bypass current limiter when not in bypass mode to prevent
-     excessive current between VREGVDD and DVDD supplies when reentering bypass mode.  */
-  if (currentDcdcMode != EMU_DCDCCTRL_DCDCMODE_BYPASS) {
-    BUS_RegBitWrite(&EMU->DCDCCLIMCTRL, _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT, 1);
-  }
-
-  if ((EMU_DcdcMode_TypeDef)currentDcdcMode == dcdcMode) {
-    /* Mode already set. If already in bypass, make sure the bypass current limiter
-       is disabled. */
-    if (dcdcMode == emuDcdcMode_Bypass) {
-      BUS_RegBitWrite(&EMU->DCDCCLIMCTRL, _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT, 0);
-    }
-    return;
-  }
-
-#if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_80)
-
-  /* Fix for errata DCDC_E203. */
-  if ((currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_BYPASS)
-      && (dcdcMode == emuDcdcMode_LowNoise)) {
-    errataFixDcdcHsState = errataFixDcdcHsBypassLn;
-  }
-
-#else
-
-  /* Fix for errata DCDC_E204. */
-  if (((currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_OFF) || (currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_BYPASS))
-      && ((dcdcMode == emuDcdcMode_LowPower) || (dcdcMode == emuDcdcMode_LowNoise))) {
-    /* Always start in LOWNOISE. Switch to LOWPOWER mode once LOWNOISE startup is complete. */
-    EMU_IntClear(EMU_IFC_DCDCLNRUNNING);
-    while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
-    }
-    EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODE_MASK) | EMU_DCDCCTRL_DCDCMODE_LOWNOISE;
-    while ((EMU_IntGet() & EMU_IF_DCDCLNRUNNING) == 0U) {
-    }
-  }
-#endif
-
-  /* Set user-requested mode. */
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0UL) {
-  }
-  EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODE_MASK)
-                  | (uint32_t)dcdcMode;
-
-  /* Disable bypass current limiter after bypass mode is entered.
-     Enable the limiter if any other mode is entered. */
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
-  }
-  BUS_RegBitWrite(&EMU->DCDCCLIMCTRL,
-                  _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT,
-                  dcdcMode == emuDcdcMode_Bypass ? 0U : 1U);
-
-  if (dcdcLocked) {
-    EMU_PowerLock();
-  }
-}
-
-#if defined(EMU_DCDCCTRL_DCDCMODEEM23)
-/***************************************************************************//**
- * @brief
- *   Set DCDC Mode EM23 operating mode.
- *
- * @param[in] dcdcModeEM23
- *   DCDC mode EM23.
- ******************************************************************************/
-void EMU_DCDCModeEM23Set(EMU_DcdcModeEM23_TypeDef dcdcModeEM23)
-{
-  bool dcdcLocked;
-
-  dcdcLocked = (EMU->PWRLOCK == EMU_PWRLOCK_LOCKKEY_LOCKED);
-  EMU_PowerUnlock();
-
-  /* Set user-requested mode. */
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0UL) {
-  }
-  EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODEEM23_MASK)
-                  | (uint32_t)dcdcModeEM23;
-
-  if (dcdcLocked) {
-    EMU_PowerLock();
-  }
-}
-#endif
-
-/***************************************************************************//**
- * @brief
- *   Set DCDC LN regulator conduction mode.
- *
- * @param[in] conductionMode
- *   DCDC LN conduction mode.
- * @param[in] rcoDefaultSet
- *   The default DCDC RCO band for the conductionMode will be used if true.
- *   Otherwise, the current RCO configuration is used.
- ******************************************************************************/
-void EMU_DCDCConductionModeSet(EMU_DcdcConductionMode_TypeDef conductionMode,
-                               bool rcoDefaultSet)
-{
-  EMU_DcdcMode_TypeDef currentDcdcMode
-    = (EMU_DcdcMode_TypeDef)((uint32_t)
-                             (EMU->DCDCCTRL & _EMU_DCDCCTRL_DCDCMODE_MASK));
-  EMU_DcdcLnRcoBand_TypeDef rcoBand
-    = (EMU_DcdcLnRcoBand_TypeDef)((uint32_t)
-                                  ((EMU->DCDCLNFREQCTRL
-                                    & _EMU_DCDCLNFREQCTRL_RCOBAND_MASK)
-                                   >> _EMU_DCDCLNFREQCTRL_RCOBAND_SHIFT));
-
-  /* Set bypass mode and wait for bypass mode to settle before
-     EMU_DCDCMISCCTRL_LNFORCECCM is set. Restore current DCDC mode. */
-  EMU_IntClear(EMU_IFC_DCDCINBYPASS);
-  EMU_DCDCModeSet(emuDcdcMode_Bypass);
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
-  }
-  while ((EMU_IntGet() & EMU_IF_DCDCINBYPASS) == 0U) {
-  }
-  if (conductionMode == emuDcdcConductionMode_DiscontinuousLN) {
-    EMU->DCDCMISCCTRL &= ~EMU_DCDCMISCCTRL_LNFORCECCM;
-    if (rcoDefaultSet) {
-      EMU_DCDCLnRcoBandSet(emuDcdcLnRcoBand_3MHz);
-    } else {
-      /* emuDcdcConductionMode_DiscontinuousLN supports up to 4MHz LN RCO. */
-      EFM_ASSERT(rcoBand <= emuDcdcLnRcoBand_4MHz);
-    }
-  } else {
-    EMU->DCDCMISCCTRL |= EMU_DCDCMISCCTRL_LNFORCECCM;
-    if (rcoDefaultSet) {
-      EMU_DCDCLnRcoBandSet(emuDcdcLnRcoBand_7MHz);
-    }
-  }
-  EMU_DCDCModeSet(currentDcdcMode);
-  /* Update slice configuration as it depends on conduction mode and RCO band.*/
-  EMU_DCDCOptimizeSlice(dcdcEm01LoadCurrent_mA);
-}
-
-/***************************************************************************//**
- * @brief
  *   Configure the DCDC regulator.
  *
  * @note
@@ -2754,6 +2764,201 @@ bool EMU_DCDCInit(const EMU_DCDCInit_TypeDef *dcdcInit)
 
 /***************************************************************************//**
  * @brief
+ *   Set DCDC regulator operating mode.
+ *
+ * @param[in] dcdcMode
+ *   DCDC mode.
+ ******************************************************************************/
+void EMU_DCDCModeSet(EMU_DcdcMode_TypeDef dcdcMode)
+{
+  bool dcdcLocked;
+  uint32_t currentDcdcMode;
+
+  dcdcLocked = (EMU->PWRLOCK == EMU_PWRLOCK_LOCKKEY_LOCKED);
+  EMU_PowerUnlock();
+
+  /* Wait for any previous write sync to complete and read DCDC mode. */
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
+  }
+  currentDcdcMode = (EMU->DCDCCTRL & _EMU_DCDCCTRL_DCDCMODE_MASK);
+
+  /* Enable bypass current limiter when not in bypass mode to prevent
+     excessive current between VREGVDD and DVDD supplies when reentering bypass mode.  */
+  if (currentDcdcMode != EMU_DCDCCTRL_DCDCMODE_BYPASS) {
+    BUS_RegBitWrite(&EMU->DCDCCLIMCTRL, _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT, 1);
+  }
+
+  if ((EMU_DcdcMode_TypeDef)currentDcdcMode == dcdcMode) {
+    /* Mode already set. If already in bypass, make sure the bypass current limiter
+       is disabled. */
+    if (dcdcMode == emuDcdcMode_Bypass) {
+      BUS_RegBitWrite(&EMU->DCDCCLIMCTRL, _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT, 0);
+    }
+    return;
+  }
+
+#if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_80)
+
+  /* Fix for errata DCDC_E203. */
+  if ((currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_BYPASS)
+      && (dcdcMode == emuDcdcMode_LowNoise)) {
+    errataFixDcdcHsState = errataFixDcdcHsBypassLn;
+  }
+#endif // (_SILICON_LABS_GECKO_INTERNAL_SDID_80)
+
+#if defined(_SILICON_LABS_GECKO_INTERNAL_SDID_84)
+
+  /* Fix for errata DCDC_E204. */
+  if (((currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_OFF) || (currentDcdcMode == EMU_DCDCCTRL_DCDCMODE_BYPASS))
+      && ((dcdcMode == emuDcdcMode_LowPower) || (dcdcMode == emuDcdcMode_LowNoise))) {
+    /* Always start in LOWNOISE. Switch to LOWPOWER mode once LOWNOISE startup is complete. */
+    EMU_IntClear(EMU_IFC_DCDCLNRUNNING);
+    while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
+    }
+    EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODE_MASK) | EMU_DCDCCTRL_DCDCMODE_LOWNOISE;
+    while ((EMU_IntGet() & EMU_IF_DCDCLNRUNNING) == 0U) {
+    }
+  }
+#endif // (_SILICON_LABS_GECKO_INTERNAL_SDID_84)
+
+  /* Set user-requested mode. */
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0UL) {
+  }
+  EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODE_MASK)
+                  | (uint32_t)dcdcMode;
+
+  /* Disable bypass current limiter after bypass mode is entered.
+     Enable the limiter if any other mode is entered. */
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
+  }
+  BUS_RegBitWrite(&EMU->DCDCCLIMCTRL,
+                  _EMU_DCDCCLIMCTRL_BYPLIMEN_SHIFT,
+                  dcdcMode == emuDcdcMode_Bypass ? 0U : 1U);
+
+  if (dcdcLocked) {
+    EMU_PowerLock();
+  }
+}
+
+#if defined(EMU_DCDCCTRL_DCDCMODEEM23)
+/***************************************************************************//**
+ * @brief
+ *   Set DCDC Mode EM23 operating mode.
+ *
+ * @param[in] dcdcModeEM23
+ *   DCDC mode EM23.
+ ******************************************************************************/
+void EMU_DCDCModeEM23Set(EMU_DcdcModeEM23_TypeDef dcdcModeEM23)
+{
+  bool dcdcLocked;
+
+  dcdcLocked = (EMU->PWRLOCK == EMU_PWRLOCK_LOCKKEY_LOCKED);
+  EMU_PowerUnlock();
+
+  /* Set user-requested mode. */
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0UL) {
+  }
+  EMU->DCDCCTRL = (EMU->DCDCCTRL & ~_EMU_DCDCCTRL_DCDCMODEEM23_MASK)
+                  | (uint32_t)dcdcModeEM23;
+
+  if (dcdcLocked) {
+    EMU_PowerLock();
+  }
+}
+#endif
+
+/***************************************************************************//**
+ * @brief
+ *   Power off the DCDC regulator.
+ *
+ * @details
+ *   This function powers off the DCDC controller. This function should only be
+ *   used if the external power circuit is wired for no DCDC. If the external power
+ *   circuit is wired for DCDC usage, use @ref EMU_DCDCInit() and set the
+ *   DCDC in bypass mode to disable DCDC.
+ *
+ * @return
+ *   Return false if the DCDC could not be disabled.
+ ******************************************************************************/
+bool EMU_DCDCPowerOff(void)
+{
+  bool dcdcModeSet;
+
+#if defined(_EMU_PWRCFG_MASK)
+  /* Set DCDCTODVDD only to enable write access to EMU->DCDCCTRL. */
+  EMU->PWRCFG = EMU_PWRCFG_PWRCFG_DCDCTODVDD;
+#endif
+
+  /* Select DVDD as input to the digital regulator. */
+#if defined(EMU_PWRCTRL_IMMEDIATEPWRSWITCH)
+  EMU->PWRCTRL |= EMU_PWRCTRL_REGPWRSEL_DVDD | EMU_PWRCTRL_IMMEDIATEPWRSWITCH;
+#elif defined(EMU_PWRCTRL_REGPWRSEL_DVDD)
+  EMU->PWRCTRL |= EMU_PWRCTRL_REGPWRSEL_DVDD;
+#endif
+
+  /* Set DCDC to OFF and disable LP in EM2/3/4. Verify that the required
+     mode could be set. */
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
+  }
+  EMU->DCDCCTRL = EMU_DCDCCTRL_DCDCMODE_OFF;
+
+  dcdcModeSet = (EMU->DCDCCTRL == EMU_DCDCCTRL_DCDCMODE_OFF);
+  EFM_ASSERT(dcdcModeSet);
+
+  return dcdcModeSet;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set DCDC LN regulator conduction mode.
+ *
+ * @param[in] conductionMode
+ *   DCDC LN conduction mode.
+ * @param[in] rcoDefaultSet
+ *   The default DCDC RCO band for the conductionMode will be used if true.
+ *   Otherwise, the current RCO configuration is used.
+ ******************************************************************************/
+void EMU_DCDCConductionModeSet(EMU_DcdcConductionMode_TypeDef conductionMode,
+                               bool rcoDefaultSet)
+{
+  EMU_DcdcMode_TypeDef currentDcdcMode
+    = (EMU_DcdcMode_TypeDef)((uint32_t)
+                             (EMU->DCDCCTRL & _EMU_DCDCCTRL_DCDCMODE_MASK));
+  EMU_DcdcLnRcoBand_TypeDef rcoBand
+    = (EMU_DcdcLnRcoBand_TypeDef)((uint32_t)
+                                  ((EMU->DCDCLNFREQCTRL
+                                    & _EMU_DCDCLNFREQCTRL_RCOBAND_MASK)
+                                   >> _EMU_DCDCLNFREQCTRL_RCOBAND_SHIFT));
+
+  /* Set bypass mode and wait for bypass mode to settle before
+     EMU_DCDCMISCCTRL_LNFORCECCM is set. Restore current DCDC mode. */
+  EMU_IntClear(EMU_IFC_DCDCINBYPASS);
+  EMU_DCDCModeSet(emuDcdcMode_Bypass);
+  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
+  }
+  while ((EMU_IntGet() & EMU_IF_DCDCINBYPASS) == 0U) {
+  }
+  if (conductionMode == emuDcdcConductionMode_DiscontinuousLN) {
+    EMU->DCDCMISCCTRL &= ~EMU_DCDCMISCCTRL_LNFORCECCM;
+    if (rcoDefaultSet) {
+      EMU_DCDCLnRcoBandSet(emuDcdcLnRcoBand_3MHz);
+    } else {
+      /* emuDcdcConductionMode_DiscontinuousLN supports up to 4MHz LN RCO. */
+      EFM_ASSERT(rcoBand <= emuDcdcLnRcoBand_4MHz);
+    }
+  } else {
+    EMU->DCDCMISCCTRL |= EMU_DCDCMISCCTRL_LNFORCECCM;
+    if (rcoDefaultSet) {
+      EMU_DCDCLnRcoBandSet(emuDcdcLnRcoBand_7MHz);
+    }
+  }
+  EMU_DCDCModeSet(currentDcdcMode);
+  /* Update slice configuration as it depends on conduction mode and RCO band.*/
+  EMU_DCDCOptimizeSlice(dcdcEm01LoadCurrent_mA);
+}
+
+/***************************************************************************//**
+ * @brief
  *   Set the DCDC output voltage.
  *
  * @note
@@ -2778,7 +2983,6 @@ bool EMU_DCDCOutputVoltageSet(uint32_t mV,
 {
 #if defined(_DEVINFO_DCDCLNVCTRL0_3V0LNATT1_MASK)
 
-#define DCDC_TRIM_MODES ((uint8_t)dcdcTrimMode_LN + 1)
   bool validOutVoltage;
   bool attenuationSet;
   uint32_t mVlow = 0;
@@ -2997,61 +3201,20 @@ void EMU_DCDCLnRcoBandSet(EMU_DcdcLnRcoBand_TypeDef band)
   /* Update slice configuration as this depends on the RCO band. */
   EMU_DCDCOptimizeSlice(dcdcEm01LoadCurrent_mA);
 }
+#endif /* EMU_SERIES1_DCDC_BUCK_PRESENT */
 
+#if defined(EMU_SERIES2_DCDC_BOOST_PRESENT)
 /***************************************************************************//**
  * @brief
- *   Power off the DCDC regulator.
+ *   Configure the DCDC Boost regulator.
  *
- * @details
- *   This function powers off the DCDC controller. This function should only be
- *   used if the external power circuit is wired for no DCDC. If the external power
- *   circuit is wired for DCDC usage, use @ref EMU_DCDCInit() and set the
- *   DCDC in bypass mode to disable DCDC.
- *
- * @return
- *   Return false if the DCDC could not be disabled.
- ******************************************************************************/
-bool EMU_DCDCPowerOff(void)
-{
-  bool dcdcModeSet;
-
-#if defined(_EMU_PWRCFG_MASK)
-  /* Set DCDCTODVDD only to enable write access to EMU->DCDCCTRL. */
-  EMU->PWRCFG = EMU_PWRCFG_PWRCFG_DCDCTODVDD;
-#endif
-
-  /* Select DVDD as input to the digital regulator. */
-#if defined(EMU_PWRCTRL_IMMEDIATEPWRSWITCH)
-  EMU->PWRCTRL |= EMU_PWRCTRL_REGPWRSEL_DVDD | EMU_PWRCTRL_IMMEDIATEPWRSWITCH;
-#elif defined(EMU_PWRCTRL_REGPWRSEL_DVDD)
-  EMU->PWRCTRL |= EMU_PWRCTRL_REGPWRSEL_DVDD;
-#endif
-
-  /* Set DCDC to OFF and disable LP in EM2/3/4. Verify that the required
-     mode could be set. */
-  while ((EMU->DCDCSYNC & EMU_DCDCSYNC_DCDCCTRLBUSY) != 0U) {
-  }
-  EMU->DCDCCTRL = EMU_DCDCCTRL_DCDCMODE_OFF;
-
-  dcdcModeSet = (EMU->DCDCCTRL == EMU_DCDCCTRL_DCDCMODE_OFF);
-  EFM_ASSERT(dcdcModeSet);
-
-  return dcdcModeSet;
-}
-#endif
-
-#if defined(_DCDC_CTRL_MASK)
-/***************************************************************************//**
- * @brief
- *   Configure the DCDC regulator.
- *
- * @param[in] dcdcInit
+ * @param[in] dcdcBoostInit
  *  The DCDC initialization structure.
  *
  * @return
  *   True if initialization parameters are valid.
  ******************************************************************************/
-bool EMU_DCDCInit(const EMU_DCDCInit_TypeDef *dcdcInit)
+bool EMU_DCDCBoostInit(const EMU_DCDCBoostInit_TypeDef *dcdcBoostInit)
 {
   bool dcdcLocked;
 
@@ -3062,34 +3225,100 @@ bool EMU_DCDCInit(const EMU_DCDCInit_TypeDef *dcdcInit)
   dcdcLocked = ((DCDC->LOCKSTATUS & DCDC_LOCKSTATUS_LOCK) != 0);
   EMU_DCDCUnlock();
 
-  EMU->VREGVDDCMPCTRL = ((uint32_t)dcdcInit->cmpThreshold
-                         << _EMU_VREGVDDCMPCTRL_THRESSEL_SHIFT)
-                        | EMU_VREGVDDCMPCTRL_VREGINCMPEN;
-
 #if defined(_DCDC_SYNCBUSY_MASK)
-  EMU_DCDCSync(DCDC_SYNCBUSY_CTRL | DCDC_SYNCBUSY_EM01CTRL0 | DCDC_SYNCBUSY_EM23CTRL0);
+  EMU_DCDCSync(_DCDC_SYNCBUSY_MASK);
 #endif
-#if defined(_DCDC_CTRL_DCMONLYEN_MASK)
-  DCDC->CTRL = (DCDC->CTRL & ~(_DCDC_CTRL_IPKTMAXCTRL_MASK
-                               | _DCDC_CTRL_DCMONLYEN_MASK))
-               | ((uint32_t)dcdcInit->tonMax << _DCDC_CTRL_IPKTMAXCTRL_SHIFT)
-               | ((uint32_t)(dcdcInit->dcmOnlyEn ? 1U : 0U) << _DCDC_CTRL_DCMONLYEN_SHIFT);
-#else
-  DCDC->CTRL = (DCDC->CTRL & ~(_DCDC_CTRL_IPKTMAXCTRL_MASK))
-               | ((uint32_t)dcdcInit->tonMax << _DCDC_CTRL_IPKTMAXCTRL_SHIFT);
-#endif
-  DCDC->EM01CTRL0 = ((uint32_t)dcdcInit->driveSpeedEM01 << _DCDC_EM01CTRL0_DRVSPEED_SHIFT)
-                    | ((uint32_t)dcdcInit->peakCurrentEM01 << _DCDC_EM01CTRL0_IPKVAL_SHIFT);
-  DCDC->EM23CTRL0 = ((uint32_t)dcdcInit->driveSpeedEM23 << _DCDC_EM23CTRL0_DRVSPEED_SHIFT)
-                    | ((uint32_t)dcdcInit->peakCurrentEM23 << _DCDC_EM23CTRL0_IPKVAL_SHIFT);
 
-  EMU_DCDCModeSet(dcdcInit->mode);
+  DCDC->BSTCTRL = (DCDC->BSTCTRL & ~(_DCDC_BSTCTRL_IPKTMAXCTRL_MASK))
+                  | ((uint32_t)dcdcBoostInit->tonMax << _DCDC_BSTCTRL_IPKTMAXCTRL_SHIFT);
+  DCDC->BSTEM01CTRL = ((uint32_t)dcdcBoostInit->driveSpeedEM01 << _DCDC_BSTEM01CTRL_DRVSPEED_SHIFT)
+                      | ((uint32_t)dcdcBoostInit->peakCurrentEM01 << _DCDC_BSTEM01CTRL_IPKVAL_SHIFT);
+  DCDC->BSTEM23CTRL = ((uint32_t)dcdcBoostInit->driveSpeedEM23 << _DCDC_BSTEM23CTRL_DRVSPEED_SHIFT)
+                      | ((uint32_t)dcdcBoostInit->peakCurrentEM23 << _DCDC_BSTEM23CTRL_IPKVAL_SHIFT);
+
+  EMU_BoostExternalShutdownEnable(dcdcBoostInit->externalShutdownEn);
+
+  EMU_DCDCModeSet(emuDcdcMode_Regulation);
 
   if (dcdcLocked) {
     EMU_DCDCLock();
   }
 
+  EMU_DCDCUpdatedHook();
+
   return true;
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Set EMO1 mode Boost Peak Current setting.
+ *
+ * @param[in] peakCurrentEM01
+ *  Boost Peak load current coefficient in EM01 mode.
+ ******************************************************************************/
+void EMU_EM01BoostPeakCurrentSet(const EMU_DcdcBoostEM01PeakCurrent_TypeDef boostPeakCurrentEM01)
+{
+  bool dcdcLocked = false;
+  bool dcdcClkWasEnabled = false;
+
+  dcdcClkWasEnabled = ((CMU->CLKEN0 & CMU_CLKEN0_DCDC) != 0);
+  CMU->CLKEN0_SET = CMU_CLKEN0_DCDC;
+
+  dcdcLocked = ((DCDC->LOCKSTATUS & DCDC_LOCKSTATUS_LOCK) != 0);
+  EMU_DCDCUnlock();
+
+  /* Wait for synchronization before writing new value */
+#if defined(_DCDC_SYNCBUSY_MASK)
+  EMU_DCDCSync(_DCDC_SYNCBUSY_MASK);
+#endif
+
+  BUS_RegMaskedWrite(&DCDC->BSTEM01CTRL,
+                     _DCDC_BSTEM01CTRL_IPKVAL_MASK,
+                     ((uint32_t)boostPeakCurrentEM01 << _DCDC_BSTEM01CTRL_IPKVAL_SHIFT));
+
+  if (dcdcLocked) {
+    EMU_DCDCLock();
+  }
+
+  if (!dcdcClkWasEnabled) {
+    CMU->CLKEN0_CLR = CMU_CLKEN0_DCDC;
+  }
+
+  EMU_DCDCUpdatedHook();
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Enable/disable Boost External Shutdown Mode.
+ *
+ * @param[in] enable
+ *   The boost DC-DC converter can be activated or deactivated
+ *   from a dedicated BOOST_EN pin on the device if enable is true.
+ ******************************************************************************/
+void EMU_BoostExternalShutdownEnable(bool enable)
+{
+  if (enable) {
+    EMU->BOOSTCTRL_CLR = EMU_BOOSTCTRL_BOOSTENCTRL;
+  } else {
+    EMU->BOOSTCTRL_SET = EMU_BOOSTCTRL_BOOSTENCTRL;
+  }
+}
+#endif /* EMU_SERIES2_DCDC_BOOST_PRESENT */
+
+#if defined(EMU_SERIES2_DCDC_BUCK_PRESENT) \
+  || defined(EMU_SERIES2_DCDC_BOOST_PRESENT)
+/***************************************************************************//**
+ * @brief
+ *   Indicate that the DCDC peripheral bus clock enable has changed allowing
+ *   RAIL to react accordingly.
+ *
+ * @details
+ *   This function is called after DCDC has been enabled or disabled.
+ *   The function implementation does not perform anything, but it is SL_WEAK
+ *   so that it can use the RAIL version if needed.
+ ******************************************************************************/
+SL_WEAK void EMU_DCDCUpdatedHook(void)
+{
 }
 
 /***************************************************************************//**
@@ -3113,7 +3342,11 @@ void EMU_DCDCModeSet(EMU_DcdcMode_TypeDef dcdcMode)
 
   if (dcdcMode == emuDcdcMode_Bypass) {
 #if defined(_DCDC_SYNCBUSY_MASK)
+#if defined(_DCDC_SYNCBUSY_CTRL_MASK)
     EMU_DCDCSync(DCDC_SYNCBUSY_CTRL);
+#else
+    EMU_DCDCSync(_DCDC_SYNCBUSY_MASK);
+#endif
 #endif
     currentDcdcMode = (DCDC->CTRL & _DCDC_CTRL_MODE_MASK) >> _DCDC_CTRL_MODE_SHIFT;
 
@@ -3142,6 +3375,67 @@ void EMU_DCDCModeSet(EMU_DcdcMode_TypeDef dcdcMode)
   if (dcdcLocked) {
     EMU_DCDCLock();
   }
+
+  EMU_DCDCUpdatedHook();
+}
+#endif /* EMU_SERIES2_DCDC_BUCK_PRESENT || EMU_SERIES2_DCDC_BOOST_PRESENT */
+
+#if defined(EMU_SERIES2_DCDC_BUCK_PRESENT)
+/***************************************************************************//**
+ * @brief
+ *   Configure the DCDC regulator.
+ *
+ * @param[in] dcdcInit
+ *  The DCDC initialization structure.
+ *
+ * @return
+ *   True if initialization parameters are valid.
+ ******************************************************************************/
+bool EMU_DCDCInit(const EMU_DCDCInit_TypeDef *dcdcInit)
+{
+  bool dcdcLocked;
+
+  CMU->CLKEN0_SET = CMU_CLKEN0_DCDC;
+#if defined(_DCDC_EN_EN_MASK)
+  DCDC->EN_SET    = DCDC_EN_EN;
+#endif
+  dcdcLocked = ((DCDC->LOCKSTATUS & DCDC_LOCKSTATUS_LOCK) != 0);
+  EMU_DCDCUnlock();
+
+  EMU->VREGVDDCMPCTRL = ((uint32_t)dcdcInit->cmpThreshold
+                         << _EMU_VREGVDDCMPCTRL_THRESSEL_SHIFT)
+                        | EMU_VREGVDDCMPCTRL_VREGINCMPEN;
+
+#if defined(_DCDC_SYNCBUSY_MASK)
+#if defined(_DCDC_SYNCBUSY_CTRL_MASK)
+  EMU_DCDCSync(DCDC_SYNCBUSY_CTRL | DCDC_SYNCBUSY_EM01CTRL0 | DCDC_SYNCBUSY_EM23CTRL0);
+#else
+  EMU_DCDCSync(_DCDC_SYNCBUSY_MASK);
+#endif
+#endif
+#if defined(_DCDC_CTRL_DCMONLYEN_MASK)
+  DCDC->CTRL = (DCDC->CTRL & ~(_DCDC_CTRL_IPKTMAXCTRL_MASK
+                               | _DCDC_CTRL_DCMONLYEN_MASK))
+               | ((uint32_t)dcdcInit->tonMax << _DCDC_CTRL_IPKTMAXCTRL_SHIFT)
+               | ((uint32_t)(dcdcInit->dcmOnlyEn ? 1U : 0U) << _DCDC_CTRL_DCMONLYEN_SHIFT);
+#else
+  DCDC->CTRL = (DCDC->CTRL & ~(_DCDC_CTRL_IPKTMAXCTRL_MASK))
+               | ((uint32_t)dcdcInit->tonMax << _DCDC_CTRL_IPKTMAXCTRL_SHIFT);
+#endif
+  DCDC->EM01CTRL0 = ((uint32_t)dcdcInit->driveSpeedEM01 << _DCDC_EM01CTRL0_DRVSPEED_SHIFT)
+                    | ((uint32_t)dcdcInit->peakCurrentEM01 << _DCDC_EM01CTRL0_IPKVAL_SHIFT);
+  DCDC->EM23CTRL0 = ((uint32_t)dcdcInit->driveSpeedEM23 << _DCDC_EM23CTRL0_DRVSPEED_SHIFT)
+                    | ((uint32_t)dcdcInit->peakCurrentEM23 << _DCDC_EM23CTRL0_IPKVAL_SHIFT);
+
+  EMU_DCDCModeSet(dcdcInit->mode);
+
+  if (dcdcLocked) {
+    EMU_DCDCLock();
+  }
+
+  EMU_DCDCUpdatedHook();
+
+  return true;
 }
 
 /***************************************************************************//**
@@ -3156,9 +3450,7 @@ bool EMU_DCDCPowerOff(void)
   EMU_DCDCModeSet(emuDcdcMode_Bypass);
   return true;
 }
-#endif /* _DCDC_CTRL_MASK */
 
-#if defined(_DCDC_EM01CTRL0_IPKVAL_MASK)
 /***************************************************************************//**
  * @brief
  *   Set EMO1 mode Peak Current setting.
@@ -3182,9 +3474,13 @@ void EMU_EM01PeakCurrentSet(const EMU_DcdcPeakCurrent_TypeDef peakCurrentEM01)
   dcdcLocked = ((DCDC->LOCKSTATUS & DCDC_LOCKSTATUS_LOCK) != 0);
   EMU_DCDCUnlock();
 
-#if defined(_DCDC_SYNCBUSY_MASK)
   /* Wait for synchronization before writing new value */
+#if defined(_DCDC_SYNCBUSY_MASK)
+#if defined(_DCDC_SYNCBUSY_EM01CTRL0_MASK)
   EMU_DCDCSync(DCDC_SYNCBUSY_EM01CTRL0);
+#else
+  EMU_DCDCSync(_DCDC_SYNCBUSY_MASK);
+#endif
 #endif
 
   BUS_RegMaskedWrite(&DCDC->EM01CTRL0,
@@ -3204,8 +3500,9 @@ void EMU_EM01PeakCurrentSet(const EMU_DcdcPeakCurrent_TypeDef peakCurrentEM01)
   if (!dcdcClkWasEnabled) {
     CMU->CLKEN0_CLR = CMU_CLKEN0_DCDC;
   }
+
+  EMU_DCDCUpdatedHook();
 }
-#endif /* _DCDC_EM01CTRL0_MASK */
 
 #if defined(_DCDC_PFMXCTRL_IPKVAL_MASK)
 /***************************************************************************//**
@@ -3248,6 +3545,8 @@ void EMU_DCDCSetPFMXModePeakCurrent(uint32_t value)
   if (!dcdcClkWasEnabled) {
     CMU->CLKEN0_CLR = CMU_CLKEN0_DCDC;
   }
+
+  EMU_DCDCUpdatedHook();
 }
 #endif /* _DCDC_PFMXCTRL_IPKVAL_MASK */
 
@@ -3285,8 +3584,11 @@ void EMU_DCDCSetPFMXTimeoutMaxCtrl(EMU_DcdcTonMaxTimeout_TypeDef value)
   if (!dcdcClkWasEnabled) {
     CMU->CLKEN0_CLR = CMU_CLKEN0_DCDC;
   }
+
+  EMU_DCDCUpdatedHook();
 }
 #endif /* _DCDC_PFMXCTRL_IPKTMAXCTRL_MASK */
+#endif /* EMU_SERIES2_DCDC_BUCK_PRESENT */
 
 #if defined(EMU_STATUS_VMONRDY)
 
@@ -3661,11 +3963,6 @@ bool EMU_VmonChannelStatusGet(EMU_VmonChannel_TypeDef channel)
  ******************************************************************************/
 void EMU_SetBiasMode(EMU_BiasMode_TypeDef mode)
 {
-#define EMU_TESTLOCK         (*(volatile uint32_t *) (EMU_BASE + 0x190))
-#define EMU_BIASCONF         (*(volatile uint32_t *) (EMU_BASE + 0x164))
-#define EMU_BIASTESTCTRL     (*(volatile uint32_t *) (EMU_BASE + 0x19C))
-#define CMU_ULFRCOCTRL       (*(volatile uint32_t *) (CMU_BASE + 0x03C))
-
   uint32_t freq = 0x2u;
   bool emuTestLocked = false;
 
@@ -3696,19 +3993,12 @@ void EMU_SetBiasMode(EMU_BiasMode_TypeDef mode)
 #endif
 
 #if defined(_EMU_TEMP_TEMP_MASK)
-
-/** As we do not know what energy mode a temperature measurement was taken at,
- * we choose a constant for the TEMPCO calculation that is midway between the
- * EM0/EM1 constant and the EM2/EM3/EM4 constant.
- */
-#define EMU_TEMPCO_CONST (0.273f)
-
 /***************************************************************************//**
  * @brief
- *   Get temperature in degrees Celcius
+ *   Get temperature in degrees Celsius
  *
  * @return
- *   Temperature in degrees Celcius
+ *   Temperature in degrees Celsius
  ******************************************************************************/
 float EMU_TemperatureGet(void)
 {
@@ -3738,7 +4028,7 @@ float EMU_TemperatureGet(void)
   return diTemp + tempCo * ((int) diEmu - (int) val1);
 #endif
 }
-#endif //defined(_EMU_TEMP_TEMP_MASK)
+#endif // defined(_EMU_TEMP_TEMP_MASK)
 
 #if defined(EMU_CTRL_EFPDIRECTMODEEN)
 /***************************************************************************//**

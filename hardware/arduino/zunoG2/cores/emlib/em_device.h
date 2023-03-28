@@ -13,7 +13,7 @@
  *
  *******************************************************************************
  * # License
- * <b>Copyright 2021 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2022 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -40,11 +40,6 @@
 
 #ifndef EM_DEVICE_H
 #define EM_DEVICE_H
-
-#if defined(_ZWAVE_NOT_CUSTOM_HEADER_EMLIB)
-#else
-	#include "zwave_custom_header_emlib.h"
-#endif
 
 #define CMSIS_NVIC_VIRTUAL
 #define ZGM130S037HGN1

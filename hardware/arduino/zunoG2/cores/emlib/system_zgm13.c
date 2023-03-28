@@ -3,7 +3,7 @@
  * @brief CMSIS Cortex-M3/M4 System Layer for EFR32 devices.
  *******************************************************************************
  * # License
- * <b>Copyright 2020 Silicon Laboratories Inc. www.silabs.com</b>
+ * <b>Copyright 2022 Silicon Laboratories Inc. www.silabs.com</b>
  *******************************************************************************
  *
  * SPDX-License-Identifier: Zlib
@@ -109,6 +109,11 @@ uint32_t SystemCoreClock = EFR32_HFRCO_STARTUP_FREQ;
  *   Frequency of the system HFRCO oscillator
  */
 uint32_t SystemHfrcoFreq = EFR32_HFRCO_STARTUP_FREQ;
+
+/*---------------------------------------------------------------------------
+   Exception / Interrupt Vector table
+ *---------------------------------------------------------------------------*/
+extern const tVectorEntry __VECTOR_TABLE[16 + EXT_IRQ_COUNT];
 
 /*******************************************************************************
  **************************   GLOBAL FUNCTIONS   *******************************
@@ -284,8 +289,8 @@ void SystemHFXOClockSet(uint32_t freq)
  ******************************************************************************/
 void SystemInit(void)
 {
-#if defined(__VTOR_PRESENT) && (__VTOR_PRESENT == 1U)
-  SCB->VTOR = (uint32_t)&__Vectors;
+#if defined (__VTOR_PRESENT) && (__VTOR_PRESENT == 1U)
+  SCB->VTOR = (uint32_t)(&__VECTOR_TABLE[0]);
 #endif
 
 #if (__FPU_PRESENT == 1U) && (__FPU_USED == 1U)

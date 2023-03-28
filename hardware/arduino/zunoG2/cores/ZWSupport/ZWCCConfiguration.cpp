@@ -496,14 +496,18 @@ static int _configuration_info_get(ZwConfigurationInfoGetFrame_t *cmd, ZUNOComma
 
 static int _configuration_default_reset(void) {
 	const ZunoCFGParameter_t							*cfg;
-	for(int i=CONFIGPARAM_MIN_PARAM; i< CONFIGPARAM_MAX_PARAM; i++){
-		cfg = zunoCFGParameter(i);
-		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN)
-			_zunoSaveCFGParam(i, cfg->defaultValue, false);
-	}
-	return (ZUNO_UNKNOWN_CMD); // forward reset to main firmware
-}
 
+	for(int i=0x0; i< CONFIGPARAM_MAX_PARAM; i++){
+		cfg = zunoCFGParameter(i);
+		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN) {
+			if (i < CONFIGPARAM_MIN_PARAM)
+				_saveSysParam(i, cfg->defaultValue);
+			else
+				_zunoSaveCFGParam(i, cfg->defaultValue, false);
+		}
+	}
+	return (ZUNO_COMMAND_PROCESSED); // forward reset to main firmware
+}
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 

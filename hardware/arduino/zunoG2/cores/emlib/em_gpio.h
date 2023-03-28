@@ -35,8 +35,10 @@
 #if defined(GPIO_COUNT) && (GPIO_COUNT > 0)
 
 #include <stdbool.h>
+#include "sl_assert.h"
 #include "em_bus.h"
-#include "em_assert.h"
+#include "sl_common.h"
+#include "sl_enum.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -465,7 +467,7 @@ extern "C" {
  ******************************************************************************/
 
 /** GPIO ports IDs. */
-typedef enum {
+SL_ENUM(GPIO_Port_TypeDef) {
 #if (_GPIO_PORT_A_PIN_COUNT > 0)
   /** Port A. */
   gpioPortA = 0,
@@ -510,11 +512,11 @@ typedef enum {
   /** Port K. */
   gpioPortK = 10,
 #endif
-} GPIO_Port_TypeDef;
+};
 
 #if defined(_GPIO_P_CTRL_DRIVEMODE_MASK)
 /** GPIO drive mode. */
-typedef enum {
+SL_ENUM_GENERIC(GPIO_DriveMode_TypeDef, uint32_t) {
   /** Default 6mA. */
   gpioDriveModeStandard = GPIO_P_CTRL_DRIVEMODE_STANDARD,
   /** 0.5 mA. */
@@ -523,12 +525,12 @@ typedef enum {
   gpioDriveModeHigh     = GPIO_P_CTRL_DRIVEMODE_HIGH,
   /** 2 mA. */
   gpioDriveModeLow      = GPIO_P_CTRL_DRIVEMODE_LOW
-} GPIO_DriveMode_TypeDef;
+};
 #endif
 
 #if defined(_GPIO_P_CTRL_DRIVESTRENGTH_MASK) && defined(_GPIO_P_CTRL_DRIVESTRENGTHALT_MASK)
 /** GPIO drive strength. */
-typedef enum {
+SL_ENUM_GENERIC(GPIO_DriveStrength_TypeDef, uint32_t) {
   /** GPIO weak 1mA and alternate function weak 1mA. */
   gpioDriveStrengthWeakAlternateWeak     = GPIO_P_CTRL_DRIVESTRENGTH_WEAK | GPIO_P_CTRL_DRIVESTRENGTHALT_WEAK,
 
@@ -540,7 +542,7 @@ typedef enum {
 
   /** GPIO strong 10mA and alternate function strong 10mA. */
   gpioDriveStrengthStrongAlternateStrong = GPIO_P_CTRL_DRIVESTRENGTH_STRONG | GPIO_P_CTRL_DRIVESTRENGTHALT_STRONG,
-} GPIO_DriveStrength_TypeDef;
+};
 
 /* Deprecated enums. */
 /** @cond DO_NOT_INCLUDE_WITH_DOXYGEN */
@@ -551,7 +553,7 @@ typedef enum {
 
 /** Pin mode. For more details on each mode, refer to the
  * reference manual. */
-typedef enum {
+SL_ENUM_GENERIC(GPIO_Mode_TypeDef, uint32_t) {
   /** Input disabled. Pull-up if DOUT is set. */
   gpioModeDisabled                  = _GPIO_P_MODEL_MODE0_DISABLED,
   /** Input enabled. Filter if DOUT is set. */
@@ -602,7 +604,7 @@ typedef enum {
   /** Open-drain output using alternate control with filter and pull-up. */
   gpioModeWiredAndAlternatePullUpFilter = _GPIO_P_MODEL_MODE0_WIREDANDALTPULLUPFILTER,
 #endif
-} GPIO_Mode_TypeDef;
+};
 
 /*******************************************************************************
  *****************************   PROTOTYPES   **********************************
@@ -674,6 +676,10 @@ __STATIC_INLINE void GPIO_DbgSWDIOEnable(bool enable)
  *   Enabling this pin is not sufficient to fully enable serial wire output,
  *   which is also dependent on issues outside the GPIO module. Refer to
  *   DBG_SWOEnable().
+ *
+ * @warning
+ *   If debug port is locked, SWO pin is not disabled automatically. To avoid
+ *   information leakage through SWO, disable SWO pin after locking debug port.
  *
  * @param[in] enable
  *   @li false - disable serial wire viewer pin (default after reset).
@@ -795,6 +801,13 @@ void GPIO_ExtIntConfig(GPIO_Port_TypeDef port,
                        bool fallingEdge,
                        bool enable);
 
+#if _SILICON_LABS_32B_SERIES > 0
+void GPIO_EM4WUExtIntConfig(GPIO_Port_TypeDef port,
+                            unsigned int pin,
+                            uint32_t intNo,
+                            bool polarity,
+                            bool enable);
+#endif
 /***************************************************************************//**
  * @brief
  *   Enable/disable input sensing.
@@ -814,7 +827,7 @@ void GPIO_ExtIntConfig(GPIO_Port_TypeDef port,
 __STATIC_INLINE void GPIO_InputSenseSet(uint32_t val, uint32_t mask)
 {
 #if defined(_GPIO_INSENSE_MASK)
-  GPIO->INSENSE = (GPIO->INSENSE & ~mask) | (val & mask);
+  BUS_RegMaskedWrite(&(GPIO->INSENSE), mask, val);
 #else
   (void) val;
   (void) mask;
@@ -846,7 +859,7 @@ __STATIC_INLINE void GPIO_IntClear(uint32_t flags)
  ******************************************************************************/
 __STATIC_INLINE void GPIO_IntDisable(uint32_t flags)
 {
-  GPIO->IEN &= ~flags;
+  BUS_RegMaskedClear(&(GPIO->IEN), flags);
 }
 
 /***************************************************************************//**
@@ -863,7 +876,20 @@ __STATIC_INLINE void GPIO_IntDisable(uint32_t flags)
  ******************************************************************************/
 __STATIC_INLINE void GPIO_IntEnable(uint32_t flags)
 {
-  GPIO->IEN |= flags;
+  BUS_RegMaskedSet(&(GPIO->IEN), flags);
+}
+
+/***************************************************************************//**
+ * @brief
+ *   Get enabled GPIO interrupts.
+ *
+ * @return
+ *   Enabled GPIO interrupt sources.
+ *
+ ******************************************************************************/
+__STATIC_INLINE uint32_t GPIO_EnabledIntGet(void)
+{
+  return GPIO->IEN;
 }
 
 /***************************************************************************//**
@@ -923,7 +949,7 @@ __STATIC_INLINE void GPIO_IntSet(uint32_t flags)
 
 /***************************************************************************//**
  * @brief
- *   Locks the GPIO configuration.
+ *   Lock the GPIO configuration.
  ******************************************************************************/
 __STATIC_INLINE void GPIO_Lock(void)
 {
@@ -981,8 +1007,8 @@ void GPIO_PinModeSet(GPIO_Port_TypeDef port,
  *   Set a single pin in GPIO data out port register to 0.
  *
  * @note
- *   In order for the setting to take effect on the output pad, the pin must
- *   have been configured properly. If not, it will take effect whenever the
+ *   To ensure that the setting takes effect on the output pad, the pin must
+ *   be configured properly. If not, it will take effect whenever the
  *   pin has been properly configured.
  *
  * @param[in] port
@@ -1028,8 +1054,8 @@ __STATIC_INLINE unsigned int GPIO_PinOutGet(GPIO_Port_TypeDef port,
  *   Set a single pin in GPIO data out register to 1.
  *
  * @note
- *   In order for the setting to take effect on the output pad, the pin must
- *   have been configured properly. If not, it will take effect whenever the
+ *   To ensure that the setting takes effect on the output pad, the pin must
+ *   be configured properly. If not, it will take effect whenever the
  *   pin has been properly configured.
  *
  * @param[in] port
@@ -1055,8 +1081,8 @@ __STATIC_INLINE void GPIO_PinOutSet(GPIO_Port_TypeDef port, unsigned int pin)
  *   Toggle a single pin in GPIO port data out register.
  *
  * @note
- *   In order for the setting to take effect on the output pad, the pin must
- *   have been configured properly. If not, it will take effect whenever the
+ *   To ensure that the setting takes effect on the output pad, the pin must
+ *   be configured properly. If not, it will take effect whenever the
  *   pin has been properly configured.
  *
  * @param[in] port
@@ -1100,8 +1126,8 @@ __STATIC_INLINE uint32_t GPIO_PortInGet(GPIO_Port_TypeDef port)
  *   Set bits in DOUT register for a port to 0.
  *
  * @note
- *   In order for the setting to take effect on the output pad, the pin must
- *   have been configured properly. If not, it will take effect whenever the
+ *   To ensure that the setting takes effect on the output pad, the pin must
+ *   be configured properly. If not, it will take effect whenever the
  *   pin has been properly configured.
  *
  * @param[in] port
@@ -1124,7 +1150,7 @@ __STATIC_INLINE void GPIO_PortOutClear(GPIO_Port_TypeDef port, uint32_t pins)
 
 /***************************************************************************//**
  * @brief
- *   Get current setting for a GPIO port data out register.
+ *   Get the current setting for a GPIO port data out register.
  *
  * @param[in] port
  *   The GPIO port to access.
@@ -1144,8 +1170,8 @@ __STATIC_INLINE uint32_t GPIO_PortOutGet(GPIO_Port_TypeDef port)
  *   Set bits GPIO data out register to 1.
  *
  * @note
- *   In order for the setting to take effect on the respective output pads, the
- *   pins must have been configured properly. If not, it will take effect
+ *   To ensure that the setting takes effect on the respective output pads, the
+ *   pins must be configured properly. If not, it will take effect
  *   whenever the pin has been properly configured.
  *
  * @param[in] port
@@ -1171,8 +1197,8 @@ __STATIC_INLINE void GPIO_PortOutSet(GPIO_Port_TypeDef port, uint32_t pins)
  *   Set GPIO port data out register.
  *
  * @note
- *   In order for the setting to take effect on the respective output pads, the
- *   pins must have been configured properly. If not, it will take effect
+ *   To ensure that the setting takes effect on the respective output pads, the
+ *   pins must be configured properly. If not, it will take effect
  *   whenever the pin has been properly configured.
  *
  * @param[in] port
@@ -1198,8 +1224,8 @@ __STATIC_INLINE void GPIO_PortOutSetVal(GPIO_Port_TypeDef port,
  *   Toggle pins in GPIO port data out register.
  *
  * @note
- *   In order for the setting to take effect on the output pad, the pin must
- *   have been configured properly. If not, it will take effect whenever the
+ *   To ensure that the setting takes effect on the output pad, the pin must
+ *   be configured properly. If not, it will take effect whenever the
  *   pin has been properly configured.
  *
  * @param[in] port
@@ -1252,7 +1278,7 @@ __STATIC_INLINE void GPIO_SlewrateSet(GPIO_Port_TypeDef port,
 
 /***************************************************************************//**
  * @brief
- *   Unlocks the GPIO configuration.
+ *   Unlock the GPIO configuration.
  ******************************************************************************/
 __STATIC_INLINE void GPIO_Unlock(void)
 {
@@ -1304,11 +1330,11 @@ __STATIC_INLINE void GPIO_Unlock(void)
  *   Set to true if interrupt will be enabled after configuration completed,
  *   false to leave disabled. See @ref GPIO_IntDisable() and @ref GPIO_IntEnable().
  ******************************************************************************/
-__STATIC_INLINE void GPIO_IntConfig(GPIO_Port_TypeDef port,
-                                    unsigned int pin,
-                                    bool risingEdge,
-                                    bool fallingEdge,
-                                    bool enable)
+__STATIC_INLINE SL_DEPRECATED_API_SDK_4_1 void GPIO_IntConfig(GPIO_Port_TypeDef port,
+                                                              unsigned int pin,
+                                                              bool risingEdge,
+                                                              bool fallingEdge,
+                                                              bool enable)
 {
   GPIO_ExtIntConfig(port, pin, pin, risingEdge, fallingEdge, enable);
 }

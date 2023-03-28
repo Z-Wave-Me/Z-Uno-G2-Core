@@ -29,12 +29,18 @@
  ******************************************************************************/
 
 #include "em_iadc.h"
+
 #if defined(IADC_COUNT) && (IADC_COUNT > 0)
 
-#include "em_assert.h"
+#include "sl_assert.h"
 #include "em_cmu.h"
-#include "em_common.h"
+#include "sl_common.h"
 #include <stddef.h>
+
+/***************************************************************************//**
+ * @addtogroup emlib
+ * @{
+ ******************************************************************************/
 
 /***************************************************************************//**
  * @addtogroup iadc IADC - Incremental ADC
@@ -186,7 +192,7 @@ void IADC_init(IADC_TypeDef *iadc,
 {
   uint32_t tmp;
   uint32_t config;
-  uint8_t wantedPrescale;
+  uint16_t wantedPrescale;
   uint8_t srcClkPrescale;
   uint32_t adcClkPrescale;
   uint8_t timebase;
@@ -223,8 +229,15 @@ void IADC_init(IADC_TypeDef *iadc,
 
   timebase = init->timebase;
   if (timebase == 0) {
+    // CLK_SRC_ADC is derived from CLK_CMU_ADC, and must be no faster than 40 MHz. Therefore we set
+    // srcClkFreq's original value to CLK_CMU_ADC before evaluating the prescaling conditions.
+    uint32_t srcClkFreq = CMU_ClockFreqGet(cmuClock_IADC0);
+    // If srcClkFreq is greater than 40MHz, then divide by the prescaler HSCLKRATE to obtain valid frequency
+    if (srcClkFreq >= IADC_CLK_MAX_FREQ) {
+      srcClkFreq = srcClkFreq / srcClkPrescale;
+    }
     // Calculate timebase based on CMU_IADCCLKCTRL
-    timebase = IADC_calcTimebase(iadc, 0);
+    timebase = IADC_calcTimebase(iadc, srcClkFreq);
   }
 
   tmp = (((uint32_t)(init->warmup) << _IADC_CTRL_WARMUPMODE_SHIFT)
@@ -381,7 +394,12 @@ void IADC_init(IADC_TypeDef *iadc,
         }
 
         // Compensate offset according to selected reference voltage.
-        offset *= 1.25f / (allConfigs->configs[config].vRef / 1000.0f);
+        if (allConfigs->configs[config].reference == iadcCfgReferenceInt1V2) {
+          // Internal reference voltage (VBGR) depends on the chip revision.
+          offset *= 1.25f / (IADC_getReferenceVoltage(allConfigs->configs[config].reference) / 1000.0f);
+        } else {
+          offset *= 1.25f / (allConfigs->configs[config].vRef / 1000.0f);
+        }
 
         // Compensate offset for systematic offset.
         offset = (offset * 4.0f) + (640.0f * (256.0f / iOsr));
@@ -406,38 +424,8 @@ void IADC_init(IADC_TypeDef *iadc,
 
 #if defined(_IADC_CFG_ADCMODE_HIGHACCURACY)
       case iadcCfgModeHighAccuracy:
-        switch (allConfigs->configs[config].reference) {
-          case iadcCfgReferenceInt1V2:
-            refVoltage = 1.21;
-            break;
-          case iadcCfgReferenceExt1V25:
-            refVoltage = 1.25;
-            break;
-#if defined(_IADC_CFG_REFSEL_VREF2P5)
-          case iadcCfgReferenceExt2V5:
-            refVoltage = 2.5;
-            break;
-#endif
-          case iadcCfgReferenceVddx:
-            refVoltage = 3.0;
-            break;
-          case iadcCfgReferenceVddX0P8Buf:
-            refVoltage = 2.4;
-            break;
-#if defined(_IADC_CFG_REFSEL_VREFBUF)
-          case iadcCfgReferenceBuf:
-            refVoltage = 1.25;
-            break;
-#endif
-#if defined(_IADC_CFG_REFSEL_VREF0P8BUF)
-          case iadcCfgReference0P8Buf:
-            refVoltage = 1.0;
-            break;
-#endif
-          default:
-            EFM_ASSERT(false);
-            break;
-        }
+        // Get reference voltage in volts
+        refVoltage = IADC_getReferenceVoltage(allConfigs->configs[config].reference) / 1000.0f;
 
         // Get OSR from config register
         osrValue = (iadc->CFG[config].CFG & _IADC_CFG_OSRHA_MASK) >> _IADC_CFG_OSRHA_SHIFT;
@@ -471,7 +459,8 @@ void IADC_init(IADC_TypeDef *iadc,
         // Get offset from DEVINFO
         offsetAnaBase = (int16_t)(DEVINFO->IADC0OFFSETCAL0 & _DEVINFO_IADC0OFFSETCAL0_OFFSETANABASE_MASK)
                         >> _DEVINFO_IADC0OFFSETCAL0_OFFSETANABASE_SHIFT;
-        offsetAna = offsetAnaBase + (offsetAna1HiAccInt) / (2 ^ osrValue);
+        // 1 << osrValue is the same as pow(2, osrValue)
+        offsetAna = offsetAnaBase + (offsetAna1HiAccInt) / (1 << osrValue);
 
         // 3. Reference voltage adjustment
         offsetAna = (offsetAna) * (1.25f / refVoltage);
@@ -731,7 +720,7 @@ void IADC_setScanMask(IADC_TypeDef *iadc, uint32_t mask)
  *   Pointer to IADC peripheral register block.
  *
  * @param[in] id
- *   Id of scan table entry to add.
+ *   ID of scan table entry to add.
  *
  * @param[in] entry
  *   Pointer to scan table entry structure.
@@ -861,36 +850,44 @@ void IADC_reset(IADC_TypeDef *iadc)
  * @param[in] iadc
  *   Pointer to IADC peripheral register block.
  *
- * @param[in] cmuClkFreq Frequency in Hz of reference CLK_CMU_ADC clock. Set to 0 to
- *   use currently defined CMU clock setting for the IADC.
+ * @param[in] srcClkFreq Frequency in Hz of reference CLK_SRC_ADC clock. Set to 0 to
+ *   derive srcClkFreq from CLK_CMU_ADC and prescaler HSCLKRATE.
  *
  * @return
  *   Timebase value to use for IADC in order to achieve at least 1 us.
  ******************************************************************************/
-uint8_t IADC_calcTimebase(IADC_TypeDef *iadc, uint32_t cmuClkFreq)
+uint8_t IADC_calcTimebase(IADC_TypeDef *iadc, uint32_t srcClkFreq)
 {
   EFM_ASSERT(IADC_REF_VALID(iadc));
 
-  if (cmuClkFreq == 0UL) {
-    cmuClkFreq = CMU_ClockFreqGet(IADC_CMU_CLOCK(iadc));
+  if (srcClkFreq == 0UL) {
+    // CLK_SRC_ADC is derived from CLK_CMU_ADC, and must be no faster than 40 MHz. Therefore we set
+    // srcClkFreq's original value to CLK_CMU_ADC before evaluating the prescaling conditions.
+    srcClkFreq = CMU_ClockFreqGet(cmuClock_IADC0);
 
-    // Just in case, make sure we get non-zero freq for below calculation
-    if (cmuClkFreq == 0UL) {
-      cmuClkFreq = 1;
+    // Just in case, make sure we get non-zero frequency for below calculation
+    if (srcClkFreq == 0UL) {
+      srcClkFreq = 1;
+    }
+    // If srcClkFreq is greater than 40MHz, then divide by the prescaler HSCLKRATE
+    if (srcClkFreq > IADC_CLK_MAX_FREQ) {
+      uint32_t prescaler = (uint32_t)(IADC0->CTRL & _IADC_CTRL_HSCLKRATE_MASK) >> _IADC_CTRL_HSCLKRATE_SHIFT;
+      srcClkFreq /= (prescaler + 1);
     }
   }
+
   // Determine number of ADCCLK cycle >= 1us
-  cmuClkFreq += 999999UL;
-  cmuClkFreq /= 1000000UL;
+  srcClkFreq += 999999UL;
+  srcClkFreq /= 1000000UL;
 
   // Convert to N+1 format
-  cmuClkFreq -= 1UL;
+  srcClkFreq -= 1UL;
 
   // Limit to max allowed register setting
-  cmuClkFreq = SL_MIN(cmuClkFreq, (_IADC_CTRL_TIMEBASE_MASK >> _IADC_CTRL_TIMEBASE_SHIFT));
+  srcClkFreq = SL_MIN(srcClkFreq, (_IADC_CTRL_TIMEBASE_MASK >> _IADC_CTRL_TIMEBASE_SHIFT));
 
   // Return timebase value
-  return (uint8_t) cmuClkFreq;
+  return (uint8_t) srcClkFreq;
 }
 
 /***************************************************************************//**
@@ -1005,7 +1002,7 @@ uint32_t IADC_calcAdcClkPrescale(IADC_TypeDef *iadc,
   // Limit to max allowed register setting
   ret = SL_MIN(ret, (_IADC_SCHED_PRESCALE_MASK >> _IADC_SCHED_PRESCALE_SHIFT));
 
-  return (uint8_t)ret;
+  return (uint16_t)ret;
 }
 
 /***************************************************************************//**
@@ -1098,5 +1095,66 @@ IADC_Result_t IADC_readScanResult(IADC_TypeDef *iadc)
                                      (IADC_Alignment_t) alignment);
 }
 
+/***************************************************************************//**
+ * @brief
+ *   Get reference voltage selection.
+ *
+ * @param[in] reference
+ *   IADC Reference selection.
+ *
+ * @return
+ *   IADC reference voltage in millivolts.
+ ******************************************************************************/
+uint32_t IADC_getReferenceVoltage(IADC_CfgReference_t reference)
+{
+  uint32_t refVoltage = 0;
+  // Get chip revision
+  SYSTEM_ChipRevision_TypeDef chipRev;
+  SYSTEM_ChipRevisionGet(&chipRev);
+  switch (reference) {
+    case iadcCfgReferenceInt1V2:
+#if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_1)
+      if (chipRev.major == 1UL) {
+        refVoltage = 1210;
+      } else {
+        refVoltage = 1180;
+      }
+#else
+      refVoltage = 1210;
+#endif
+      break;
+    case iadcCfgReferenceExt1V25:
+      refVoltage = 1250;
+      break;
+#if defined(_IADC_CFG_REFSEL_VREF2P5)
+    case iadcCfgReferenceExt2V5:
+      refVoltage = 2500;
+      break;
+#endif
+    case iadcCfgReferenceVddx:
+      refVoltage = 3000;
+      break;
+    case iadcCfgReferenceVddX0P8Buf:
+      refVoltage = 2400;
+      break;
+#if defined(_IADC_CFG_REFSEL_VREFBUF)
+    case iadcCfgReferenceBuf:
+      refVoltage = 12500;
+      break;
+#endif
+#if defined(_IADC_CFG_REFSEL_VREF0P8BUF)
+    case iadcCfgReference0P8Buf:
+      refVoltage = 1000;
+      break;
+#endif
+    default:
+      EFM_ASSERT(false);
+      break;
+  }
+
+  return refVoltage;
+}
+
 /** @} (end addtogroup iadc) */
+/** @} (end addtogroup emlib) */
 #endif /* defined(IADC_COUNT) && (IADC_COUNT > 0) */

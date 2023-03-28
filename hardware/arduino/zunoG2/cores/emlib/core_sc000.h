@@ -1,11 +1,11 @@
 /**************************************************************************//**
  * @file     core_sc000.h
  * @brief    CMSIS SC000 Core Peripheral Access Layer Header File
- * @version  V5.0.3
- * @date     10. January 2018
+ * @version  V5.0.7
+ * @date     27. March 2020
  ******************************************************************************/
 /*
- * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+ * Copyright (c) 2009-2020 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -62,7 +62,7 @@
 
 #include "cmsis_version.h"
 
-/*  CMSIS SC000 definitions */
+/* CMSIS SC000 definitions */
 #define __SC000_CMSIS_VERSION_MAIN  (__CM_CMSIS_VERSION_MAIN)                /*!< \deprecated [31:16] CMSIS HAL main version */
 #define __SC000_CMSIS_VERSION_SUB   (__CM_CMSIS_VERSION_SUB)                 /*!< \deprecated [15:0]  CMSIS HAL sub version */
 #define __SC000_CMSIS_VERSION       ((__SC000_CMSIS_VERSION_MAIN << 16U) | \
@@ -81,7 +81,7 @@
   #endif
 
 #elif defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
-  #if defined __ARM_PCS_VFP
+  #if defined __ARM_FP
     #error "Compiler generates FPU instructions for a device without an FPU (check __FPU_PRESENT)"
   #endif
 
@@ -142,6 +142,11 @@
     #warning "__MPU_PRESENT not defined in device header file; using default!"
   #endif
 
+  #ifndef __VTOR_PRESENT
+    #define __VTOR_PRESENT             0U
+    #warning "__VTOR_PRESENT not defined in device header file; using default!"
+  #endif
+  
   #ifndef __NVIC_PRIO_BITS
     #define __NVIC_PRIO_BITS          2U
     #warning "__NVIC_PRIO_BITS not defined in device header file; using default!"
@@ -727,6 +732,12 @@ typedef struct
 #define NVIC_USER_IRQ_OFFSET          16
 
 
+/* The following EXC_RETURN values are saved the LR on exception entry */
+#define EXC_RETURN_HANDLER         (0xFFFFFFF1UL)     /* return to Handler mode, uses MSP after return                               */
+#define EXC_RETURN_THREAD_MSP      (0xFFFFFFF9UL)     /* return to Thread mode, uses MSP after return                                */
+#define EXC_RETURN_THREAD_PSP      (0xFFFFFFFDUL)     /* return to Thread mode, uses PSP after return                                */
+
+
 /* Interrupt Priorities are WORD accessible only under Armv6-M                  */
 /* The following MACROS handle generation of the register offset and byte masks */
 #define _BIT_SHIFT(IRQn)         (  ((((uint32_t)(int32_t)(IRQn))         )      &  0x03UL) * 8UL)
@@ -744,7 +755,9 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 {
   if ((int32_t)(IRQn) >= 0)
   {
+    __COMPILER_BARRIER();
     NVIC->ISER[0U] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
+    __COMPILER_BARRIER();
   }
 }
 
@@ -898,6 +911,7 @@ __STATIC_INLINE void __NVIC_SetVector(IRQn_Type IRQn, uint32_t vector)
 {
   uint32_t *vectors = (uint32_t *)SCB->VTOR;
   vectors[(int32_t)IRQn + NVIC_USER_IRQ_OFFSET] = vector;
+  /* ARM Application Note 321 states that the M0 and M0+ do not require the architectural barrier - assume SC000 is the same */
 }
 
 
@@ -920,7 +934,7 @@ __STATIC_INLINE uint32_t __NVIC_GetVector(IRQn_Type IRQn)
   \brief   System Reset
   \details Initiates a system reset request to reset the MCU.
  */
-__STATIC_INLINE void __NVIC_SystemReset(void)
+__NO_RETURN __STATIC_INLINE void __NVIC_SystemReset(void)
 {
   __DSB();                                                          /* Ensure all outstanding memory accesses included
                                                                        buffered write are completed before reset */

@@ -31,7 +31,7 @@
 #ifndef EM_BUS_H
 #define EM_BUS_H
 
-#include "em_assert.h"
+#include "sl_assert.h"
 #include "em_core.h"
 #include "em_device.h"
 
@@ -58,7 +58,7 @@ extern "C" {
  *
  * @note
  *   This function is atomic on Cortex-M cores with bit-banding support. Bit-
- *   banding is a multicycle read-modify-write bus operation. RAM bit-banding is
+ *   banding is a multi cycle read-modify-write bus operation. RAM bit-banding is
  *   performed using the memory alias region at BITBAND_RAM_BASE.
  *
  * @param[in] addr An ddress of a 32-bit word in RAM.
@@ -129,7 +129,7 @@ __STATIC_INLINE unsigned int BUS_RamBitRead(volatile const uint32_t *addr,
  *
  * @note
  *   This function is atomic on Cortex-M cores with bit-banding support. Bit-
- *   banding is a multicycle read-modify-write bus operation. Peripheral register
+ *   banding is a multi cycle read-modify-write bus operation. Peripheral register
  *   bit-banding is performed using the memory alias region at BITBAND_PER_BASE.
  *
  * @param[in] addr A peripheral register address.
@@ -145,7 +145,7 @@ __STATIC_INLINE void BUS_RegBitWrite(volatile uint32_t *addr,
   EFM_ASSERT(bit < 32U);
 #if defined(PER_REG_BLOCK_SET_OFFSET) && defined(PER_REG_BLOCK_CLR_OFFSET)
   uint32_t aliasAddr;
-  if (val) {
+  if (val != 0U) {
     aliasAddr = (uint32_t)addr + PER_REG_BLOCK_SET_OFFSET;
   } else {
     aliasAddr = (uint32_t)addr + PER_REG_BLOCK_CLR_OFFSET;

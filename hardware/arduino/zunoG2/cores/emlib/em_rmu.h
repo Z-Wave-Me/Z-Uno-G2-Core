@@ -33,7 +33,7 @@
 
 #include "em_device.h"
 #if (defined(RMU_COUNT) && (RMU_COUNT > 0)) || (_EMU_RSTCTRL_MASK)
-#include "em_assert.h"
+#include "sl_assert.h"
 
 #include <stdbool.h>
 
@@ -107,6 +107,12 @@ typedef enum {
 #if defined(_EMU_RSTCTRL_IOVDD0BODRMODE_MASK)
   rmuResetIOVDD0 = _EMU_RSTCTRL_IOVDD0BODRMODE_MASK,   /**< IOVDD0 monitoring select */
 #endif
+#if defined(_EMU_RSTCTRL_IOVDD1BODRMODE_MASK)
+  rmuResetIOVDD1 = _EMU_RSTCTRL_IOVDD1BODRMODE_MASK,   /**< IOVDD1 monitoring select */
+#endif
+#if defined(_EMU_RSTCTRL_IOVDD2BODRMODE_MASK)
+  rmuResetIOVDD2 = _EMU_RSTCTRL_IOVDD2BODRMODE_MASK,   /**< IOVDD2 monitoring select */
+#endif
 #if defined(_EMU_RSTCTRL_DECBODRMODE_MASK)
   rmuResetDecouple = _EMU_RSTCTRL_DECBODRMODE_MASK,    /**< Decouple monitoring select */
 #endif
@@ -115,6 +121,9 @@ typedef enum {
 #endif
 #if defined(_EMU_RSTCTRL_SELOCKUPRMODE_MASK)
   rmuResetSELockup = _EMU_RSTCTRL_SELOCKUPRMODE_MASK,  /**< M0+ (SE) lockup select */
+#endif
+#if defined(_EMU_RSTCTRL_DCIRMODE_MASK)
+  rmuResetDCI = _EMU_RSTCTRL_DCIRMODE_MASK,            /**< DCI reset select */
 #endif
 } RMU_Reset_TypeDef;
 

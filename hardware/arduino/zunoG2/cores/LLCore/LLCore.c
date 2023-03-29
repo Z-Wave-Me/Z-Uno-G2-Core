@@ -14,8 +14,6 @@
 #include <CommandQueue.h>
 #include <SysService.h>
 
-
-
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
 #endif
@@ -949,27 +947,10 @@ int analogRead(uint8_t pin) {
 
 
 
-
-void WDOG_Feed(){
-  WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog
-  /* The watchdog should not be fed while it is disabled */
-  if (!(wdog->CTRL & WDOG_CTRL_EN)) {
-    return;
-  }
-
-  /* If a previous clearing is being synchronized to LF domain, then there */
-  /* is no point in waiting for it to complete before clearing over again. */
-  /* This avoids stalling the core in the typical use case where some idle loop */
-  /* keeps clearing the watchdog. */
-  if (wdog->SYNCBUSY & WDOG_SYNCBUSY_CMD) {
-    return;
-  }
-  /* Before writing to the WDOG_CMD register we also need to make sure that
-   * any previous write to WDOG_CTRL is complete. */
-  while ( (wdog->SYNCBUSY & WDOG_SYNCBUSY_CTRL) != 0U ) {
-  }
-
-  wdog->CMD = WDOG_CMD_CLEAR;
+// MULTI_CHIP
+void WDOGn_Feed(WDOG_TypeDef *wdog);
+void WDOG_Feed() {
+	WDOGn_Feed(WDOG0);
 }
 
 inline void WDOGWR(unsigned int currloop)
@@ -1096,8 +1077,14 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t pola
     GPIO_EM4EnablePinWakeup(wu_map, polarity);
     return ZunoErrorOk;
 }
-void zunoClearEm4Wakeup(){
-  GPIO->EXTILEVEL = _GPIO_EXTILEVEL_RESETVALUE;
+
+// MULTI_CHIP
+void zunoClearEm4Wakeup() {
+	#if defined(_GPIO_EM4WUPOL_MASK)
+	GPIO->EM4WUPOL = _GPIO_EM4WUPOL_RESETVALUE;
+	#elif defined(_GPIO_EXTILEVEL_MASK)
+	GPIO->EXTILEVEL = _GPIO_EXTILEVEL_RESETVALUE;
+	#endif
   GPIO->EM4WUEN  = 0;                /* Disable wakeup. */
 }
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {

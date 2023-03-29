@@ -1,9 +1,12 @@
+
+
+#include "em_device.h"
+#if defined(LEUART_COUNT) && (LEUART_COUNT > 0)
 #include "Arduino.h"
 #include "stdio.h"
 #include "stdarg.h"
 #include "LeUartClass.h"
 #include "zwaveme_libft.h"
-#include "em_device.h"
 #include "em_leuart.h"
 
 #define LE_UART_MIN_WRITE_ZDMA			2
@@ -88,7 +91,7 @@ size_t LeUartClass::write(const uint8_t *b, size_t count) {
 		while (!(usart->STATUS & LEUART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
 	}
-	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, LdmaClassSignal_LEUART0_TXBL, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0) {
+	else if ((channel = LdmaClass::transferSingle(b, (void*)&(usart->TXDATA), count, ldmaPeripheralSignal_LEUART0_TXBL, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(ms);
 		while (!(usart->STATUS & LEUART_STATUS_TXC))/* Check that transmit buffer is empty */
 			__NOP();
@@ -223,7 +226,7 @@ ZunoError_t LeUartClass::_begin(size_t baudrate, uint32_t option, uint8_t rx, ui
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
 	if (len != 0x0) {
-		channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, b, len, LdmaClassSignal_LEUART0_RXDATAV, ldmaCtrlSizeByte, &this->_arrayReceivedCyclical);
+		channel = LdmaClass::receivedCyclical((void *)&usart->RXDATA, b, len, ldmaPeripheralSignal_LEUART0_RXDATAV, ldmaCtrlSizeByte, &this->_arrayReceivedCyclical);
 		this->_channel = channel;
 	}
 	else
@@ -257,3 +260,5 @@ LeUartClass LeUart;
 // 	}
 // 	return (-1);
 // }
+
+#endif//#if defined(LEUART_COUNT) && (LEUART_COUNT > 0)

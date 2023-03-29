@@ -17,8 +17,8 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART0,
 		.lpLock = &gSyncUSART0,
-		.dmaSignalWrite = LdmaClassSignal_USART0_TXBL,
-		.dmaSignalRead = LdmaClassSignal_USART0_RXDATAV,
+		.dmaSignalWrite = ldmaPeripheralSignal_USART0_TXBL,
+		.dmaSignalRead = ldmaPeripheralSignal_USART0_RXDATAV,
 		.bus_clock = cmuClock_USART0,
 		.rx = RX0,
 		.tx = TX0
@@ -26,8 +26,8 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART1,
 		.lpLock = &gSyncUSART1,
-		.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
-		.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
+		.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
+		.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 		.bus_clock = cmuClock_USART1,
 		.rx = RX1,
 		.tx = TX1
@@ -36,8 +36,8 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 			{
 				.usart = USART1,
 				.lpLock = &gSyncUSART2,
-				.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
-				.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
+				.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
+				.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 				.bus_clock = cmuClock_USART1,
 				.rx = RX2,
 				.tx = TX2
@@ -46,8 +46,8 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 			{
 				.usart = USART2,
 				.lpLock = &gSyncUSART2,
-				.dmaSignalWrite = LdmaClassSignal_USART2_TXBL,
-				.dmaSignalRead = LdmaClassSignal_USART2_RXDATAV,
+				.dmaSignalWrite = ldmaPeripheralSignal_USART2_TXBL,
+				.dmaSignalRead = ldmaPeripheralSignal_USART2_RXDATAV,
 				.bus_clock = cmuClock_USART2,
 				.rx = RX2,
 				.tx = TX2

@@ -23,8 +23,8 @@ typedef struct							ZunoWireI2CTypeConfig_s
 	I2C_TypeDef							*i2c;
 	ZunoSync_t							*lpLock;
 	void								*IRQHandler;
-	LdmaClassSignal_t					dmaSignalRead;
-	LdmaClassSignal_t					dmaSignalWrite;
+	LDMA_PeripheralSignal_t					dmaSignalRead;
+	LDMA_PeripheralSignal_t					dmaSignalWrite;
 	CMU_Clock_TypeDef					bus_clock;
 	IRQn_Type							irq;
 	uint8_t								subType;

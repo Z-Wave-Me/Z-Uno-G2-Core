@@ -1,6 +1,10 @@
 #ifndef LE_UART_H
 #define LE_UART_H
 
+#include "em_device.h"
+
+#if defined(LEUART_COUNT) && (LEUART_COUNT > 0)
+
 #include "Stream.h"
 #include "stdio.h"
 #include "LdmaClass.h"
@@ -66,5 +70,6 @@ class LeUartClass : public Stream {
 
 extern LeUartClass LeUart;
 
+#endif//#if defined(LEUART_COUNT) && (LEUART_COUNT > 0)
 
 #endif // LE_UART_H

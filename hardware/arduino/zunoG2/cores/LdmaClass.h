@@ -2,6 +2,7 @@
 #define LDMA_CLASS_H
 
 #include "em_ldma.h"
+void *zunoSysCall(uint8_t ct, uint8_t n, ...);
 
 typedef enum							LdmaClassSignal_e
 {

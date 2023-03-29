@@ -1,6 +1,7 @@
 #ifndef _ZUNO_HARDWARE_SERIAL_H
 #define _ZUNO_HARDWARE_SERIAL_H
 
+#include "Arduino.h"
 #include "Stream.h"
 #include "stdio.h"
 #include "LdmaClass.h"

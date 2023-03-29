@@ -3,6 +3,7 @@
 #include "ZUNO_Buttons.h"
 #include "ZWCCResetLocally.h"
 #include "Debug.h"
+#include "em_core.h"
 
 ZunoLedMode_t SYSLED_ACTIVITY_MODES[] = {
                                             {50, 0x55555555}, // SYSLED_ACTIVITY_MODE_BLINK
@@ -134,4 +135,14 @@ void SysServiceEvent(ZUNOSysEvent_t * ev){
 void SysServiceSleep(){
     serviceLeds.off(SYSLED_LEARN);
     serviceLeds.off(SYSLED_ACTIVITY);
+}
+
+CORE_irqState_t CORE_EnterCritical(void) {
+	zunoSysCall(ZUNO_SYSFUNC_ENTER_CRITICAL, 0);
+	return (0x0);
+}
+
+void CORE_ExitCritical(CORE_irqState_t irqState) {
+	zunoSysCall(ZUNO_SYSFUNC_EXIT_CRITICAL, 0);
+	(void)irqState;
 }

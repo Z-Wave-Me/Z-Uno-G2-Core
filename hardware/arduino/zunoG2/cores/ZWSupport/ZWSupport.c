@@ -692,6 +692,10 @@ void _fillZWaveData(uint8_t secure_param){
 	g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt = sizeof(zuno_cmdClassListNSNI_Def);
 	memcpy(g_zuno_sys->zw_protocol_data->CCLstSec, zuno_cmdClassListSec_Def, sizeof(zuno_cmdClassListSec_Def));
 	g_zuno_sys->zw_protocol_data->CCLstSec_cnt = sizeof(zuno_cmdClassListSec_Def);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("_fillZWaveData NIF:");
+	LOGGING_UART.dumpPrint(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt);
+	#endif
 	if((g_zuno_sys->p_config->secure_mode) && 
 	   (secure_param != ZUNO_SECUREPARAM_OFF) && 
 	   (g_zuno_sys->zw_protocol_data->req_s2_keys != 0)){
@@ -777,12 +781,12 @@ void _zunoSaveUserChannels(){
 	zunoEEPROMWrite(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
+	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
 	_zunoSaveUserChannels();
 	zunoBasicSaveInit();
 	#ifdef WITH_CC_SWITCHCOLOR
 	zunoSwitchColorSaveInit();
 	#endif
-	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }
 static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){

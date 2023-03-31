@@ -13,6 +13,7 @@
 #include "em_gpio.h"
 #include <CommandQueue.h>
 #include <SysService.h>
+#include "em_burtc.h"
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -449,9 +450,12 @@ static void LLInit(void *data) {
         WDOG_Feed();
     }
     // default configuration values
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
     g_zuno_odhw_cfg.adc_reference  = adcRef5V;
     g_zuno_odhw_cfg.adc_resolution = 10; // 
     g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
+#endif
     g_zuno_odhw_cfg.pwm_resolution = 8;
     g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
 	g_zuno_sys = (ZUNOSetupSysState_t*)data;
@@ -684,8 +688,9 @@ void checkSystemCriticalStat(){
     }
 }
 #endif
-
-
+#include "em_iadc.h"
+// MULTI_CHIP
+#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
 uint64_t rtcc_micros(void) {
 	uint32_t			tic1;
 	uint32_t			tic2;
@@ -718,6 +723,41 @@ time_t zunoGetTimeStamp(void) {
 void zunoSetTimeStamp(time_t timeUnix) {
 	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
 }
+#endif//#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
+#if defined(BURTC_PRESENT)
+uint64_t rtcc_micros(void) {
+	uint32_t			tic1;
+	uint32_t			tic2;
+	uint32_t			overflow;
+	uint64_t			out;
+
+	tic1 = BURTC_CounterGet();
+	overflow = BURAM->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
+	tic2 = BURTC_CounterGet();
+	if (tic2 < tic1) {
+		tic1 = tic2;
+		overflow++;
+	}
+	out = overflow;
+	out = (out << 0x20) | tic1;
+	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
+	return (out);
+}
+
+bool zunoIsValidDate(void) {
+	if (BURAM->RET[0x1E].REG == 0x0)
+		return (false);
+	return (true);
+}
+
+time_t zunoGetTimeStamp(void) {
+	return (BURAM->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
+}
+
+void zunoSetTimeStamp(time_t timeUnix) {
+	BURAM->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
+}
+#endif//#if defined(BURTC_PRESENT)
 
 dword millis(void){
 	return (dword)(rtcc_micros() / 1000);
@@ -799,6 +839,8 @@ size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
     ch <<= 3;
     return (loc << ch);
 }
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
     if(res > 8)
         return adcRes12Bit;
@@ -806,6 +848,8 @@ inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
         return adcRes8Bit;
     return 	adcRes6Bit;
 }
+#endif
+
 inline uint8_t  __adc_resolution2RealBits(uint8_t res){
     if(res > 8)
         return 12;
@@ -818,12 +862,20 @@ inline uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
         return v >> (src - dst);
     return v << (dst - src);
 }
+
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogReference(ADC_Ref_TypeDef ref){
     g_zuno_odhw_cfg.adc_reference = ref;
 }
+#endif
+
 void analogReadResolution(uint8_t bits){
     g_zuno_odhw_cfg.adc_resolution = bits;
 }
+
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime){
     g_zuno_odhw_cfg.adc_acqtime = acqtime;
 }
@@ -907,7 +959,10 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin) {
 	}
 	return (out);
 }
+#endif
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void zmeADCInit() {
 	ADC_Init_TypeDef				adcInit;
 
@@ -924,7 +979,10 @@ void zmeADCInit() {
 		g_zuno_odhw_cfg.ADCInitialized = true;
 	}
 }
+#endif
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 int analogRead(uint8_t pin) {
 	uint32_t								sampleValue;
 	ADC_InitSingle_TypeDef					singleInit;
@@ -944,11 +1002,11 @@ int analogRead(uint8_t pin) {
 	ADC0->CMD = ADC_CMD_SINGLESTOP;
 	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(g_zuno_odhw_cfg.adc_resolution), g_zuno_odhw_cfg.adc_resolution));
 }
-
+#endif
 
 
 // MULTI_CHIP
-void WDOGn_Feed(WDOG_TypeDef *wdog);
+extern "C" void WDOGn_Feed(WDOG_TypeDef *wdog);
 void WDOG_Feed() {
 	WDOGn_Feed(WDOG0);
 }
@@ -1039,6 +1097,65 @@ uint32_t    zunoMapPin2EM4Int(uint8_t em4_pin){
     uint32_t real_pin = getRealPin(em4_pin);
     return (1 << real_pin);
 }
+
+// MULTI_CHIP
+#if defined(_GPIO_EM4WUPOL_MASK)
+uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin) {
+	uint8_t								real_pin;
+	uint32_t							mask;
+	static constexpr uint32_t			mask_default = 0x0;
+
+	real_pin = getRealPin(em4_pin);
+	switch (getRealPort(em4_pin)) {
+		case gpioPortB:
+			switch (real_pin) {
+				case 0x1://PB01
+					mask = GPIO_IEN_EM4WUIEN3;
+					break ;
+				case 0x3://PB03
+					mask = GPIO_IEN_EM4WUIEN4;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		case gpioPortC:
+			switch (real_pin) {
+				case 0x0://PC00
+					mask = GPIO_IEN_EM4WUIEN6;
+					break ;
+				case 0x5://PC05
+					mask = GPIO_IEN_EM4WUIEN7;
+					break ;
+				case 0x7://PC07
+					mask = GPIO_IEN_EM4WUIEN8;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		case gpioPortD:
+			switch (real_pin) {
+				case 0x2://PD02
+					mask = GPIO_IEN_EM4WUIEN9;
+					break ;
+				case 0x5://PD05
+					mask = GPIO_IEN_EM4WUIEN10;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		default:
+			mask = mask_default;
+			break ;
+	}
+	return (mask);
+}
+#elif defined(_GPIO_EXTILEVEL_MASK)
 uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
     uint32_t real_pin = getRealPin(em4_pin);
     switch (getRealPort(em4_pin)) {
@@ -1067,6 +1184,8 @@ uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
     }
     return 0;
 }
+#endif
+
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t polarity){
     pinMode(em4_pin, mode);
     uint32_t wu_map = zunoMapPin2EM4Bit(em4_pin);

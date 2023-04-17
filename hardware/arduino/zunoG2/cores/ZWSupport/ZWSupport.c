@@ -794,15 +794,15 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	uint8_t								rx_s2level;
 
 	s2level = zunoSecurityStatus();
-	if(s2level == SECURITY_KEY_NONE)// Включены без Security - нет смысла фильтровать
+	if(s2level == SECURITY_KEY_NONE)// Node was included without security - we not need to filter anything
 		return (false);
-	if(s2level == SECURITY_KEY_S0)
-		if(ZW_CMD_CLASS == COMMAND_CLASS_MANUFACTURER_SPECIFIC)// Для обратной совместимости
-			return (false);
 	rx_s2level = cmd->zw_rx_secure_opts;
-	if(s2level == rx_s2level)// Запрос пришел на высшем уровне безопасности
+	if(rx_s2level == SECURITY_KEY_S0)
+		if(ZW_CMD_CLASS == COMMAND_CLASS_MANUFACTURER_SPECIFIC)// Backward compatibility
+			return (false);
+	if(s2level == rx_s2level)// Highest avaliable S2-level for this node => pass it
 		return (false);
-	if (_zmeIsS2LevelGreater(s2level, rx_s2level))// Запрос пришел с тем, что меньше нашего уровня безопасности
+	if (_zmeIsS2LevelGreater(s2level, rx_s2level)) // Request level lower than node level - check nonsecure NIF 
 		if (_isCCinList(ZW_CMD_CLASS, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
 			return (false);
 	return (true);

@@ -805,6 +805,10 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	if (_zmeIsS2LevelGreater(s2level, rx_s2level)) // Request level lower than node level - check nonsecure NIF 
 		if (_isCCinList(ZW_CMD_CLASS, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
 			return (false);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print(millis());
+	LOGGING_UART.println("*** S2 Filtered!"); 
+	#endif
 	return (true);
 }
 
@@ -818,7 +822,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	int													result;
 	// delay(10); // TST!
 	zunoReportHandler(cmd);
-	if (_zunoS2PkgFilter(cmd) == true)
+	if (_zunoS2PkgFilter(cmd))
 		return (ZUNO_COMMAND_BLOCKED);
 	result = ZUNO_UNKNOWN_CMD;
 	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;

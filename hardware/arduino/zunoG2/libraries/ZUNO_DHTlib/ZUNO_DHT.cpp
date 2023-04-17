@@ -27,7 +27,7 @@ typedef struct							ZunoDhtTypeConfig_s
 {
 	TIMER_TypeDef						*timer;
 	ZunoSync_t							*lpLock;
-	LdmaClassSignal_t					dmaSignal;
+	LDMA_PeripheralSignal_t					dmaSignal;
 	CMU_Clock_TypeDef					bus_clock;
 }										ZunoDhtTypeConfig_t;
 
@@ -45,13 +45,13 @@ const ZunoDhtTypeConfig_t gconfigTable[] = {
 	{
 		.timer = TIMER0,
 		.lpLock = &gSyncTIMER0,
-		.dmaSignal =  LdmaClassSignal_TIMER0_CC0,
+		.dmaSignal =  ldmaPeripheralSignal_TIMER0_CC0,
 		.bus_clock = cmuClock_TIMER0
 	},
 	{
 		.timer = TIMER1,
 		.lpLock = &gSyncTIMER1,
-		.dmaSignal =  LdmaClassSignal_TIMER1_CC0,
+		.dmaSignal =  ldmaPeripheralSignal_TIMER1_CC0,
 		.bus_clock = cmuClock_TIMER1
 	}
 };

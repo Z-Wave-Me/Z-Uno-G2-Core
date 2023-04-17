@@ -6,7 +6,10 @@
 typedef enum
 {
 	BtnTypeButton,
+	// MULTI_CHIP
+	#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 	BtnTypeTouch
+	#endif
 } ZunoBtnType_t;
 
 typedef enum
@@ -169,7 +172,10 @@ class ButtonsClass {
 		inline ZunoError_t					addButton(uint8_t pin) {return (this->addButton(pin, BtnTypeButton));};
 		ZunoError_t							addButton(uint8_t pin, ZunoBtnType_t type);
 		inline ZunoError_t					addButton(uint8_t pin, ZunoBtnButtonInit_t *init) {return (this->_addButton(pin, BtnTypeButton, (void *)init));};
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		inline ZunoError_t					addButton(uint8_t pin, ZunoBtnTouchInit_t *init) {return (this->_addButton(pin, BtnTypeTouch, (void *)init));};
+		#endif
 		void								deleteButton(uint8_t pin);
 		inline uint8_t						isSingleClick(uint8_t pin) {return (this->_isCommonClick(pin, BTN_COMMON_SINGLE));};
 		inline uint8_t						isDoubleClick(uint8_t pin) {return (this->_isCommonClick(pin, BTN_COMMON_DOUBLE));};
@@ -182,10 +188,13 @@ class ButtonsClass {
 		size_t								_isCommonClick(uint8_t pin, ZunoBtnCommonClick_t typeClick);
 		ZunoError_t							_addButton(uint8_t pin, ZunoBtnType_t type, void *init);
 		inline ZunoError_t					_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeader_t *list);
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		inline ZunoError_t					_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *list);
 		inline ZunoError_t					_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBtnTouch_t *list);
-		inline void							_deactive(ZunoBtnHeader_t *list);
 		inline void							_deactiveTouch(ZunoBtnTouch_t *list);
+		#endif
+		inline void							_deactive(ZunoBtnHeader_t *list);
 		inline ZunoError_t					_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init);
 		inline void							_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init, uint8_t bOld);
 		inline ZunoBtnHeader_t				*_findList(uint8_t pin);

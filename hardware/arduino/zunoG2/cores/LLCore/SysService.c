@@ -137,11 +137,13 @@ void SysServiceSleep(){
     serviceLeds.off(SYSLED_ACTIVITY);
 }
 
+CORE_irqState_t CORE_EnterAtomic(void) __attribute__ ((alias("CORE_EnterCritical")));
 CORE_irqState_t CORE_EnterCritical(void) {
 	zunoSysCall(ZUNO_SYSFUNC_ENTER_CRITICAL, 0);
 	return (0x0);
 }
 
+void CORE_ExitAtomic(CORE_irqState_t irqState) __attribute__ ((alias("CORE_ExitCritical")));
 void CORE_ExitCritical(CORE_irqState_t irqState) {
 	zunoSysCall(ZUNO_SYSFUNC_EXIT_CRITICAL, 0);
 	(void)irqState;

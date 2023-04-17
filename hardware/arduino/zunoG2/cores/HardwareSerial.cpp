@@ -17,27 +17,30 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 	{
 		.usart = USART0,
 		.lpLock = &gSyncUSART0,
-		.dmaSignalWrite = LdmaClassSignal_USART0_TXBL,
-		.dmaSignalRead = LdmaClassSignal_USART0_RXDATAV,
+		.dmaSignalWrite = ldmaPeripheralSignal_USART0_TXBL,
+		.dmaSignalRead = ldmaPeripheralSignal_USART0_RXDATAV,
 		.bus_clock = cmuClock_USART0,
 		.rx = RX0,
 		.tx = TX0
 	},
+	#if USART_COUNT >= 2// MULTI_CHIP
 	{
 		.usart = USART1,
 		.lpLock = &gSyncUSART1,
-		.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
-		.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
+		.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
+		.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 		.bus_clock = cmuClock_USART1,
 		.rx = RX1,
 		.tx = TX1
 	},
+	#endif//USART_COUNT >= 2
+	#if USART_COUNT >= 3
 		#if ZUNO_PIN_V <= 3
 			{
 				.usart = USART1,
 				.lpLock = &gSyncUSART2,
-				.dmaSignalWrite = LdmaClassSignal_USART1_TXBL,
-				.dmaSignalRead = LdmaClassSignal_USART1_RXDATAV,
+				.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
+				.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 				.bus_clock = cmuClock_USART1,
 				.rx = RX2,
 				.tx = TX2
@@ -46,13 +49,14 @@ const ZunoHardwareSerialConfig_t HardwareSerial::_configTable[] = {
 			{
 				.usart = USART2,
 				.lpLock = &gSyncUSART2,
-				.dmaSignalWrite = LdmaClassSignal_USART2_TXBL,
-				.dmaSignalRead = LdmaClassSignal_USART2_RXDATAV,
+				.dmaSignalWrite = ldmaPeripheralSignal_USART2_TXBL,
+				.dmaSignalRead = ldmaPeripheralSignal_USART2_RXDATAV,
 				.bus_clock = cmuClock_USART2,
 				.rx = RX2,
 				.tx = TX2
 			}
 		#endif
+	#endif//USART_COUNT >= 3
 };
 
 /* Public Constructors */
@@ -225,16 +229,21 @@ inline ZunoError_t HardwareSerial::_beginFaill(ZunoError_t ret, uint8_t bFree, v
 inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree) {
 	const ZunoHardwareSerialConfig_t			*config;
 	USART_TypeDef								*usart;
-	const uint8_t								*location_ptr;
-	size_t										location_sz;
 	ZunoError_t									ret;
-	size_t 										rx_loc;
-	size_t 										tx_loc;
 	USART_InitAsync_TypeDef						usartInit;
 	ssize_t										channel;
+	// MULTI_CHIP
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
+	const uint8_t								*location_ptr;
+	size_t										location_sz;
+	size_t 										rx_loc;
+	size_t 										tx_loc;
+	#endif
 
 	config = &HardwareSerial::_configTable[this->_numberConfig];
 	usart = config->usart;
+	// MULTI_CHIP
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	// The right place to check pin location is here, 'cause we haven't allocate SyncMasterHadwareSerial
 	// So we can throw pin error without extra code
 	if (usart == USART2) {
@@ -250,6 +259,7 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	tx_loc = getLocation(location_ptr, location_sz, tx);
 	if (rx == tx || rx_loc == INVALID_PIN_INDEX || tx_loc == INVALID_PIN_INDEX)
 		return (this->_beginFaill(ZunoErrorInvalidPin, bFree, b));// wrong index or pin combination // The pin is valid, but it doesn't support by this USART interface
+	#endif
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterHadwareSerial, 0x0, 0x0, &this->_lpKey)) != ZunoErrorOk)
 		return (this->_beginFaill(ret, bFree, b));
 	CMU_ClockEnable(config->bus_clock, true);
@@ -265,9 +275,16 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	this->_buffer = (uint8_t *)b;
 	this->_buffer_len = len;
 	this->_bFree = bFree;
+	// MULTI_CHIP
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT;
 	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;
+	#else
+	GPIO->USARTROUTE[this->_numberConfig].TXROUTE = (getRealPort(tx) << _GPIO_USART_TXROUTE_PORT_SHIFT) | (getRealPin(tx) << _GPIO_USART_TXROUTE_PIN_SHIFT);
+	GPIO->USARTROUTE[this->_numberConfig].RXROUTE = (getRealPort(rx) << _GPIO_USART_RXROUTE_PORT_SHIFT) | (getRealPin(rx) << _GPIO_USART_RXROUTE_PIN_SHIFT);
+	GPIO->USARTROUTE[this->_numberConfig].ROUTEEN = GPIO_USART_ROUTEEN_RXPEN | GPIO_USART_ROUTEEN_TXPEN;
+	#endif
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
 	if (len != 0x0) {
@@ -286,21 +303,13 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 }
 
 /* Preinstantiate Objects */
-#if ZUNO_PIN_V == 3
-	HardwareSerial Serial(2);// USB
-	HardwareSerial Serial1(1); // UART1 // Пока не поддерживается 2
-	HardwareSerial Serial0(0); // UART0
-#elif ZUNO_PIN_V == 4
-	HardwareSerial Serial(2);// USB
+#if ZUNO_PIN_V == 4 || ZUNO_PIN_V == 6
+	#if USART_COUNT >= 3// MULTI_CHIP
+	HardwareSerial Serial(2);// UART2
+	#endif
+	#if USART_COUNT >= 2// MULTI_CHIP
 	HardwareSerial Serial1(1); // UART1
-	HardwareSerial Serial0(0); // UART0
-#elif ZUNO_PIN_V == 6
-	HardwareSerial Serial(2);// USB
-	HardwareSerial Serial1(1); // UART1
-	HardwareSerial Serial0(0); // UART0
-#elif ZUNO_PIN_V == 0
-	HardwareSerial Serial(1);// USB
-	HardwareSerial Serial1(1); // UART1
+	#endif
 	HardwareSerial Serial0(0); // UART0
 #else
 	#error ZUNO_PIN_V
@@ -311,12 +320,16 @@ ssize_t write(int fd, const void *buf, size_t count) {
 		case 0:
 			return (Serial0.write((const uint8_t *)buf, count));
 			break ;
+		#if USART_COUNT >= 2// MULTI_CHIP
 		case 1:
 			return (Serial1.write((const uint8_t *)buf, count));
 			break ;
+		#endif
+		#if USART_COUNT >= 3// MULTI_CHIP
 		case 2:
 			return (Serial.write((const uint8_t *)buf, count));
 			break ;
+		#endif
 		default:
 			break ;
 	}

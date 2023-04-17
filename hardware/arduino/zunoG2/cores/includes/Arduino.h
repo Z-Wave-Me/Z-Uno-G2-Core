@@ -181,12 +181,18 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogReference(ADC_Ref_TypeDef ref);
+#endif
 void analogReadResolution(uint8_t bits);
 void analogWriteResolution(uint8_t bits);
 int  analogRead(uint8_t pin);
-void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
+void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
+#endif
 
 
 /* EEPROM */

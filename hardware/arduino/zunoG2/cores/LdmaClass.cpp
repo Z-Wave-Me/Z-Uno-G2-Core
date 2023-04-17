@@ -13,15 +13,15 @@ size_t LdmaClass::transferDone(ssize_t channel) {
 	return ((size_t)zunoSysCall(ZUNO_SYSFUNC_DMA_XFER_DONE, 0x1, channel));
 }
 
-ssize_t LdmaClass::transferSingle(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LDMA_CtrlSrcInc_t srcInc, LDMA_CtrlDstInc_t dstInc, LdmaClassTransferSingle_t *array) {
+ssize_t LdmaClass::transferSingle(const void *src, void *dst, size_t len, LDMA_PeripheralSignal_t signal, LDMA_CtrlSize_t size, LDMA_CtrlSrcInc_t srcInc, LDMA_CtrlDstInc_t dstInc, LdmaClassTransferSingle_t *array) {
 	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_XFER_SINGLE, 0x8, src, dst, len, signal, size, srcInc, dstInc, array));
 }
 
-ssize_t LdmaClass::receivedCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassReceivedCyclical_t *array) {
+ssize_t LdmaClass::receivedCyclical(const void *src, void *dst, size_t len, LDMA_PeripheralSignal_t signal, LDMA_CtrlSize_t size, LdmaClassReceivedCyclical_t *array) {
 	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_CYCLIC, 0x6, src, dst, len, signal, size, array));
 }
 
-ssize_t LdmaClass::transferCyclical(const void *src, void *dst, size_t len, LdmaClassSignal_t signal, LDMA_CtrlSize_t size, LdmaClassTransferCyclical_t *array) {
+ssize_t LdmaClass::transferCyclical(const void *src, void *dst, size_t len, LDMA_PeripheralSignal_t signal, LDMA_CtrlSize_t size, LdmaClassTransferCyclical_t *array) {
 	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_XFER_CYCLIC, 0x6, src, dst, len, signal, size, array));
 }
 
@@ -37,6 +37,6 @@ void LdmaClass::i2cFixReceived(ssize_t channel) {
 	zunoSysCall(ZUNO_SYSFUNC_DMA_I2C_RCV, 0x1, channel);
 }
 
-ssize_t LdmaClass::i2cRequestFrom(I2C_TypeDef *i2c, void *dst, size_t len, LdmaClassSignal_t signal, LdmaClassTransferI2cRequestFromMaster_t *array) {
+ssize_t LdmaClass::i2cRequestFrom(I2C_TypeDef *i2c, void *dst, size_t len, LDMA_PeripheralSignal_t signal, LdmaClassTransferI2cRequestFromMaster_t *array) {
 	return ((ssize_t)zunoSysCall(ZUNO_SYSFUNC_DMA_I2C_REQUEST, 0x5, i2c, dst, len, signal, array));
 }

@@ -156,7 +156,7 @@ typedef struct							ZunoNeoBaseConfig_s
 	};
 	ZunoSync_t							*lpLock;
 	void								*dst;
-	LdmaClassSignal_t					dmaSignal;
+	LDMA_PeripheralSignal_t					dmaSignal;
 	CMU_Clock_TypeDef					bus_clock;
 	uint8_t								type;
 	uint8_t								coder;

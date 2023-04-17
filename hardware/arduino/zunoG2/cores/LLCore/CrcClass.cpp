@@ -65,7 +65,7 @@ static void _crcCommon(const void *data, size_t len, GPCRC_Init_TypeDef *initGpc
 // 		while (((size_t)b & (sizeof(uint32_t) - 1)) != 0)//Выравниваем адрес под  слово используемое в системе в arm x86 - выравниваем под 4 байт
 // 			GPCRC_InputU8(GPCRC, b++[0]);
 // 		len = (e - b) / sizeof(uint32_t);
-// 		channel = LdmaClass::transferSingle(b, (void *)&GPCRC->INPUTDATA, len, LdmaClassSignal_NONE, ldmaCtrlSizeWord, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array);
+// 		channel = LdmaClass::transferSingle(b, (void *)&GPCRC->INPUTDATA, len, ldmaPeripheralSignal_NONE, ldmaCtrlSizeWord, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array);
 // 		// delay(len / 0x1800);//Считаем что 0x1800 считает за 1 ms
 // 		while (LdmaClass::transferDone(channel) == false)
 // 			__NOP();

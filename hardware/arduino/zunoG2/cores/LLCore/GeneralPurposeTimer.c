@@ -4,6 +4,8 @@
 #include "em_device.h"
 #include "em_timer.h"
 
+// MULTI_CHIP
+#if defined(WTIMER0)
 #define GPT_TOP_SET_FREQ(interval)		(size_t)((((gFlags & ZUNO_GPT_SCALE1024) != 0) ? (32 * 4) : 1) * gTopSetPrescale * interval)//32 ps / 0.25ps
 #define GPT_DEFAULT_INTERVAL			0xFFFFF
 
@@ -92,3 +94,4 @@ void zunoGPTSet(uint16_t interval) {
 	gInterval = interval;
 	zunoSyncReleseRead(&GPT_TIMER_LOCK, SyncMasterGPT, &GPT_TIMER_LOCK_KEY);
 }
+#endif

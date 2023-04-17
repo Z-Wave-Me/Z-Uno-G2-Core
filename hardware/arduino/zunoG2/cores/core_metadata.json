@@ -79,6 +79,25 @@
                     "-lm",
                     "-Wl,--gc-sections"],
     "chip_depending":{
+            "ZGM230SB27HGN":{
+                "family":"ZGM23",
+                "hw_directory":"../device/ZGM23/",
+                "compiler_flags":[
+                                    "-mcpu=cortex-m33",
+                                    "-mfpu=fpv5-sp-d16",
+                                    "-mfloat-abi=hard",
+                                    "-mcmse",
+                                    "-DZGM230SB27HGN"
+                                ],
+                "linker_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DZGM230SB27HGN"
+                            ],
+                "link_file":"ZGM230SB27HGN.ld"
+            },
             "ZGM130S037HGN1":{
                 "family":"ZGM130S",
                 "hw_directory":"../device/ZGM130S/",
@@ -95,8 +114,20 @@
             "EFR32ZG23B010F512IM48":{
                 "family":"EFR32ZG23",
                 "hw_directory":"../device/EFR32ZG23/",
-                "compiler_flags":["-mcpu=cortex-m33"],
-                "linker_flags":["-mcpu=cortex-m33"],
+                "compiler_flags":[
+                    "-mcpu=cortex-m33",
+                    "-mfpu=fpv5-sp-d16",
+                    "-mfloat-abi=hard",
+                    "-mcmse",
+                    "-DEFR32ZG23B010F512IM48"
+                ],
+                "linker_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DEFR32ZG23B010F512IM48"
+                            ],
                 "link_file":"EFR32ZG23B010F512IM48.ld"
             }
     },

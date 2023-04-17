@@ -797,7 +797,8 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	if(s2level == SECURITY_KEY_NONE)// Node was included without security - we not need to filter anything
 		return (false);
 	rx_s2level = cmd->zw_rx_secure_opts;
-	if(rx_s2level == SECURITY_KEY_S0)
+	if(((s2level >= SECURITY_KEY_S0) && (rx_s2level == SECURITY_KEY_S0)) || 
+		((s2level == SECURITY_KEY_S0) && (rx_s2level == 0)))
 		if(ZW_CMD_CLASS == COMMAND_CLASS_MANUFACTURER_SPECIFIC)// Backward compatibility
 			return (false);
 	if(s2level == rx_s2level)// Highest avaliable S2-level for this node => pass it

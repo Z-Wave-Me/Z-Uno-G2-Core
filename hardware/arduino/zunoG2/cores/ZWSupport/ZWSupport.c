@@ -821,6 +821,11 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	ZUNOCommandPacketReport_t							frame_report;
 	int													result;
 	// delay(10); // TST!
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print(millis());
+	LOGGING_UART.print("INCOMING  "); 
+	zuno_dbgdumpZWPacakge(cmd);
+	#endif
 	zunoReportHandler(cmd);
 	if (_zunoS2PkgFilter(cmd))
 		return (ZUNO_COMMAND_BLOCKED);
@@ -829,11 +834,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	g_rcv_context.bBroadcast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0;
 	g_rcv_context.source_node_id = cmd->src_node;
 
-	#ifdef LOGGING_DBG
-	LOGGING_UART.print(millis());
-	LOGGING_UART.print("INCOMING  "); 
-	zuno_dbgdumpZWPacakge(cmd);
-	#endif
 	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	zunoKickSleepTimeout(ZUNO_SLEEP_RX_TIMEOUT);
     //g_wup_sended_notify = true;

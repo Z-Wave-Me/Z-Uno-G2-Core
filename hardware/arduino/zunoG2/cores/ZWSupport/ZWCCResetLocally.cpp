@@ -2,6 +2,7 @@
 #include "SysService.h"
 #include "ZWSupport.h"
 #include "CommandQueue.h"
+#include "Debug.h"
 
 
 
@@ -13,10 +14,14 @@ RSTLocallyData_t g_rst_locally_data = {false, 0};
 
 
 void zunoResetLocally(){
+    #ifdef LOGGING_DBG
+    LOGGING_UART.println("*** ZUNO RST LOCALLY USR CALL");
+    #endif
     ZUNOCommandPacketReport_t			frame;
     fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_GROUP | RST_LOCALLY_QUEUE_CHANNEL, ZUNO_LIFELINE_GRP);
 	frame.packet.cmd[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
     frame.packet.cmd[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
+    frame.packet.len = 2;
 	zunoSendZWPackage(&frame.packet);
     g_rst_locally_data.started = true;
     g_rst_locally_data.timeout = millis() + RST_LOCALLY_TIMEOUT;
@@ -32,6 +37,9 @@ void RSTLocallyTick(){
         // Check if the package was processed by ZW Stack
         if(zunoCheckSystemQueueStatus(RST_LOCALLY_QUEUE_CHANNEL))
             return;
+        #ifdef LOGGING_DBG
+        LOGGING_UART.println("*** ZUNO RST LOCALLY: FLUSH SYS. MEM");
+        #endif
         // Call OS to reset all SDK memory
         zunoSysCall(ZUNO_SYSFUNC_SETDEFAULT, 1, 0);
         g_rst_locally_data.started = false;

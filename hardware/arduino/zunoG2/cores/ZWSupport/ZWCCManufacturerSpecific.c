@@ -11,6 +11,12 @@
 
 int zuno_CCManufacturerSpecificHandler(ZUNOCommandPacket_t *cmd, 
                             ZUNOCommandPacketReport_t *frame_report) {
+
+    
+    // "Report the way you was asked" approach is absolutely legal fo this CC
+    uint8_t rx_s2level = cmd->zw_rx_secure_opts;
+    frame_report->packet.zw_rx_secure_opts = rx_s2level;
+
 	switch(ZW_CMD){
         case MANUFACTURER_SPECIFIC_GET:
             frame_report->packet.cmd[2] = (uint8_t)(DEVICE_MANUFACTURER_ID >> 8);

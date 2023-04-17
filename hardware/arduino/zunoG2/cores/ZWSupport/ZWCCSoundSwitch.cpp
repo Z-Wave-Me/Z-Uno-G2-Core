@@ -216,6 +216,8 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	parameter_array->play->playCommandToneVolume = playCommandToneVolume;
 	parameter_array->play->bReport = bReport;
 	zunoExitCritical();
+	if (result == ZUNO_COMMAND_PROCESSED)
+		zunoSendReport(channel + 1);
 	return (result);
 }
 

@@ -7,7 +7,8 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
-    if(zunoNID() == 0) { // We are out of network - don't send anything
+    if(((pkg->flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
+        (zunoNID() == 0)) { // We are out of network - don't send anything
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
 		LOGGING_UART.println(" Package was dropped! NodeID==0");

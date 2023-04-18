@@ -804,8 +804,22 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	if(s2level == rx_s2level)// Highest avaliable S2-level for this node => pass it
 		return (false);
 	if (_zmeIsS2LevelGreater(s2level, rx_s2level)) // Request level lower than node level - check nonsecure NIF 
-		if (_isCCinList(ZW_CMD_CLASS, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
+	{
+		uint8_t cc = ZW_CMD_CLASS;
+		// Special case for multichannel
+		if(ZUNO_CFG_CHANNEL_COUNT > 1){
+			// Multichannel is included 
+			if((cc == COMMAND_CLASS_MULTI_CHANNEL)){
+				 if(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP){
+					return false; // Metadata is avaliable
+				 }
+				 cc = cmd->cmd[4];
+			} 
+
+		}
+		if (_isCCinList(cc, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
 			return (false);
+	}
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());
 	LOGGING_UART.println("*** S2 Filtered!"); 
@@ -1693,6 +1707,17 @@ static uint8_t DEPRECATED_RF_EVENTS[] = {
 											ZUNO_SYS_EVENT_INVALID_TX_REQUEST
 
 										}; 
+
+void zunoSendTestPackage(uint8_t * data, uint8_t len){
+	ZUNOCommandPacketReport_t			frame;
+	fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_TEST | QUEUE_CHANNEL_LLREPORT, 0xF0);
+	//frame.packet.flags |= ZUNO_PACKETFLAGS_TEST
+    frame.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
+    frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
+	frame.packet.len = 2 + len;
+	_zme_memcpy(&frame.packet.cmd[2], (uint8_t*)data, len);
+	zunoSendZWPackage(&frame.packet);
+}
 void zunoRFLogger(ZUNOSysEvent_t * ev){
 	int i;
 	ZUNOCommandPacketReport_t			frame;
@@ -1705,8 +1730,8 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 		if(ev->event == DEPRECATED_RF_EVENTS[i])
 			return;
 	fillOutgoingReportPacketAsync(&frame, 0);
-    frame.packet.cmd[0] = 0x72;
-    frame.packet.cmd[1] = 0x05 + 0x10;
+    frame.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
+    frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
 	frame.packet.len = 2 + 13;
     uint8_t * p_data  = &frame.packet.cmd[2];
     uint32_t systime_data  = millis();

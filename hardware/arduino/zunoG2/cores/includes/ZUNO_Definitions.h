@@ -89,7 +89,7 @@ typedef enum
 #define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 				4
 #define MAX_FWHEADER_SIGN 16
 
-
+#define MAX_ZUNO_USER_RETENTION                         16
 #define MAX_SLEEP_DELAY 								60000
 #ifndef ZUNO_MAX_CONTROLLER_WUP_TIMEOUT
 #define ZUNO_MAX_CONTROLLER_WUP_TIMEOUT 				10000

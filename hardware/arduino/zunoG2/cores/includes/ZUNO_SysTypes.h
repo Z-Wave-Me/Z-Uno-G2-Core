@@ -152,6 +152,7 @@ typedef struct ZUNOSetupSysState_s {
 	uint32_t  error_pc_value;
 	ZUNOSysConfigData_t *   p_config;
 	bool      fw_update_accepted;
+	uint8_t   usr_retention[MAX_ZUNO_USER_RETENTION];
 }ZUNOSetupSysState_t;
 
 

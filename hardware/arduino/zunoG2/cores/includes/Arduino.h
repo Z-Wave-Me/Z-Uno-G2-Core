@@ -77,6 +77,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoIsDbgModeOn()       ((g_zuno_sys->flags & ZUNO_CFGFILE_FLAG_DBG) != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->wakeup_reason)
+#define zunoRSTRetention(N)     ( N < MAX_ZUNO_USER_RETENTION ? g_zuno_sys->usr_retention[N] : 0)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 
 // Arduino specific macroses/function
@@ -241,6 +242,7 @@ inline void zunoSetS2Keys(byte keys) {
 };
 void zunoStartLearn(byte timeout, bool secured);
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
+void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id);
 // Backward compatibility macro
 #define ZUNO_START_CONFIG() 						zunoStartDeviceConfiguration()
 #define ZUNO_ADD_CHANNEL(TYPE, SUBTYPE, OPTIONS)  	zunoAddChannel(TYPE, SUBTYPE, OPTIONS)

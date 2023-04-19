@@ -1717,13 +1717,14 @@ static uint8_t DEPRECATED_RF_EVENTS[] = {
 
 										}; 
 
-void zunoSendTestPackage(uint8_t * data, uint8_t len){
+void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id){
 	ZUNOCommandPacketReport_t			frame;
-	fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_TEST | QUEUE_CHANNEL_LLREPORT, 0xF0);
+	fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_TEST | QUEUE_CHANNEL_CONTROL, dst_node_id);
 	//frame.packet.flags |= ZUNO_PACKETFLAGS_TEST
     frame.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
     frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
 	frame.packet.len = 2 + len;
+	frame.packet.zw_rx_secure_opts = 0;
 	_zme_memcpy(&frame.packet.cmd[2], (uint8_t*)data, len);
 	zunoSendZWPackage(&frame.packet);
 }

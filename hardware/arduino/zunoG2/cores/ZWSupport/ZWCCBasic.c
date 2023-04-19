@@ -6,12 +6,11 @@
 
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier);
-
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	size_t							value;
 	size_t							type;
 
-	type = 0;//ZUNO_CFG_CHANNEL(channel).type;
+	type = ZUNO_CFG_CHANNEL(channel).type;
 	value = paket->value;
 	#if defined(WITH_CC_SOUND_SWITCH)
 	switch (type) {

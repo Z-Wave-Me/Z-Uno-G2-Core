@@ -490,7 +490,7 @@ static int _configuration_default_reset(void) {
 	const ZunoCFGParameter_t							*cfg;
 
 	for(int i=0x0; i< CONFIGPARAM_MAX_PARAM; i++){
-		cfg = zunoCFGParameter(i);
+		cfg = zunoCFGParameterProxy(i);
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN) {
 			if (i < CONFIGPARAM_MIN_PARAM)
 				_saveSysParam(i, cfg->defaultValue);
@@ -500,6 +500,7 @@ static int _configuration_default_reset(void) {
 	}
 	return (ZUNO_COMMAND_PROCESSED); // forward reset to main firmware
 }
+
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 

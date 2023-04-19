@@ -461,6 +461,11 @@ static void LLInit(void *data) {
 	g_zuno_sys = (ZUNOSetupSysState_t*)data;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
+	if ((EEPROM_CONFIGURATION_ADDR + EEPROM_CONFIGURATION_SIZE) > EEPROM_MAX_SIZE) {
+		LOGGING_UART.print("EEPROM: Exceeded memory limit!!!");
+		while (true)
+			__NOP();
+	}
 	#endif
 	#ifdef WITH_AUTOSETUP
 	zuno_static_autosetup();

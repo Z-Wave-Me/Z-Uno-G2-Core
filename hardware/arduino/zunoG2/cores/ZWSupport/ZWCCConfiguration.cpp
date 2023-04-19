@@ -4,17 +4,9 @@
 #include "SysService.h"
 
 #define CONFIGPARAM_MIN_PARAM				0x40
-#define CONFIGPARAM_PARAM_COUNT_DEFAULT		(EEPROM_CONFIGURATION_SIZE / 0x4)
-#define CONFIGPARAM_MAX_PARAM_DEFAULT		(CONFIGPARAM_MIN_PARAM + CONFIGPARAM_PARAM_COUNT_DEFAULT)
-
-#ifdef CONFIGPARAMETERS_MAX_COUNT
-	#define CONFIGPARAM_MAX_PARAM			(CONFIGPARAM_MIN_PARAM + CONFIGPARAMETERS_MAX_COUNT)
-#else
-	#define CONFIGPARAM_MAX_PARAM			CONFIGPARAM_MAX_PARAM_DEFAULT
-#endif
+#define CONFIGPARAM_MAX_PARAM				(CONFIGPARAM_MIN_PARAM + (EEPROM_CONFIGURATION_SIZE / 0x4))
 
 #define CONFIGPARAM_EEPROM_ADDR(param)		(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
-#define CONFIGPARAM_EEPROM_ADDR_ADD(param)	(((param - CONFIGPARAM_MAX_PARAM_DEFAULT) * sizeof(int32_t)) + EEPROM_USER_CODE_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
@@ -236,7 +228,7 @@ static void _loadSysParam(size_t param, uint32_t & value){
                     value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_DBG ? 1 : 0;
                     break;
             case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
-                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF? 1 : 0;
+                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF? 0 : 1;
                     break;
             case ZUNO_SYSCFGPARAM_LOGGING:
                     value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_RFLOG ? 1 : 0;
@@ -280,7 +272,7 @@ static void _saveSysParam(size_t param, uint32_t  value){
 					update = true;
 					break;
             case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
-					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value != 0);
+					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value == 0);
 					#ifndef NO_SYS_SVC
 					SysReconfigLeds();
 					#endif
@@ -498,7 +490,7 @@ static int _configuration_default_reset(void) {
 	const ZunoCFGParameter_t							*cfg;
 
 	for(int i=0x0; i< CONFIGPARAM_MAX_PARAM; i++){
-		cfg = zunoCFGParameter(i);
+		cfg = zunoCFGParameterProxy(i);
 		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN) {
 			if (i < CONFIGPARAM_MIN_PARAM)
 				_saveSysParam(i, cfg->defaultValue);
@@ -508,6 +500,7 @@ static int _configuration_default_reset(void) {
 	}
 	return (ZUNO_COMMAND_PROCESSED); // forward reset to main firmware
 }
+
 int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 
@@ -551,14 +544,7 @@ ssize_t zunoLoadCFGParam(uint8_t param) {
 
 	if (param < CONFIGPARAM_MIN_PARAM || param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
-	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
-		if (param >= CONFIGPARAM_MAX_PARAM_DEFAULT)
-			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
-		else
-			addr = CONFIGPARAM_EEPROM_ADDR(param);
-	#else
-		addr = CONFIGPARAM_EEPROM_ADDR(param);
-	#endif
+	addr = CONFIGPARAM_EEPROM_ADDR(param);
 	zunoEEPROMRead(addr, sizeof(out), (uint8_t *)&out);
 	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		return (out);
@@ -618,14 +604,7 @@ static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 		result = value;
 	if (bUser == false)
 		zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
-	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
-		if (param >= CONFIGPARAM_MAX_PARAM_DEFAULT)
-			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
-		else
-			addr = CONFIGPARAM_EEPROM_ADDR(param);
-	#else
-		addr = CONFIGPARAM_EEPROM_ADDR(param);
-	#endif
+	addr = CONFIGPARAM_EEPROM_ADDR(param);
 	zunoEEPROMWrite(addr, sizeof(result), (uint8_t *)&result);
 }
 

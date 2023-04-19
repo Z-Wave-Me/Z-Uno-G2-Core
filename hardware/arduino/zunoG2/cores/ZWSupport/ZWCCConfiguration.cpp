@@ -228,7 +228,7 @@ static void _loadSysParam(size_t param, uint32_t & value){
                     value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_DBG ? 1 : 0;
                     break;
             case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
-                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF? 1 : 0;
+                    value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF? 0 : 1;
                     break;
             case ZUNO_SYSCFGPARAM_LOGGING:
                     value = g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_RFLOG ? 1 : 0;
@@ -272,7 +272,7 @@ static void _saveSysParam(size_t param, uint32_t  value){
 					update = true;
 					break;
             case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
-					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value != 0);
+					_saveFlag8b(g_zuno_sys->p_config->flags, ZUNO_CFGFILE_FLAG_LED_OFF, value == 0);
 					#ifndef NO_SYS_SVC
 					SysReconfigLeds();
 					#endif

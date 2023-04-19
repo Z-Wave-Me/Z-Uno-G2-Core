@@ -326,6 +326,14 @@ void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) 
 	fillOutgoingRawPacket(&frame->packet, frame->data, ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
 }
 
+void fillOutgoingReportPacketAsyncReport(ZUNOCommandPacketReport_t *frame_report, size_t channel) {
+	node_id_t															node_id;
+
+	fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(channel).zw_channel);
+	node_id = zunoGetSupervisionHost();
+	memcpy(&frame_report->packet.aux_data[0], &node_id, sizeof(node_id));
+}
+
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 	

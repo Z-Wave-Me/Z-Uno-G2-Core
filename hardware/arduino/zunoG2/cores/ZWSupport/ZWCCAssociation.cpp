@@ -290,7 +290,10 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 		#endif
 		#ifdef WITH_CC_SOUND_SWITCH
 		case COMMAND_CLASS_SOUND_SWITCH:
-			cmd = SOUND_SWITCH_TONE_PLAY_REPORT;
+			command[0] = cmdClass;
+			command[1] = SOUND_SWITCH_TONE_PLAY_REPORT;
+			command = command + 0x2;
+			cmd = SOUND_SWITCH_CONFIGURATION_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE

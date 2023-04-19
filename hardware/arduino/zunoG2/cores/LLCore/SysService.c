@@ -28,7 +28,7 @@ ServiceData_t g_service_data;
 ButtonsClass  serviceBtn;
 ZunoLed       serviceLeds;
 void SysReconfigLeds(){
-    if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
+    if(!(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF)) {
         serviceLeds.off(SYSLED_ACTIVITY);
     } else {
         if(zunoGetSleepingMode()){

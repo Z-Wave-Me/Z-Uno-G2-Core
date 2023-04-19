@@ -2,10 +2,16 @@
 #include "Debug.h"
 
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
+static uint32_t last_controller_package_time = 0;
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 
+void ZWQIncomingStat(ZUNOCommandPacket_t * pkg){
+    if(pkg->src_node == 1){
+        last_controller_package_time = millis();
+    }
+}
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
     if(((pkg->flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
         (zunoNID() == 0)) { // We are out of network - don't send anything
@@ -146,6 +152,10 @@ void ZWQProcess(){
             break;
         }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
+        if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
+           ( q_ch ==  QUEUE_CHANNEL_LLREPORT) &&
+           (zunoSecurityStatus() == SECURITY_KEY_S0))
+                continue; // Skip report packets during interview
         // Check if we have a free channel to send the package
         if(zunoCheckSystemQueueStatus(q_ch))
             continue; // Needed queue is full for this priority - just skip the package

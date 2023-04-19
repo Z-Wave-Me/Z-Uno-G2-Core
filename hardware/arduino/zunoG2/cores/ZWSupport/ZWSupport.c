@@ -856,6 +856,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	#endif
 	if ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
 		return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
+	ZWQIncomingStat(cmd);
 	// prepare packet for report
 	_fillOutgoingPacket(cmd, &frame_report);
 	// If we have multichannel support enabled.

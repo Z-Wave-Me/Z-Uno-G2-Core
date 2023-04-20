@@ -133,8 +133,6 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
 	.name = "Radio frequency",
 	.info = "Changes Z-Wave region of Z-Uno.",
-	.name = "Radio frequency",
-	.info = "Changes Z-Wave region of Z-Uno.",
 	.minValue = 0x00FF,
 	.maxValue = 0x11EE,
 	.defaultValue = 0x00FF,
@@ -147,8 +145,6 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM11 =
 {
-	.name = "Multilevel report interval",
-	.info = "Minimal report interval. Debugging mode is required.",
 	.name = "Multilevel report interval",
 	.info = "Minimal report interval. Debugging mode is required.",
 	.minValue = 0x0,
@@ -543,7 +539,6 @@ ssize_t zunoLoadCFGParam(uint8_t param) {
 	int32_t												out;
 	ssize_t												minValue;
 	ssize_t												maxValue;
-	uint32_t											addr;
 	uint32_t											addr;
 
 	if (param < CONFIGPARAM_MIN_PARAM || param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data

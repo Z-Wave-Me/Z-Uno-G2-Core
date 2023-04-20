@@ -37,7 +37,7 @@
 #if defined(CMU_PRESENT) && defined(FPGA)
 
 #include <stdbool.h>
-#include "em_assert.h"
+#include "sl_assert.h"
 #include "em_bus.h"
 
 #ifdef __cplusplus
@@ -163,11 +163,17 @@ typedef enum {
   cmuClock_LSPCLK,                  /**< Low speed peripheral APB bus interface clock. */
   cmuClock_IADCCLK,                 /**< IADC clock. */
   cmuClock_EM01GRPACLK,             /**< EM01GRPA clock. */
+#if defined(_CMU_EM01GRPBCLKCTRL_MASK)
+  cmuClock_EM01GRPBCLK,             /**< EM01GRPB clock. */
+#endif
   cmuClock_EM01GRPCCLK,             /**< EM01GRPC clock. */
   cmuClock_EM23GRPACLK,             /**< EM23GRPA clock. */
   cmuClock_EM4GRPACLK,              /**< EM4GRPA clock. */
   cmuClock_LFRCO,                   /**< LFRCO clock. */
+  cmuClock_ULFRCO,                  /**< ULFRCO clock. */
+  cmuClock_LFXO,                    /**< LFXO clock. */
   cmuClock_HFRCO0,                  /**< HFRCO0 clock. */
+  cmuClock_HFRCOEM23,               /**< HFRCOEM23 clock. */
   cmuClock_WDOG0CLK,                /**< WDOG0 clock. */
 #if WDOG_COUNT > 1
   cmuClock_WDOG1CLK,                /**< WDOG1 clock. */
@@ -177,6 +183,10 @@ typedef enum {
   cmuClock_TRACECLK,                /**< Debug trace clock. */
 #endif
   cmuClock_RTCCCLK,                 /**< RTCC clock. */
+#if defined(LESENSE_PRESENT)
+  cmuClock_LESENSEHFCLK,
+  cmuClock_LESENSECLK,
+#endif
 
   /*********************/
   /* Peripheral clocks */
@@ -187,10 +197,14 @@ typedef enum {
   cmuClock_ACMP0,                   /**< ACMP0 clock. */
   cmuClock_ACMP1,                   /**< ACMP1 clock. */
   cmuClock_BURTC,                   /**< BURTC clock. */
+#if defined(ETAMPDET_PRESENT)
+  cmuClock_ETAMPDET,                /**< ETAMPDET clock. */
+#endif
   cmuClock_GPCRC,                   /**< GPCRC clock. */
   cmuClock_GPIO,                    /**< GPIO clock. */
   cmuClock_I2C0,                    /**< I2C0 clock. */
   cmuClock_I2C1,                    /**< I2C1 clock. */
+  cmuClock_SYSCFG,                  /**< SYSCFG clock. */
   cmuClock_IADC0,                   /**< IADC clock. */
   cmuClock_LDMA,                    /**< LDMA clock. */
   cmuClock_LDMAXBAR,                /**< LDMAXBAR clock. */
@@ -203,8 +217,12 @@ typedef enum {
   cmuClock_TIMER2,                  /**< TIMER2 clock. */
   cmuClock_TIMER3,                  /**< TIMER3 clock. */
   cmuClock_TIMER4,                  /**< TIMER4 clock. */
+  cmuClock_TIMER5,                  /**< TIMER5 clock. */
+  cmuClock_TIMER6,                  /**< TIMER6 clock. */
+  cmuClock_TIMER7,                  /**< TIMER7 clock. */
   cmuClock_BURAM,
   cmuClock_LESENSE,
+  cmuClock_LESENSEHF,               /**< LESENSEHF clock. */
 #if defined(USART0)
   cmuClock_USART0,                  /**< USART0 clock. */
 #endif
@@ -236,11 +254,20 @@ typedef enum {
 #if defined(EUSART2)
   cmuClock_EUSART2,                 /**< EUSART2 clock. */
 #endif
+#if defined(EUSART3)
+  cmuClock_EUSART3,                 /**< EUSART3 clock. */
+#endif
+#if defined(EUSART4)
+  cmuClock_EUSART4,                 /**< EUSART4 clock. */
+#endif
   cmuClock_PCNT0,
   cmuClock_KEYSCAN,
   cmuClock_HFPER,
   cmuClock_MSC,
-  cmuClock_DMEM
+  cmuClock_DMEM,
+  cmuClock_SEMAILBOX,
+  cmuClock_SMU,
+  cmuClock_VDAC0
 } CMU_Clock_TypeDef;
 
 /** OCELOT TEMPORARY DEFINE. */
@@ -458,7 +485,7 @@ typedef enum {
  ******************************************************************************/
 
 /** LFXO initialization structure. Init values should be obtained from a
-    configuration tool, app. note or xtal datasheet.  */
+    configuration tool, app. note or xtal data sheet.  */
 typedef struct {
   uint8_t   gain;                       /**< Startup gain. */
   uint8_t   capTune;                    /**< Internal capacitance tuning. */
@@ -490,7 +517,7 @@ typedef struct {
   }
 
 /** HFXO initialization structure. Init values should be obtained from a configuration tool,
-    app note or xtal datasheet  */
+    app note or xtal data sheet  */
 
 typedef struct {
   CMU_HfxoCbLsbTimeout_TypeDef        timeoutCbLsb;            /**< Core bias change timeout. */
@@ -609,6 +636,8 @@ void                       CMU_HFRCODPLLBandSet(CMU_HFRCODPLLFreq_TypeDef freq);
 uint32_t              CMU_HFRCOStartupDelayGet(void);
 void                  CMU_HFRCOStartupDelaySet(uint32_t delay);
 void                  CMU_HFXOInit(const CMU_HFXOInit_TypeDef *hfxoInit);
+void                  CMU_HFXOCTuneDeltaSet(int32_t delta);
+int32_t               CMU_HFXOCTuneDeltaGet(void);
 uint32_t              CMU_LCDClkFDIVGet(void);
 void                  CMU_LCDClkFDIVSet(uint32_t div);
 void                  CMU_LFXOInit(const CMU_LFXOInit_TypeDef *lfxoInit);
@@ -683,6 +712,35 @@ __STATIC_INLINE void CMU_Lock(void)
 __STATIC_INLINE void CMU_Unlock(void)
 {
 }
+
+#if !defined(_SILICON_LABS_32B_SERIES_0)
+/***************************************************************************//**
+ * @brief
+ *   Convert prescaler dividend to a logarithmic value. It only works for even
+ *   numbers equal to 2^n.
+ *
+ * @param[in] presc
+ *   An unscaled dividend (dividend = presc + 1).
+ *
+ * @return
+ *   Logarithm of 2, as used by fixed 2^n prescalers.
+ ******************************************************************************/
+__STATIC_INLINE uint32_t CMU_PrescToLog2(uint32_t presc)
+{
+  uint32_t log2;
+
+  /* Integer prescalers take argument less than 32768. */
+  EFM_ASSERT(presc < 32768U);
+
+  /* Count leading zeroes and "reverse" result. */
+  log2 = 31UL - __CLZ(presc + (uint32_t) 1);
+
+  /* Check that prescaler is a 2^n number. */
+  EFM_ASSERT(presc == (SL_Log2ToDiv(log2) - 1U));
+
+  return log2;
+}
+#endif // !defined(_SILICON_LABS_32B_SERIES_0)
 
 /** @} (end addtogroup CMU) */
 /** @} (end addtogroup emlib) */

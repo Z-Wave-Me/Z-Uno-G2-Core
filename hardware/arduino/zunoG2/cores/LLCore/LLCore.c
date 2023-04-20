@@ -12,7 +12,8 @@
 #include "em_adc.h"
 #include "em_gpio.h"
 #include <CommandQueue.h>
-
+#include <SysService.h>
+#include "em_burtc.h"
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -449,14 +450,22 @@ static void LLInit(void *data) {
         WDOG_Feed();
     }
     // default configuration values
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
     g_zuno_odhw_cfg.adc_reference  = adcRef5V;
     g_zuno_odhw_cfg.adc_resolution = 10; // 
     g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
+#endif
     g_zuno_odhw_cfg.pwm_resolution = 8;
     g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
 	g_zuno_sys = (ZUNOSetupSysState_t*)data;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
+	if ((EEPROM_CONFIGURATION_ADDR + EEPROM_CONFIGURATION_SIZE) > EEPROM_MAX_SIZE) {
+		LOGGING_UART.print("EEPROM: Exceeded memory limit!!!");
+		while (true)
+			__NOP();
+	}
 	#endif
 	#ifdef WITH_AUTOSETUP
 	zuno_static_autosetup();
@@ -473,47 +482,47 @@ static void LLInit(void *data) {
 	__g_zuno_indicator_init();
 	g_sketch_inited = false;
 }
-
+#ifdef LOGGING_DBG
+void checkSystemCriticalStat();
+#endif
+void _zunoRegisterTimerThread();
+void _zunoRegisterCommandThread();
+uint32_t g_sys_timer_counter = 0;
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
-    /*
-    // DBG CODE
-    static uint32_t pl = 0;
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    //delay(100);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayMicroseconds(50000);
-    //delayMicroseconds(50000);
-    //delay(100);
-    pl++;
-    return (void*)pl; // 
-    */
     switch(vec){
         case ZUNO_JUMPTBL_SETUP:
             LLInit(data);
             break;
         case ZUNO_JUMPTBL_LOOP:
             if(!g_sketch_inited){
+                #ifndef NO_SYS_SVC
+                SysServiceInit();
+                #endif
                 ZWCCSetup();
                 setup();
                 g_sketch_inited = true;
             }
             loop();
+            #ifdef LOGGING_DBG
+            checkSystemCriticalStat(); // Self check after each loop
+            #endif
             #if (SKETCH_FLAGS_LOOP_DELAY>0)
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             #endif
             break;
         case ZUNO_JUMPTBL_CMDHANDLER:
+            _zunoRegisterCommandThread();
             // Awake code if user had sent device to sleep, but z-wave message has arrived
             zunoAwakeUsrCode();
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+                #ifndef NO_SYS_SVC
+                SysServiceEvent(evnt);
+                #endif
                 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
                 if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
                     zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
@@ -556,6 +565,10 @@ void * zunoJumpTable(int vec, void * data) {
             break;
        
         case ZUNO_JUMPTBL_SYSTIMER:
+            _zunoRegisterTimerThread();
+            #ifndef NO_SYS_SVC  
+            SysServiceTimer();
+            #endif
             zuno_CCTimer((uint32_t)data);
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             _zunoSleepingUpd();
@@ -568,8 +581,16 @@ void * zunoJumpTable(int vec, void * data) {
                 zunoAwakeUsrCode();
             }
             break;
+        /*    
+        case ZUNO_JUMPTBL_SYSTIMER:
+            g_sys_timer_counter ++;
+            break;
+        */
         case ZUNO_JUMPTBL_SLEEP:
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+            #ifndef NO_SYS_SVC 
+            SysServiceSleep();
+            #endif
             _zunoSysSleep();
             #endif
             #ifdef LOGGING_DBG
@@ -589,7 +610,6 @@ void * zunoJumpTable(int vec, void * data) {
         default:
             break; // UNKNOWN VECTOR
     }
-    
     if(vec >= ZUNO_JUMPTBL_SYSTIMER){
         zunoSysHandlerCall(vec-ZUNO_JUMPTBL_SYSTIMER,sub_handler_type, data);
     }
@@ -604,22 +624,78 @@ void zunoSetCustomWUPTimer(uint32_t timeout){
     g_sleep_data.sleep_timers[1] = timeout;
     //zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, 1,  timeout);
 }
+void _fillZWaveData(uint8_t secure_param);
 void zunoStartLearn(byte timeout, bool secured){
+    uint8_t secure_param = secured ? ZUNO_SECUREPARAM_ON : ZUNO_SECUREPARAM_OFF;
+    _fillZWaveData(secure_param);
     zunoSysCall(ZUNO_SYSFUNC_LEARN, 2, timeout, secured);
-}
-void zunoResetLocally(){
-    zunoSysCall(ZUNO_SYSFUNC_SETDEFAULT, 1, 0);   
 }
 void zunoSendNIF(){
     zunoSysCall(ZUNO_SYSFUNC_SENDNIF, 0);   
 }
-
-/* time */
-void delay(dword ms){
-    zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
+void zunoReboot(bool force){
+    zunoSysCall(ZUNO_SYSFUNC_REBOOT, 0);   
+	(void)force;
 }
 
-
+/* time */
+extern SysCryticalStat_t  g_sys_crytical_stat;
+bool zunoIsSystemThread(void * handle);
+void delay(dword ms){
+    if(zunoIsSystemThread(NULL)){
+        g_sys_crytical_stat.systhread_delay_count++;
+        return;
+    }
+    zunoSysCall(ZUNO_SYSFUNC_DELAY_MS, 1, ms);
+}
+#ifdef LOGGING_DBG
+void checkSystemCriticalStat(){
+    static uint32_t reported_delay_cnt = 0;
+    static uint32_t reported_lock_timeout_cnt = 0;
+    static uint32_t reported_open_timeout_cnt = 0;
+    static uint32_t reported_max_lock_wait = 0;
+    static uint32_t reported_max_open_wait = 0;
+    
+    if(g_sys_crytical_stat.systhread_delay_count != reported_delay_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) delay() call in system thread. Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.systhread_delay_count);
+        reported_delay_cnt = g_sys_crytical_stat.systhread_delay_count;
+    }
+    if(g_sys_crytical_stat.lock_timeout_count != reported_lock_timeout_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) Sync lock() timeout . Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.lock_timeout_count);
+        reported_lock_timeout_cnt = g_sys_crytical_stat.lock_timeout_count;
+    }
+    if(g_sys_crytical_stat.open_timeout_count != reported_open_timeout_cnt){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (!!!) zunoSyncOpen() timeout . Count:");
+        LOGGING_UART.println(g_sys_crytical_stat.open_timeout_count);
+        reported_open_timeout_cnt = g_sys_crytical_stat.lock_timeout_count;
+    }
+    if(g_sys_crytical_stat.max_lock_wait != reported_max_lock_wait){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (INFO) max_lock_wait:");
+        LOGGING_UART.println(g_sys_crytical_stat.max_lock_wait);
+        reported_max_lock_wait = g_sys_crytical_stat.max_lock_wait;
+    }
+    if(g_sys_crytical_stat.max_open_wait != reported_max_open_wait){
+        LOGGING_UART.print("[");
+        LOGGING_UART.print(millis());
+        LOGGING_UART.print("] (INFO) max_open_wait:");
+        LOGGING_UART.println(g_sys_crytical_stat.max_lock_wait);
+        reported_max_open_wait = g_sys_crytical_stat.max_open_wait;
+    }
+}
+#endif
+#include "em_iadc.h"
+// MULTI_CHIP
+#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
 uint64_t rtcc_micros(void) {
 	uint32_t			tic1;
 	uint32_t			tic2;
@@ -652,6 +728,41 @@ time_t zunoGetTimeStamp(void) {
 void zunoSetTimeStamp(time_t timeUnix) {
 	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
 }
+#endif//#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
+#if defined(BURTC_PRESENT)
+uint64_t rtcc_micros(void) {
+	uint32_t			tic1;
+	uint32_t			tic2;
+	uint32_t			overflow;
+	uint64_t			out;
+
+	tic1 = BURTC_CounterGet();
+	overflow = BURAM->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
+	tic2 = BURTC_CounterGet();
+	if (tic2 < tic1) {
+		tic1 = tic2;
+		overflow++;
+	}
+	out = overflow;
+	out = (out << 0x20) | tic1;
+	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
+	return (out);
+}
+
+bool zunoIsValidDate(void) {
+	if (BURAM->RET[0x1E].REG == 0x0)
+		return (false);
+	return (true);
+}
+
+time_t zunoGetTimeStamp(void) {
+	return (BURAM->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
+}
+
+void zunoSetTimeStamp(time_t timeUnix) {
+	BURAM->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
+}
+#endif//#if defined(BURTC_PRESENT)
 
 dword millis(void){
 	return (dword)(rtcc_micros() / 1000);
@@ -733,6 +844,8 @@ size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch) {
     ch <<= 3;
     return (loc << ch);
 }
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
     if(res > 8)
         return adcRes12Bit;
@@ -740,6 +853,8 @@ inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
         return adcRes8Bit;
     return 	adcRes6Bit;
 }
+#endif
+
 inline uint8_t  __adc_resolution2RealBits(uint8_t res){
     if(res > 8)
         return 12;
@@ -752,12 +867,20 @@ inline uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
         return v >> (src - dst);
     return v << (dst - src);
 }
+
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogReference(ADC_Ref_TypeDef ref){
     g_zuno_odhw_cfg.adc_reference = ref;
 }
+#endif
+
 void analogReadResolution(uint8_t bits){
     g_zuno_odhw_cfg.adc_resolution = bits;
 }
+
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime){
     g_zuno_odhw_cfg.adc_acqtime = acqtime;
 }
@@ -841,7 +964,10 @@ ADC_PosSel_TypeDef zme_ADC_PIN2Channel(uint8_t pin) {
 	}
 	return (out);
 }
+#endif
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void zmeADCInit() {
 	ADC_Init_TypeDef				adcInit;
 
@@ -858,7 +984,10 @@ void zmeADCInit() {
 		g_zuno_odhw_cfg.ADCInitialized = true;
 	}
 }
+#endif
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 int analogRead(uint8_t pin) {
 	uint32_t								sampleValue;
 	ADC_InitSingle_TypeDef					singleInit;
@@ -878,153 +1007,13 @@ int analogRead(uint8_t pin) {
 	ADC0->CMD = ADC_CMD_SINGLESTOP;
 	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(g_zuno_odhw_cfg.adc_resolution), g_zuno_odhw_cfg.adc_resolution));
 }
+#endif
 
 
-/* Handler */
-ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
-    HandlerFunc_t				*lp_b;
-    HandlerFunc_t				*lp_e;
-    uint16_t					code_offset;
-
-    code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-    lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-    lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-    while (lp_b < lp_e) {
-        if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset)
-            return (ZunoErrorOk);
-        lp_b++;
-    }
-    lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-    while (lp_b < lp_e) {
-        if (lp_b->code_offset == 0) {
-            lp_b->main_type = type;
-            lp_b->sub_type = sub_type;
-            lp_b->code_offset = code_offset;
-            return (ZunoErrorOk);
-        }
-        lp_b++;
-    }
-    return (ZunoErrorAttachSysHandler);
-}
-
-ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler) {
-    HandlerFunc_t				*lp_b;
-    HandlerFunc_t				*lp_e;
-    uint16_t					code_offset;
-
-    code_offset = (uint16_t)((uint32_t)(((byte*)handler) - ZUNO_CODE_START)) & 0xFFFF;
-    lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-    lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-    while (lp_b < lp_e) {
-        if (lp_b->main_type == type && lp_b->sub_type == sub_type && lp_b->code_offset == code_offset) {
-            lp_b->code_offset = 0;
-            return (ZunoErrorOk);
-        }
-        lp_b++;
-    }
-    return (ZunoErrorAttachSysHandler);
-}
-
-ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type) {
-    HandlerFunc_t				*lp_b;
-    HandlerFunc_t				*lp_e;
-    ZunoError_t					out;
-
-    out = ZunoErrorAttachSysHandler;
-    lp_e = &g_zuno_odhw_cfg.h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];
-    lp_b = lp_e - MAX_AVAILIABLE_SYSHANDLERS;
-    while (lp_b < lp_e) {
-        if (lp_b->main_type == type && lp_b->sub_type == sub_type) {
-            lp_b->code_offset = 0;
-            out = ZunoErrorOk;
-        }
-        lp_b++;
-    }
-    return (out);
-}
-
-void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
-    uint8_t i;
-    void * result = NULL;
-    byte * base_addr;
-    va_list args;
-    for(i=0;i<MAX_AVAILIABLE_SYSHANDLERS;i++){
-        if(g_zuno_odhw_cfg.h_sys_handler[i].code_offset == 0) // Empty handler
-            continue;
-        if((g_zuno_odhw_cfg.h_sys_handler[i].main_type == type) && 
-            (g_zuno_odhw_cfg.h_sys_handler[i].sub_type  == sub_type || 
-            g_zuno_odhw_cfg.h_sys_handler[i].sub_type == 0xFF)) // 0xFF is "wild card"
-            {
-                base_addr = (byte*) ZUNO_CODE_START;
-                base_addr += g_zuno_odhw_cfg.h_sys_handler[i].code_offset;
-                switch(type){
-                    case ZUNO_HANDLER_SYSTIMER:
-                        va_start (args, sub_type);
-                        ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
-                        va_end (args);
-                        break;
-                    case ZUNO_HANDLER_REPORT:
-                        va_start (args, sub_type);
-                        ((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
-                        va_end (args);
-                        break;
-                    case ZUNO_HANDLER_SYSEVENT:
-                        va_start (args, sub_type);
-                        ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
-                        va_end (args);
-                        break;
-                    case ZUNO_HANDLER_IRQ:{
-                            va_start (args, sub_type);
-                            IOQueueMsg_t * p_msg = va_arg(args,IOQueueMsg_t *);
-                            ((zuno_irq_handler*)(base_addr))((void*)p_msg->param);
-                            va_end (args);
-                        }
-                        break;
-                    case ZUNO_HANDLER_EXTINT:
-                        va_start (args, sub_type);
-                        ((zuno_void_handler_ext_int*)(base_addr))((uint8_t)va_arg(args,size_t));
-                        va_end (args);
-                        break;
-                    case ZUNO_HANDLER_GPT:
-                    case ZUNO_HANDLER_SLEEP:
-                    case ZUNO_HANDLER_WUP:
-                    case ZUNO_HANDLER_NOTIFICATON_TIME_STAMP:
-                        ((zuno_void_handler*)(base_addr))();
-                        break;
-                    case ZUNO_HANDLER_ZW_CFG:
-                        va_start (args, sub_type);
-                        ((zuno_configuartionhandler_t*)(base_addr))((uint8_t)va_arg(args,uint32_t), va_arg(args,uint32_t));
-                        va_end (args);
-                        break;
-                    case ZUNO_HANDLER_ZW_BATTERY:
-                        result = (void*)(((zuno_battery_handler_t*)(base_addr))());
-                        break;
-                }
-        }
-    }
-    return result;
-}
-
-void WDOG_Feed(){
-  WDOG_TypeDef *wdog = WDOG0; // the default SDK watchdog
-  /* The watchdog should not be fed while it is disabled */
-  if (!(wdog->CTRL & WDOG_CTRL_EN)) {
-    return;
-  }
-
-  /* If a previous clearing is being synchronized to LF domain, then there */
-  /* is no point in waiting for it to complete before clearing over again. */
-  /* This avoids stalling the core in the typical use case where some idle loop */
-  /* keeps clearing the watchdog. */
-  if (wdog->SYNCBUSY & WDOG_SYNCBUSY_CMD) {
-    return;
-  }
-  /* Before writing to the WDOG_CMD register we also need to make sure that
-   * any previous write to WDOG_CTRL is complete. */
-  while ( (wdog->SYNCBUSY & WDOG_SYNCBUSY_CTRL) != 0U ) {
-  }
-
-  wdog->CMD = WDOG_CMD_CLEAR;
+// MULTI_CHIP
+extern "C" void WDOGn_Feed(WDOG_TypeDef *wdog);
+void WDOG_Feed() {
+	WDOGn_Feed(WDOG0);
 }
 
 inline void WDOGWR(unsigned int currloop)
@@ -1096,18 +1085,6 @@ unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout)
     return loopsToMcs(width);
 }
 
-void zunoCommitCfg(){
-    zunoSysCall(ZUNO_SYSFUNC_COMMIT_CONFIG, 0);
-}
-
-/*
-bool 	 b_write = va_arg(lst, uint32_t) > 0;
-            uint16_t addr  	 = va_arg(lst, uint32_t)&0x0ffff;
-            uint16_t size  	 = va_arg(lst, uint32_t)&0x0ffff;
-            uint8_t * p_data = va_arg(lst,uint8_t *);
-            zme_EEPROM_io(g_zuno_state.file_system, addr, p_data, size, b_write);
-*/
-
 
 void _zme_memcpy(byte * dst, byte * src, byte count)
 {
@@ -1125,6 +1102,65 @@ uint32_t    zunoMapPin2EM4Int(uint8_t em4_pin){
     uint32_t real_pin = getRealPin(em4_pin);
     return (1 << real_pin);
 }
+
+// MULTI_CHIP
+#if defined(_GPIO_EM4WUPOL_MASK)
+uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin) {
+	uint8_t								real_pin;
+	uint32_t							mask;
+	static constexpr uint32_t			mask_default = 0x0;
+
+	real_pin = getRealPin(em4_pin);
+	switch (getRealPort(em4_pin)) {
+		case gpioPortB:
+			switch (real_pin) {
+				case 0x1://PB01
+					mask = GPIO_IEN_EM4WUIEN3;
+					break ;
+				case 0x3://PB03
+					mask = GPIO_IEN_EM4WUIEN4;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		case gpioPortC:
+			switch (real_pin) {
+				case 0x0://PC00
+					mask = GPIO_IEN_EM4WUIEN6;
+					break ;
+				case 0x5://PC05
+					mask = GPIO_IEN_EM4WUIEN7;
+					break ;
+				case 0x7://PC07
+					mask = GPIO_IEN_EM4WUIEN8;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		case gpioPortD:
+			switch (real_pin) {
+				case 0x2://PD02
+					mask = GPIO_IEN_EM4WUIEN9;
+					break ;
+				case 0x5://PD05
+					mask = GPIO_IEN_EM4WUIEN10;
+					break ;
+				default:
+					mask = mask_default;
+					break ;
+			}
+			break ;
+		default:
+			mask = mask_default;
+			break ;
+	}
+	return (mask);
+}
+#elif defined(_GPIO_EXTILEVEL_MASK)
 uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
     uint32_t real_pin = getRealPin(em4_pin);
     switch (getRealPort(em4_pin)) {
@@ -1153,6 +1189,8 @@ uint32_t    zunoMapPin2EM4Bit(uint8_t em4_pin){
     }
     return 0;
 }
+#endif
+
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t polarity){
     pinMode(em4_pin, mode);
     uint32_t wu_map = zunoMapPin2EM4Bit(em4_pin);
@@ -1163,8 +1201,14 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin, uint32_t mode, uint32_t pola
     GPIO_EM4EnablePinWakeup(wu_map, polarity);
     return ZunoErrorOk;
 }
-void zunoClearEm4Wakeup(){
-  GPIO->EXTILEVEL = _GPIO_EXTILEVEL_RESETVALUE;
+
+// MULTI_CHIP
+void zunoClearEm4Wakeup() {
+	#if defined(_GPIO_EM4WUPOL_MASK)
+	GPIO->EM4WUPOL = _GPIO_EM4WUPOL_RESETVALUE;
+	#elif defined(_GPIO_EXTILEVEL_MASK)
+	GPIO->EXTILEVEL = _GPIO_EXTILEVEL_RESETVALUE;
+	#endif
   GPIO->EM4WUEN  = 0;                /* Disable wakeup. */
 }
 ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin) {
@@ -1384,9 +1428,10 @@ void zunoKickSleepTimeout(uint32_t ms){
 void zunoAwakeUsrCode(){
     zunoLockSleep();
     #ifdef LOGGING_DBG
+    /*
     uint8_t val = zunoThreadIsRunning(g_zuno_sys->hMainThread);
     LOGGING_UART.print("Tread running:");
-    LOGGING_UART.println(val);
+    LOGGING_UART.println(val);*/
     #endif
     //if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
         zunoResumeThread(g_zuno_sys->hMainThread);
@@ -1396,9 +1441,11 @@ void zunoSendDeviceToSleep(uint8_t mode) {
   // we inform the system that device is ready for sleep
   zunoMarkDeviceToSleep(mode);
   // suspend the main tread
+  /*
+  // !!! FIX
   if((g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) != 0){
     zunoSuspendThread(g_zuno_sys->hMainThread);
-  }
+  }*/
 }
 void zunoMarkDeviceToSleep(uint8_t mode){
     // Store time mark
@@ -1475,7 +1522,26 @@ bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
 void zunoPTIDisable(){
     zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, NULL);
 }
-
+uint8_t zmeMapDict(uint8_t * dict, uint8_t size, uint8_t key, bool back){
+	for(int i=0;i<size;i+=2){
+		if(back){
+			if(dict[i+1] == key)
+				return dict[i];
+		} else {
+			if(dict[i] == key)
+				return dict[i+1];
+		}
+	}
+	return INVALID_VALUE;
+}
+void zunoUpdateSysConfig(bool deffered, bool force){
+	uint32_t flags = 0;
+	if(deffered)
+		flags |= 0x01;
+	if(force)
+		flags |= 0x02;
+	zunoSysCall(ZUNO_SYSFUNC_COMMIT_DEVCFG, 1, flags);
+}
 extern "C" void __cxa_pure_virtual() { 
     #ifdef LOGGING_DBG
     LOGGING_UART.println("ZUNO:PURE VIRTUAL CALL!");

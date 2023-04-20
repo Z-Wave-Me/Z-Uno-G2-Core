@@ -4,7 +4,9 @@
 #include "ZWCCSwitchColor.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSwitchBinary.h"
+#include "ZWCCResetLocally.h"
 #include "CommandQueue.h"
+
 
 size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
@@ -69,6 +71,7 @@ void zunoSendReportHandler(uint32_t ticks);
 void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
+void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
 void zuno_CCSoundSwitchTimer(void);
 void zuno_CCIndicatorTimer(void);
@@ -77,7 +80,7 @@ void zuno_CCCentralSceneTimer(void);
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_WINDOW_COVERING)
 static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
@@ -101,6 +104,11 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 				#ifdef WITH_CC_SWITCH_COLOR
 				case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 					zuno_CCSwitchColorTimer(lp_b, frame_report);
+					break ;
+				#endif
+				#ifdef WITH_CC_WINDOW_COVERING
+				case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+					zuno_CCWindowCoveringTimer(lp_b, frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_DOORLOCK
@@ -136,4 +144,5 @@ void zuno_CCTimer(uint32_t ticks) {
 		zunoSendReportHandler(ticks);
 	}
 	ZWQProcess();
+	RSTLocallyTick();
 }

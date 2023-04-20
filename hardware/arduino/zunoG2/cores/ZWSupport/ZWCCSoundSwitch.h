@@ -140,15 +140,28 @@ typedef struct _ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME_
 } ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME;
 
 
+typedef struct						ZunoSoundSwitchParameterDuration_s
+{
+	uint16_t						freq;
+	uint16_t						play_ms;
+	uint16_t						pause_ms;
+}									ZunoSoundSwitchParameterDuration_t;
+
+
 typedef struct						ZunoSoundSwitchParameter_s
 {
 	const char						*name;
-	uint16_t						toneDuration;
+	const ZunoSoundSwitchParameterDuration_t	*duration;
+	uint32_t						count:8;
+	uint32_t						ms_duration:24;
 }									ZunoSoundSwitchParameter_t;
 
 typedef struct						ZunoSoundSwitchParameterPlay_s
 {
 	uint64_t						time_stamp;
+	const ZunoSoundSwitchParameter_t	*parameter;
+	uint8_t							index;
+	uint8_t							status;
 	uint8_t							toneIdentifier;
 	uint8_t							playCommandToneVolume;
 	uint8_t							bReport;
@@ -159,49 +172,64 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 	const ZunoSoundSwitchParameter_t		*parametr;
 	ZunoSoundSwitchParameterPlay_t			*play;
 	uint8_t									count;
+	uint8_t									channel;
 }											ZunoSoundSwitchParameterArray_t;
 
-const ZunoSoundSwitchParameterArray_t *zunoSoundSwitchGetParameterArray(size_t channel);
 
-#define ZUNO_SETUP_SOUND_SWITCH_COMMON(...) 	\
-	const ZunoSoundSwitchParameterArray_t *zunoSoundSwitchGetParameterArrayUser(size_t channel) {					\
-		const ZunoSoundSwitchParameterArray_t					*out;					\
-		switch (channel) {					\
-			__VA_ARGS__						\
-			default:					\
-				out = 0x0;					\
-				break ;					\
-		}					\
-		return (out);					\
-	}					\
 
+#define ZUNO_SETUP_SOUND_SWITCH_TONE_DURATION(TONE, ...)	\
+static const ZunoSoundSwitchParameterDuration_t _switch_cc_parameter_##TONE[] = \
+{\
+	__VA_ARGS__, \
+};\
+
+#define ZUNO_SETUP_SOUND_SWITCH_TONE_DURATION_SET(MS_PLAY, MS_PAUSE)	\
+{\
+	.freq = 0x0,\
+	.play_ms = MS_PLAY,\
+	.pause_ms = MS_PAUSE\
+}\
 
 #define ZUNO_SETUP_SOUND_SWITCH(CHANNEL, ...) 	\
-	case CHANNEL:								\
-		static const ZunoSoundSwitchParameter_t _switch_parameter_##CHANNEL[]= \
-		{ \
-			__VA_ARGS__, \
-		};\
-		static ZunoSoundSwitchParameterPlay_t _switch_parameter_play_##CHANNEL = \
-		{ \
-			.time_stamp = 0x0,														\
-			.toneIdentifier = 0x0,													\
-			.playCommandToneVolume = 0x0,											\
-			.bReport = false														\
-		};\
-		static const ZunoSoundSwitchParameterArray_t _switch_parameter_array_##CHANNEL = \
-		{ \
-			.parametr = &_switch_parameter_##CHANNEL[0x0],									\
-			.play = &_switch_parameter_play_##CHANNEL,									\
-			.count = ((sizeof(_switch_parameter_##CHANNEL) / sizeof(_switch_parameter_##CHANNEL[0x0])))			\
-		};\
-		out = &_switch_parameter_array_##CHANNEL;\
-		break ;								\
+	static const ZunoSoundSwitchParameter_t _switch_cc_parameter_##CHANNEL[]= \
+	{ \
+		__VA_ARGS__, \
+	};\
+	static ZunoSoundSwitchParameterPlay_t _switch_cc_parameter_play_##CHANNEL = \
+	{ \
+		.time_stamp = 0x0,														\
+		.parameter = NULL,														\
+		.index = 0x0,													\
+		.status = 0x0,													\
+		.toneIdentifier = 0x0,													\
+		.playCommandToneVolume = 0x0,											\
+		.bReport = false														\
+	};\
+	static const ZunoSoundSwitchParameterArray_t _switch_cc_parameter_array_##CHANNEL __attribute__((__used__, __section__("_switch_cc_array_list"))) = \
+	{ \
+		.parametr = &_switch_cc_parameter_##CHANNEL[0x0],									\
+		.play = &_switch_cc_parameter_play_##CHANNEL,									\
+		.count = ((sizeof(_switch_cc_parameter_##CHANNEL) / sizeof(_switch_cc_parameter_##CHANNEL[0x0]))),			\
+		.channel = CHANNEL\
+	};\
 
-#define ZUNO_SETUP_SOUND_SWITCH_SET(NAME, DURATION)	\
+static constexpr uint16_t _soundSwitchGetParameterCountDurationMs(const ZunoSoundSwitchParameterDuration_t *duration, uint8_t count) {
+	size_t								ms = 0x0;
+	uint8_t								i = 0x0;
+
+	while (i < count){
+		ms = ms + duration[i].pause_ms + duration[i].play_ms;
+		i++;
+	}
+	return (ms);
+}
+
+#define ZUNO_SETUP_SOUND_SWITCH_TONE(NAME, TONE)	\
 {\
 	.name = NAME,\
-	.toneDuration = DURATION\
+	.duration = &_switch_cc_parameter_##TONE[0x0],\
+	.count = ((sizeof(_switch_cc_parameter_##TONE) / sizeof(_switch_cc_parameter_##TONE[0x0]))),			\
+	.ms_duration = _soundSwitchGetParameterCountDurationMs(&_switch_cc_parameter_##TONE[0x0], ((sizeof(_switch_cc_parameter_##TONE) / sizeof(_switch_cc_parameter_##TONE[0x0]))))\
 }\
 
 int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);

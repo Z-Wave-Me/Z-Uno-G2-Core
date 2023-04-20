@@ -1,6 +1,6 @@
 #ifndef ZWCC_REPORT_HANDLER_H
 #define ZWCC_REPORT_HANDLER_H
-
+#include "Arduino.h"
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCSwitchMultilevel.h"

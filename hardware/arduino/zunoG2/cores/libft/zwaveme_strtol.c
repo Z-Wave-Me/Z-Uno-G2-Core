@@ -12,10 +12,10 @@ extern "C" {
 /* Convert a string to a long integer. */
 long strtol(const char *s, char **nptr, int base)
 {
-	register unsigned long acc;
-	register int c;
-	register unsigned long cutoff;
-	register int neg = 0, any, cutlim;
+	unsigned long acc;
+	int c;
+	unsigned long cutoff;
+	int neg = 0, any, cutlim;
 
 	if (base < 0 || base == 1 || base > 36) {
 		errno = EINVAL;

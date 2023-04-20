@@ -2,12 +2,19 @@
 #include "Debug.h"
 
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
+static uint32_t last_controller_package_time = 0;
 #ifdef LOGGING_UART
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 
+void ZWQIncomingStat(ZUNOCommandPacket_t * pkg){
+    if(pkg->src_node == 1){
+        last_controller_package_time = millis();
+    }
+}
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
-    if(zunoNID() == 0) { // We are out of network - don't send anything
+    if(((pkg->flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
+        (zunoNID() == 0)) { // We are out of network - don't send anything
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
 		LOGGING_UART.println(" Package was dropped! NodeID==0");
@@ -17,14 +24,23 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 	}
     ZUNOCommandPacket_t * stored_pck;
     stored_pck = (ZUNOCommandPacket_t *)malloc(sizeof(ZUNOCommandPacket_t));
-    if (stored_pck == NULL)
+    if (stored_pck == NULL){
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print(millis());
+		LOGGING_UART.println(" Enqueue: Memory OVF1");
+		#endif
         return false;
+    }
     memcpy(stored_pck, pkg, sizeof(ZUNOCommandPacket_t));
     // We have to allocated command buffer dynamically too
     // add ZAF offset
     stored_pck->cmd = (uint8_t*)malloc(sizeof(uint8_t)*pkg->len + MAX_ZWTRANSPORT_ENCAP);
     if(stored_pck->cmd == NULL){
         free(stored_pck);
+        #ifdef LOGGING_DBG
+		LOGGING_UART.print(millis());
+		LOGGING_UART.println(" Enqueue: Memory OVF1");
+		#endif
         return false;
     }
     memset(stored_pck->cmd, 0, MAX_ZWTRANSPORT_ENCAP);
@@ -40,16 +56,18 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 	#endif
     return true;
 }
-ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags){
+ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd){
     ZNLinkedList_t *e;
     ZUNOCommandPacket_t * p;
     for(e=g_zwpkg_queue;e; e=e->next){
         p = (ZUNOCommandPacket_t *) e->data;
-        if(flags != 0xFF){
-            if((p->flags & flags)  !=  flags)
-                continue;
-        }
-        if(p->dst_node != dst_id)
+        if((flags != 0xFF) && ((p->flags & flags)  !=  flags))
+            continue;
+        if((dst_id != 0xFF) && (p->dst_node != dst_id))
+            continue;
+        if((cc != 0xFF) && (p->cmd[0]!= cc))
+            continue;
+        if((cmd != 0xFF) && (p->cmd[1]!= cmd))
             continue;
         return p;
     }
@@ -62,8 +80,8 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;
     if((channel > 0) && (interval < SYSTEM_PKG_DOMINATION_TIME)){
         #ifdef LOGGING_DBG
-		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
-        LOGGING_UART.println(interval);
+		//LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+        //LOGGING_UART.println(interval);
         #endif
         return true;
     }
@@ -83,9 +101,9 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 	LOGGING_UART.print(") OUTGOING PACKAGE: ");
 	zuno_dbgdumpZWPacakge(p);
 	#endif
-	if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
+    if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
 		uint8_t mapped_channel = p->src_zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
-		p->src_zw_channel = 0;
+        p->src_zw_channel = 0;
 		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
 		p->src_zw_channel = mapped_channel;
 	}
@@ -134,6 +152,10 @@ void ZWQProcess(){
             break;
         }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
+        if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
+           ( q_ch ==  QUEUE_CHANNEL_LLREPORT) &&
+           (zunoSecurityStatus() == SECURITY_KEY_S0))
+                continue; // Skip report packets during interview
         // Check if we have a free channel to send the package
         if(zunoCheckSystemQueueStatus(q_ch))
             continue; // Needed queue is full for this priority - just skip the package

@@ -57,6 +57,8 @@ enum{
 // ZUNO_ENABLE setups some global extra build flags
 ZUNO_ENABLE(
             LOGGING_DBG    // Uncomment for console output on TX0
+            DBG_CONSOLE_BAUDRATE=921600
+            SYSTHREAD_INT_ONLY
             // SKETCH_VERSION=258 // OTA
             // MODERN_MULTICHANNEL  // No clusterring the first channel is mapped to NIF only
             // MODERN_MULTICHANNEL_S2  // S2 encapsulated NIF in multichannel
@@ -110,6 +112,10 @@ void setup() {
    Serial0.print("*** START! ");
 }
 // OS calls loop() function repeatedly
+void my_test_func1(){
+    void * handle = zunoGetSysThreadHandle(SYS_THREAD_TIMER);
+   zunoSuspendThread(handle);
+}
 void loop() {
    // Switches
    digitalWrite(LedPin1, switchValue1 == 0);
@@ -160,4 +166,7 @@ void loop() {
        zunoSendReport(SENSOR_HUMIDITY_CHANNEL);
    }
    delay(50);
+   //my_test_func1();
+   /*for(int i=0;i<10;i++)
+    delayMicroseconds(65000);*/
 }

@@ -36,8 +36,8 @@ typedef struct								ZunoSpiUsartTypeConfig_s
 	USART_TypeDef							*usart;
 	ZunoSync_t								*lpLock;
 	void									(*IRQHandler)(uint32_t);
-	LdmaClassSignal_t						dmaSignalWrite;
-	LdmaClassSignal_t						dmaSignalRead;
+	LDMA_PeripheralSignal_t						dmaSignalWrite;
+	LDMA_PeripheralSignal_t						dmaSignalRead;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
 	uint8_t									miso;

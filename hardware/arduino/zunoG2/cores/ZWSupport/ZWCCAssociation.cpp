@@ -14,6 +14,7 @@
 #include "ZWCCCentralScene.h"
 #include "CommandQueue.h"
 #include "Debug.h"
+#include "ZWCCWindowCovering.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -282,9 +283,17 @@ static uint8_t *_find_report(size_t cmdClass, uint8_t *command) {
 			cmd = SWITCH_COLOR_REPORT;
 			break ;
 		#endif
+		#ifdef WITH_CC_WINDOW_COVERING
+		case COMMAND_CLASS_WINDOW_COVERING:
+			cmd = WINDOW_COVERING_REPORT;
+			break ;
+		#endif
 		#ifdef WITH_CC_SOUND_SWITCH
 		case COMMAND_CLASS_SOUND_SWITCH:
-			cmd = SOUND_SWITCH_TONE_PLAY_REPORT;
+			command[0] = cmdClass;
+			command[1] = SOUND_SWITCH_TONE_PLAY_REPORT;
+			command = command + 0x2;
+			cmd = SOUND_SWITCH_CONFIGURATION_REPORT;
 			break ;
 		#endif
 		#ifdef WITH_CC_THERMOSTAT_MODE
@@ -447,7 +456,7 @@ static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 	// It's a user group (not LifeLine) and the queue is blocked
 	if((frame->packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
 		// Try to find the package for user group and substitude it to new one
-		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags);
+		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags, 0xFF, 0xFF);
 		if(p != NULL){
 			if(p->dst_zw_channel != 0){
 				// Processing has been started -  add a new one package

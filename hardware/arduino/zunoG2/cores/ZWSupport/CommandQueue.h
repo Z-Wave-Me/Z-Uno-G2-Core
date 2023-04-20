@@ -9,6 +9,10 @@
 #define MAX_SYS_QUEUE_PKGS 3
 #endif
 
+#ifndef CONTROLLER_INTERVIEW_REQUEST_INTERVAL
+#define CONTROLLER_INTERVIEW_REQUEST_INTERVAL 2000
+#endif
+
 #ifndef SYSTEM_PKG_DOMINATION_TIME
 #define SYSTEM_PKG_DOMINATION_TIME 2000
 #endif
@@ -16,9 +20,10 @@
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg);
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node);
 bool zunoCheckSystemQueueStatus(uint8_t channel);
-ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags);
+ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd);
 void ZWQProcess();
 bool ZWQIsEmpty();
+void ZWQIncomingStat(ZUNOCommandPacket_t * pkg);
 
 
 #endif // ZWPACKAGE_QUEUE

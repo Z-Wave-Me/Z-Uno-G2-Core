@@ -23,6 +23,7 @@
 #include <math.h>
 #include "WCharacter.h"
 #include "pgmspace.h"
+#include "SysHandlerMap.h"
 
 typedef enum {
   /** Input disabled. Pullup if DOUT is set. */
@@ -62,6 +63,11 @@ enum{
     INPUT_UP = 0x100 | GPIOMODE_INPUT,
     INPUT_DOWN = GPIOMODE_INPUT
 };
+enum{
+  ZUNO_SECUREPARAM_OFF = 0,
+  ZUNO_SECUREPARAM_ON = 1,
+  ZUNO_SECUREPARAM_UNDEFINED = 0xFF,
+};
 
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
@@ -71,6 +77,7 @@ extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoInNetwork()         (g_zuno_sys->node_id != 0)
 #define zunoIsDbgModeOn()       ((g_zuno_sys->flags & ZUNO_CFGFILE_FLAG_DBG) != 0)
 #define zunoGetWakeReason()     (g_zuno_sys->wakeup_reason)
+#define zunoRSTRetention(N)     ( N < MAX_ZUNO_USER_RETENTION ? g_zuno_sys->usr_retention[N] : 0)
 //#define zunoSendWakeUpNotification() zuno_sendWUP_Notification()
 
 // Arduino specific macroses/function
@@ -132,19 +139,24 @@ void zunoSendWakeUpNotification();
 void zunoSendBatteryReport();
 #endif
 inline void zunoSetSleepingMode(byte mode) {
-	g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+  g_zuno_sys->zw_protocol_data->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
-	g_zuno_sys->zwave_cfg->flags |= mode;
+	g_zuno_sys->zw_protocol_data->flags |= mode;
 }
-inline uint8_t zunoGetSleepingMode(void) {return (g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);};
+inline uint8_t zunoGetSleepingMode(void) {
+  return (g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
+};
 inline void zunoEnableSmartStart(bool en){
+  /*
 	if(en)
 		g_zuno_sys->zwave_cfg->flags &= ~(DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
 	else
 		g_zuno_sys->zwave_cfg->flags |= (DEVICE_CONFIGURATION_FLAGS_SMARTSTART_DISABLE);
+  */
+ (void)en;
 }
 inline void zunoSetProductID(uint16_t product_id){
-	g_zuno_sys->zwave_cfg->product_id = product_id;
+	g_zuno_sys->zw_protocol_data->product_id = product_id;
 }
 
 
@@ -170,32 +182,49 @@ uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
 size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
 inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogReference(ADC_Ref_TypeDef ref);
+#endif
 void analogReadResolution(uint8_t bits);
 void analogWriteResolution(uint8_t bits);
 int  analogRead(uint8_t pin);
+
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
-
-
-/* Handler */
-ZunoError_t zunoAttachSysHandler(byte type, byte sub_type, void * handler);
-ZunoError_t zunoDetachSysHandler(byte type, byte sub_type, void *handler);
-ZunoError_t zunoDetachSysHandlerAllSubType(byte type, byte sub_type);
-void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...);
+#endif
 
 
 /* EEPROM */
 #define EEPROM_SKETH_ADDR								0x0
 #define EEPROM_SKETH_SIZE								0xE00
 #define EEPROM_NOTIFICATION_ADDR						(EEPROM_SKETH_ADDR + EEPROM_SKETH_SIZE)
-#define EEPROM_NOTIFICATION_SIZE						0x4
+#define EEPROM_NOTIFICATION_SIZE						4
 #define EEPROM_WAKEUP_ADDR								(EEPROM_NOTIFICATION_ADDR + EEPROM_NOTIFICATION_SIZE)
-#define EEPROM_WAKEUP_SIZE								0x4
-#define EEPROM_CONFIGURATION_ADDR						(EEPROM_WAKEUP_ADDR + EEPROM_WAKEUP_SIZE)
-#define EEPROM_CONFIGURATION_SIZE						0x84
+#define EEPROM_WAKEUP_SIZE								4
+
 #ifndef EEPROM_USER_CODE_ADDR
 	#define EEPROM_USER_CODE_ADDR						EEPROM_SKETH_ADDR
 #endif
+
+#define EEPROM_BASIC_SAVE_ADDR							(EEPROM_WAKEUP_ADDR + EEPROM_WAKEUP_SIZE)
+#define EEPROM_BASIC_SAVE_SIZE							(1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
+#define EEPROM_SWITCH_COLOR_SAVE_ADDR					(EEPROM_BASIC_SAVE_ADDR + EEPROM_BASIC_SAVE_SIZE)
+#define EEPROM_SWITCH_COLOR_SAVE_SIZE					(1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
+#define EEPROM_USER_CHANNELS_EEPROM_ADDR				(EEPROM_SWITCH_COLOR_SAVE_ADDR + EEPROM_SWITCH_COLOR_SAVE_SIZE)
+#define EEPROM_USER_CHANNELS_EEPROM_SIZE				sizeof(g_zuno_zw_cfg)
+
+// All last
+#define EEPROM_CONFIGURATION_ADDR						(((EEPROM_USER_CHANNELS_EEPROM_ADDR + EEPROM_USER_CHANNELS_EEPROM_SIZE) + (0x100 - 0x1)) & (0x0 - 0x100))
+#ifdef CONFIGPARAMETERS_MAX_COUNT
+	#define EEPROM_CONFIGURATION_SIZE					(CONFIGPARAMETERS_MAX_COUNT * 0x4)
+#else
+	#define EEPROM_CONFIGURATION_SIZE					(0x20 * 0x4)
+#endif
+
+#define EEPROM_MAX_SIZE									0x1300
+
 
 inline int zunoEEPROMWrite(word address, word size, byte * data) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, true, address, size, data);};
 inline int zunoEEPROMRead(word address, word size, byte * data) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, false, address, size, data);};
@@ -206,16 +235,21 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ER
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
-inline void zunoSetZWChannel(byte ch, byte zw_channel) {ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;};
-byte zunoAddChannel(byte type, byte subtype, byte options);
+inline void zunoSetZWChannel(byte ch, byte zw_channel) {
+  ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
+};
+byte zunoAddChannel(byte type, byte subtype, uint32_t options);
 bool zunoAddBaseCCS(byte ccs, byte version);
 void zunoSendReport(byte ch);
 void zunoResetLocally();
 void zunoSendNIF();
 bool zunoStartDeviceConfiguration();
-inline void zunoSetS2Keys(byte keys) {g_zuno_sys->zwave_cfg->security_keys = keys;};
+inline void zunoSetS2Keys(byte keys) {
+  g_zuno_sys->zw_protocol_data->req_s2_keys = keys;
+};
 void zunoStartLearn(byte timeout, bool secured);
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
+void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id);
 // Backward compatibility macro
 #define ZUNO_START_CONFIG() 						zunoStartDeviceConfiguration()
 #define ZUNO_ADD_CHANNEL(TYPE, SUBTYPE, OPTIONS)  	zunoAddChannel(TYPE, SUBTYPE, OPTIONS)
@@ -238,8 +272,11 @@ inline void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_clos
 
 /* Misc */
 void WDOG_Feed();
+void zunoUpdateSysConfig(bool deffered=true, bool force=false);
+void zunoReboot(bool force=true);
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout=20000);
 void _zme_memcpy(byte *dst, byte *src, byte count);
+uint8_t zmeMapDict(uint8_t * dict, uint8_t size, uint8_t key, bool back);
 
 
 /* Sleep & PowerDown mode */
@@ -248,11 +285,12 @@ ZunoError_t zunoEM4EnablePinWakeup(uint8_t em4_pin);
 void zunoSetWUPTimer(uint32_t timeout);
 void zunoSetCustomWUPTimer(uint32_t timeout);
 
+
 #include "GpioInterrupt.h"
 #include "GeneralPurposeTimer.h"
 #include "Tone.h"
 #include "Threading.h"
-
 #include "ReportHandler.h"
 
+extern ZUNOCodeHeader_t g_zuno_codeheader;
 #endif // ZUNO_ARDUINOH

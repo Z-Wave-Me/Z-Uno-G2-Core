@@ -1,6 +1,6 @@
 {
-    "core_version":{"major":3,"minor":10,"branch":"beta"},
-    "load_offset":215040,
+    "core_version":{"major":3,"minor":12,"branch":"beta"},
+    "load_offset":198656,
     "default_defs":"MODERN_MULTICHANNEL MODERN_MULTICHANNEL_S2 MODERN_MULTICHANNEL_S2_ALWAYS",
     "max_channel_ccs":2,
     "static_value_mapper":{
@@ -62,6 +62,75 @@
         {"type_name":"ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER", "type_val":3, "preproc_flags":[]},
         {"type_name":"ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER", "type_val":4, "preproc_flags":["S2_ENTRY_CONTROL"]}
     ],
+    "no_lto_set":[],
+    "compiler_flags":["-mthumb", 
+                        "-Os", 
+                        "-std=c++17",
+                        "-fdata-sections", 
+                        "-ffunction-sections", 
+                        "-fno-rtti",
+                        "-fsingle-precision-constant",
+                        "-fzero-initialized-in-bss",
+                        "-fno-exceptions"],
+    "linker_flags":["-mthumb",
+                    "-Os", 
+                    "-std=c++17",
+                    "--specs=nano.specs",
+                    "-lm",
+                    "-Wl,--gc-sections"],
+    "chip_depending":{
+            "ZGM230SB27HGN":{
+                "family":"ZGM23",
+                "hw_directory":"../device/ZGM23/",
+                "compiler_flags":[
+                                    "-mcpu=cortex-m33",
+                                    "-mfpu=fpv5-sp-d16",
+                                    "-mfloat-abi=hard",
+                                    "-mcmse",
+                                    "-DZGM230SB27HGN"
+                                ],
+                "linker_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DZGM230SB27HGN"
+                            ],
+                "link_file":"ZGM230SB27HGN.ld"
+            },
+            "ZGM130S037HGN1":{
+                "family":"ZGM130S",
+                "hw_directory":"../device/ZGM130S/",
+                "compiler_flags":[  "-mcpu=cortex-m4",
+                                    "-mfloat-abi=hard",
+                                    "-mfpu=fpv4-sp-d16",
+                                    "-DZGM130S037HGN1"],
+                "linker_flags":["-mcpu=cortex-m4",
+                                "-mfloat-abi=hard",
+                                "-mfpu=fpv4-sp-d16",
+                                "-DZGM130S037HGN1"],
+                "link_file":"ZGM130S037HGN1.ld"
+            },
+            "EFR32ZG23B010F512IM48":{
+                "family":"EFR32ZG23",
+                "hw_directory":"../device/EFR32ZG23/",
+                "compiler_flags":[
+                    "-mcpu=cortex-m33",
+                    "-mfpu=fpv5-sp-d16",
+                    "-mfloat-abi=hard",
+                    "-mcmse",
+                    "-DEFR32ZG23B010F512IM48"
+                ],
+                "linker_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DEFR32ZG23B010F512IM48"
+                            ],
+                "link_file":"EFR32ZG23B010F512IM48.ld"
+            }
+    },
     "channels":[
         {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
             "cc_flags":["WITH_CC_SWITCH_BINARY","WITH_CC_BASIC"],
@@ -244,6 +313,21 @@
             "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
+            "cluster_rule":"${type}"
+        },
+        {   
+            "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":14,
+            "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
+            "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
+            "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",
+            "icon_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE",
+            "icon_app_id":"ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE",
+            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
+            "preproc_flags":[],
+            "ccs":[
+                {"name":"COMMAND_CLASS_WINDOW_COVERING","version":"WINDOW_COVERING_VERSION"},
+                {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
+            ],
             "cluster_rule":"${type}"
         }
     ]

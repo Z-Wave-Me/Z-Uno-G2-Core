@@ -5,8 +5,14 @@
 #define SYNCTIMEOUT_IMMIDIATELY     0
 #define MAX_SEMAPHORE_COUNT         0x10 
 
+#define SYSTHREAD_INT_ONLY 
 typedef void (*threadcodefunc_t) (void *param);
-
+typedef enum{
+	SYS_THREAD_MAIN,
+	SYS_THREAD_TIMER,
+	SYS_THREAD_COMMAND_HANDLER,
+	SYS_THREAD_IO
+} ZunoSysThreadType_t;
 // -----------------------------------------------------------------------
 // SYSTEM internal structs. Depend on RTOS release
 // Do not modify!!!
@@ -77,6 +83,15 @@ class znThread {
 };
 
 // C API
+// while (0xFF)
+void * zunoCreateCustomThread(threadcodefunc_t  func, uint32_t stack_size, uint32_t *stack, void *param, _znSysThData_t * thdata);
+bool zunoIsCustomThread(void * handle=NULL);
+bool zunoIsSystemThread(void * handle=NULL);
+bool zunoIsIOThread(void * handle=NULL);
+bool zunoIsMainThread(void * handle=NULL);
+void * zunoGetSysThreadHandle(ZunoSysThreadType_t type);
+
+
 inline void *zunoGetCurrentThreadHandle() {
 	return zunoSysCall(ZUNO_SYSFUNC_THREAD_GETCURRENTHANDLE, 0);
 }
@@ -88,12 +103,11 @@ inline void zunoSuspendThread(void *handle) {
 inline void zunoResumeThread(void *handle) {
 	zunoSysCall(ZUNO_SYSFUNC_THREAD_RESUME, 1, handle);
 }
+/*
 inline bool zunoThreadIsRunning(void *handle){
     return (bool)zunoSysCall(ZUNO_SYSFUNC_THREAD_ISRUNNING, 1, handle);
 }
-inline bool zunoIsIOThread(){
-	return (g_zuno_sys->hIOThread == zunoSysCall(ZUNO_SYSFUNC_THREAD_GETCURRENTHANDLE, 0));
-}
+*/
 inline void zunoEnterCritical(){
 	zunoSysCall(ZUNO_SYSFUNC_ENTER_CRITICAL, 0);
 }

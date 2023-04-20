@@ -7,14 +7,15 @@
 	#include "Custom_defs.h"
 #endif
 
-#define ZUNO_UNO				1//Для тип чего собираеться - зуно
-#define ZUNO_RASBERI			2//Для тип чего собираеться - распбери
-#define ZUNO_BOOTLOADER			3//Для тип чего собираеться - загрузчик
+#define ZUNO_UNO				1
+#define ZUNO_RASBERI			2
+#define ZUNO_BOOTLOADER			3
 
 typedef enum
 {
 	ZunoErrorOk,//Good!!!
 	ZunoErrorTredIo,
+	ZunoErrorSyncTimeout,
 	ZunoErrorTimerAlredy,//the timer is already in use
 	ZunoErrorUsartAlredy,//the usart is already in use
 	ZunoErrorExtInt,//Failed to configure interrupt
@@ -68,21 +69,27 @@ typedef enum
 } ZunoError_t;
 
 #include "ZUNO_AutoDef.h"
-
+#define MAX_CMDCLASES_NSNI								48
+#define MAX_CMDCLASES_SECURED							48
+#define MAX_CMDCLASES_CROPPED							8
 #define MAX_CHANNEL_PARAMS                              4
 #define ZUNO_MAX_MULTI_CHANNEL_NUMBER 					32
 #define ZUNO_MAX_ASSOC_NUMBER 							32
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
 #define ZUNO_MAX_CUSTOM_CCS								8
-#define ZUNO_CODE_START                                 0x34800L
+//#define ZUNO_CODE_START                                 0x30800L
 //#define USER_SPACE_FLASH_ADDR                           0x10000
-#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0x4000-0x800+0x8000+0x20000)
+#define ZUNO_CUSTOM_CODESPACE_SIZE                      (0x10000-0x800+0x20000)
 #define MAX_ZUNO_PWMS           						4
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN				300
+#define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT				32 // !!!(MAX_ZW_PACKAGE - MAX_ZWTRANSPORT_ENCAP)
+#define ZUNO_COMMAND_PACKET_MAX_AUX_DATA 				4
+#define MAX_FWHEADER_SIGN 16
 
-
+#define MAX_ZUNO_USER_RETENTION                         16
 #define MAX_SLEEP_DELAY 								60000
 #ifndef ZUNO_MAX_CONTROLLER_WUP_TIMEOUT
 #define ZUNO_MAX_CONTROLLER_WUP_TIMEOUT 				10000
@@ -117,6 +124,14 @@ typedef enum
 
 
 
+enum{
+	SYSFAULT_HARDWARE = 0x01,
+	SYSFAULT_MEMORY = 0x02,
+	SYSFAULT_USAGE = 0x04,
+	SYSFAULT_BUS = 0x08,
+	SYSFAULT_SUPERVISOR_CALL= 0x10,
+	SYSFAULT_HANG= 0x20
+};
 enum { 
 	ZUNO_EEPROM_OK,
 	ZUNO_EEPROM_NOTALIGNED,
@@ -300,6 +315,7 @@ enum{
 };
 enum{
 	ZUNO_PACKETFLAGS_GROUP = 0x80,
+	ZUNO_PACKETFLAGS_TEST = 0x40,
 	ZUNO_PACKETFLAGS_PRIORITY_MASK = 0x03
 };
 enum {

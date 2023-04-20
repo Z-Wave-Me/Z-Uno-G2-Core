@@ -21,6 +21,13 @@
 #define VERSION_CAPABILITIES_REPORT_PROPERTIES1_RESERVED1_SHIFT                          0x03
 
 
+#define VERSION_LIBRARY_TYPE_SLAVE                                                      0x03
+#define VERSION_PROTOCOL_VERSION_MAJ                                                    7
+#define VERSION_PROTOCOL_VERSION_MIN                                                    18
+
+
+
+
 /************************************************************/
 /* Version Command Class Get V3 command class structs */    
 /************************************************************/

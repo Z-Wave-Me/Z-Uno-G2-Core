@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "ZWCCSensorMultilevel.h"
 
+#ifdef WITH_CC_SENSOR_MULTILEVEL
 int zuno_CCSensorMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 	ZwSensorMultilevelReportFrame_t					*report;
 	size_t											channel_size;
@@ -118,3 +119,4 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 	}
 	return (rs);
 }
+#endif // WITH_CC_SENSOR_MULTILEVEL

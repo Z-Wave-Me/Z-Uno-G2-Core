@@ -24,9 +24,12 @@ ZunoError_t ButtonsClass::addButton(uint8_t pin, ZunoBtnType_t type) {
 	void				*init;
 
 	switch (type) {
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		case BtnTypeTouch:
 			init = (void *)&this->_initBtnTouch;
 			break ;
+		#endif
 		case BtnTypeButton:
 			init = (void *)&this->_initBtnButton;
 			break ;
@@ -181,9 +184,12 @@ ZunoError_t ButtonsClass::_addButton(uint8_t pin, ZunoBtnType_t type, void *init
 		case BtnTypeButton:
 			len = sizeof(ZunoBtnButton_t);
 			break ;
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		case BtnTypeTouch:
 			len = sizeof(ZunoBtnTouch_t);
 			break ;
+		#endif
 	}
 	if ((list = (ZunoBtnHeader_t *)malloc(len)) == 0)
 		return (ZunoErrorMemory);
@@ -223,7 +229,10 @@ inline ZunoError_t ButtonsClass::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_
 inline void ButtonsClass::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, void *init, uint8_t bOld) {
 	ZunoButtonMode_t		mode;
 	ZunoBtnDelayInit_t		*delay;
+	// MULTI_CHIP
+	#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 	uint8_t					clickPower;
+	#endif
 
 	switch (type) {
 		case BtnTypeButton:
@@ -235,11 +244,14 @@ inline void ButtonsClass::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, v
 			}
 			((ZunoBtnButton_t *)list)->bInvert = ((ZunoBtnButtonInit_t *)init)->bInvert;
 			break ;
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		case BtnTypeTouch:
 			if ((clickPower = ((ZunoBtnTouchInit_t *)init)->clickPower) > BTN_TOUCH_MAX_CLICK_POWER)
 				clickPower = BTN_TOUCH_MAX_CLICK_POWER;
 			((ZunoBtnTouch_t *)list)->clickPower = clickPower;
 			break ;
+		#endif
 	}
 	list->lastTransition = 0;
 	list->event_map = 0;
@@ -258,6 +270,8 @@ void ButtonsClass::_closeTimer(void) {
 	zunoExitCritical();
 }
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 ZunoError_t ButtonsClass::_deInitCsen(size_t param) {
 	if (param <= 0x1F)
 		CSEN->SCANMASK0 ^= (1 << param);
@@ -275,6 +289,7 @@ ZunoError_t ButtonsClass::_deInitCsen(size_t param) {
 	ButtonsClass::_reconfigTouch();
 	return (ZunoErrorSyncDeInit);
 }
+#endif
 
 inline void ButtonsClass::_deactive(ZunoBtnHeader_t *list) {
 	ZunoBtnButton_t			*list_button;
@@ -291,18 +306,24 @@ inline void ButtonsClass::_deactive(ZunoBtnHeader_t *list) {
 					break ;
 			}
 			break ;
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		case BtnTypeTouch:
 			zunoSyncClose(&gSyncCSEN, SyncMasterBtn, this->_deInitCsen, ((ZunoBtnTouch_t *)list)->index, &this->_values.keyCsen);
 			break ;
+		#endif
 	}
 	free(list);
 }
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 void ButtonsClass::_reconfigTouch(void) {
 
 	LdmaClass::transferStop(ButtonsClass::_values.dma->channel_data);
-	ButtonsClass::_values.dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, ButtonsClass::_values.toushAutoScanBufferLp, ButtonsClass::_values.touchBlock, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &ButtonsClass::_values.dma->array_data);
+	ButtonsClass::_values.dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, ButtonsClass::_values.toushAutoScanBufferLp, ButtonsClass::_values.touchBlock, ldmaPeripheralSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &ButtonsClass::_values.dma->array_data);
 }
+#endif
 
 inline ZunoError_t ButtonsClass::_active(uint8_t pin, ZunoBtnType_t type, ZunoBtnHeader_t *list) {
 	ZunoError_t				ret;
@@ -322,25 +343,30 @@ inline ZunoError_t ButtonsClass::_active(uint8_t pin, ZunoBtnType_t type, ZunoBt
 					break ;
 			}
 			break ;
+		// MULTI_CHIP
+		#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 		case BtnTypeTouch:
 			ret = this->_activeTouchLock(pin, (ZunoBtnTouch_t *)list);
 			break ;
+		#endif
 	}
 	return (ret);
 }
 
 ZunoError_t ButtonsClass::_openTimer(void) {
-	ZunoError_t				ret;
-
+	ZunoError_t ret = ZunoErrorOk;
 	zunoEnterCritical();
-	if (ButtonsClass::_values.bSysTimerInit++ != 0)
-		ret = ZunoErrorOk;
-	else if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer)) != ZunoErrorOk) 
+	if ( (ButtonsClass::_values.bSysTimerInit++ == 0) && 
+		(!zunoAttachSysHandler(ZUNO_HANDLER_SYSTIMER, 0, (void *)ButtonsClass::_updateTimer))){ 
 		ButtonsClass::_values.bSysTimerInit--;
+		ret = ZunoErrorAttachSysHandler;
+	}
 	zunoExitCritical();
-	return (ret);
+	return ret;
 }
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 static inline void _setPeriodCsen(CSEN_Init_TypeDef *csenInit, size_t ms) {
 	CSEN_PCPrescale_TypeDef				pcPrescale;
 	size_t								pcReload;
@@ -360,7 +386,10 @@ static inline void _setPeriodCsen(CSEN_Init_TypeDef *csenInit, size_t ms) {
 	csenInit->pcReload = 0xFF;
 	csenInit->pcPrescale = csenPCPrescaleDiv128;
 }
+#endif
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 ZunoError_t ButtonsClass::_initCsen(size_t param) {
 	ZunoBtnCsenInit_t			*initBtn;
 	ZunoError_t					ret;
@@ -377,13 +406,13 @@ ZunoError_t ButtonsClass::_initCsen(size_t param) {
 		return (ZunoErrorMemory);
 	}
 	memset(blockBuffer, 0, BTN_TOUCH_BLOCK_PERIOD * sizeof(btn_touch_value));
-	if ((dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, blockBuffer, 0x1, LdmaClassSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_data)) < 0x0)
+	if ((dma->channel_data = LdmaClass::receivedCyclical((const void *)&CSEN->DATA, blockBuffer, 0x1, ldmaPeripheralSignal_CSEN_DATA, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_data)) < 0x0)
 	{
 		free(dma);
 		free(blockBuffer);
 		return (ZunoErrorDmaLimitChannel);
 	}
-	if ((dma->channel_baseline = LdmaClass::transferCyclical(&ButtonsClass::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, LdmaClassSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) < 0x0)
+	if ((dma->channel_baseline = LdmaClass::transferCyclical(&ButtonsClass::_baseLineTouch[0], (void *)&CSEN->DMBASELINE, 0x1, ldmaPeripheralSignal_CSEN_BSLN, BTN_TOUCH_BLOCK_DMA_SIZE, &dma->array_baseline)) < 0x0)
 	{
 		LdmaClass::transferStop(dma->channel_data);
 		free(dma);
@@ -428,7 +457,10 @@ ZunoError_t ButtonsClass::_initCsen(size_t param) {
 	CSEN->CTRL = (CSEN->CTRL ^ (csenTrigSelStart << _CSEN_CTRL_STM_SHIFT)) | (csenTrigSelTimer << _CSEN_CTRL_STM_SHIFT);
 	return (ZunoErrorOk);
 }
+#endif
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 inline ZunoError_t ButtonsClass::_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *list) {
 	ZunoBtnCsenInit_t			initBtn;
 	ZunoError_t					ret;
@@ -441,7 +473,10 @@ inline ZunoError_t ButtonsClass::_activeTouchLock(uint8_t pin, ZunoBtnTouch_t *l
 	zunoSyncReleseWrite(&gSyncCSEN, SyncMasterBtn, &this->_values.keyCsen);
 	return (ret);
 }
+#endif
 
+// MULTI_CHIP
+#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 inline ZunoError_t ButtonsClass::_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBtnTouch_t *list) {
 	size_t						aport;
 	size_t						block;
@@ -475,6 +510,7 @@ inline ZunoError_t ButtonsClass::_activeTouch(ZunoBtnCsenInit_t *initBtn, ZunoBt
 	}
 	return (ZunoErrorOk);
 }
+#endif
 
 inline void ButtonsClass::_addList(ZunoBtnHeader_t *list) {
 	ZunoBtnHeader_t		*list_next;
@@ -519,9 +555,12 @@ void ButtonsClass::_updateTimer(void) {
 	ZunoBtnHeader_t			*list;
 	size_t					time_now;
 	size_t					pressed;
+	// MULTI_CHIP
+	#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 	size_t					input0;
 	size_t					input1;
 	size_t					index;
+	#endif
 
 	time_now = millis() / BTN_DELAY_DIVIDED;
 	list = Btn._values.list;
@@ -535,6 +574,8 @@ void ButtonsClass::_updateTimer(void) {
 					ButtonsClass::_updateTimerCommon(time_now, list, pressed);
 				}
 				break ;
+			// MULTI_CHIP
+			#if defined(CSEN_COUNT) && (CSEN_COUNT > 0)
 			case BtnTypeTouch:
 				index = ((ZunoBtnTouch_t *)list)->index;
 				input0 = CSEN->SCANMASK0;
@@ -560,6 +601,7 @@ void ButtonsClass::_updateTimer(void) {
 				pressed = (ButtonsClass::_values.toushAutoScanBufferLp[index] >= ButtonsClass::_values.touchFullClick * ((ZunoBtnTouch_t *)list)->clickPower)? 1 : 0;
 				ButtonsClass::_updateTimerCommon(time_now, list, pressed);
 				break ;
+			#endif
 		}
 		list = list->next;
 	}

@@ -5,7 +5,7 @@
 #include "ZWSupport.h"
 
 /* Multi Channel command class commands */
-#define MULTI_CHANNEL_VERSION                                                          0x03
+#define MULTI_CHANNEL_VERSION                                                          0x04
 #define MULTI_CHANNEL_CAPABILITY_GET                                                   0x09
 #define MULTI_CHANNEL_CAPABILITY_REPORT                                                0x0A
 #define MULTI_CHANNEL_CMD_ENCAP                                                        0x0D

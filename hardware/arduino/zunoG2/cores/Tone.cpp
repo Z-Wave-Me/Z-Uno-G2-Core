@@ -2,6 +2,8 @@
 #include "em_device.h"
 #include "em_timer.h"
 
+// MULTI_CHIP
+#if defined(_TIMER_ROUTELOC0_CC0LOC_MASK)
 #define PWM_TIMER						TIMER1
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1
 
@@ -296,3 +298,4 @@ void analogWriteFrequency(uint32_t freq){
 	if ((freq >= PWM_FREQ_MIN) && (freq <= PWM_FREQ_MAX))
 		g_zuno_odhw_cfg.pwm_freq = freq;
 }
+#endif

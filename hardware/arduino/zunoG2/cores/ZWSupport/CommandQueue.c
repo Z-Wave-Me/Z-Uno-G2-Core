@@ -77,18 +77,19 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     return b_busy;
 }
 void _ZWQSend(ZUNOCommandPacket_t * p){
-    #ifdef LOGGING_DBG
+	#ifdef LOGGING_DBG
 	LOGGING_UART.print("\n >>> (");
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print(") OUTGOING PACKAGE: ");
 	zuno_dbgdumpZWPacakge(p);
 	#endif
-    if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
+	if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
+		uint8_t mapped_channel = p->src_zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
 		p->src_zw_channel = 0;
 		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
-		p->src_zw_channel &= ~(ZWAVE_CHANNEL_MAPPED_BIT);
+		p->src_zw_channel = mapped_channel;
 	}
-    zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
+	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t * p){
     // revert back cmd addr

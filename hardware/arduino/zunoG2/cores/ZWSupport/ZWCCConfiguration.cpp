@@ -2,7 +2,20 @@
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
 
-#define CONFIGPARAM_EEPROM_ADDR(param)	(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
+#define CONFIGPARAM_MIN_PARAM				0x40
+#define CONFIGPARAM_PARAM_COUNT_DEFAULT		(EEPROM_CONFIGURATION_SIZE / 0x4 - 0x1)
+#define CONFIGPARAM_MAX_PARAM_DEFAULT		(CONFIGPARAM_MIN_PARAM + CONFIGPARAM_PARAM_COUNT_DEFAULT)
+
+#ifdef CONFIGPARAMETERS_MAX_COUNT
+	#define CONFIGPARAM_MAX_PARAM			(CONFIGPARAM_MIN_PARAM + CONFIGPARAMETERS_MAX_COUNT)
+#else
+	#define CONFIGPARAM_MAX_PARAM			CONFIGPARAM_MAX_PARAM_DEFAULT
+#endif
+
+
+
+#define CONFIGPARAM_EEPROM_ADDR(param)		(((param - CONFIGPARAM_MIN_PARAM) * sizeof(int32_t)) + EEPROM_CONFIGURATION_ADDR)
+#define CONFIGPARAM_EEPROM_ADDR_ADD(param)	(((param - CONFIGPARAM_MAX_PARAM_DEFAULT - 0x1) * sizeof(int32_t)) + EEPROM_USER_CODE_ADDR)
 
 #define CONFIGPARAM_STANDART_NAME			"Eeprom parameter "
 
@@ -49,7 +62,7 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 const ZunoCFGParameter_t SYSCFGPARAM1 =
 {
 	.name = "Debug mode",
-	.info = "Enables Z-Uno debug mode",
+	.info = "Enables Z-Uno debug mode.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
 	.defaultValue = 0x0,
@@ -58,11 +71,11 @@ const ZunoCFGParameter_t SYSCFGPARAM1 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t SYSCFGPARAM2 =
 {
-	.name = "ActivityLED",
-	.info = "Turns on/off activity led",
+	.name = "Activity LED",
+	.info = "Turns on/off activity led.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
 	.defaultValue = 0x1,
@@ -71,7 +84,7 @@ const ZunoCFGParameter_t SYSCFGPARAM2 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 #ifdef SECURITY_CONFIG_PARAM
 const ZunoCFGParameter_t SYSCFGPARAM7 =
 {
@@ -85,11 +98,11 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.readOnly = false,
 	.altering = true,
 	.advanced = true
-}; 
+};
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM8 =
 {
-	.name = "RFLogging",
+	.name = "RF logging",
 	.info = "Turns on/off exception logging.",
 	.minValue = 0x0,
 	.maxValue = 0x1,
@@ -104,8 +117,8 @@ const ZunoCFGParameter_t SYSCFGPARAM8 =
 #pragma message "parameter 9 DEBUG version"
 const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
-	.name = "RFFrequency",
-	.info = "Changes Z-Wave region of Z-Uno",
+	.name = "Radio frequency",
+	.info = "Changes Z-Wave region of Z-Uno.",
 	.minValue = 0,
 	.maxValue = 0x11EE,
 	.defaultValue = 0x00FF,
@@ -115,11 +128,11 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.altering = false,
 	.advanced = true
 };
-#else 
+#else
 const ZunoCFGParameter_t SYSCFGPARAM9 =
 {
-	.name = "RFFrequency",
-	.info = "Changes Z-Wave region of Z-Uno",
+	.name = "Radio frequency",
+	.info = "Changes Z-Wave region of Z-Uno.",
 	.minValue = 0x00FF,
 	.maxValue = 0x11EE,
 	.defaultValue = 0x00FF,
@@ -132,8 +145,8 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM11 =
 {
-	.name = "MultilevelReportInterval",
-	.info = "Minimal report interval.",
+	.name = "Multilevel report interval",
+	.info = "Minimal report interval. Debugging mode is required.",
 	.minValue = 0x0,
 	.maxValue = 255,
 	.defaultValue = 30,
@@ -142,10 +155,10 @@ const ZunoCFGParameter_t SYSCFGPARAM11 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t SYSCFGPARAM20 =
 {
-	.name = "OTAConfirmation",
+	.name = "OTA confirmation",
 	.info = "Accepts firmware update process.",
 	.minValue = 0x0,
 	.maxValue = 0x7FFFFFFF,
@@ -155,7 +168,7 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.readOnly = false,
 	.altering = false,
 	.advanced = true
-}; 
+};
 const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 	#if !defined(CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
 	switch(param){
@@ -410,16 +423,24 @@ int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketRepor
 	return (rs);
 }
 
-
 ssize_t zunoLoadCFGParam(uint8_t param) {
 	const ZunoCFGParameter_t							*cfg;
 	int32_t												out;
 	ssize_t												minValue;
 	ssize_t												maxValue;
+	uint32_t											addr;
 
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return (0);
-	zunoEEPROMRead(CONFIGPARAM_EEPROM_ADDR(param), sizeof(out), (uint8_t *)&out);
+	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
+		if (param > CONFIGPARAM_MAX_PARAM_DEFAULT)
+			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
+		else
+			addr = CONFIGPARAM_EEPROM_ADDR(param);
+	#else
+		addr = CONFIGPARAM_EEPROM_ADDR(param);
+	#endif
+	zunoEEPROMRead(addr, sizeof(out), (uint8_t *)&out);
 	if ((cfg = zunoCFGParameter(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
 		return (out);
 	minValue = cfg->minValue;
@@ -437,6 +458,7 @@ static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 	const ZunoCFGParameter_t							*cfg;
 	int32_t												result;
 	size_t												size;
+	uint32_t											addr;
 
 	if (param < CONFIGPARAM_MIN_PARAM || param > CONFIGPARAM_MAX_PARAM)// Check if this is not user data
 		return ;
@@ -477,7 +499,15 @@ static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser) {
 		result = value;
 	if (bUser == false)
 		zunoSysHandlerCall(ZUNO_HANDLER_ZW_CFG, 0, param, value);
-	zunoEEPROMWrite(CONFIGPARAM_EEPROM_ADDR(param), sizeof(result), (uint8_t *)&result);
+	#if CONFIGPARAM_MAX_PARAM > CONFIGPARAM_MAX_PARAM_DEFAULT
+		if (param > CONFIGPARAM_MAX_PARAM_DEFAULT)
+			addr = CONFIGPARAM_EEPROM_ADDR_ADD(param);
+		else
+			addr = CONFIGPARAM_EEPROM_ADDR(param);
+	#else
+		addr = CONFIGPARAM_EEPROM_ADDR(param);
+	#endif
+	zunoEEPROMWrite(addr, sizeof(result), (uint8_t *)&result);
 }
 
 void zunoSaveCFGParam(uint8_t param, ssize_t value) {

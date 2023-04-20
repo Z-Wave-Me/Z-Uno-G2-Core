@@ -3,9 +3,6 @@
 
 #include "ZWSupport.h"
 
-#define CONFIGPARAM_MIN_PARAM			0x40
-#define CONFIGPARAM_MAX_PARAM			0x60
-
 #define MAX_CFGUPDATE_LISTENERS 2
 /* Configuration command class commands */
 #define CONFIGURATION_VERSION                                                            0x04

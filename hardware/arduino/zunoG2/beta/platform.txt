@@ -11,7 +11,7 @@ name=Z-Wave>ME Z-Uno2 Boards Beta
 # ---------------------
 tools.zprog.cmd.path={runtime.tools.zme_make.path}/zme_make
 tools.zprog.cmd.utility={runtime.tools.zme_make.path}/utility
-tools.zprog.cmd.include={runtime.tools.arm-none-eabi-gcc.path}/lib/gcc/arm-none-eabi/7.2.1/include
+tools.zprog.cmd.include={runtime.tools.arm-none-eabi-gcc.path}/lib/gcc/arm-none-eabi/10.3.1/include
 tools.zprog.cmd.clang_lib={runtime.tools.libClang.path}
 tools.zprog.cmd.bin={runtime.tools.arm-none-eabi-gcc.path}/bin
 tools.zprog.cmd.libraries={runtime.platform.path}/libraries

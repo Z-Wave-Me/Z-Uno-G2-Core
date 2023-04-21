@@ -447,6 +447,7 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 	size_t												parameterNumber1;
 	size_t												parameterNumber2;
 	size_t												len;
+	uint8_t												reportsToFollow;
 	const char											*str;
 	const ZunoCFGParameter_t							*cfg;
 
@@ -464,10 +465,13 @@ static int _configuration_name_get(ZwConfigurationNameGetFrame_t *cmd, ZunoCFGTy
 		len = 1 + sizeof(ZwConfigurationNameReportFrame_t);
 	} else {
 		frame_report->packet.len = (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT);
-		report->reportsToFollow = 0x1;
 		str = (type == ZunoCFGTypeHandlerInfo) ? cfg->info : cfg->name;
 		len = strlen(str);
 		while (len > (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t))) {
+			reportsToFollow = len / (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t));
+			if (len % (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t)) == 0x0)
+				reportsToFollow--;
+			report->reportsToFollow = reportsToFollow;
 			len = len - (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t));
 			memcpy(&report->name[0], str, (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t)));
 			str = str + (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwConfigurationNameReportFrame_t));

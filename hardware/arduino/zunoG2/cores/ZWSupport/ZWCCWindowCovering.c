@@ -2,7 +2,6 @@
 #include "ZWCCWindowCovering.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSuperVision.h"
-#include "debug.h"
 
 typedef struct					ZunoWindowCoveringDuration_s {
 	uint8_t						targetValue;

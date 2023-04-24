@@ -488,6 +488,57 @@ void checkSystemCriticalStat();
 void _zunoRegisterTimerThread();
 void _zunoRegisterCommandThread();
 uint32_t g_sys_timer_counter = 0;
+#ifdef LOGGING_DBG
+void printSystemEvent(ZUNOSysEvent_t * evnt ){
+    LOGGING_UART.print("[");
+    LOGGING_UART.print(millis());
+    LOGGING_UART.print("] "); 
+    switch(evnt->event){
+        case ZUNO_SYS_EVENT_STACK_OVERFLOW:
+            LOGGING_UART.print("***ERROR: STACKOVERFLOW:");
+            LOGGING_UART.println(evnt->params[0], HEX);
+            break;
+        case ZUNO_SYS_EVENT_QUEUE_OVERLOAD:
+            LOGGING_UART.println("***ERROR: SYSTEM QUEUE OVERLOAD");
+            break;
+        case ZUNO_SYS_EVENT_INVALID_TX_REQUEST:
+            LOGGING_UART.println("***ERROR: INVALID TX REQUEST");
+            break;
+        case ZUNO_SYS_EVENT_INVALID_MEMORYAREA_IN_SYSCALL:
+            LOGGING_UART.print("***ERROR: INVALID MEMORY AREA AS SYSCALL PARAMETER:");
+            LOGGING_UART.print(evnt->params[0], HEX);
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(evnt->params[1], HEX);
+            break;
+        case ZUNO_SYS_EVENT_INVALID_PARAMNUM_IN_SYSCALL:
+            LOGGING_UART.print("***ERROR: WRONG PARAMETER COUNT IN SYSCALL:");
+            LOGGING_UART.print(evnt->params[0], HEX);
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(evnt->params[1], HEX);
+            break;
+        case ZUNO_SYS_EVENT_INVALID_SYSCALL_PARAM_VALUE:
+            LOGGING_UART.print("***ERROR: WRONG PARAMETER VALUE IN SYSCALL:");
+            LOGGING_UART.print(evnt->params[0], HEX);
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(evnt->params[1], HEX);
+            break;
+        case ZUNO_SYS_EVENT_SYSTEM_FAULT:
+            LOGGING_UART.print("***ERROR: SYSTEM FAULT DURING PREV. BOOT:");
+            LOGGING_UART.print(evnt->params[0], HEX);
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(evnt->params[1], HEX);
+            break;
+        default:
+            LOGGING_UART.print("SYSEVENT: ");
+            LOGGING_UART.print(evnt->event, HEX);
+            LOGGING_UART.print(" ARGS: ");
+            LOGGING_UART.print(evnt->params[0], HEX);
+            LOGGING_UART.print(" ");
+            LOGGING_UART.println(evnt->params[1], HEX);
+            break;
+    }
+}
+#endif
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -549,16 +600,9 @@ void * zunoJumpTable(int vec, void * data) {
                     (evnt->params[1] == 0)){
                     initCCSDataDefault();
                 }
+                
                 #ifdef LOGGING_DBG
-                LOGGING_UART.print("[");
-                LOGGING_UART.print(millis());
-                LOGGING_UART.print("] "); 
-                LOGGING_UART.print("SYSEVENT: ");
-                LOGGING_UART.print(evnt->event, HEX);
-                LOGGING_UART.print(" ARGS: ");
-                LOGGING_UART.print(evnt->params[0], HEX);
-                LOGGING_UART.print(" ");
-                LOGGING_UART.println(evnt->params[1], HEX);
+                printSystemEvent(evnt);
                 #endif
                 zunoRFLogger(evnt);
             }

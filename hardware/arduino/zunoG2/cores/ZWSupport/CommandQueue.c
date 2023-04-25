@@ -39,7 +39,7 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
         free(stored_pck);
         #ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
-		LOGGING_UART.println(" Enqueue: Memory OVF1");
+		LOGGING_UART.println(" Enqueue: Memory OVF2");
 		#endif
         return false;
     }
@@ -80,8 +80,8 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;
     if((channel > 0) && (interval < SYSTEM_PKG_DOMINATION_TIME)){
         #ifdef LOGGING_DBG
-		//LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
-        //LOGGING_UART.println(interval);
+		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+        LOGGING_UART.println(interval);
         #endif
         return true;
     }
@@ -136,7 +136,7 @@ void ZWQProcess(){
         LOGGING_UART.println(queue_sz);
     }
     #endif
-    for(e=g_zwpkg_queue, qi=0;e; e=e->next, qi++){
+    for(e=g_zwpkg_queue, qi=0; e; e=e->next, qi++){
         p = (ZUNOCommandPacket_t *) e->data;
        
         uint32_t system_queue_count = g_zuno_sys->rstat_pkgs_queued - g_zuno_sys->rstat_pkgs_processed; //s.pkgs_queued - s.pkgs_processed;
@@ -152,17 +152,24 @@ void ZWQProcess(){
             break;
         }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
-        if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
-           ( q_ch ==  QUEUE_CHANNEL_LLREPORT) &&
-           (zunoSecurityStatus() == SECURITY_KEY_S0))
-                continue; // Skip report packets during interview
-        // Check if we have a free channel to send the package
-        if(zunoCheckSystemQueueStatus(q_ch))
-            continue; // Needed queue is full for this priority - just skip the package
         #ifdef LOGGING_DBG
 		LOGGING_UART.print("*** QCH:");
         LOGGING_UART.println(q_ch);
         #endif
+        if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
+           ( q_ch ==  QUEUE_CHANNEL_LLREPORT) &&
+           (zunoSecurityStatus() == SECURITY_KEY_S0)){
+               #ifdef LOGGING_DBG
+                LOGGING_UART.print("*** QCH:");
+                LOGGING_UART.println(q_ch);
+                #endif
+                continue; // Skip report packets during interview
+           }
+
+        // Check if we have a free channel to send the package
+        if(zunoCheckSystemQueueStatus(q_ch))
+            continue; // Needed queue is full for this priority - just skip the package
+        
         if(p->flags & ZUNO_PACKETFLAGS_GROUP){
             #ifdef LOGGING_DBG
 		    LOGGING_UART.print(millis());
@@ -208,7 +215,6 @@ void ZWQProcess(){
             processed_indexes[processed_indexes_cnt++] = qi;
             if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
                 break;
-            break;
         }
     }
     #ifdef LOGGING_DBG

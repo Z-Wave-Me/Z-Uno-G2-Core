@@ -313,7 +313,7 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 }
 static void _fillOutgoingPacket(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	
-	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], 0, 0, cmd->src_node);
+	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], 0, QUEUE_CHANNEL_SYNC, cmd->src_node);
 	frame_report->packet.cmd[0] = cmd->cmd[0];  // the same command class
 	frame_report->packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
 	// Reply as we were asked
@@ -347,8 +347,10 @@ void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
 	LOGGING_UART.print(cmd->dst_zw_channel);
 	LOGGING_UART.print(" KEY:");
 	LOGGING_UART.print(cmd->zw_rx_secure_opts, HEX);
-	LOGGING_UART.print(" OPTS:");
+	LOGGING_UART.print(" OPT:");
 	LOGGING_UART.print(cmd->zw_rx_opts, HEX);
+	LOGGING_UART.print(" FL:");
+	LOGGING_UART.print(cmd->flags, HEX);
 	LOGGING_UART.print(" DATA:");
 	LOGGING_UART.dumpPrint(cmd->cmd, cmd->len);
 	LOGGING_UART.println("");

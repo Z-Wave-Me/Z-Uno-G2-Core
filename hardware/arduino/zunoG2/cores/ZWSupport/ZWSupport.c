@@ -1727,7 +1727,7 @@ void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id){
     frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
 	frame.packet.len = 2 + len;
 	frame.packet.zw_rx_secure_opts = 0;
-	_zme_memcpy(&frame.packet.cmd[2], (uint8_t*)data, len);
+	memcpy(&frame.packet.cmd[2], (uint8_t*)data, len);
 	zunoSendZWPackage(&frame.packet);
 }
 void zunoRFLogger(ZUNOSysEvent_t * ev){

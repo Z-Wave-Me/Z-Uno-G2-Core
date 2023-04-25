@@ -25,16 +25,15 @@ typedef struct ServiceData_s{
     uint32_t led_active_timeout;
 }ServiceData_t;
 ServiceData_t g_service_data;
-ButtonsClass  serviceBtn;
-ZunoLed       serviceLeds;
+
 void SysReconfigLeds(){
     if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
-        serviceLeds.off(SYSLED_ACTIVITY);
+        Led.off(SYSLED_ACTIVITY);
     } else {
         if(zunoGetSleepingMode()){
-            serviceLeds.on(SYSLED_ACTIVITY);
+            Led.on(SYSLED_ACTIVITY);
         } else {
-            serviceLeds.setMode(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODE_BLINK);
+            Led.setMode(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODE_BLINK);
         }
     }
 }
@@ -45,17 +44,17 @@ void SysSetLearnLedMode(uint8_t mode, uint32_t timeout){
     LOGGING_UART.print(" TIMEOUT:"); 
     LOGGING_UART.println(timeout, HEX);
     #endif
-    serviceLeds.setMode(SYSLED_LEARN, mode);
+    Led.setMode(SYSLED_LEARN, mode);
     g_service_data.led_learn_timeout = millis()+timeout;
 }
 void SysStopLearnLed(){
     g_service_data.led_learn_timeout = 0;
-    serviceLeds.off(SYSLED_LEARN);
+    Led.off(SYSLED_LEARN);
 }
 void SysServiceInit(){
-    serviceLeds.addLed(SYSLED_LEARN, SYSLED_LEARN_MODES, sizeof(SYSLED_LEARN_MODES)/sizeof(ZunoLedMode_t));
-    serviceLeds.addLed(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODES, sizeof(SYSLED_ACTIVITY_MODES)/sizeof(ZunoLedMode_t));
-    serviceBtn.addButton(SYSBUTTON);
+    Led.addLed(SYSLED_LEARN, SYSLED_LEARN_MODES, sizeof(SYSLED_LEARN_MODES)/sizeof(ZunoLedMode_t));
+    Led.addLed(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODES, sizeof(SYSLED_ACTIVITY_MODES)/sizeof(ZunoLedMode_t));
+    Btn.addButton(SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     SysReconfigLeds();
@@ -85,24 +84,24 @@ static void _setSysCntrlState(uint8_t mode, uint32_t timeout){
 void SysServiceTimer(){
     switch(g_service_data.cntrl_mode){
         case SYS_SVC_MODE_NORMAL:
-            if(serviceBtn.isTripleClick(SYSBUTTON)){
+            if(Btn.isTripleClick(SYSBUTTON)){
                 zunoStartLearn(SYS_LEARN_TIMEOUT, true);
             }
-            if(serviceBtn.isLongClick(SYSBUTTON)){
+            if(Btn.isLongClick(SYSBUTTON)){
                 _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
                 SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
             }
             break;
         case SYS_SVC_MODE_SUBMENU:
-            if(serviceBtn.isTripleClick(SYSBUTTON)){
+            if(Btn.isTripleClick(SYSBUTTON)){
                 zunoResetLocally();
             }
-            if(serviceBtn.isSingleClick(SYSBUTTON)){
+            if(Btn.isSingleClick(SYSBUTTON)){
                 zunoStartLearn(SYS_LEARN_TIMEOUT, false);
             }
             break;
         case SYS_SVC_MODE_LEARN:
-            if(serviceBtn.isSingleClick(SYSBUTTON)){
+            if(Btn.isSingleClick(SYSBUTTON)){
                 zunoStartLearn(0xFF, true); // Cancel learn mode
             }
             break;
@@ -133,8 +132,8 @@ void SysServiceEvent(ZUNOSysEvent_t * ev){
     }
 }
 void SysServiceSleep(){
-    serviceLeds.off(SYSLED_LEARN);
-    serviceLeds.off(SYSLED_ACTIVITY);
+    Led.off(SYSLED_LEARN);
+    Led.off(SYSLED_ACTIVITY);
 }
 
 CORE_irqState_t CORE_EnterAtomic(void) __attribute__ ((alias("CORE_EnterCritical")));

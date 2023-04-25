@@ -71,12 +71,14 @@
                         "-fno-rtti",
                         "-fsingle-precision-constant",
                         "-fzero-initialized-in-bss",
+                        "-flto",
                         "-fno-exceptions"],
     "linker_flags":["-mthumb",
                     "-Os", 
                     "-std=c++17",
                     "--specs=nano.specs",
                     "-lm",
+                    "-flto",
                     "-Wl,--gc-sections"],
     "chip_depending":{
             "ZGM230SB27HGN":{

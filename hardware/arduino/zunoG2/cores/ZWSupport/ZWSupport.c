@@ -816,6 +816,7 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 	if (_zmeIsS2LevelGreater(s2level, rx_s2level)) // Request level lower than node level - check nonsecure NIF 
 	{
 		uint8_t cc = ZW_CMD_CLASS;
+		
 		// Special case for multichannel
 		if(ZUNO_CFG_CHANNEL_COUNT > 1){
 			// Multichannel is included 
@@ -823,7 +824,7 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 				 if(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP){
 					return false; // Metadata is avaliable
 				 }
-				 cc = cmd->cmd[4];
+				 //cc = cmd->cmd[4];
 			} 
 
 		}

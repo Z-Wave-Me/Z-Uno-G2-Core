@@ -144,8 +144,8 @@ int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *fra
 		(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP))
 		return (ZUNO_COMMAND_BLOCKED);
 	/// Mutichannel is always secure command class and availiably ONLY on the highest S2 level
-	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
-		return ZUNO_COMMAND_BLOCKED; // Don't answer to it 
+	// if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
+	//	return ZUNO_COMMAND_BLOCKED; // Don't answer to it 
 	switch(ZW_CMD) {
 		case MULTI_CHANNEL_CAPABILITY_GET:
 			rs = _capability_get((ZwMultiChannelCapabilityGetFrame_t *)cmd->cmd, frame_report);

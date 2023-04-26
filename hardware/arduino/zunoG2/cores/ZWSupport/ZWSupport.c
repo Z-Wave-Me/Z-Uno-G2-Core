@@ -875,6 +875,9 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	if(ZW_CMD_CLASS == COMMAND_CLASS_MULTI_CHANNEL){
 		result = zuno_CCMultichannel(cmd, &frame_report);
 		if(result == ZUNO_COMMAND_BLOCKED){
+			#ifdef LOGGING_DBG
+			LOGGING_UART.println("*** MULTICHANNEL WAS BLOCKED"); 
+			#endif
 			return __zuno_CommandHandler_Out(result);
 		}
 		if(result == ZUNO_COMMAND_UNPACKED){

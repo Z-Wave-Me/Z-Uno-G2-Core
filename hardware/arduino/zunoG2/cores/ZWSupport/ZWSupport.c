@@ -818,6 +818,7 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 		uint8_t cc = ZW_CMD_CLASS;
 		
 		// Special case for multichannel
+		/*
 		if(ZUNO_CFG_CHANNEL_COUNT > 1){
 			// Multichannel is included 
 			if((cc == COMMAND_CLASS_MULTI_CHANNEL)){
@@ -827,7 +828,7 @@ static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
 				 //cc = cmd->cmd[4];
 			} 
 
-		}
+		}*/
 		if (_isCCinList(cc, (uint8_t*)zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def)))
 			return (false);
 	}

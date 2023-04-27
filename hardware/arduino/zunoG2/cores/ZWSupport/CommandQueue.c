@@ -157,10 +157,10 @@ void ZWQProcess(){
         LOGGING_UART.println(q_ch);
         #endif
         if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
-           ( q_ch ==  QUEUE_CHANNEL_LLREPORT) &&
+           ( q_ch !=  0) &&
            (zunoSecurityStatus() == SECURITY_KEY_S0)){
                #ifdef LOGGING_DBG
-                LOGGING_UART.print("*** QCH:");
+                LOGGING_UART.print("Waiting for controller.  QCH:");
                 LOGGING_UART.println(q_ch);
                 #endif
                 continue; // Skip report packets during interview

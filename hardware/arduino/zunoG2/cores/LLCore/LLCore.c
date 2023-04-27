@@ -441,6 +441,7 @@ static void LLInit(void *data) {
     for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
         *p = 0;
     }
+    
     for (uint32_t * b = (uint32_t *)&__preinit_array_start; b < ((uint32_t *)&__preinit_array_end); b++) {
         ((void (*)())b[0])();
         WDOG_Feed();

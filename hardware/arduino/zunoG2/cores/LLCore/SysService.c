@@ -5,18 +5,14 @@
 #include "Debug.h"
 #include "em_core.h"
 
-ZunoLedMode_t SYSLED_ACTIVITY_MODES[] = {
-                                            {50, 0x55555555}, // SYSLED_ACTIVITY_MODE_BLINK
-                                            
-                                        }; 
-ZunoLedMode_t SYSLED_LEARN_MODES[] = {  {10, 0x55555555},  // SYSLED_LEARN_MODE_INCLUSION
+ZunoLedMode_t SYSLED_MODES[] = {  {10, 0x55555555},  // SYSLED_LEARN_MODE_INCLUSION
                                         {10, 0x35353535},  // SYSLED_LEARN_MODE_SUBMENU_READY
                                         {20, 0x00FF0F35},  // SYSLED_LEARN_MODE_IDENTITY
                                         {20, 0x00AA00AA},  // SYSLED_LEARN_MODE_WAITING_RST
                                         {100,0x00010001},  // SYSLED_LEARN_MODE_SYSERROR_MEMORY
                                         {100,0x00050005},  // SYSLED_LEARN_MODE_SYSERROR_HW
                                         {100,0x00150015},  // SYSLED_LEARN_MODE_SYSERROR_WDOG
-                                        {100,0x00550055}, 
+                                        {50, 0x55555555}, // SYSLED_LEARN_MODE_BLINK
                                         };
 typedef struct ServiceData_s{
     uint8_t cntrl_mode;
@@ -26,14 +22,31 @@ typedef struct ServiceData_s{
 }ServiceData_t;
 ServiceData_t g_service_data;
 
+__WEAK void zunoSysServiceLedInit(void) {
+	Led.addLed(SYSLED_LEARN, SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t));
+	Led.addLed(SYSLED_ACTIVITY, SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t));
+}
+
+__WEAK void zunoSysServiceLedOff(uint8_t pin) {
+	Led.off(pin);
+}
+
+__WEAK void zunoSysServiceLedOn(uint8_t pin) {
+	Led.on(pin);
+}
+
+__WEAK void zunoSysServiceLedSetMode(uint8_t pin, uint8_t mode) {
+	Led.setMode(pin, mode);
+}
+
 void SysReconfigLeds(){
     if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
-        Led.off(SYSLED_ACTIVITY);
+        zunoSysServiceLedOff(SYSLED_ACTIVITY);
     } else {
         if(zunoGetSleepingMode()){
-            Led.on(SYSLED_ACTIVITY);
+            zunoSysServiceLedOn(SYSLED_ACTIVITY);
         } else {
-            Led.setMode(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODE_BLINK);
+            zunoSysServiceLedSetMode(SYSLED_ACTIVITY, SYSLED_LEARN_MODE_BLINK);
         }
     }
 }
@@ -44,38 +57,19 @@ void SysSetLearnLedMode(uint8_t mode, uint32_t timeout){
     LOGGING_UART.print(" TIMEOUT:"); 
     LOGGING_UART.println(timeout, HEX);
     #endif
-    Led.setMode(SYSLED_LEARN, mode);
+    zunoSysServiceLedSetMode(SYSLED_LEARN, mode);
     g_service_data.led_learn_timeout = millis()+timeout;
 }
 void SysStopLearnLed(){
     g_service_data.led_learn_timeout = 0;
-    Led.off(SYSLED_LEARN);
+    zunoSysServiceLedOff(SYSLED_LEARN);
 }
 void SysServiceInit(){
-    Led.addLed(SYSLED_LEARN, SYSLED_LEARN_MODES, sizeof(SYSLED_LEARN_MODES)/sizeof(ZunoLedMode_t));
-    Led.addLed(SYSLED_ACTIVITY, SYSLED_ACTIVITY_MODES, sizeof(SYSLED_ACTIVITY_MODES)/sizeof(ZunoLedMode_t));
+	zunoSysServiceLedInit();
     Btn.addButton(SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     SysReconfigLeds();
-    /*
-    // !DBG
-    if(g_zuno_sys->start_error_code != 0){
-        #ifdef LOGGING_DBG
-        LOGGING_UART.print("(!) HARDWARE FAULT CODE:");
-        LOGGING_UART.print(g_zuno_sys->start_error_code, HEX);
-        LOGGING_UART.print(" PC:"); 
-        LOGGING_UART.println(g_zuno_sys->error_pc_value, HEX);
-        #endif
-        if(g_zuno_sys->start_error_code & (SYSFAULT_HARDWARE | SYSFAULT_USAGE| SYSFAULT_BUS | SYSFAULT_SUPERVISOR_CALL)){
-            SysSetLearnLedMode(SYSLED_LEARN_MODE_SYSERROR_HW, ERROR_IDENTITY_TIMEOUT);
-        } else if (g_zuno_sys->start_error_code & (SYSFAULT_MEMORY)) {
-            SysSetLearnLedMode(SYSLED_LEARN_MODE_SYSERROR_MEMORY, ERROR_IDENTITY_TIMEOUT);
-        } else if (g_zuno_sys->start_error_code & (SYSLED_LEARN_MODE_SYSERROR_WDOG)) {
-            SysSetLearnLedMode(SYSLED_LEARN_MODE_SYSERROR_WDOG, ERROR_IDENTITY_TIMEOUT);
-        }
-        delay(ERROR_IDENTITY_DELAY);
-    }*/
 }
 static void _setSysCntrlState(uint8_t mode, uint32_t timeout){
     g_service_data.cntrl_mode = mode;
@@ -132,8 +126,8 @@ void SysServiceEvent(ZUNOSysEvent_t * ev){
     }
 }
 void SysServiceSleep(){
-    Led.off(SYSLED_LEARN);
-    Led.off(SYSLED_ACTIVITY);
+    zunoSysServiceLedOff(SYSLED_LEARN);
+    zunoSysServiceLedOff(SYSLED_ACTIVITY);
 }
 
 CORE_irqState_t CORE_EnterAtomic(void) __attribute__ ((alias("CORE_EnterCritical")));

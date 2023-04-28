@@ -29,6 +29,26 @@ __WEAK void zunoIndicatorPinMode(uint8_t pin, uint8_t value, uint8_t indicatorId
 	(void)indicatorId;
 }
 
+#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+__WEAK void zunoIndicatorBinary(uint8_t pin, uint8_t value, uint8_t indicatorId) {
+	(void)pin;
+	(void)value;
+	(void)indicatorId;
+}
+
+__WEAK void zunoIndicatorLoopOpen(uint8_t pin, uint8_t indicatorId)
+{
+	(void)indicatorId;
+	(void)pin;
+}
+
+__WEAK void zunoIndicatorLoopClose(uint8_t pin, uint8_t indicatorId)
+{
+	(void)indicatorId;
+	(void)pin;
+}
+#endif
+
 static ZunoIndicatorTimer_t _indicator_parameter_timer;
 static const ZunoIndicatorParameter_t _indicator_parameter =
 {
@@ -312,6 +332,9 @@ static void _timer_update_toggling(const ZunoIndicatorParameter_t *parameter_arr
 		_set_ms(timer_array, 0x0);
 		_lock_sleep(timer_array, false);
 		zunoExitCritical();
+		#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+		zunoIndicatorLoopClose(parameter_array->pin, parameter_array->indicatorId);
+		#endif
 		return ;
 	}
 	switch (timer_array->prop.toggling.state) {
@@ -407,6 +430,9 @@ static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_ar
 		_lock_sleep(timer_array, false);
 		zunoExitCritical();
 		zunoIndicatorDigitalWrite(parameter_array->pin, LOW, parameter_array->indicatorId);
+		#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+		zunoIndicatorBinary(parameter_array->pin, LOW, parameter_array->indicatorId);
+		#endif
 	}
 	on_time = prop->toggling.on_time;
 	timer_array->prop.toggling.on_off_period = on_off_period;
@@ -420,11 +446,22 @@ static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_ar
 	else
 		on_time_ms = on_time * 100;
 	off_time_ms = on_off_period_length_ms - on_time_ms;
-	timer_array->prop.toggling.on_time_ms = on_time_ms;
-	timer_array->prop.toggling.off_time_ms = off_time_ms;
+	timer_array->prop.toggling.on_time_ms = on_time_ms
+	#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+	+ WB_MSW_CERT_BUILD_INDICATOR
+	#endif
+	;
+	timer_array->prop.toggling.off_time_ms = off_time_ms
+	#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+	+ WB_MSW_CERT_BUILD_INDICATOR
+	#endif
+	;
 	_set_ms(timer_array, (rtcc_micros() / 1000));
 	_lock_sleep(timer_array, true);
 	zunoExitCritical();
+	#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+	zunoIndicatorLoopOpen(parameter_array->pin, parameter_array->indicatorId);
+	#endif
 }
 
 static size_t _indicator_set_binary(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimerProp_t *prop) {
@@ -450,6 +487,9 @@ static size_t _indicator_set_binary(const ZunoIndicatorParameter_t *parameter_ar
 		_lock_sleep(timer_array, sleep_lock);
 		zunoExitCritical();
 		zunoIndicatorDigitalWrite(parameter_array->pin, value, parameter_array->indicatorId);
+		#if defined(WB_MSW_CERT_BUILD_INDICATOR)
+		zunoIndicatorBinary(parameter_array->pin, value, parameter_array->indicatorId);
+		#endif
 		return (true);
 	}
 	return (false);

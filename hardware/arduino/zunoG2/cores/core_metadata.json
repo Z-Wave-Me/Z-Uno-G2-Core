@@ -134,6 +134,26 @@
                             ],
                 "link_file":"EFR32ZG23B010F512IM48.ld",
                 "flash_start_offset":"0x803A000"
+            },
+            "EFR32ZG23B020F512IM48":{
+                "family":"EFR32ZG23",
+                "hw_directory":"../device/EFR32ZG23/",
+                "compiler_flags":[
+                    "-mcpu=cortex-m33",
+                    "-mfpu=fpv5-sp-d16",
+                    "-mfloat-abi=hard",
+                    "-mcmse",
+                    "-DEFR32ZG23B020F512IM48"
+                ],
+                "linker_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DEFR32ZG23B020F512IM48"
+                            ],
+                "link_file":"EFR32ZG23B020F512IM48.ld",
+                "flash_start_offset":"0x803A000"
             }
     },
     "channels":[

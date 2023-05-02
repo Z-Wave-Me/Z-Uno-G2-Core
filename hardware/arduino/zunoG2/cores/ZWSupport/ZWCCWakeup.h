@@ -3,6 +3,8 @@
 #include "Arduino.h"
 #include "ZWSupport.h"
 
+#define WAKE_UP_VERSION                                                               0x03
+
 #define WAKE_UP_INTERVAL_CAPABILITIES_GET                                             0x09
 #define WAKE_UP_INTERVAL_CAPABILITIES_REPORT                                          0x0A
 #define WAKE_UP_INTERVAL_GET                                                          0x05

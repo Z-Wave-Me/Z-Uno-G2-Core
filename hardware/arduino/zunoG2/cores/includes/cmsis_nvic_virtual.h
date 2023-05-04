@@ -13,7 +13,7 @@
 // #define NVIC_GetActive              __NVIC_GetActive
 // #define NVIC_SetPriority            __NVIC_SetPriority
 #define NVIC_GetPriority            __NVIC_GetPriority
-// #define NVIC_SystemReset            __NVIC_SystemReset
+#define NVIC_SystemReset            __NVIC_SystemReset
 
 	void *zunoSysCall(uint8_t ct, uint8_t n, ...);
 	__STATIC_INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)

@@ -99,12 +99,12 @@
                                 "-mcmse",
                                 "-DZGM230SB27HGN"
                             ],
-                "link_file":"ZGM230SB27HGN.ld",
+                "link_file":"../ZGM230SB27HGN.ld",
                 "flash_start_offset":"0x803A000"
             },
             "ZGM130S037HGN1":{
-                "family":"ZGM130S",
-                "hw_directory":"../device/ZGM130S/",
+                "family":"ZGM13",
+                "hw_directory":"../device/ZGM13/",
                 "compiler_flags":[  "-mcpu=cortex-m4",
                                     "-mfloat-abi=hard",
                                     "-mfpu=fpv4-sp-d16",
@@ -113,7 +113,7 @@
                                 "-mfloat-abi=hard",
                                 "-mfpu=fpv4-sp-d16",
                                 "-DZGM130S037HGN1"],
-                "link_file":"ZGM130S037HGN1.ld",
+                "link_file":"../ZGM130S037HGN1.ld",
                 "flash_start_offset":"0x30800"
             },
             "EFR32ZG23B010F512IM48":{
@@ -133,7 +133,7 @@
                                 "-mcmse",
                                 "-DEFR32ZG23B010F512IM48"
                             ],
-                "link_file":"EFR32ZG23B010F512IM48.ld",
+                "link_file":"../EFR32ZG23B010F512IM48.ld",
                 "flash_start_offset":"0x803A000"
             },
             "EFR32ZG23B020F512IM48":{
@@ -153,7 +153,7 @@
                                 "-mcmse",
                                 "-DEFR32ZG23B020F512IM48"
                             ],
-                "link_file":"EFR32ZG23B020F512IM48.ld",
+                "link_file":"../EFR32ZG23B020F512IM48.ld",
                 "flash_start_offset":"0x803A000"
             }
     },

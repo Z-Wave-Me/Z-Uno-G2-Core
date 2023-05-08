@@ -24,45 +24,8 @@
 #include "WCharacter.h"
 #include "pgmspace.h"
 #include "SysHandlerMap.h"
+#include "zuno_gpio.h"
 
-typedef enum {
-  /** Input disabled. Pullup if DOUT is set. */
-  GPIOMODE_DISABLED                  = _GPIO_P_MODEL_MODE0_DISABLED,
-  /** Input enabled. Filter if DOUT is set */
-  GPIOMODE_INPUT                     = _GPIO_P_MODEL_MODE0_INPUT,
-  /** Input enabled. DOUT determines pull direction */
-  GPIOMODE_INPUTPULL                 = _GPIO_P_MODEL_MODE0_INPUTPULL,
-  /** Input enabled with filter. DOUT determines pull direction */
-  GPIOMODE_INPUTPULLFILTER           = _GPIO_P_MODEL_MODE0_INPUTPULLFILTER,
-  /** Push-pull output */
-  GPIOMODE_OUTPUT_PUSHPULL           = _GPIO_P_MODEL_MODE0_PUSHPULL,
-  /** Wired-or output */
-  GPIOMODE_OUTPUT_WIREDOR              = _GPIO_P_MODEL_MODE0_WIREDOR,
-  /** Wired-or output with pull-down */
-  GPIOMODE_OUTPUT_WIREDORPD             = _GPIO_P_MODEL_MODE0_WIREDORPULLDOWN,
-  /** Open-drain output */
-  GPIOMODE_OUTPUT_OPENDRAIN             = _GPIO_P_MODEL_MODE0_WIREDAND,
-  /** Open-drain output with filter */
-  GPIOMODE_OUTPUT_OPENDRAINFLT          = _GPIO_P_MODEL_MODE0_WIREDANDFILTER,
-  /** Open-drain output with pullup */
-  GPIOMODE_OUTPUT_OPENDRAINPUP           = _GPIO_P_MODEL_MODE0_WIREDANDPULLUP,
-  /** Open-drain output with filter and pullup */
-  GPIOMODE_OUTPUT_OPENDRAINPUPFLT        = _GPIO_P_MODEL_MODE0_WIREDANDPULLUPFILTER,
-} GPIO_Mode_t;
-
-enum{
-    DISABLED = GPIOMODE_DISABLED,
-    OUTPUT = GPIOMODE_OUTPUT_PUSHPULL,
-    INPUT = GPIOMODE_INPUT,
-    INPUT_PULLUP    = 0x100 | GPIOMODE_INPUTPULL,
-    INPUT_PULLDOWN  = GPIOMODE_INPUTPULL,
-	INPUT_PULLUP_FILTER = 0x100 | GPIOMODE_INPUTPULLFILTER,
-	INPUT_PULLDOWN_FILTER = GPIOMODE_INPUTPULLFILTER,
-    OUTPUT_UP = 0x100 | GPIOMODE_OUTPUT_PUSHPULL,
-    OUTPUT_DOWN = GPIOMODE_OUTPUT_PUSHPULL,
-    INPUT_UP = 0x100 | GPIOMODE_INPUT,
-    INPUT_DOWN = GPIOMODE_INPUT
-};
 enum{
   ZUNO_SECUREPARAM_OFF = 0,
   ZUNO_SECUREPARAM_ON = 1,
@@ -167,20 +130,6 @@ dword micros(void);
 void delayMicroseconds(word tdelay);
 inline void yield() { delay(1); }
 
-
-/* pin */
-void pinMode(uint8_t pin, int mode);
-uint8_t pin2HWPin(uint8_t pin);
-void digitalWrite(uint8_t pin, uint8_t val);
-void digitalToggle(uint8_t pin);
-uint8_t getPin(uint8_t port, uint8_t pin);
-inline size_t getRealPort(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].port);};
-inline size_t getRealPin(uint8_t pin) {return(ZUNO_PIN_DEFS[pin].pin);};
-uint32_t zunoMapPin2EM4Bit(uint8_t em4_pin);
-uint32_t zunoMapPin2EM4Int(uint8_t em4_pin);
-uint8_t getLocation(const uint8_t *location, size_t count, uint8_t pin);
-size_t getLocationTimer0AndTimer1Chanell(uint8_t pin, uint8_t ch);
-inline int digitalRead(uint8_t pin) {return (GPIO_PinInGet((GPIO_Port_TypeDef)getRealPort(pin), getRealPin(pin)));};
 
 // MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)

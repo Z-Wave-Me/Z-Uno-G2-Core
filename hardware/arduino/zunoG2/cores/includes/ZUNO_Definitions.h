@@ -958,7 +958,6 @@ enum {
 #define ZEROX					3
 #define INT0					17
 #define INT1					18
-#define BUTTON_PIN				23
 
 #define ZUNO_SYSTIMER_PERIOD_MC			0xA
 

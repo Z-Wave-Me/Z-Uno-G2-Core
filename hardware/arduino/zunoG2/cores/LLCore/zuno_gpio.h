@@ -33,6 +33,8 @@
 #define MOSI2				7
 #define SS2					8
 
+#define BUTTON_PIN			23
+
 #define BATTERY				0xFF
 
 #define HIGH				1
@@ -57,6 +59,15 @@
 
 	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 6
+	#define SCL                 9
+	#define SDA                 10
+	#define SCL1                23
+	#define SDA1                25
+
+	#define LED_BUILTIN         13
+
+	#define ZUNO_PIN_LAST_INDEX	27
+#elif ZUNO_PIN_V == 802
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23

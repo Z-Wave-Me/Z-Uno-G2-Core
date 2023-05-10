@@ -56,7 +56,7 @@ inline boolean isAlpha(int c)
   return ( isalpha(c) == 0 ? false : true);
 }
 
-int isascii (int c);
+extern "C" int isascii (int c);
 // Checks whether c is a 7-bit unsigned char value 
 // that fits into the ASCII character set.
 inline boolean isAscii(int c)

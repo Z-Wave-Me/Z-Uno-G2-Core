@@ -64,6 +64,9 @@ void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_
 extern ZunoSync_t gSyncUSART0;
 extern ZunoSync_t gSyncUSART1;
 extern ZunoSync_t gSyncUSART2;
+extern ZunoSync_t gSyncEUSART0 ;
+extern ZunoSync_t gSyncEUSART1;
+extern ZunoSync_t gSyncEUSART2;
 extern ZunoSync_t gSyncTIMER0;
 extern ZunoSync_t gSyncTIMER1;
 extern ZunoSync_t gSyncWTIMER0;

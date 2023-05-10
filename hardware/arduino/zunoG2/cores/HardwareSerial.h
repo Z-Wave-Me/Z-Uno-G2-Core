@@ -8,33 +8,64 @@
 #include "Sync.h"
 #include "em_device.h"
 #include "em_cmu.h"
+#include "em_eusart.h"
 #include "em_usart.h"
 
 #define HARDWARE_SERIAL_SPEED_DEFAULT							115200
 #define HARDWARE_SERIAL_CONFIG(databits, parity, stopbits)		(databits | parity | stopbits)
 
-#define SERIAL_8N1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_9N1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_8N2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_TWO)
-#define SERIAL_9N2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_NONE, USART_FRAME_STOPBITS_TWO)
-#define SERIAL_8E1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_9E1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_8E2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_TWO)
-#define SERIAL_9E2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_EVEN, USART_FRAME_STOPBITS_TWO)
-#define SERIAL_8O1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_9O1								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_ONE)
-#define SERIAL_8O2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_EIGHT, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_TWO)
-#define SERIAL_9O2								HARDWARE_SERIAL_CONFIG(USART_FRAME_DATABITS_NINE, USART_FRAME_PARITY_ODD, USART_FRAME_STOPBITS_TWO)
+#define HARDWARE_SERIAL_DATA_BITS_8									(0x00000005UL << 0)
+#define HARDWARE_SERIAL_DATA_BITS_9									(0x00000006UL << 0)
+#define HARDWARE_SERIAL_NO_PARIRY									(0x00000000UL << 8)
+#define HARDWARE_SERIAL_EVEN_PARIRY									(0x00000002UL << 8)
+#define HARDWARE_SERIAL_ODD_PARIRY									(0x00000003UL << 8)
+#define HARDWARE_SERIAL_STOP_BITS_1									(0x00000001UL << 12)
+#define HARDWARE_SERIAL_STOP_BITS_2									(0x00000003UL << 12)
+
+#define SERIAL_8N1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_NO_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_9N1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_NO_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_8N2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_NO_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+#define SERIAL_9N2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_NO_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+#define SERIAL_8E1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_EVEN_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_9E1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_EVEN_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_8E2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_EVEN_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+#define SERIAL_9E2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_EVEN_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+#define SERIAL_8O1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_ODD_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_9O1								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_ODD_PARIRY, HARDWARE_SERIAL_STOP_BITS_1)
+#define SERIAL_8O2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_8, HARDWARE_SERIAL_ODD_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+#define SERIAL_9O2								HARDWARE_SERIAL_CONFIG(HARDWARE_SERIAL_DATA_BITS_9, HARDWARE_SERIAL_ODD_PARIRY, HARDWARE_SERIAL_STOP_BITS_2)
+
+typedef enum							ZunoHardwareSerialType_s
+{
+	#if EUSART_COUNT >= 1
+	ZunoHardwareSerialTypeEusart,
+	#endif
+	ZunoHardwareSerialTypeUsart,
+}										ZunoHardwareSerialType_t;
 
 typedef struct							ZunoHardwareSerialConfig_s
 {
-	USART_TypeDef						*usart;
+	union
+	{
+		#if EUSART_COUNT >= 1
+		EUSART_TypeDef						*eusart;
+		#endif
+		#if USART_COUNT >= 1
+		USART_TypeDef						*usart;
+		#endif
+	};
+	volatile uint32_t					*TXDATA;
+	volatile uint32_t					*FRAME;
+	volatile const uint32_t				*RXDATA;
+	volatile const uint32_t				*STATUS;
 	ZunoSync_t							*lpLock;
-	LDMA_PeripheralSignal_t					dmaSignalWrite;
-	LDMA_PeripheralSignal_t					dmaSignalRead;
+	LDMA_PeripheralSignal_t				dmaSignalWrite;
+	LDMA_PeripheralSignal_t				dmaSignalRead;
 	CMU_Clock_TypeDef					bus_clock;
 	uint8_t								rx;
 	uint8_t								tx;
+	uint8_t								fd;
+	ZunoHardwareSerialType_t			type;
 }										ZunoHardwareSerialConfig_t;
 
 class HardwareSerial : public Stream {
@@ -63,18 +94,23 @@ class HardwareSerial : public Stream {
 		size_t									countWaitingMs(size_t n);
 
 	private:
+		#if EUSART_COUNT >= 1
+		inline uint32_t							_begin_eusart(const ZunoHardwareSerialConfig_t *config, size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx);
+		#endif
+		#if USART_COUNT >= 1
+		uint32_t								_begin_usart(const ZunoHardwareSerialConfig_t *config, size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx);
+		#endif
 		inline int								_readLock(uint8_t bOffset);
 		inline ZunoError_t						_begin(size_t baudrate, uint32_t option, uint8_t rx, uint8_t tx, void *b, size_t len, uint8_t bFree);
 		inline ZunoError_t						_beginFaill(ZunoError_t ret, uint8_t bFree, void *b);
 		static ZunoError_t						_deInit(size_t param);
-		static const ZunoHardwareSerialConfig_t	_configTable[];
+		const ZunoHardwareSerialConfig_t		*_configTable;
 		uint8_t									*_buffer;
 		uint32_t								_baudrate;
 		ssize_t									_channel;
 		LdmaClassReceivedCyclical_t				_arrayReceivedCyclical;
 		uint16_t								_buffer_len;
 		uint8_t									_lpKey;
-		uint8_t									_numberConfig;
 		uint8_t									_bFree;
 };
 

@@ -82,6 +82,26 @@
                     "-flto",
                     "-Wl,--gc-sections"],
     "chip_depending":{
+        "ZGM230SA27HGN":{
+            "family":"ZGM23",
+            "hw_directory":"../device/ZGM23/",
+            "compiler_flags":[
+                                "-mcpu=cortex-m33",
+                                "-mfpu=fpv5-sp-d16",
+                                "-mfloat-abi=hard",
+                                "-mcmse",
+                                "-DZGM230SA27HGN"
+                            ],
+            "linker_flags":[
+                            "-mcpu=cortex-m33",
+                            "-mfpu=fpv5-sp-d16",
+                            "-mfloat-abi=hard",
+                            "-mcmse",
+                            "-DZGM230SA27HGN"
+                        ],
+            "link_file":"../ZGM230SA27HGN.ld",
+            "flash_start_offset":"0x803A000"
+        },
             "ZGM230SB27HGN":{
                 "family":"ZGM23",
                 "hw_directory":"../device/ZGM23/",

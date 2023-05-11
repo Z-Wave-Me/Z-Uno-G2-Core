@@ -4,7 +4,7 @@
 #include "HardwareSerial.h"
 #include "zwaveme_libft.h"
 
-#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			2
+#define HARDWARE_SERIAL_MIN_WRITE_ZDMA			3
 #define HARDWARE_SERIAL_BUFFER_LENGTH			128
 
 #define HARDWARE_SERIAL_STATUS_TXC				(0x1UL << 5)
@@ -104,8 +104,10 @@
 HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _channel(-1), _lpKey(false), _bFree(false) {
 	const ZunoHardwareSerialConfig_t				*configTable;
 
-	if (numberConfig >= ZunoHardwareSerialLast)
-		numberConfig = (ZunoHardwareSerialNumConfig_t)0;
+	if (numberConfig >= ZunoHardwareSerialLast) {
+		while (true)
+			__NOP();
+	}
 	switch (numberConfig) {
 		#if EUSART_COUNT >= 2
 		case ZunoHardwareSerialEusart1:
@@ -531,21 +533,28 @@ uint32_t HardwareSerial::_begin_usart(const ZunoHardwareSerialConfig_t *config, 
 }
 #endif
 
+#if EUSART_COUNT >= 3
+static constexpr ZunoHardwareSerialNumConfig_t _get_serial_num_eusart(uint8_t tx, uint8_t rx) {
+	if ((ZUNO_PIN_DEFS[tx].port == gpioPortA || ZUNO_PIN_DEFS[tx].port == gpioPortB) & (ZUNO_PIN_DEFS[rx].port == gpioPortA || ZUNO_PIN_DEFS[rx].port == gpioPortB))
+		return (ZunoHardwareSerialEusart0);
+	if ((ZUNO_PIN_DEFS[tx].port == gpioPortC || ZUNO_PIN_DEFS[tx].port == gpioPortD) & (ZUNO_PIN_DEFS[rx].port == gpioPortC || ZUNO_PIN_DEFS[rx].port == gpioPortD))
+		return (ZunoHardwareSerialEusart2);
+	return (ZunoHardwareSerialLast);
+}
+#endif
 
 /* Preinstantiate Objects */
-	#if ZUNO_PIN_V == 802
-	HardwareSerial Serial(ZunoHardwareSerialEusart0);
-	HardwareSerial Serial1(ZunoHardwareSerialEusart2);
+#if EUSART_COUNT >= 3
+	HardwareSerial Serial(_get_serial_num_eusart(TX2, RX2));
+	HardwareSerial Serial1(_get_serial_num_eusart(TX1, RX1));
 	HardwareSerial Serial0(ZunoHardwareSerialEusart1);
-	#elif ZUNO_PIN_V == 803
-	HardwareSerial Serial(ZunoHardwareSerialEusart2);
-	HardwareSerial Serial1(ZunoHardwareSerialEusart0);
-	HardwareSerial Serial0(ZunoHardwareSerialEusart1);
-	#else
+#endif
+#if USART_COUNT >= 3
 	HardwareSerial Serial(ZunoHardwareSerialUsart2);
 	HardwareSerial Serial1(ZunoHardwareSerialUsart1);
 	HardwareSerial Serial0(ZunoHardwareSerialUsart0);
-	#endif
+#endif
+
 
 //For printf
 ssize_t write(int fd, const void *buf, size_t count) {

@@ -147,7 +147,11 @@ void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 
 /* EEPROM */
 #define EEPROM_SKETH_ADDR								0x0
+#if defined(_EFR32_ZEN_FAMILY)
 #define EEPROM_SKETH_SIZE								0xE00
+#else
+#define EEPROM_SKETH_SIZE								0x000
+#endif
 #define EEPROM_NOTIFICATION_ADDR						(EEPROM_SKETH_ADDR + EEPROM_SKETH_SIZE)
 #define EEPROM_NOTIFICATION_SIZE						4
 #define EEPROM_WAKEUP_ADDR								(EEPROM_NOTIFICATION_ADDR + EEPROM_NOTIFICATION_SIZE)

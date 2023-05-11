@@ -100,36 +100,12 @@
 #endif
 
 
-typedef enum							ZunoHardwareSerialNumConfig_s
-{
-	#if EUSART_COUNT >= 2
-	ZunoHardwareSerialEusart1,
-	#endif
-	#if EUSART_COUNT >= 1
-	ZunoHardwareSerialEusart0,
-	#endif
-	#if EUSART_COUNT >= 3
-	ZunoHardwareSerialEusart2,
-	#endif
-	#if USART_COUNT >= 1
-	ZunoHardwareSerialUsart0,
-	#endif
-	#if USART_COUNT >= 2
-	ZunoHardwareSerialUsart1,
-	#endif
-	#if USART_COUNT >= 3
-	ZunoHardwareSerialUsart2,
-	#endif
-	ZunoHardwareSerialLast
-}										ZunoHardwareSerialNumConfig_t;
-
-
 /* Public Constructors */
-HardwareSerial::HardwareSerial(uint8_t numberConfig): _channel(-1), _lpKey(false), _bFree(false) {
+HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _channel(-1), _lpKey(false), _bFree(false) {
 	const ZunoHardwareSerialConfig_t				*configTable;
 
 	if (numberConfig >= ZunoHardwareSerialLast)
-		numberConfig = 0;
+		numberConfig = (ZunoHardwareSerialNumConfig_t)0;
 	switch (numberConfig) {
 		#if EUSART_COUNT >= 2
 		case ZunoHardwareSerialEusart1:

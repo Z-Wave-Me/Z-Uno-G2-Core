@@ -68,9 +68,32 @@ typedef struct							ZunoHardwareSerialConfig_s
 	ZunoHardwareSerialType_t			type;
 }										ZunoHardwareSerialConfig_t;
 
+typedef enum							ZunoHardwareSerialNumConfig_s
+{
+	#if EUSART_COUNT >= 2
+	ZunoHardwareSerialEusart1,
+	#endif
+	#if EUSART_COUNT >= 1
+	ZunoHardwareSerialEusart0,
+	#endif
+	#if EUSART_COUNT >= 3
+	ZunoHardwareSerialEusart2,
+	#endif
+	#if USART_COUNT >= 1
+	ZunoHardwareSerialUsart0,
+	#endif
+	#if USART_COUNT >= 2
+	ZunoHardwareSerialUsart1,
+	#endif
+	#if USART_COUNT >= 3
+	ZunoHardwareSerialUsart2,
+	#endif
+	ZunoHardwareSerialLast
+}										ZunoHardwareSerialNumConfig_t;
+
 class HardwareSerial : public Stream {
 	public:
-		HardwareSerial(uint8_t numberConfig);
+		HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig);
 		void									begin(unsigned long baud) { begin(baud, SERIAL_8N1); }
 		void									begin(unsigned long baud, uint32_t config);
 		void									end();

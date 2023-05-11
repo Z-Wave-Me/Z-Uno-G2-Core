@@ -67,7 +67,7 @@
 	#define LED_BUILTIN         13
 
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 802
+#elif ZUNO_PIN_V == 802 || ZUNO_PIN_V == 803
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23

@@ -7,6 +7,8 @@
 #pragma message "ZUNO_PIN_V==4"
 #elif ZUNO_PIN_V == 6
 #pragma message "ZUNO_PIN_V==6"
+#elif ZUNO_PIN_V == 802
+#pragma message "ZUNO_PIN_V==802"
 #elif ZUNO_PIN_V == 803
 #pragma message "ZUNO_PIN_V==803"
 #else

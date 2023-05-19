@@ -139,7 +139,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 		i = 0x0;
 		while (i < count) {
 			parameterId = vg[i].parameterId;
-			if ((parameterId & 0x1) == 0x0) {
+			if ((parameterId & 0x1) != 0x0) {
 				lpDur_b = &_duration[0x0];
 				lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
 				while (lpDur_b < lpDur_e) {
@@ -149,8 +149,8 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 					}
 					lpDur_b++;
 				}
-				i++;
 			}
+			i++;
 		}
 		lpDur_b = &_duration[0x0];
 		lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
@@ -216,7 +216,6 @@ static void _get_set(uint8_t channel, ZW_WINDOW_COVERING_REPORT_FRAME *report, u
 	}
 	zunoExitCritical();
 	if (lpDur_b == lpDur_e) {
-		currentValue = 0x0;
 		targetValue = 0x0;
 		if ((parameterId & 0x1) == 0x0)
 			duration = 0xFE;
@@ -231,8 +230,8 @@ static void _get_set(uint8_t channel, ZW_WINDOW_COVERING_REPORT_FRAME *report, u
 		else
 			currentValue = currentValue - targetValue;
 		duration = zuno_CCTimerTable8(currentValue * lpDur_b->step);
-		currentValue = zuno_universalGetter2P(channel, parameterId);
 	}
+	currentValue = zuno_universalGetter2P(channel, parameterId);
 	report->currentValue = currentValue;
 	report->targetValue = targetValue;
 	report->duration = duration;

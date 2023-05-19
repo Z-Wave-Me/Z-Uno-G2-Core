@@ -5,7 +5,7 @@
 #include "ZWSupport.h"
 
 
-#define BATTERY_VERSION                                                                  0x0
+#define BATTERY_VERSION                                                                  0x01
 #define BATTERY_GET                                                                      0x02
 #define BATTERY_REPORT                                                                   0x03
 

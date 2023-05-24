@@ -762,6 +762,12 @@ uint16_t _calcCfg16Crc(){
 	uint16_t crc16 = mCrc.crc16_a(&g_zuno_zw_cfg, crc16_pos);
 	return crc16;
 }
+void _resetUserChannels(){
+	memset(&g_zuno_zw_cfg, 0xFF, sizeof(g_zuno_zw_cfg));
+	g_zuno_zw_cfg.num_channels = 0;
+	g_zuno_zw_cfg.num_associations = 0;
+	
+}
 void _zunoLoadUserChannels(){
 	zunoEEPROMRead(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 	uint16_t crc16 = _calcCfg16Crc();
@@ -776,7 +782,8 @@ void _zunoLoadUserChannels(){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("*** Wrong channels CRC!. Clear data.");
 		#endif
-		memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
+		//memset(&g_zuno_zw_cfg, 0xFF, sizeof(g_zuno_zw_cfg));
+		_resetUserChannels();
 	}
 }
 void _zunoSaveUserChannels(){
@@ -1320,12 +1327,17 @@ bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
 		return false;
 	// System-side protocol data
-	memset(g_zuno_sys->zw_protocol_data, 0, sizeof(ZUNOZWaveProtocolData_t));
+	//memset(g_zuno_sys->zw_protocol_data, 0xFF, sizeof(ZUNOZWaveProtocolData_t));
+	g_zuno_sys->zw_protocol_data->association_count = 0;
+	g_zuno_sys->zw_protocol_data->CCLstNSIS_cnt = 0;
+	g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt = 0;
+	g_zuno_sys->zw_protocol_data->CCLstSec_cnt = 0;
 	g_zuno_sys->zw_protocol_data->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zw_protocol_data->product_id = DEFAULT_PRODUCT_ID;
 	g_zuno_sys->zw_protocol_data->req_s2_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
 	// User-side data
-	memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
+	_resetUserChannels();
+	//memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
 	return  true;
 }
 byte getMaxChannelTypes() {

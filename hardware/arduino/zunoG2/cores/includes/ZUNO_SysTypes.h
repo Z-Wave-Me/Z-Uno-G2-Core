@@ -122,6 +122,7 @@ typedef struct ZUNOFWHeader_s{
 	uint16_t    vendor_id;
 	uint16_t    product_type_id;
 	uint32_t    flags;
+	uint8_t     default_region;
 	uint32_t    crc32;
 } __attribute__((aligned(1),packed)) ZUNOFWHeader_t ;
 

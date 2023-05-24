@@ -67,7 +67,7 @@
 	#define LED_BUILTIN         13
 
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 802 || ZUNO_PIN_V == 803
+#elif ZUNO_PIN_V == 802 || ZUNO_PIN_V == 803  || ZUNO_PIN_V == 800
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -81,7 +81,7 @@
 #endif
 
 
-// Universal apport index
+// Universal aport index
 const uint8_t g_aport_pa0_pf7_all[] = {//APORT3Y APORT3X APORT1Y APORT1X
 		0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D,//PA0-PA5 - CH8-CH13 - APORT3
 		0x7B, 0x7C, 0x7D, 0x7E, 0x7F,//PB11-PB15 - CH27-CH31 - APORT3
@@ -228,6 +228,39 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     {5, 3},//27 - PF3 - USB Serial tx
     {1, 15},//28 - PB15 - green
     {1, 14}//29 - PB14 - red
+};
+#elif ZUNO_PIN_V == 800
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{0, 0},//00 - PA00
+	{0, 1},//01 - PA01
+	{0, 2},//02 - PA02
+	{0, 3},//03 - PA03
+	{0, 4},//04 - PA04
+	{0, 5},//05 - PA05
+	{2, 8},//06 - PC08
+	{2, 2},//07 - PC02 - TX1
+	{2, 9},//08 - PC09 - RX1
+	{0, 6},//09 - PA06
+	{0,10},//10 - PA10
+	{1, 0},//11 - PB00
+	{2, 5},//12 - PC05
+	{0, 7},//13 - PB02
+	{1, 3},//14 - PB03
+	{1, 4},//15 - PB04
+	{1, 5},//16 - PB05
+	{1, 6},//17 - PB06
+	{2, 0},//18 - PC00
+	{2, 6},//19 - PC06
+	{0, 8},//20 - PA08
+	{2, 3},//21 - PC03
+	{2, 4},//22 - PC04
+	{1, 1},//23 - PB01 - button_pin
+	{2, 1},//24 - PC01 - TX0
+	{3, 2},//25 - PD02 - RX0
+	{0, 8},//26 - PA06 - sapi_tx_pin
+	{0, 9},//27 - PA07 - sapi_rx_pin
+	{1, 2},//28 - PB02 - led1_pin
+	{3, 3},//29 - PD03 - led2_pin
 };
 #elif ZUNO_PIN_V == 802
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5

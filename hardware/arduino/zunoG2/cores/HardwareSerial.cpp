@@ -408,6 +408,7 @@ ZunoError_t HardwareSerial::_deInit(size_t param) {
 	#if EUSART_COUNT >= 1
 	if (config->type == ZunoHardwareSerialTypeEusart)
 		EUSART_Reset(config->eusart);
+		GPIO->EUSARTROUTE[config->fd].ROUTEEN = _GPIO_EUSART_ROUTEEN_RESETVALUE;
 	#endif
 	#if USART_COUNT >= 1
 	if (config->type == ZunoHardwareSerialTypeUsart)

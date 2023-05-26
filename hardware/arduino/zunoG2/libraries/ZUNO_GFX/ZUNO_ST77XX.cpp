@@ -141,10 +141,10 @@ void ZUNO_ST77XX::drawImage_1bpp(uint16_t x, uint16_t y, uint8_t *img,uint16_t c
 {
 	uint8_t w = img[0];
 	uint8_t h = img[1];
-	uint8_t w_byte = w >> 3 + (w % 8 ? 1 : 0);
+	uint8_t w_byte = (w >> 3) + (w % 8 ? 1 : 0);
 	uint8_t *buf = &img[2];
 
-	if (bg_color != -1){
+	if (bg_color != (uint32_t)-1){
 		color = (color >> 8) | ((color & 0xff) << 8);
 		bg_color = (bg_color >> 8) | ((bg_color & 0xff) << 8);
 		uint16_t *buf_img = (uint16_t*)malloc(w * sizeof(uint16_t));

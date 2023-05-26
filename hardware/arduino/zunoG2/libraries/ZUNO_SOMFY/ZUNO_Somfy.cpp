@@ -241,9 +241,8 @@ inline ZunoError_t SomfyClass::_begin(size_t types, uint8_t rx, uint8_t tx, uint
 	};
 
 	hardwareSerial = this->_hardwareSerial;
-	if ((ret = hardwareSerial->begin(ZUNO_SOMFY_BAUDRATE, rx, tx)) != ZunoErrorOk)
+	if ((ret = hardwareSerial->begin(SERIAL_8O1, ZUNO_SOMFY_BAUDRATE, rx, tx)) != ZunoErrorOk)
 		return (ret);
-	hardwareSerial->changeParity(usartOddParity);
 	this->_end(this->_list);
 	this->_dir_pin = dir_pin;
 	pinMode(dir_pin, OUTPUT_UP);//Поднимаем и всегда RS485 держим на отправку данных

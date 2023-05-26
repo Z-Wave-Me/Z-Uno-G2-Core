@@ -30,7 +30,7 @@ class ZUNO_GFX : public Print
 		uint8_t			bytes_simbol;
 		uint8_t			ranges;
 		font_chunk		*chunks;
-		uint8_t			*font_buf;
+		const uint8_t	*font_buf;
 		
 	}				ZUNO_fonts;
 	protected:
@@ -85,7 +85,7 @@ class ZUNO_GFX : public Print
 		void fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 								uint8_t corners, int16_t delta, uint16_t color);
 		void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-		void setFont(uint8_t *font_name);
+		void setFont(const uint8_t *font_name);
 		inline void setFontColor(uint16_t color, uint32_t bgcolor = -1) {_color = color; _bgcolor = bgcolor;};
 		void drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 									int16_t x2, int16_t y2, uint16_t color);

@@ -78,7 +78,7 @@ class ZUNO_SSD1306 : public ZUNO_GFX
 		void display();
 		void on() { sendCmd(SSD1306_DISPLAYON); };
 		void off() { sendCmd(SSD1306_DISPLAYOFF); };
-		void invert() {_invert != _invert;
+		void invert() {
 			sendCmd((_invert) ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY);};
 		void setArea(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 };

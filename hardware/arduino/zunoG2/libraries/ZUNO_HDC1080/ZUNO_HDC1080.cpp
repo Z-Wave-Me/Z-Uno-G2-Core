@@ -54,7 +54,7 @@ void ZUNO_HDC1080::readTempHumid(){
 	this->_wire->write(0x00);
 	this->_wire->endTransmission();
 	delay(15);
-	this->_wire->requestFrom(_addr, 4);
+	this->_wire->requestFrom(_addr, (uint8_t)4);
 	_temperatureRaw = _temperatureRaw << 8 | _wire->read();
 	_temperatureRaw = _temperatureRaw << 8 | _wire->read();
 	_humidityRaw = _humidityRaw << 8 | _wire->read();
@@ -89,7 +89,7 @@ uint16_t ZUNO_HDC1080::readData(uint8_t address){
 	_wire->endTransmission();
 
 	delay(10);
-	_wire->requestFrom(_addr,2);
+	_wire->requestFrom(_addr, (uint8_t)2);
 
 	byte msb = _wire->read();
 	byte lsb = _wire->read();
@@ -99,7 +99,6 @@ uint16_t ZUNO_HDC1080::readData(uint8_t address){
 
 void ZUNO_HDC1080::heatUp(uint8_t seconds) {
 	uint16_t reg = readData(0x02);
-	uint8_t buf[4];
 	
 	reg |= 1 << 13;
 	writeRegister(0x02, reg);
@@ -109,11 +108,11 @@ void ZUNO_HDC1080::heatUp(uint8_t seconds) {
 		_wire->write(0x00);
 		_wire->endTransmission();
 		delay(15);
-		_wire->requestFrom(_addr, 4);
-		buf[3] = _wire->read();
-		buf[2] = _wire->read();
-		buf[1] = _wire->read();
-		buf[0] = _wire->read();
+		_wire->requestFrom(_addr, (uint8_t)4);
+		_wire->read();
+		_wire->read();
+		_wire->read();
+		_wire->read();
 	}
 	
 	reg ^= 1 << 13;

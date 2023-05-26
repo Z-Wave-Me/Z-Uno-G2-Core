@@ -100,6 +100,7 @@ const USART_InitSync_TypeDef NeoPixelClass::_initSpi =
 	.prsRxCh = 0,
 	.autoTx = false,
 	.autoCsEnable = false,
+	.csInv = false,
 	.autoCsHold = 0,
 	.autoCsSetup = 0
 };

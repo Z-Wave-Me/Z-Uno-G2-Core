@@ -26,7 +26,7 @@
 #define MSBFIRST		true
 #define LSBFIRST		false
 
-#define SPI_INIT_DEFAULT					{usartEnable, 0, 4000000, usartDatabits8, true, MSBFIRST, usartClockMode0, false, usartPrsRxCh0, false, false, 0, 0}
+#define SPI_INIT_DEFAULT					{usartEnable, 0, 4000000, usartDatabits8, true, MSBFIRST, usartClockMode0, false, usartPrsRxCh0, false, false, false, 0, 0}
 
 #define SPI_FLAGS_CONST				0x1
 #define SPI_FLAGS_16BIT				0x2

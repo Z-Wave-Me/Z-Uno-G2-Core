@@ -337,12 +337,11 @@ void LesenseClass::_LESENSE_IRQHandler(uint32_t flags) {
 
 ZunoError_t LesenseClass::_lesenseInit(void) {
 	LESENSE_Init_TypeDef		initLesense;
-	ZunoError_t					ret;
 
 	if (this->_values.count_lesense == 0x0)
 	{
-		if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_LESENCE, (void *)LesenseClass::_LESENSE_IRQHandler)) != ZunoErrorOk)
-			return (ret);
+		if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_LESENCE, (void *)LesenseClass::_LESENSE_IRQHandler) != true)
+			return (ZunoErrorAttachSysHandler);
 		CMU_ClockEnable(cmuClock_HFLE, true);
 		CMU_ClockSelectSet(cmuClock_LFA, cmuSelect_LFRCO);
 		CMU_ClockEnable(cmuClock_LESENSE, true);

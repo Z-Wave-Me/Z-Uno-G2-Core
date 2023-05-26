@@ -9,9 +9,9 @@
 // version 2.1 of the License, or (at your option) any later version.
 
 // set to true to include code for new and delete operators
-#ifndef REQUIRESNEW
-#define REQUIRESNEW true
-#endif
+// #ifndef REQUIRESNEW
+// #define REQUIRESNEW true
+// #endif
 
 // set to true to include code implementing alarm search functions
 #ifndef REQUIRESALARMS
@@ -107,7 +107,7 @@ public:
 	void writeScratchPad(const uint8_t*, const uint8_t*);
 
 	// read device's power requirements
-	bool readPowerSupply(const uint8_t* deviceAddress);
+	bool readPowerSupply(const uint8_t* deviceAddress = NULL);
 
 	// get global resolution
 	uint8_t getResolution();

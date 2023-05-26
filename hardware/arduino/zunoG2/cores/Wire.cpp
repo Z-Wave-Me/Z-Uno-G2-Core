@@ -198,7 +198,6 @@ ZunoError_t TwoWire::_deInit(size_t param) {
 
 ZunoError_t TwoWire::_init(size_t param) {
 	const ZunoWireI2CInit_t				*init;
-	ZunoError_t							ret;
 	TwoWire								*wire;
 	const ZunoWireI2CTypeConfig_t		*i2c_config;
 	size_t								len;
@@ -209,8 +208,8 @@ ZunoError_t TwoWire::_init(size_t param) {
 		return (ZunoErrorOk);
 	wire = init->wire;
 	i2c_config = wire->_i2c_config;
-	if ((ret = zunoAttachSysHandler(ZUNO_HANDLER_IRQ, i2c_config->subType, i2c_config->IRQHandler)) != ZunoErrorOk)
-		return (ret);
+	if (zunoAttachSysHandler(ZUNO_HANDLER_IRQ, i2c_config->subType, i2c_config->IRQHandler) != true)
+		return (ZunoErrorAttachSysHandler);
 	len = init->len / 0x2;
 	if ((channel = LdmaClass::receivedCyclical((void *)&i2c_config->i2c->RXDATA, (uint8_t *)init->buffer + len, len, i2c_config->dmaSignalRead, ldmaCtrlSizeByte, &wire->_arrayCyclical)) >= 0x0) {
 		wire->_channel = channel;

@@ -74,7 +74,6 @@ void ZUNO_GFX::drawBitmap(uint16_t x, uint16_t y,uint8_t w, uint8_t h,
 
 void ZUNO_GFX::printChar(const uint8_t *sim_buf, uint8_t w_sim)
 {
-	int			i = 0;
 	if (font.font_buf == NULL)
 		return;
 	for (uint8_t col = 0; col < w_sim; col++)
@@ -86,7 +85,7 @@ void ZUNO_GFX::printChar(const uint8_t *sim_buf, uint8_t w_sim)
 			
 			if (sim_buf[cur_b] & cur_bit)
 				drawPixel(cur_x + col, cur_y + row, _color);
-			else if (_bgcolor != -1)
+			else if (_bgcolor != (uint32_t)-1)
 				drawPixel(cur_x + col, cur_y + row, _bgcolor);
 
 		}
@@ -157,7 +156,7 @@ uint8_t ZUNO_GFX::retchunk(uint32_t unicode)
 	return(-1);
 }
 
-void	ZUNO_GFX::setFont(uint8_t *font_name)
+void	ZUNO_GFX::setFont(const uint8_t *font_name)
 {
 
 	if (font.font_buf != NULL)
@@ -220,6 +219,7 @@ uint8_t ZUNO_GFX::write(uint32_t unicode)
 		printChar(sim_buf, w_sim);
 		cur_x += w_sim + 1;
 	}
+	return (4);
 }
 
 size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
@@ -228,7 +228,7 @@ size_t ZUNO_GFX::write(const uint8_t *buf, size_t size)
 	size_t		ret = 0;
 	char *sub_str = (char*)buf;
 
-	while (*sub_str && size >= 0)
+	while (*sub_str)
 	{
 		unic = utf8toUnicode(sub_str);
 		//Serial0.printf("unic - %#x\n", unic);
@@ -683,7 +683,7 @@ void ZUNO_GFX::drawImage_1bpp(uint16_t x, uint16_t y, uint8_t *img,uint16_t colo
 {
 	uint8_t w = img[0];
 	uint8_t h = img[1];
-	uint8_t w_byte = w >> 3 + (w % 8 ? 1 : 0);
+	uint8_t w_byte = (w >> 3) + (w % 8 ? 1 : 0);
 	for (uint8_t i = 0; i < h; i++)
 	{
 		for (uint8_t j = 0; j < w; j++)
@@ -692,7 +692,7 @@ void ZUNO_GFX::drawImage_1bpp(uint16_t x, uint16_t y, uint8_t *img,uint16_t colo
 			{
 				drawPixel(j + x, i + y,color);
 			}
-			else if (bg_color != -1)
+			else if (bg_color != (uint32_t)-1)
 				drawPixel(j + x, i + y, bg_color);
 		}
 		WDOG_Feed();

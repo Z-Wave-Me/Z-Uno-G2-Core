@@ -102,8 +102,18 @@ static const uint8_t zuno_CCVesrions[] = {
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE, CENTRAL_SCENE_VERSION,
   #endif
+  #ifdef WITH_CC_USER_CODE
+  COMMAND_CLASS_USER_CODE, USER_CODE_VERSION,
+  #endif
+  #ifdef WITH_CC_ENTRY_CONTROL
+  COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION,
+  #endif
+  #ifdef WITH_CC_TIME_PARAMETERS
+  COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION,
+  #endif
   #endif // DYNAMIC_CCS_SUPPORT
 };
+
 static uint8_t extractVersionFromCCList(uint8_t cc, uint8_t * ccs, uint8_t ccs_len){
 	for(int i=0;i<ccs_len;i+=2){
 		if(ccs[i] == cc)

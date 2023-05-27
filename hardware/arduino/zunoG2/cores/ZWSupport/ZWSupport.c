@@ -89,6 +89,15 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE,
   #endif
+  #ifdef WITH_CC_USER_CODE
+  COMMAND_CLASS_USER_CODE,
+  #endif
+  #ifdef WITH_CC_ENTRY_CONTROL
+  COMMAND_CLASS_ENTRY_CONTROL,
+  #endif
+  #ifdef WITH_CC_TIME_PARAMETERS
+  COMMAND_CLASS_TIME_PARAMETERS,
+  #endif
 };
 static const uint8_t zuno_cmdClassListNSNI_Def[] =
 {
@@ -108,9 +117,16 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE,
   #endif
+  #ifdef WITH_CC_USER_CODE
+  COMMAND_CLASS_USER_CODE,
+  #endif
+  #ifdef WITH_CC_ENTRY_CONTROL
+  COMMAND_CLASS_ENTRY_CONTROL,
+  #endif
+  #ifdef WITH_CC_TIME_PARAMETERS
+  COMMAND_CLASS_TIME_PARAMETERS,
+  #endif
 };
-
-
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 

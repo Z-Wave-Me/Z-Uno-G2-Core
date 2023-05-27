@@ -85,7 +85,10 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   COMMAND_CLASS_INDICATOR,
   COMMAND_CLASS_POWERLEVEL,
   COMMAND_CLASS_CONFIGURATION,
-  COMMAND_CLASS_FIRMWARE_UPDATE_MD
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
+  #ifdef WITH_CC_CENTRAL_SCENE
+  COMMAND_CLASS_CENTRAL_SCENE,
+  #endif
 };
 static const uint8_t zuno_cmdClassListNSNI_Def[] =
 {
@@ -101,7 +104,10 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   COMMAND_CLASS_POWERLEVEL,
   COMMAND_CLASS_SUPERVISION,
   COMMAND_CLASS_CONFIGURATION,
-  COMMAND_CLASS_FIRMWARE_UPDATE_MD
+  COMMAND_CLASS_FIRMWARE_UPDATE_MD,
+  #ifdef WITH_CC_CENTRAL_SCENE
+  COMMAND_CLASS_CENTRAL_SCENE,
+  #endif
 };
 
 
@@ -676,8 +682,10 @@ static int _appendCC(uint8_t * cc_list, uint8_t &cc_list_sz, uint8_t cc, uint8_t
 }
 
 uint8_t dynamicCCVersion(uint8_t cc){
+	#ifdef WITH_CC_MULTICHANNEL
 	if((cc == COMMAND_CLASS_MULTI_CHANNEL) && (ZUNO_CFG_CHANNEL_COUNT > 1))
 		return MULTI_CHANNEL_VERSION;
+	#endif
 	// Loop over all user-defined channels
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
@@ -694,6 +702,12 @@ uint8_t dynamicCCVersion(uint8_t cc){
 	}
 	return 0;
 }
+
+static void _zunoAddBaseCCS(byte ccs) {
+	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, ccs, MAX_CMDCLASES_NSNI);
+	_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt, ccs, MAX_CMDCLASES_SECURED);
+}
+
 void _fillZWaveData(uint8_t secure_param){
 	// Fill base CCs into NIF
 	memcpy(g_zuno_sys->zw_protocol_data->CCLstNSIS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def));
@@ -712,11 +726,12 @@ void _fillZWaveData(uint8_t secure_param){
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY, MAX_CMDCLASES_NSNI);
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY_2, MAX_CMDCLASES_NSNI);
 	   }
+	#ifdef WITH_CC_MULTICHANNEL
 	// Add MULTICHANNEL CC only if we need it
 	if(ZUNO_CFG_CHANNEL_COUNT > 1){
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_MULTI_CHANNEL, MAX_CMDCLASES_NSNI);
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt, COMMAND_CLASS_MULTI_CHANNEL, MAX_CMDCLASES_SECURED);
+		_zunoAddBaseCCS(COMMAND_CLASS_MULTI_CHANNEL);
 	}
+	#endif
 	// Loop over all user-defined channels
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
@@ -743,17 +758,14 @@ void _fillZWaveData(uint8_t secure_param){
 		g_zuno_sys->zw_protocol_data->device_icon = ZUNO_DEV_TYPES[type].icon;
 	}
 	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
-  	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
-	  	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
-	  	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_WAKE_UP, MAX_CMDCLASES_NSNI);
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_WAKE_UP, MAX_CMDCLASES_SECURED);
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_BATTERY, MAX_CMDCLASES_NSNI);
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_BATTERY, MAX_CMDCLASES_SECURED);
-  	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
-	  	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
-	  	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_BATTERY, MAX_CMDCLASES_NSNI);
-		_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,COMMAND_CLASS_BATTERY, MAX_CMDCLASES_SECURED);
-  	}
+	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
+		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+		_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
+		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
+		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+	}
 	// Reflection of association count 
 	g_zuno_sys->zw_protocol_data->association_count = g_zuno_zw_cfg.num_associations;
 }

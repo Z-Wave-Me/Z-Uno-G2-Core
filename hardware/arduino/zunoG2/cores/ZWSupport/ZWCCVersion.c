@@ -99,6 +99,9 @@ static const uint8_t zuno_CCVesrions[] = {
   #ifdef WITH_CC_MULTICHANNEL
   COMMAND_CLASS_MULTI_CHANNEL, MULTI_CHANNEL_VERSION,
   #endif
+  #ifdef WITH_CC_CENTRAL_SCENE
+  COMMAND_CLASS_CENTRAL_SCENE, CENTRAL_SCENE_VERSION,
+  #endif
   #endif // DYNAMIC_CCS_SUPPORT
 };
 static uint8_t extractVersionFromCCList(uint8_t cc, uint8_t * ccs, uint8_t ccs_len){

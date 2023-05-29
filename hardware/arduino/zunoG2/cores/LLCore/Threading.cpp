@@ -170,3 +170,12 @@ void znThread::start(threadcodefunc_t func, void *param ) {
 		_handle = zunoCreateCustomThread(func, _stack_size, _stack, param, &_th_data);//zunoSysCall(ZUNO_SYSFUNC_THREAD_CREATE, 5, func, _stack_size, _stack, &_th_data, param);
 	}
 }
+
+
+void __malloc_lock(void) {
+	zunoEnterCritical();
+}
+
+void __malloc_unlock(void) {
+	zunoExitCritical();
+}

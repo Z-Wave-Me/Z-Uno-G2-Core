@@ -28,6 +28,7 @@ typedef struct ZUNOCodeHeader_s{
 	uint32_t    ota_pincode;
 	uint32_t    ota_custom_offset;
 	char        name[MAX_SKETCH_NAME];
+	uint16_t    hw_id;
 } ZUNOCodeHeader_t;
 
 #endif

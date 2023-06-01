@@ -8,12 +8,11 @@
 #include "sys/stat.h"
 #include "Custom_timestamp.h"
 #include "em_device.h"
-#include "em_rtcc.h"
 #include "em_adc.h"
 #include "em_gpio.h"
 #include <CommandQueue.h>
 #include <SysService.h>
-#include "em_burtc.h"
+
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -504,93 +503,6 @@ void checkSystemCriticalStat(){
 }
 #endif
 #include "em_iadc.h"
-// MULTI_CHIP
-#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
-uint64_t rtcc_micros(void) {
-	uint32_t			tic1;
-	uint32_t			tic2;
-	uint32_t			overflow;
-	uint64_t			out;
-
-	tic1 = RTCC_CounterGet();
-	overflow = RTCC->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
-	tic2 = RTCC_CounterGet();
-	if (tic2 < tic1) {
-		tic1 = tic2;
-		overflow++;
-	}
-	out = overflow;
-	out = (out << 0x20) | tic1;
-	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
-	return (out);
-}
-
-bool zunoIsValidDate(void) {
-	if (RTCC->RET[0x1E].REG == 0x0)
-		return (false);
-	return (true);
-}
-
-time_t zunoGetTimeStamp(void) {
-	return (RTCC->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
-}
-
-void zunoSetTimeStamp(time_t timeUnix) {
-	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
-}
-#endif//#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
-#if defined(BURTC_PRESENT)
-uint64_t rtcc_micros(void) {
-	uint32_t			tic1;
-	uint32_t			tic2;
-	uint32_t			overflow;
-	uint64_t			out;
-
-	tic1 = BURTC_CounterGet();
-	overflow = BURAM->RET[0x1F].REG;// overflow = RTCC->RET[0x1F].REG;
-	tic2 = BURTC_CounterGet();
-	if (tic2 < tic1) {
-		tic1 = tic2;
-		overflow++;
-	}
-	out = overflow;
-	out = (out << 0x20) | tic1;
-	out = (out * 1000000) >> 0xF;//DIV1 - 32768 - freq
-	return (out);
-}
-
-bool zunoIsValidDate(void) {
-	if (BURAM->RET[0x1E].REG == 0x0)
-		return (false);
-	return (true);
-}
-
-time_t zunoGetTimeStamp(void) {
-	return (BURAM->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
-}
-
-void zunoSetTimeStamp(time_t timeUnix) {
-	BURAM->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
-}
-#endif//#if defined(BURTC_PRESENT)
-
-dword millis(void){
-	return (dword)(rtcc_micros() / 1000);
-}
-// JUST A STUB...
-dword micros(void){
-	return (dword)(rtcc_micros());
-}
-
-void delayMicroseconds(word tdelay){
-    while(tdelay--){
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-   }
-}
-
 
 // MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)

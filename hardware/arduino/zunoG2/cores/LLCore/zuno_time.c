@@ -4,6 +4,9 @@
 #include "em_burtc.h"
 #include "Custom_timestamp.h"
 
+#define ZUNO_TIME_DELAY_MICROSECONDS_MIN				2000
+#define ZUNO_TIME_DELAY_MICROSECONDS_MAX				4000
+
 // MULTI_CHIP
 #if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
 uint64_t rtcc_micros(void) {
@@ -82,11 +85,26 @@ dword micros(void){
 	return (dword)(rtcc_micros());
 }
 
-void delayMicroseconds(word tdelay){
-    while(tdelay--){
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-        asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
-   }
+static void _udelay(dword tdelay){
+	while(tdelay--){
+		asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+		asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+		asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+		asm("nop\nnop\nnop\nnop\nnop\nnop\nnop\nnop");
+	}
+}
+
+
+void delayMicroseconds(dword tdelay) {
+	uint64_t					us_required;
+	uint64_t					us_current;
+
+	if (tdelay <= ZUNO_TIME_DELAY_MICROSECONDS_MAX)
+		return (_udelay(tdelay));
+	us_required = rtcc_micros() + tdelay;
+	delay((tdelay - ZUNO_TIME_DELAY_MICROSECONDS_MIN) / 1000);
+	us_current = rtcc_micros();
+	if (us_current >= us_required)
+		return ;
+	_udelay(us_required - us_current);
 }

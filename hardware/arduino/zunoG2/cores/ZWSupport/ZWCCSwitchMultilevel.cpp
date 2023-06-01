@@ -5,18 +5,21 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSuperVision.h"
 
+void zunoSwitchColorSaveSet(uint8_t channel, void *value);
+uint8_t zunoSwitchColorSaveGet(uint8_t channel);
+
 void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
-	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
-	switch (type) {
-		#ifdef WITH_CC_SWITCH_COLOR
-		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-			zunoSwitchColorSaveSet(zuno_ch, &value);
-			break;
-		#endif
-		default:
-			zuno_universalSetter1P(zuno_ch, value);
-			break ;
-	}
+    uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+    switch (type) {
+        #ifdef WITH_CC_SWITCH_COLOR
+        case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+            zunoSwitchColorSaveSet(zuno_ch, &value);
+            break;
+        #endif
+        default:
+            zuno_universalSetter1P(zuno_ch, value);
+            break ;
+    }
 }
 
 int32_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {

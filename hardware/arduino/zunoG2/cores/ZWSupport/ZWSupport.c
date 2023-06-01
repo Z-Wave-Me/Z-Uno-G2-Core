@@ -829,7 +829,7 @@ void zunoCommitCfg(){
 	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
 	_zunoSaveUserChannels();
 	zunoBasicSaveInit();
-	#ifdef WITH_CC_SWITCHCOLOR
+	#ifdef WITH_CC_SWITCH_COLOR
 	zunoSwitchColorSaveInit();
 	#endif
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);

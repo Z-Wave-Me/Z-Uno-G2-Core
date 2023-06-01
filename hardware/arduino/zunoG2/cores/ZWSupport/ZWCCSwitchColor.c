@@ -4,7 +4,7 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSuperVision.h"
 
-#ifdef WITH_CC_SWITCHCOLOR
+#ifdef WITH_CC_SWITCH_COLOR
 typedef struct					ZunoColorDuration_s {
 	uint8_t						targetValue;
 	uint8_t						currentValue;

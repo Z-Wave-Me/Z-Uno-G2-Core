@@ -172,10 +172,10 @@ void znThread::start(threadcodefunc_t func, void *param ) {
 }
 
 
-void __malloc_lock(void) {
+extern "C" void zuno_malloc_lock(void) {
 	zunoEnterCritical();
 }
 
-void __malloc_unlock(void) {
+extern "C" void zuno_malloc_unlock(void) {
 	zunoExitCritical();
 }

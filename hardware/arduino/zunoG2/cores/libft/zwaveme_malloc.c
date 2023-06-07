@@ -119,15 +119,15 @@ static void *_malloc(size_t size) {
 	return ((uint8_t *)list + sizeof(ZMallocTop_t));
 }
 
-void __malloc_lock(void);
-void __malloc_unlock(void);
+void zuno_malloc_lock(void);
+void zuno_malloc_unlock(void);
 
 void *malloc(size_t size) {
 	void			*tmp;
 
-	__malloc_lock();
+	zuno_malloc_lock();
 	tmp = _malloc(size);
-	__malloc_unlock();
+	zuno_malloc_unlock();
 	return (tmp);
 }
 
@@ -180,9 +180,9 @@ static void _free(void *ptr) {
 }
 
 void free(void *ptr) {
-	__malloc_lock();
+	zuno_malloc_lock();
 	_free(ptr);
-	__malloc_unlock();
+	zuno_malloc_unlock();
 }
 
 void *realloc(void *ptr, size_t size) {

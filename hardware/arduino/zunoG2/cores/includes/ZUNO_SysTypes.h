@@ -157,33 +157,6 @@ typedef struct ZUNOSetupSysState_s {
 }ZUNOSetupSysState_t;
 
 
-// Handlers
-typedef struct zuno_handler_single_gettersetter_s{
-    void * getter;
-    void * setter;
-}zuno_handler_single_gettersetter_t;
-typedef struct zuno_handler_multi_getter_s{
-    void * getter;
-    uint8_t offset;
-}zuno_handler_multi_getter_t;
-typedef struct zuno_handler_multi_gettersetter_s{
-    void * getter;
-    void * setter;
-    uint8_t offset;
-}zuno_handler_multi_gettersetter_t;
-typedef struct		zuno_handler_single_thermostat_s {
-	void			*getter1;
-	void			*setter1;
-	void			*getter2;
-	void			*setter2;
-}					zuno_handler_single_thermostat_t;
-typedef struct		zuno_handler_multi_thermostat_s {
-	void			*getter1;
-	void			*setter1;
-	void			*getter2;
-	void			*setter2;
-	uint8_t			offset;
-}					zuno_handler_multi_thermostat_t;
 typedef struct ZUNOSysEvent_s{
 	uint8_t event;
 	uint32_t params[2];

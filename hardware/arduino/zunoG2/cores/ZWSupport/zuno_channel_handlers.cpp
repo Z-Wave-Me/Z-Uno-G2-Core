@@ -12,6 +12,7 @@ int32_t static _zuno_universalGetterSetter_map(uint8_t chi, uint32_t flag, uint8
 	uint32_t						*lp_point_4;
 	uint32_t						arg;
 
+	Serial.printf("_zuno_universalGetterSetter_map: %ld %d %p\n", (flag & ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_MASK), chi, handler);
 	switch ((flag & ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_MASK)) {
 		case ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_4:
 			lp_point_4 = (uint32_t *)handler;
@@ -64,6 +65,7 @@ int32_t static _zuno_universalGetterSetter(uint8_t chi, uint8_t argc, uint32_t f
 		args[i] = va_arg(ap, uint32_t);
 		i++;
 	}
+	Serial.printf("_zuno_universalGetterSetter: %d %p\n", chi, handler);
 	switch (argc) {
 		case 0x0:
 			out = ((int32_t (*)(void))handler)();
@@ -125,16 +127,13 @@ static uint32_t _get_size_old(byte value_size) {
 	uint32_t						out;
 
 	switch (value_size) {
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case 0x4:
 			out = ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_4;
 			break;
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case 0x2:
 			out = ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_2;
 			break;
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case 0x1:
 		default:
 			out = ZUNO_CHANNEL_HANDLERS_FLAGS_POINTER_SIZE_1;
 			break ;
@@ -142,7 +141,7 @@ static uint32_t _get_size_old(byte value_size) {
 	return (out);
 }
 
-bool zunoAppendChannelHandler_New(byte ch, byte value_size, byte type, void *handler) {
+bool _zunoAppendChannelHandler(byte ch, byte value_size, byte type, void *handler) {
 	ZUnoChannelHandler_t								*channel_handler;
 	uint8_t												count;
 	uint32_t											flag;
@@ -264,6 +263,24 @@ bool zunoAppendChannelHandler_New(byte ch, byte value_size, byte type, void *han
 	zunoAppendChannelHandlerEx(ch, channel_handler);
 	return (true);
 }
+
+// void zuno_universalSetter1P(byte zuno_ch, int32_t value) {
+// 	zuno_universalGetterSetter(zuno_ch, 0x1, 0x1, value);
+// }
+// void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
+// 	zuno_universalGetterSetter(zuno_ch, 0x1, 0x2, value, value_add);
+// }
+// int32_t zuno_universalGetter1P(byte zuno_ch) {
+// 	return (zuno_universalGetterSetter(zuno_ch, 0x0, 0x0));
+// }
+// uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
+// 	return (zuno_universalGetterSetter(zuno_ch, 0x0, 0x1, value));
+// }
+
+// void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler) {
+// 	_zunoAppendChannelHandler(ch, value_size, type, handler);
+// }
+
 
 ZUnoChannelDtaHandler_t g_zuno_channelhandlers_map[ZUNO_MAX_MULTI_CHANNEL_NUMBER];
 

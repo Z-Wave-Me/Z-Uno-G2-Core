@@ -1,6 +1,34 @@
 #ifndef ZUNO_CHANNEL_HANDLERS_H
 #define ZUNO_CHANNEL_HANDLERS_H
 
+// Handlers
+typedef struct zuno_handler_single_gettersetter_s{
+    void * getter;
+    void * setter;
+}zuno_handler_single_gettersetter_t;
+typedef struct zuno_handler_multi_getter_s{
+    void * getter;
+    uint8_t offset;
+}zuno_handler_multi_getter_t;
+typedef struct zuno_handler_multi_gettersetter_s{
+    void * getter;
+    void * setter;
+    uint8_t offset;
+}zuno_handler_multi_gettersetter_t;
+typedef struct		zuno_handler_single_thermostat_s {
+	void			*getter1;
+	void			*setter1;
+	void			*getter2;
+	void			*setter2;
+}					zuno_handler_single_thermostat_t;
+typedef struct		zuno_handler_multi_thermostat_s {
+	void			*getter1;
+	void			*setter1;
+	void			*getter2;
+	void			*setter2;
+	uint8_t			offset;
+}					zuno_handler_multi_thermostat_t;
+
 // SINGLE_GETTER
 typedef uint8_t zuno_singlegetter1ub_t(void);
 typedef uint16_t zuno_singlegetter2ub_t(void);

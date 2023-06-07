@@ -178,7 +178,7 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ER
 /* Z-Wave protocol support */
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
-void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
+#include "zuno_channel_handlers.h"
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {
   ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 };

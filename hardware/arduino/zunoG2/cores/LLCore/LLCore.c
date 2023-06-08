@@ -1249,15 +1249,12 @@ bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
         return false;
     loc = loc ? loc - 1 : MAX_VALID_PINLOCATION;
     cfg.doutLoc = loc;
-    
     uint8_t test_pin = 13;
     cfg.dframePort = getRealPort(test_pin);
     cfg.dframePin = getRealPin(test_pin);
     loc  = getLocation(g_loc_pa0_pf7_all, sizeof(g_loc_pa0_pf7_all), test_pin);
     loc = (loc>=2) ? loc-2 : 30 + loc;
     cfg.dframeLoc = loc;
-
-    
     uint32_t res =  (uint32_t)zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, &cfg);
     #ifdef LOGGING_DBG
     LOGGING_UART.print("ZUNO PTI LOC:");
@@ -1269,6 +1266,15 @@ bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud){
 }
 void zunoPTIDisable(){
     zunoSysCall(ZUNO_SYSFUNC_PTI_CONFIG, 1, NULL);
+}
+void zunoStartRadioTest(RadioTestType_t mode, ZWaveRegion_t region, uint32_t timeout, uint8_t power, uint8_t channel) {
+    RadioTestFuncParams_t rt_params;
+    rt_params.mode = mode;
+    rt_params.region = region;
+    rt_params.power = power;
+    rt_params.channel = channel;
+    rt_params.timeout_ms = timeout;
+    zunoSysCall(ZUNO_SYSFUNC_RADIOTEST, 1, &rt_params);
 }
 uint8_t zmeMapDict(uint8_t * dict, uint8_t size, uint8_t key, bool back){
 	for(int i=0;i<size;i+=2){

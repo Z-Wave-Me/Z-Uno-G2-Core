@@ -991,4 +991,26 @@ typedef struct RAIL_PtiConfig {
   uint8_t dframePin;
 } RAIL_PtiConfig_t;
 
+typedef enum RadioTestType_e {
+    RADIO_TEST_CARRIER = 1,
+    RADIO_TEST_PN9_STREAM = 2,
+    RADIO_TEST_10_STREAM = 3,
+    RADIO_TEST_PACKET_STREAM = 4,
+    RADIO_TEST_MODEM_MODE = 5
+} RadioTestType_t;
+typedef enum {
+  REGION_EU = 0,                                          ///< Radio is located in Region EU. 2 Channel region.
+  REGION_US,                                              ///< Radio is located in Region US. 2 Channel region.
+  REGION_ANZ,                                             ///< Radio is located in Region Australia/New Zealand. 2 Channel region.
+  REGION_HK,                                              ///< Radio is located in Region Hong Kong. 2 Channel region.
+  REGION_IN = 5,                                          ///< Radio is located in Region India. 2 Channel region.
+  REGION_IL,                                              ///< Radio is located in Region Israel. 2 Channel region.
+  REGION_RU,                                              ///< Radio is located in Region Russia. 2 Channel region.
+  REGION_CN,                                              ///< Radio is located in Region China. 2 Channel region.
+  REGION_US_LR,                                           ///< Radio is located in Region US. 2 Channel LR region.
+  REGION_US_LR_BACKUP,                                    ///< Radio is located in Region US. 2 Channel LR Backup region.
+  REGION_JP = 32,                                         ///< Radio is located in Region Japan. 3 Channel region.
+  REGION_KR,                                              ///< Radio is located in Region Korea. 3 Channel region.
+  REGION_US_LR_END_DEVICE = 48                           ///< Radio is located in Region US Long Range End Device. 2 Long Range Channel Region
+} ZWaveRegion_t;
 #endif // ZUNO_DEFINITIONS

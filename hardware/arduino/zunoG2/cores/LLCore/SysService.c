@@ -44,6 +44,9 @@ void SysReconfigLeds(){
         zunoSysServiceLedOff(SYSLED_ACTIVITY);
     } else {
         if(zunoGetSleepingMode()){
+            #ifdef LOGGING_DBG
+            LOGGING_UART.println("*** DEVICE IS SLEEPING");
+            #endif
             zunoSysServiceLedOn(SYSLED_ACTIVITY);
         } else {
             zunoSysServiceLedSetMode(SYSLED_ACTIVITY, SYSLED_LEARN_MODE_BLINK);

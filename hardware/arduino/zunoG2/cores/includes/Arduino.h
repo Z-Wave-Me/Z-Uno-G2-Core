@@ -203,6 +203,7 @@ inline void zunoSetS2Keys(byte keys) {
 void zunoStartLearn(byte timeout, bool secured);
 bool zunoPTIConfigUART(uint8_t tx_pin, uint32_t baud);
 void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id);
+void zunoStartRadioTest(RadioTestType_t mode, ZWaveRegion_t region, uint32_t timeout, uint8_t power, uint8_t channel);
 // Backward compatibility macro
 #define ZUNO_START_CONFIG() 						zunoStartDeviceConfiguration()
 #define ZUNO_ADD_CHANNEL(TYPE, SUBTYPE, OPTIONS)  	zunoAddChannel(TYPE, SUBTYPE, OPTIONS)

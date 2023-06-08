@@ -90,11 +90,6 @@ void zunoLockSleep(void);
 bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);
 
-/* Clock/Time */
-time_t zunoGetTimeStamp(void);
-bool zunoIsValidDate(void);
-void zunoSetTimeStamp(time_t timeUnix);
-
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();
 #endif
@@ -123,12 +118,8 @@ inline void zunoSetProductID(uint16_t product_id){
 }
 
 
-/* time */
-void delay(dword ms);
-dword millis(void);
-dword micros(void);
-void delayMicroseconds(word tdelay);
-inline void yield() { delay(1); }
+/* Clock/Time */
+#include "zuno_time.h"
 
 
 // MULTI_CHIP
@@ -187,7 +178,7 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ER
 /* Z-Wave protocol support */
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
-void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
+#include "zuno_channel_handlers.h"
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {
   ZUNO_CFG_CHANNEL(ch).zw_channel = zw_channel;
 };

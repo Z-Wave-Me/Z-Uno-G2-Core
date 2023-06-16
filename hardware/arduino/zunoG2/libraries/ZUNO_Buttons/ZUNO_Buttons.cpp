@@ -710,6 +710,8 @@ void ButtonsClass::_updateExtIntButton(uint8_t pinExtInt) {
 	ZunoBtnStateButton_t				state_next;
 
 	list = (ZunoBtnButton_t *)Btn._findList(pinExtInt);
+	if(list == NULL)
+		return;
 	pressed = digitalRead(list->header.pin);
 	if (list->bInvert == true)
 		pressed = !pressed;

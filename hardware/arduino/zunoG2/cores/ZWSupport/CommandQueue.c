@@ -77,19 +77,21 @@ bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
 	 return zunoSysCall(ZUNO_SYSFUNC_ASSOCIATION_NODE, 3, g, i, node) == 0;
 }
 bool zunoCheckSystemQueueStatus(uint8_t channel){
+    static uint8_t count_n = 0;
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;
     if((channel > 0) && (interval < SYSTEM_PKG_DOMINATION_TIME)){
-        #ifdef LOGGING_DBG
-		LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
-        LOGGING_UART.println(interval);
-        #endif
+        // #ifdef LOGGING_DBG
+		// LOGGING_UART.print("*** HIGH PRIORITY PKG DOMINATION. INTERVAL:");
+        // LOGGING_UART.println(interval);
+        // #endif
         return true;
     }
     bool  b_busy = (g_zuno_sys->rstat_priority_counts[channel] > 0);
     #ifdef LOGGING_DBG
-    if(b_busy){
+    if((b_busy) && ((count_n & 0x3F) == 0)){
 	    LOGGING_UART.print("*** QUEUE CHANNEL is BUSY:");
         LOGGING_UART.println(channel);
+        count_n ++;
     }
     #endif
     return b_busy;
@@ -122,6 +124,7 @@ bool ZWQIsEmpty(){
 void ZWQProcess(){
     ZNLinkedList_t *e;
     ZUnoAssocNode_t node;
+    static uint32_t count_n = 0;
     
     // Walk through the queue
     int qi;
@@ -131,7 +134,8 @@ void ZWQProcess(){
     // Process the packages
     #ifdef LOGGING_DBG
     int queue_sz = znllCount(g_zwpkg_queue);
-    if(queue_sz > 0){
+    if((queue_sz > 0) && ((count_n & 0x3F) == 0)){
+
 	    LOGGING_UART.print("CommandQueue Size:");
         LOGGING_UART.println(queue_sz);
     }
@@ -152,10 +156,10 @@ void ZWQProcess(){
             break;
         }
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
-        #ifdef LOGGING_DBG
-		LOGGING_UART.print("*** QCH:");
-        LOGGING_UART.println(q_ch);
-        #endif
+        // #ifdef LOGGING_DBG
+		// LOGGING_UART.print("*** QCH:");
+        // LOGGING_UART.println(q_ch);
+        // #endif
         if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
            ( q_ch !=  0) &&
            (zunoSecurityStatus() == SECURITY_KEY_S0)){
@@ -235,4 +239,5 @@ void ZWQProcess(){
         _ZWQRemovePkg(p);
         processed_indexes_cnt--;
     }
+    count_n++;
 }

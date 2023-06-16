@@ -31,6 +31,7 @@ void SysServiceTimer();
 void SysReconfigLeds();
 void SysServiceEvent(ZUNOSysEvent_t * ev);
 void SysServiceSleep();
+void SysServiceWUP();
 void SysSetLearnLedMode(uint8_t mode, uint32_t timeout);
 
 #endif // ZME_SYSTEM_SERVICE

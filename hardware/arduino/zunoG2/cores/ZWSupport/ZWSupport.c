@@ -1275,6 +1275,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 			//LOGGING_UART.print("Report timeout for channel: ");
 			//LOGGING_UART.println(ch);
 			#endif
+			#ifdef WITH_CC_BATTERY
+			if(zunoGetSleepingMode()){
+				__clearSyncMapChannel(&g_channels_data.report_map, ch);
+			}
+			#endif
 			continue;
 		}
 		#ifdef LOGGING_DBG

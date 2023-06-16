@@ -321,6 +321,9 @@ void * zunoJumpTable(int vec, void * data) {
                 g_sketch_inited = true;
             }
             loop();
+            #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+            _zunoSleepingUpd();
+            #endif
             #ifdef LOGGING_DBG
             checkSystemCriticalStat(); // Self check after each loop
             #endif
@@ -335,7 +338,11 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
+                
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
+                #ifdef LOGGING_DBG
+                printSystemEvent(evnt);
+                #endif
                 #ifndef NO_SYS_SVC
                 SysServiceEvent(evnt);
                 #endif
@@ -366,15 +373,14 @@ void * zunoJumpTable(int vec, void * data) {
                     initCCSDataDefault();
                 }
                 
-                #ifdef LOGGING_DBG
-                printSystemEvent(evnt);
-                #endif
+                
                 zunoRFLogger(evnt);
             }
             break;
        
-        case ZUNO_JUMPTBL_SYSTIMER:
-            _zunoRegisterTimerThread();
+        case ZUNO_JUMPTBL_SYSTIMER:{
+            static uint32_t counter = 0;
+            //_zunoRegisterTimerThread();
             #ifndef NO_SYS_SVC  
             SysServiceTimer();
             #endif
@@ -382,6 +388,12 @@ void * zunoJumpTable(int vec, void * data) {
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
             _zunoSleepingUpd();
             #endif
+            #ifdef LOGGING_DBG
+            if((((uint32_t)counter) & 0x7F) == 0)
+                LOGGING_UART.println("***TMR:PULSE");
+            #endif
+            counter++;
+            }
             break;
         case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
@@ -410,6 +422,9 @@ void * zunoJumpTable(int vec, void * data) {
             // Awake code if user had sent device to sleep, but wakeup timer triggered
             zunoAwakeUsrCode();
             #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+            #ifndef NO_SYS_SVC 
+            SysServiceWUP();
+            #endif
             _zunoInitSleepingData();
             _zunoCheckWakeupBtn();
             #endif
@@ -930,64 +945,42 @@ void _zunoSysSleep(){
         }
 }
 
-static void _zunoSleepingUpd(){
+static uint8_t __zunoSleepingUpd(){
     #ifndef NO_BTN_CHECK_BEFORE_SLEEP
-	if(!digitalRead(BUTTON_PIN))
-        return; // Never spleep until button released
+	if(!digitalRead(BUTTON_PIN)){
+        return 1; // Never spleep until button released
+    }
 	#endif
     if(g_sleep_data.latch) {
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: INDICATOR ON");
-        #endif
-        return;
+        return 2;
     }
     if(g_sleep_data.indicator_latch){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: INDICATOR ON");
-        #endif
-        return;
+        return 3;
     }
     if(g_sleep_data.user_latch){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: ULATCH");
-        #endif
-        return;
+        return 4;
     }
     if(g_sleep_data.inclusion_latch){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: INCLUSION IN PROCESS");
-        #endif
-        return;
+        return 5;
     }
     if(g_sleep_data.fwupd_latch){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: FWU IN PROCESS");
-        #endif
-        return;
+        return 6;
     }
     if(_zunoHasPendingReports()){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: PENDING REPORTS");
-        #endif
-        return;
+        return 7;
     }
     if(!ZWQIsEmpty()){
-        #ifdef LOGGING_DBG
-        LOGGING_UART.println("CAN'T SLEEP: QUEUE is mot EMPTY!");
-        #endif
+        return 8;
     }
     if(g_sleep_data.wup_latch){
         if(millis() > g_sleep_data.wup_timeout){
             #ifdef LOGGING_DBG
-            //LOGGING_UART.println("***WUP LOCK RELEASED (TIMEOUT)!");
+            LOGGING_UART.println("***WUP LOCK RELEASED (TIMEOUT)!");
             #endif
             g_sleep_data.wup_latch = false;
         }
         else{
-            #ifdef LOGGING_DBG
-            //LOGGING_UART.println("CAN'T SLEEP: WAITING SLEEP AGREEMENT FROM CONTROLLER");
-            #endif
-            return;
+            return 9;
         }
     }
     uint32_t timeout;
@@ -996,22 +989,30 @@ static void _zunoSleepingUpd(){
     zunoExitCritical();
     
     if(timeout >= millis()){
-        #ifdef LOGGING_DBG
-        //LOGGING_UART.println("CAN'T SLEEP: USER SIDE TIMEOUT!");
-        #endif
-        return;
+        return 10; 
     }
     
     #ifdef LOGGING_DBG
-    //LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
+    LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
     #endif
     g_zuno_sys->sleep_latches = SLEEP_UNLOCKED;
+    return 0;
     /*
     zunoSetSleepTimeout(ZUNO_SLEEPLOCK_CUSTOM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
     zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
     */
 }
-
+ static void _zunoSleepingUpd(){
+    static uint32_t count =0;
+    uint8_t v = __zunoSleepingUpd();
+    #ifdef LOGGING_DBG
+    if((count & 0x3F) == 0){
+        LOGGING_UART.print("***SLP:");
+        LOGGING_UART.println(v);
+    }
+    #endif
+    count++;
+ }
 bool _zunoIsWUPLocked(){
     bool res = false;
     zunoEnterCritical();

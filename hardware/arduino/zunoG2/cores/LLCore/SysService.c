@@ -132,6 +132,9 @@ void SysServiceSleep(){
     zunoSysServiceLedOff(SYSLED_LEARN);
     zunoSysServiceLedOff(SYSLED_ACTIVITY);
 }
+void SysServiceWUP(){
+    SysReconfigLeds();
+}
 
 CORE_irqState_t CORE_EnterAtomic(void) __attribute__ ((alias("CORE_EnterCritical")));
 CORE_irqState_t CORE_EnterCritical(void) {

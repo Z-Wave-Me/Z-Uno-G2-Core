@@ -1,7 +1,8 @@
 #include "Arduino.h"
 #include "LinkedList.h"
 #include "Debug.h"
-
+#include "LLCore.h"
+extern ZUNOCodeHeader_t g_zuno_codeheader;
 static ZNLinkedList_t * g_syshandler_map = NULL;
 static HandlerFunc_t  * findHandlerByType(byte type, byte sub_type, void *handler = NULL, int *index = NULL){
     ZNLinkedList_t * e;
@@ -72,7 +73,17 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
             continue;
          if((h->sub_type != sub_type) && (h->sub_type != 0xFF)) // 0xFF is a "wild card"
             continue;
+         
          byte *	 base_addr = (byte*)h->code_offset;
+         if(base_addr < (( byte *)&g_zuno_codeheader)){
+            #ifdef LOGGING_DBG
+            LOGGING_UART.print("*** WRONG HANDLER ");
+            LOGGING_UART.print(type);
+            LOGGING_UART.print(" ADDR:");
+            LOGGING_UART.println((uint32_t)base_addr, HEX);
+            #endif
+            continue;
+         }
          switch(type){
             case ZUNO_HANDLER_SYSTIMER:
                     va_start (args, sub_type);

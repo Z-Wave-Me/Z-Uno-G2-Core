@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "GpioInterrupt.h"
-
+#include "Debug.h"
 
 static uint8_t _getPort(uint8_t pin) {
 	uint8_t				port;
@@ -25,6 +25,10 @@ static uint8_t _getPort(uint8_t pin) {
 static void _IRQDispatcher(void * p) {
 	uint32_t						irqIdx;
 	uint32_t iflags = (uint32_t)p;
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("*** _IRQDispatcher:");
+    LOGGING_UART.println(iflags);
+	#endif
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/

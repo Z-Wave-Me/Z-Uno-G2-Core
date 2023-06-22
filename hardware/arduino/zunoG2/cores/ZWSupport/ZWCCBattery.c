@@ -1,5 +1,5 @@
 #include "ZWCCBattery.h"
-
+#include "ZWSupport.h"
 #ifndef BATTERY_LOW
 #define BATTERY_LOW 2500
 #endif
@@ -18,7 +18,7 @@ uint8_t defaultBatteryHandler(){
     res *= 5000;
     res >>= 12;
     if(res >= BATTERY_HIGH)
-        return 100;
+        return 100; 
     res -= BATTERY_LOW;
     res *= 100;
     return res / (BATTERY_HIGH - BATTERY_LOW);

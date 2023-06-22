@@ -133,12 +133,15 @@ bool zunoIsMainThread(void * handle){
 	return (handle == g_zuno_sys->hMainThread);
 }
 bool zunoIsIOThread(void * handle){
+	
 	if(handle == NULL){
 		handle = zunoGetCurrentThreadHandle();
 	}
 	return (handle == g_zuno_sys->hIOThread);
+
 }
 bool zunoIsSystemThread(void * handle){
+
 	if(handle == NULL){
 		handle = zunoGetCurrentThreadHandle();
 	}

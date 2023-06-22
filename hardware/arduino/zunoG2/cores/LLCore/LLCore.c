@@ -398,6 +398,12 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
+                #ifdef LOGGING_DBG
+	            LOGGING_UART.print("*** _IRQ:");
+                LOGGING_UART.print(p_msg->type);
+                LOGGING_UART.print(" P:");
+                LOGGING_UART.print(p_msg->param);
+	            #endif
                 // Awake code if user had sent device to sleep, but interrupt has triggered
                 zunoAwakeUsrCode();
             }
@@ -432,6 +438,10 @@ void * zunoJumpTable(int vec, void * data) {
 
             break;
         default:
+            #ifdef LOGGING_DBG
+	        LOGGING_UART.print("*** UNKNOWN JMPTBL VEC");
+            LOGGING_UART.print(vec);
+	        #endif
             break; // UNKNOWN VECTOR
     }
     if(vec >= ZUNO_JUMPTBL_SYSTIMER){

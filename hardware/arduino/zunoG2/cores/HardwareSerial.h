@@ -62,8 +62,6 @@ typedef struct							ZunoHardwareSerialConfig_s
 	LDMA_PeripheralSignal_t				dmaSignalWrite;
 	LDMA_PeripheralSignal_t				dmaSignalRead;
 	CMU_Clock_TypeDef					bus_clock;
-	uint8_t								rx;
-	uint8_t								tx;
 	uint8_t								fd;
 	ZunoHardwareSerialType_t			type;
 }										ZunoHardwareSerialConfig_t;
@@ -93,7 +91,7 @@ typedef enum							ZunoHardwareSerialNumConfig_s
 
 class HardwareSerial : public Stream {
 	public:
-		HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig);
+		HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig, uint8_t rx, uint8_t tx);
 		void									begin(unsigned long baud) { begin(baud, SERIAL_8N1); }
 		void									begin(unsigned long baud, uint32_t config);
 		void									end();
@@ -135,6 +133,8 @@ class HardwareSerial : public Stream {
 		uint16_t								_buffer_len;
 		uint8_t									_lpKey;
 		uint8_t									_bFree;
+		uint8_t									_rx;
+		uint8_t									_tx;
 };
 
 extern HardwareSerial Serial;

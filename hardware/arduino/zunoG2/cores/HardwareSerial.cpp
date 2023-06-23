@@ -101,7 +101,7 @@
 
 
 /* Public Constructors */
-HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _channel(-1), _lpKey(false), _bFree(false) {
+HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig, uint8_t rx, uint8_t tx): _channel(-1), _lpKey(false), _bFree(false), _rx(rx), _tx(tx) {
 	const ZunoHardwareSerialConfig_t				*configTable;
 
 	if (numberConfig >= ZunoHardwareSerialLast) {
@@ -122,8 +122,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 				.dmaSignalWrite = ldmaPeripheralSignal_EUSART1_TXFL,
 				.dmaSignalRead = ldmaPeripheralSignal_EUSART1_RXFL,
 				.bus_clock = cmuClock_EUSART1,
-				.rx = RX0,
-				.tx = TX0,
 				.fd = 0x1,
 				.type = ZunoHardwareSerialTypeEusart
 			};
@@ -143,8 +141,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 				.dmaSignalWrite = ldmaPeripheralSignal_EUSART0_TXFL,
 				.dmaSignalRead = ldmaPeripheralSignal_EUSART0_RXFL,
 				.bus_clock = cmuClock_EUSART0,
-				.rx = RX1,
-				.tx = TX1,
 				.fd = 0x0,
 				.type = ZunoHardwareSerialTypeEusart
 			};
@@ -164,8 +160,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 				.dmaSignalWrite = ldmaPeripheralSignal_EUSART2_TXFL,
 				.dmaSignalRead = ldmaPeripheralSignal_EUSART2_RXFL,
 				.bus_clock = cmuClock_EUSART2,
-				.rx = RX2,
-				.tx = TX2,
 				.fd = 0x2,
 				.type = ZunoHardwareSerialTypeEusart
 			};
@@ -186,8 +180,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 				.dmaSignalWrite = ldmaPeripheralSignal_USART0_TXBL,
 				.dmaSignalRead = ldmaPeripheralSignal_USART0_RXDATAV,
 				.bus_clock = cmuClock_USART0,
-				.rx = RX0,
-				.tx = TX0,
 				.fd = 0x0,
 				.type = ZunoHardwareSerialTypeUsart
 			};
@@ -207,8 +199,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 				.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
 				.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 				.bus_clock = cmuClock_USART1,
-				.rx = RX1,
-				.tx = TX1,
 				.fd = 0x1,
 				.type = ZunoHardwareSerialTypeUsart
 			};
@@ -229,8 +219,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 					.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
 					.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
 					.bus_clock = cmuClock_USART1,
-					.rx = RX1,
-					.tx = TX1,
 					.fd = 0x1,
 					.type = ZunoHardwareSerialTypeUsart
 				};
@@ -247,8 +235,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 					.dmaSignalWrite = ldmaPeripheralSignal_USART2_TXBL,
 					.dmaSignalRead = ldmaPeripheralSignal_USART2_RXDATAV,
 					.bus_clock = cmuClock_USART2,
-					.rx = RX2,
-					.tx = TX2,
 					.fd = 0x2,
 					.type = ZunoHardwareSerialTypeUsart
 				};
@@ -262,10 +248,7 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig): _cha
 
 /* Public Methods */
 void HardwareSerial::begin(unsigned long baud, uint32_t config) {
-	const ZunoHardwareSerialConfig_t			*config_serial;
-
-	config_serial = this->_configTable;
-	this->begin(baud, config, config_serial->rx, config_serial->tx);
+	this->begin(baud, config, this->_rx, this->_tx);
 }
 
 ZunoError_t HardwareSerial::begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx) {
@@ -542,14 +525,14 @@ static constexpr ZunoHardwareSerialNumConfig_t _get_serial_num_eusart(uint8_t tx
 
 /* Preinstantiate Objects */
 #if EUSART_COUNT >= 3
-	HardwareSerial Serial(_get_serial_num_eusart(TX2, RX2));
-	HardwareSerial Serial1(_get_serial_num_eusart(TX1, RX1));
-	HardwareSerial Serial0(ZunoHardwareSerialEusart1);
+	HardwareSerial Serial(_get_serial_num_eusart(TX2, RX2), RX2, TX2);
+	HardwareSerial Serial1(_get_serial_num_eusart(TX1, RX1), RX1, TX1);
+	HardwareSerial Serial0(ZunoHardwareSerialEusart1, RX0, TX0);
 #endif
 #if USART_COUNT >= 3
-	HardwareSerial Serial(ZunoHardwareSerialUsart2);
-	HardwareSerial Serial1(ZunoHardwareSerialUsart1);
-	HardwareSerial Serial0(ZunoHardwareSerialUsart0);
+	HardwareSerial Serial(ZunoHardwareSerialUsart2, RX2, TX2);
+	HardwareSerial Serial1(ZunoHardwareSerialUsart1, RX1, TX1);
+	HardwareSerial Serial0(ZunoHardwareSerialUsart0, RX0, TX0);
 #endif
 
 

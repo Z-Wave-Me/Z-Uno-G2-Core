@@ -451,10 +451,6 @@ inline ZunoError_t HardwareSerial::_begin(size_t baudrate, uint32_t option, uint
 	if (config->type == ZunoHardwareSerialTypeUsart)
 		this->_baudrate = this->_begin_usart(config, baudrate, option, rx, tx);
 	#endif
-	#if USART_COUNT >= 1
-	if (config->type == ZunoHardwareSerialTypeUsart)
-		this->_baudrate = this->_begin_usart(config, baudrate, option, rx, tx);
-	#endif
 	if ((channel = this->_channel) > 0x0)
 		LdmaClass::transferStop(channel);
 	if (len != 0x0) {

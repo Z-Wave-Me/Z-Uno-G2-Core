@@ -389,8 +389,8 @@ void * zunoJumpTable(int vec, void * data) {
             _zunoSleepingUpd();
             #endif
             #ifdef LOGGING_DBG
-            if((((uint32_t)counter) & 0x7F) == 0)
-                LOGGING_UART.println("***TMR:PULSE");
+            //if((((uint32_t)counter) & 0x7F) == 0)
+            //    LOGGING_UART.println("***TMR:PULSE");
             #endif
             counter++;
             }
@@ -1015,6 +1015,7 @@ static uint8_t __zunoSleepingUpd(){
  static void _zunoSleepingUpd(){
     static uint32_t count =0;
     uint8_t v = __zunoSleepingUpd();
+    (void)v;
     #ifdef LOGGING_DBG
     if((count & 0x3F) == 0){
         LOGGING_UART.print("***SLP:");
@@ -1091,8 +1092,8 @@ void zunoKickSleepTimeout(uint32_t ms){
     if(g_sleep_data.timeout < new_timeout)
         g_sleep_data.timeout = new_timeout;
     #ifdef LOGGING_DBG
-    LOGGING_UART.print("NEW SLEEP TIMEOUT:");
-    LOGGING_UART.print(g_sleep_data.timeout);
+    //LOGGING_UART.print("NEW SLEEP TIMEOUT:");
+    //LOGGING_UART.print(g_sleep_data.timeout);
     #endif
 }
 #endif
@@ -1132,7 +1133,7 @@ void zunoMarkDeviceToSleep(uint8_t mode){
 }
 void zunoLockSleep(void){
     #ifdef LOGGING_DBG
-    LOGGING_UART.println("***BLOCK SLEEP!");
+    //LOGGING_UART.println("***BLOCK SLEEP!");
     #endif
     zunoEnterCritical();
     g_sleep_data.user_latch = true;

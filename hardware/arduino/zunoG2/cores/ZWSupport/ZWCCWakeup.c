@@ -71,8 +71,8 @@ void zuno_CCWakeup_OnSetup(){
 	     (reason == ZUNO_WAKEUP_REASON_WUT_EM2) );
 	bool on_button = false;
 	#ifdef LOGGING_DBG
-	LOGGING_UART.print("GPIOEM4MASK:");
-	LOGGING_UART.println(g_zuno_sys->gpio_em4flags, HEX);
+	//LOGGING_UART.print("GPIOEM4MASK:");
+	//LOGGING_UART.println(g_zuno_sys->gpio_em4flags, HEX);
 	#endif
 	#ifndef NO_BTN_WAKEUP
 	on_button = ((g_zuno_sys->gpio_em4flags & zunoMapPin2EM4Int(BUTTON_PIN)) && ((reason == ZUNO_WAKEUP_REASON_EXT_EM2) ||
@@ -84,7 +84,7 @@ void zuno_CCWakeup_OnSetup(){
 		#endif
 		0 ){
 		#ifdef LOGGING_DBG
-		LOGGING_UART.println("APPEND WAKEUP!");
+		//LOGGING_UART.println("APPEND WAKEUP!");
 		#endif
 		zunoSendWakeUpNotification();
 		return;

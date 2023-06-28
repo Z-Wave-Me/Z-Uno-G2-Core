@@ -78,6 +78,7 @@ bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
 }
 bool zunoCheckSystemQueueStatus(uint8_t channel){
     static uint8_t count_n = 0;
+    (void)count_n;
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;
     if((channel > 0) && (interval < SYSTEM_PKG_DOMINATION_TIME)){
         // #ifdef LOGGING_DBG

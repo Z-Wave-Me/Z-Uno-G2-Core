@@ -45,7 +45,7 @@ void SysReconfigLeds(){
     } else {
         if(zunoGetSleepingMode()){
             #ifdef LOGGING_DBG
-            LOGGING_UART.println("*** DEVICE IS SLEEPING");
+            //LOGGING_UART.println("*** DEVICE IS SLEEPING");
             #endif
             zunoSysServiceLedOn(SYSLED_ACTIVITY);
         } else {

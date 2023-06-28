@@ -96,6 +96,9 @@ class HardwareSerial : public Stream {
 		HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig);
 		void									begin(unsigned long baud) { begin(baud, SERIAL_8N1); }
 		void									begin(unsigned long baud, uint32_t config);
+		void									begin(void) {return (this->begin(HARDWARE_SERIAL_SPEED_DEFAULT));};
+		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
+		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);
 		void									end();
 		virtual int								available(void);
 		virtual int								peek(void);
@@ -109,9 +112,7 @@ class HardwareSerial : public Stream {
 		inline size_t							write(int n) { return write((uint8_t)n); }
 		
 		void									memset(uint8_t c, size_t n);//max 2048 * 255
-		void									begin(void) {return (this->begin(HARDWARE_SERIAL_SPEED_DEFAULT));};
-		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx);
-		ZunoError_t								begin(size_t speed, uint32_t config, uint8_t rx, uint8_t tx, void *buffer, uint16_t len);
+		
 		virtual size_t							write(const uint8_t *b, size_t count);
 
 		size_t									countWaitingMs(size_t n);

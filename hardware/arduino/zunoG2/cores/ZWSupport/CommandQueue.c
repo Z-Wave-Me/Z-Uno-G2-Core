@@ -77,6 +77,7 @@ bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
 	 return zunoSysCall(ZUNO_SYSFUNC_ASSOCIATION_NODE, 3, g, i, node) == 0;
 }
 bool zunoCheckSystemQueueStatus(uint8_t channel){
+	#ifdef LOGGING_DBG
     static uint8_t count_n = 0;
     (void)count_n;
     uint32_t interval = millis() - g_zuno_sys->rstat_pkgs_hp_time;

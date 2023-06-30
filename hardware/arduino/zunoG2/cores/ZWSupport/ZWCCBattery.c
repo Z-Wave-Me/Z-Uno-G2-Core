@@ -1,5 +1,6 @@
 #include "ZWCCBattery.h"
 #include "ZWSupport.h"
+#include "Debug.h"
 #ifndef BATTERY_LOW
 #define BATTERY_LOW 2500
 #endif
@@ -49,9 +50,18 @@ bool zunoSendBatteryReportHandler() {
 	ZwBatteryReportFrame_t							*report;
 	ZUNOCommandPacketReport_t						frame;
 
+   
 	batteryLevel = batteryReportValue();
-	if (batteryLevel == _save_batteryLevel)
-		return (false);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("*** Battery report");
+    LOGGING_UART.println(batteryLevel);
+	#endif
+	if (batteryLevel == _save_batteryLevel) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.println("Battery: Send canceled. The same level.");
+		#endif
+		return false;
+	}
 	_save_batteryLevel = batteryLevel;
 	fillOutgoingReportPacketAsync(&frame, 0x0);
 	report = (ZwBatteryReportFrame_t *)&frame.packet.cmd[0x0];
@@ -60,7 +70,7 @@ bool zunoSendBatteryReportHandler() {
 	report->batteryLevel = batteryLevel;
 	frame.packet.len = sizeof(report[0x0]);
 	zunoSendZWPackage(&frame.packet);
-	return (true);
+	return true;
 }
 
 static int _battery_report(ZUNOCommandPacketReport_t *frame_report) {

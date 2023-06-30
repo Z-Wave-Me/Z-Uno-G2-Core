@@ -1238,7 +1238,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 	#ifdef WITH_CC_BATTERY
 	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
 	if(__zunoDispatchPendingBatteryReport()){
-		if (zunoSendBatteryReportHandler() == true) {
+		if (zunoSendBatteryReportHandler()) {
 			if((--max_report_count) == 0)
 				return;
 		}
@@ -1249,6 +1249,12 @@ void zunoSendReportHandler(uint32_t ticks) {
 	if(!zunoIsSleepLocked()){
 		uint32_t sys_reports = __getSyncVar(&g_channels_data.sys_reports);
 		uint32_t usr_reports = __getSyncVar(&g_channels_data.report_map);
+		// #ifdef LOGGING_DBG
+		// LOGGING_UART.print("CCWUP U:");
+    	// LOGGING_UART.print(usr_reports);
+		// LOGGING_UART.print(" S:");
+    	// LOGGING_UART.println(sys_reports);
+		// #endif
 		if((usr_reports == 0) && 
 	    	((sys_reports & (~(1 << SYSREPORT_MAP_WAKEUP_BIT))) == 0)){
 				if(__zunoDispatchPendingWUPReport()){

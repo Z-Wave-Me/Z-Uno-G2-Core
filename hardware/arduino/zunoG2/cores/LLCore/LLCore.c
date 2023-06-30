@@ -435,7 +435,8 @@ void * zunoJumpTable(int vec, void * data) {
             _zunoCheckWakeupBtn();
             #endif
             ZWCCSetup();
-
+            break;
+        case ZUNO_JUMPTBL_WTIMER:
             break;
         default:
             #ifdef LOGGING_DBG

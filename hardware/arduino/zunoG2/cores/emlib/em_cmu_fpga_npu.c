@@ -34,7 +34,7 @@
 
 #if defined(CMU_PRESENT) && defined(FPGA)
 
-#include "em_cmu.h"
+#include "em_cmu_fpga.h"
 #include "sl_assert.h"
 
 /***************************************************************************//**
@@ -78,7 +78,7 @@ uint32_t Get_Fpga_Core_freq(void)
 {
   if ((SYSCFG->FPGAIPOTHW & SYSCFG_FPGAIPOTHW_FPGA_FPGA) != 0U) {
     if ((SYSCFG->FPGAIPOTHW & SYSCFG_FPGAIPOTHW_OTA_OTA) != 0U) {
-      return 38400000U;
+      return 38400000U / 8;
     } else {
       return 9600000U;
     }
@@ -211,11 +211,14 @@ uint32_t CMU_ClockFreqGet(CMU_Clock_TypeDef clock)
       return 28000000u; // Hard coded to pass test
     case cmuClock_LETIMER0:
     case cmuClock_RTCC:
-    case cmuClock_SYSRTC:
     case cmuClock_SYSTICK:
     case cmuClock_WDOG0:
     case cmuClock_LESENSE:
       return LFRCO_CLK_FREQ;
+    case cmuClock_SYSRTC:
+      // Fix for sleeptimer running on TIMER0. Clock enum not in sync with
+      // em_cmu.h !
+      return Get_Fpga_Core_freq();
     case cmuClock_BURTC:
 #if defined(ETAMPDET_PRESENT)
     case cmuClock_ETAMPDET:

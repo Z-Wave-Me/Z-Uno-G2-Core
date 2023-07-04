@@ -207,8 +207,6 @@ typedef struct ZUNOOnDemandHW_s {
 	uint32_t	adc_reference;
 	uint8_t		adc_resolution;
 	uint8_t		adc_acqtime;
-	uint8_t		pwm_resolution;
-	uint32_t 	pwm_freq;
 	//HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
 } ZUNOOnDemandHW_t;
 extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;

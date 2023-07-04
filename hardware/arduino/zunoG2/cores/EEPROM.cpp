@@ -14,19 +14,11 @@ int EEPROMClass::get(uint32_t address, void *value, uint16_t val_size)
 byte EEPROMClass::read(uint32_t address)
 { 
     this->get(address, &this->temp_byte, ONEBYTE);
-    #ifdef LOGGING_DBG
-    #warning "EEPROM TEST"
-    LOGGING_UART.printf("EEPROM.read(%08x) = %02x\n",address, temp_byte);
-    #endif
     return temp_byte;
 }
 
 void EEPROMClass::update(uint32_t address, byte value)
 {
-    #ifdef LOGGING_DBG
-    #warning "EEPROM TEST"
-    LOGGING_UART.printf("EEPROM.update(%08x, %02x)\n",address, value);
-    #endif
     this->get(address, &this->temp_byte, ONEBYTE);
     if (value != temp_byte)
     {

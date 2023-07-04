@@ -221,8 +221,6 @@ static void LLInit(void *data) {
     g_zuno_odhw_cfg.adc_resolution = 10; // 
     g_zuno_odhw_cfg.adc_acqtime = adcAcqTime256;
 #endif
-    g_zuno_odhw_cfg.pwm_resolution = 8;
-    g_zuno_odhw_cfg.pwm_freq = PWM_FREQ_DEFAULT;
 	g_zuno_sys = (ZUNOSetupSysState_t*)data;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);

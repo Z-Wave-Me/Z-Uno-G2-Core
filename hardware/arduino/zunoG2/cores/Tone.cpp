@@ -4,6 +4,9 @@
 
 // MULTI_CHIP
 #if defined(_TIMER_ROUTELOC0_CC0LOC_MASK)
+static uint32_t _pwm_freq = PWM_FREQ_DEFAULT;
+static uint8_t _pwm_resolution = 8;
+
 #define PWM_TIMER						TIMER1
 #define PWM_TIMER_CLOCK					cmuClock_TIMER1
 
@@ -95,7 +98,7 @@ static uint8_t _analogWrite(uint8_t pin, uint16_t value) {
 	location = getLocation(&g_loc_pa0_pf7_all[0], sizeof(g_loc_pa0_pf7_all), pin) + 32;
 	channel = _findPWMChannelBusy(location);
 	timer = PWM_TIMER;
-	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - g_zuno_odhw_cfg.pwm_resolution);
+	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - _pwm_resolution);
 	if (value == PWM_DISABLED) {
 		_noTone(pin);
 		return (PWM_OUT_CLOSE);
@@ -132,11 +135,11 @@ static ZunoError_t _initPwm(size_t param) {
 	timerInit = TIMER_INIT_DEFAULT;
 	freq = CMU_ClockFreqGet(TONE_TIMER_CLOCK);
 	timer_prescale = timerPrescale1;
-	while ((freq / g_zuno_odhw_cfg.pwm_freq / (1 << timer_prescale)) > 0xFFFF)
+	while ((freq / _pwm_freq / (1 << timer_prescale)) > 0xFFFF)
 		timer_prescale = (TIMER_Prescale_TypeDef)(timer_prescale + 1);
 	timerInit.prescale = timer_prescale;
 	freq /=  (1 << timer_prescale);
-	freq /= g_zuno_odhw_cfg.pwm_freq;
+	freq /= _pwm_freq;
 	timer = PWM_TIMER;
 	timer->ROUTEPEN = _TIMER_ROUTEPEN_RESETVALUE;//disable CC
 	TIMER_TopSet(timer, freq);
@@ -291,11 +294,11 @@ ZunoError_t toneDelayed(uint8_t pin, uint16_t freq, uint16_t duration) {
 void analogWriteResolution(uint8_t bits){
 	if (bits > 16)
 		bits = 16;
-	g_zuno_odhw_cfg.pwm_resolution = bits;
+	_pwm_resolution = bits;
 }
 
 void analogWriteFrequency(uint32_t freq){
 	if ((freq >= PWM_FREQ_MIN) && (freq <= PWM_FREQ_MAX))
-		g_zuno_odhw_cfg.pwm_freq = freq;
+		_pwm_freq = freq;
 }
 #endif

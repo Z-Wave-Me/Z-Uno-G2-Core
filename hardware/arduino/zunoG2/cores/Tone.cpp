@@ -381,8 +381,6 @@ static ZunoError_t _tone(uint8_t pin, uint16_t freq) {
 	_tone_freq = freq;
 	tone_freq_set = _tone_CMU_ClockFreqGet(pin) / 2 / freq;// get the frequency for one hertz
 	prescale = _getPrescale(tone_freq_set);
-	Serial0.print("timer_prescale: ");
-	Serial0.println(prescale);
 	#if defined (_TIMER_CFG_PRESC_MASK)
 	tone_freq_set = tone_freq_set / (prescale + 0x1);
 	#endif

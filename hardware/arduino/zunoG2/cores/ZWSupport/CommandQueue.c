@@ -142,8 +142,8 @@ void ZWQProcess(){
     int processed_indexes_cnt = 0;
     ZUNOCommandPacket_t * p;
     // Process the packages
+	int queue_sz = znllCount(g_zwpkg_queue);
     #ifdef LOGGING_DBG
-    int queue_sz = znllCount(g_zwpkg_queue);
     if((queue_sz > 0) && ((count_n & 0x3F) == 0)){
 
 	    LOGGING_UART.print("CommandQueue Size:");

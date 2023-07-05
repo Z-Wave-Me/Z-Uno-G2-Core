@@ -59,6 +59,8 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd){
     ZNLinkedList_t *e;
     ZUNOCommandPacket_t * p;
+
+    zunoEnterCritical();
     for(e=g_zwpkg_queue;e; e=e->next){
         p = (ZUNOCommandPacket_t *) e->data;
         if((flags != 0xFF) && ((p->flags & flags)  !=  flags))
@@ -69,8 +71,10 @@ ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, 
             continue;
         if((cmd != 0xFF) && (p->cmd[1]!= cmd))
             continue;
+        zunoExitCritical();
         return p;
     }
+    zunoExitCritical();
     return NULL;
 }
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node){
@@ -122,10 +126,15 @@ bool ZWQIsEmpty(){
     return (znllCount(g_zwpkg_queue) == 0);
 }
 
+#if ZUNO_PACKETFLAGS_PRIORITY_MASK > 0xFF
+#error "ZUNO_PACKETFLAGS_PRIORITY_MASK size!!!"
+#endif
+
 void ZWQProcess(){
     ZNLinkedList_t *e;
     ZUnoAssocNode_t node;
     static uint32_t count_n = 0;
+    uint8_t queue_bit_mask;
     
     // Walk through the queue
     int qi;
@@ -141,7 +150,8 @@ void ZWQProcess(){
         LOGGING_UART.println(queue_sz);
     }
     #endif
-    for(e=g_zwpkg_queue, qi=0; e; e=e->next, qi++){
+    queue_bit_mask = 0x0;
+    for(e=g_zwpkg_queue, qi=0; e!= NULL && qi < queue_sz; e=e->next, qi++){
         p = (ZUNOCommandPacket_t *) e->data;
        
         uint32_t system_queue_count = g_zuno_sys->rstat_pkgs_queued - g_zuno_sys->rstat_pkgs_processed; //s.pkgs_queued - s.pkgs_processed;
@@ -161,6 +171,14 @@ void ZWQProcess(){
 		// LOGGING_UART.print("*** QCH:");
         // LOGGING_UART.println(q_ch);
         // #endif
+
+        if ((queue_bit_mask & (0x1 << (q_ch))) != 0x0) {
+        //    #ifdef LOGGING_DBG
+        //    LOGGING_UART.print("Skip queue: ");
+        //    LOGGING_UART.println(q_ch);
+        //    #endif
+           continue ;
+        }
         if(((millis() - last_controller_package_time) < CONTROLLER_INTERVIEW_REQUEST_INTERVAL) && 
            ( q_ch !=  0) &&
            (zunoSecurityStatus() == SECURITY_KEY_S0)){
@@ -168,12 +186,15 @@ void ZWQProcess(){
                 LOGGING_UART.print("Waiting for controller.  QCH:");
                 LOGGING_UART.println(q_ch);
                 #endif
+                queue_bit_mask = queue_bit_mask | (0x1 << (q_ch));
                 continue; // Skip report packets during interview
            }
 
         // Check if we have a free channel to send the package
-        if(zunoCheckSystemQueueStatus(q_ch))
+        if(zunoCheckSystemQueueStatus(q_ch)) {
+            queue_bit_mask = queue_bit_mask | (0x1 << (q_ch));
             continue; // Needed queue is full for this priority - just skip the package
+        }
         
         if(p->flags & ZUNO_PACKETFLAGS_GROUP){
             #ifdef LOGGING_DBG

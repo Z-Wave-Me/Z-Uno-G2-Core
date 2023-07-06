@@ -1,30 +1,9 @@
 #include "ZWCCBattery.h"
 #include "ZWSupport.h"
 #include "Debug.h"
-#ifndef BATTERY_LOW
-#define BATTERY_LOW 2500
-#endif
-#ifndef BATTERY_HIGH
-#define BATTERY_HIGH 3000
-#endif
 
 static uint8_t _save_batteryLevel = 0xFF;
 
-#if !defined(WITH_CUSTOM_BATTERY_HANDLER)
-uint8_t defaultBatteryHandler(){
-    uint8_t old_res  = g_zuno_odhw_cfg.adc_resolution;
-    g_zuno_odhw_cfg.adc_resolution = 12;
-    dword res = analogRead(BATTERY);
-    g_zuno_odhw_cfg.adc_resolution = old_res;
-    res *= 5000;
-    res >>= 12;
-    if(res >= BATTERY_HIGH)
-        return 100; 
-    res -= BATTERY_LOW;
-    res *= 100;
-    return res / (BATTERY_HIGH - BATTERY_LOW);
-}
-#endif
 void zuno_CCBattery_OnSetup(){
     if ((zunoGetWakeReason() == ZUNO_WAKEUP_REASON_POR) ||
       (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM4) ||

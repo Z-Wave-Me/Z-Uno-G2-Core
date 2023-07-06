@@ -10,12 +10,13 @@ void analogReference(ADC_Ref_TypeDef ref);
 #endif
 void analogReadResolution(uint8_t bits);
 void analogWriteResolution(uint8_t bits);
-int analogRead(uint8_t pin);
 
 // MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
 #endif
+
+int analogRead(uint8_t pin);
 
 uint8_t defaultBatteryHandler(void);
 

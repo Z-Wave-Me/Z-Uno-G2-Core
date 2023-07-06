@@ -1,10 +1,13 @@
 #include "Arduino.h"
 #include "zuno_analog_read.h"
 
+static uint8_t _adc_resolution = 10;
+
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 static bool _ADCInitialized = false;
 static ADC_AcqTime_TypeDef _adc_acqtime = adcAcqTime256;
 static ADC_Ref_TypeDef _adc_reference = adcRef5V;
-static uint8_t _adc_resolution = 10;
+#endif
 
 #ifndef BATTERY_LOW
 #define BATTERY_LOW 2500
@@ -40,6 +43,9 @@ static ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
 }
 #endif
 
+// MULTI_CHIP
+#if defined(ADC_COUNT) && (ADC_COUNT > 0)
+
 static uint8_t  __adc_resolution2RealBits(uint8_t res){
     if(res > 8)
         return 12;
@@ -53,16 +59,10 @@ static uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
     return v << (dst - src);
 }
 
-// MULTI_CHIP
-#if defined(ADC_COUNT) && (ADC_COUNT > 0)
 void analogReference(ADC_Ref_TypeDef ref){
     _adc_reference = ref;
 }
 #endif
-
-void analogReadResolution(uint8_t bits){
-    _adc_resolution = bits;
-}
 
 // MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)
@@ -193,3 +193,12 @@ int analogRead(uint8_t pin) {
 	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(_adc_resolution), _adc_resolution));
 }
 #endif
+
+int analogRead(uint8_t pin) {
+	return (0x0);
+	(void)pin;
+}
+
+void analogReadResolution(uint8_t bits){
+	_adc_resolution = bits;
+}

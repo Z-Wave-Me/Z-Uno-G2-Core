@@ -31,7 +31,7 @@ uint8_t defaultBatteryHandler(void) {
 
 // MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)
-inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
+static ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
     if(res > 8)
         return adcRes12Bit;
     if(res > 6)
@@ -40,14 +40,14 @@ inline ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){
 }
 #endif
 
-inline uint8_t  __adc_resolution2RealBits(uint8_t res){
+static uint8_t  __adc_resolution2RealBits(uint8_t res){
     if(res > 8)
         return 12;
     if(res > 6)
         return 8;
     return 	6;
 } 
-inline uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
+static uint32_t __oversampleValue(uint32_t v, uint8_t src, uint8_t dst){
     if(src > dst)
         return v >> (src - dst);
     return v << (dst - src);

@@ -91,6 +91,7 @@ extern ZunoSync_t gSyncCSEN;
 extern ZunoSync_t gSyncLeUart;
 
 extern volatile SyncPeripheryCapture_t gSyncVirtualTimer0;
+extern volatile SyncPeripheryCapture_t gSyncVirtualTimer1;
 
 
 #endif // SYNC_H

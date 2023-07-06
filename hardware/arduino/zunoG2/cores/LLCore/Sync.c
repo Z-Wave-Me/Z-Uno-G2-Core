@@ -17,6 +17,7 @@ ZunoSync_t gSyncCSEN = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncLeUart = ZUNO_SYNC_INIT_DEFAULT;
 
 volatile SyncPeripheryCapture_t gSyncVirtualTimer0 = {SyncMasterFree};
+volatile SyncPeripheryCapture_t gSyncVirtualTimer1 = {SyncMasterFree};
 
 typedef enum							SyncMode_e
 {

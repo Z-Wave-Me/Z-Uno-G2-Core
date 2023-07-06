@@ -192,12 +192,12 @@ int analogRead(uint8_t pin) {
 	ADC0->CMD = ADC_CMD_SINGLESTOP;
 	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(_adc_resolution), _adc_resolution));
 }
-#endif
-
+#else
 int analogRead(uint8_t pin) {
 	return (0x0);
 	(void)pin;
 }
+#endif
 
 void analogReadResolution(uint8_t bits){
 	_adc_resolution = bits;

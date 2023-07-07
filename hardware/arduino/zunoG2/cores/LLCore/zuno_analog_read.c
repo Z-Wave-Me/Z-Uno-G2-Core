@@ -178,6 +178,7 @@ int analogRead(uint8_t pin) {
 	ADC_InitSingle_TypeDef					singleInit;
 
 	zmeADCInit();
+	pinMode(pin, INPUT);
 	singleInit = ADC_INITSINGLE_DEFAULT;
 	// Init for single conversion use, use 5V reference
 	singleInit.reference  = _adc_reference;

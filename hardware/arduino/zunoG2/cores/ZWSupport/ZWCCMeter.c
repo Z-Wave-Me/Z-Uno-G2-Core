@@ -14,10 +14,8 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 	size_t								type;
 
 	params = ZUNO_CFG_CHANNEL(channel).params[0];
-	if (paket == 0x0 || (len = paket->len) == sizeof(ZW_METER_GET_FRAME)) {
-		len = sizeof(ZW_METER_GET_FRAME);
-	}
-	else {
+	if (paket != NULL) {
+		len = paket->len;
 		cmd = (const ZwMeterGetFrame_t *)paket->cmd;
 		properties1 = cmd->v6.properties1;
 		type = (properties1 & METER_GET_PROPERTIES1_RATE_TYPE_MASK) >> METER_GET_PROPERTIES1_RATE_TYPE_SHIFT;
@@ -31,7 +29,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 	report->v3.byte1.cmdClass = COMMAND_CLASS_METER;
 	report->v3.byte1.cmd = METER_REPORT;
 	uint8_t subtype = ZUNO_CFG_CHANNEL(channel).sub_type;
-	report->v3.byte1.properties1 = (subtype & METER_REPORT_PROPERTIES1_METER_TYPE_MASK) | (len == sizeof(ZW_METER_GET_FRAME) ? 0x0  : (METER_REPORT_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | GET_SCALE2(params));
+	report->v3.byte1.properties1 = (subtype & METER_REPORT_PROPERTIES1_METER_TYPE_MASK) | (METER_REPORT_RATE_TYPE_IMPORT << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | GET_SCALE2(params);
 	report->v3.byte1.properties2 = COMBINE_PARAMS(params);
 	channel_size = GET_SIZE(params);
 	value = zuno_universalGetter1P(channel);

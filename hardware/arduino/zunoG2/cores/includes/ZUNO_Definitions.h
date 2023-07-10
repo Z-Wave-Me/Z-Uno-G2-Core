@@ -2,6 +2,7 @@
 #define ZUNO_DEFINITIONS
 #include "ZUNO_CoreDefs.h"
 #include "time.h"
+#include "em_timer.h"
 
 #ifndef ZUNO_PREPROC_PHASE
 	#include "Custom_defs.h"
@@ -80,7 +81,12 @@ typedef enum
 //#define ZUNO_CODE_START                                 0x30800L
 //#define USER_SPACE_FLASH_ADDR                           0x10000
 #define ZUNO_CUSTOM_CODESPACE_SIZE                      (0x10000-0x800+0x20000)
+#if TIMER_COUNT == 0x2
 #define MAX_ZUNO_PWMS           						4
+#endif
+#if TIMER_COUNT == 0x5
+#define MAX_ZUNO_PWMS           						6
+#endif
 #define MAX_AVAILIABLE_SYSHANDLERS 						32
 #define MAX_ZWTRANSPORT_ENCAP							8
 #define ZUNO_COMMAND_PACKET_CMD_LEN_MAX_IN				300

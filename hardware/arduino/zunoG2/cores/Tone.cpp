@@ -21,6 +21,9 @@ static uint8_t _channel[MAX_ZUNO_PWMS];
 #define PWM_TIMER_CLOCK_NUMBER_0		cmuClock_TIMER1
 #define PWM_TIMER_CC_COUNT				(sizeof(PWM_TIMER_NUMBER_0->CC) / sizeof(PWM_TIMER_NUMBER_0->CC[0x0]))
 #define PWM_TIMER_ROUTEPEN_RESET		_TIMER_ROUTEPEN_RESETVALUE
+#if MAX_ZUNO_PWMS != 4
+	#error "Error pin pwm!"
+#endif
 #endif
 #if TIMER_COUNT == 0x5
 #define PWM_TIMER_NUMBER_0				TIMER0
@@ -38,6 +41,9 @@ static uint8_t _channel[MAX_ZUNO_PWMS];
 #if _GPIO_TIMER_CC0ROUTE_PIN_SHIFT != _GPIO_TIMER_CC1ROUTE_PIN_SHIFT || _GPIO_TIMER_CC0ROUTE_PIN_SHIFT != _GPIO_TIMER_CC2ROUTE_PIN_SHIFT
 	#error "GPIO_TIMER_ROUTE_PIN"
 #endif
+#if MAX_ZUNO_PWMS != 6
+	#error "Error pin pwm!"
+#endif
 #endif
 
 static void _pwm_CMU_ClockEnable(bool enable) {
@@ -49,9 +55,6 @@ static void _pwm_CMU_ClockEnable(bool enable) {
 	#endif
 }
 
-#if MAX_ZUNO_PWMS != 4
-	#error "Error pin pwm!"
-#endif
 
 static TIMER_Prescale_TypeDef _getPrescale(size_t freq) {
 	uint8_t					i;
@@ -170,19 +173,25 @@ static bool _analogWriteEnable(uint8_t pin, uint16_t value, uint32_t pwm_enabled
 		}
 		if (channel >= (PWM_TIMER_CC_COUNT)) {
 			channel = channel - PWM_TIMER_CC_COUNT;
+			timer = PWM_TIMER_NUMBER_1;
 			fd = PWM_TIMER_FD_NUMBER_1;
 		}
-		else
+		else {
+			timer = PWM_TIMER_NUMBER_0;
 			fd = PWM_TIMER_FD_NUMBER_0;
+		}
 		GPIO->TIMERROUTE[fd].ROUTEEN = GPIO->TIMERROUTE[fd].ROUTEEN | (PWM_TIMER_CCROUTE(channel));
 		pinMode(pin, OUTPUT_UP);// enable the output
 	}
-	if (channel >= (PWM_TIMER_CC_COUNT)) {
-		channel = channel - PWM_TIMER_CC_COUNT;
-		timer = PWM_TIMER_NUMBER_1;
+	else {
+		if (channel >= (PWM_TIMER_CC_COUNT)) {
+			channel = channel - PWM_TIMER_CC_COUNT;
+			timer = PWM_TIMER_NUMBER_1;
+		}
+		else
+			timer = PWM_TIMER_NUMBER_0;
 	}
-	else
-		timer = PWM_TIMER_NUMBER_0;
+
 	TIMER_CompareBufSet(timer, channel, TIMER_TopGet(timer) * value / pwm_enabled);
 	return (true);
 }

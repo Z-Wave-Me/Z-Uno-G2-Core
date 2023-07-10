@@ -11,7 +11,7 @@
 
 #define ZWAVE_SDK_VERSION_MAJOR 7UL
 #define ZWAVE_SDK_VERSION_MINOR 19UL
-#define ZWAVE_SDK_VERSION_PATCH   1UL
+#define ZWAVE_SDK_VERSION_PATCH  3UL
 
 #define ZWAVE_SDK_VERSION ((ZWAVE_SDK_VERSION_MAJOR<<16)| \
                           (ZWAVE_SDK_VERSION_MINOR<<8) | \
@@ -105,7 +105,13 @@ enum {
 	ZUNO_IRQVEC_USART1_RX,
 	ZUNO_IRQVEC_USART2_RX,
 	ZUNO_IRQVEC_LEUART0_RX,
-	ZUNO_IRQVEC_LESENCE
+	ZUNO_IRQVEC_LESENCE,
+	// 8th gen only
+	// ---------------------
+	ZUNO_IRQVEC_TIMER2, 
+	ZUNO_IRQVEC_TIMER3,
+	ZUNO_IRQVEC_TIMER4
+	// ---------------------
 
 };
 typedef struct IOQueueMsg_s{

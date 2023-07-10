@@ -10,5 +10,5 @@ void noTone(uint8_t pin);
 
 bool analogWrite(uint8_t pin, word value);
 void analogWriteFrequency(uint32_t freq);
-
+void analogWriteResolution(uint8_t bits);
 #endif //TONE_H

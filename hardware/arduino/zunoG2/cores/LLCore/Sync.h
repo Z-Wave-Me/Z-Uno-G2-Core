@@ -28,7 +28,8 @@ typedef enum							SyncMaster_e
 	SyncMasterBtn,
 	SyncMasterLesenseClass,
 	SyncMasterCrcClass,
-	SyncMasterDht
+	SyncMasterDht,
+	SyncMasterAnalogRead,
 }										SyncMaster_t;
 
 typedef enum							SyncPeripheryCaptureStatus_e

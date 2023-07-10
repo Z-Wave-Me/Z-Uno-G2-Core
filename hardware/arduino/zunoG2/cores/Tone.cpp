@@ -106,7 +106,7 @@ static uint8_t _findPWMChannelSpace(uint8_t pin) {
 	return (INVALID_PIN_INDEX);
 }
 
-static void _noTone(uint8_t pin);
+static void _noTone(uint8_t pin, bool disable);
 
 #if defined(PWM_TIMER_NUMBER_1)
 static void _analogWriteDisable(uint8_t pin) {
@@ -144,7 +144,7 @@ static bool _analogWriteEnable(uint8_t pin, uint16_t value, uint32_t pwm_enabled
 		channel = _findPWMChannelSpace(pin);
 		if(channel == INVALID_PIN_INDEX)
 			return (false);
-		_noTone(pin);
+		_noTone(pin, true);
 		real_pin = getRealPin(pin);
 		real_port = getRealPort(pin);
 		cc_route = (real_port << _GPIO_TIMER_CC0ROUTE_PORT_SHIFT) | (real_pin << _GPIO_TIMER_CC0ROUTE_PIN_SHIFT);
@@ -214,7 +214,7 @@ static bool _analogWriteEnable(uint8_t pin, uint16_t value, uint32_t pwm_enabled
 		channel = _findPWMChannelSpace(pin);
 		if(channel == INVALID_PIN_INDEX)
 			return (false);
-		_noTone(pin);
+		_noTone(pin, true);
 		location = getLocationTimer0AndTimer1Chanell(pin, channel);
 		timer = PWM_TIMER_NUMBER_0;
 		timer->ROUTELOC0 = (timer->ROUTELOC0 & ~(_TIMER_ROUTELOC0_CC0LOC_MASK << (channel << 3))) | location;
@@ -232,7 +232,7 @@ static uint8_t _analogWrite(uint8_t pin, uint16_t value) {
 
 	pwm_enabled = 0xFFFFFFFF >> ((sizeof(pwm_enabled) * 0x8) - _pwm_resolution);
 	if (value == 0x0 || value >= pwm_enabled) {
-		_noTone(pin);
+		_noTone(pin, true);
 		_analogWriteDisable(pin);
 		if (value == 0x0)
 			mode = OUTPUT_DOWN;
@@ -421,7 +421,9 @@ static void _tone_Init(TIMER_TypeDef *timer) {
 
 }
 
-static void _noTone(uint8_t pin) {
+static void _noTone(uint8_t pin, bool disable) {
+	if (pin == INVALID_PIN_INDEX)
+		return ;
 	if (_tone_pin != pin)
 		return ;
 	_tone_pin = INVALID_PIN_INDEX;
@@ -436,16 +438,15 @@ static void _noTone(uint8_t pin) {
 	TONE_TIMER_NUMBER_0->ROUTEPEN = TONE_TIMER_ROUTEPEN_RESET;
 	#endif
 	_tone_CMU_ClockEnable(false);
-	pinMode(pin, DISABLED);// Switch off this pin anyway
 	zunoPeripheryRelese(&gSyncVirtualTimer0, SyncMasterTone);
+	if (disable == true)
+		pinMode(pin, DISABLED);// Switch off this pin anyway
 }
 
 void noTone(uint8_t pin) {
-	if (pin > ZUNO_PIN_LAST_INDEX)
-		return ;
 	if (TONE_PWM_ENTER() != ZunoErrorOk)
 		return ;
-	_noTone(pin);
+	_noTone(pin, true);
 	TONE_PWM_EXIT();
 }
 
@@ -503,14 +504,12 @@ static ZunoError_t _tone(uint8_t pin, uint16_t freq) {
 static ZunoError_t _tone_pre(uint8_t pin, uint16_t freq) {
 	ZunoError_t						ret;
 	SyncPeripheryCaptureStatus_t	status;
-	uint8_t							pin_old;
 
 	if (pin > ZUNO_PIN_LAST_INDEX)
 		return (ZunoErrorInvalidPin);
 	_analogWriteDisable(pin);//disable pwm
 	if (freq == 0) {
-		if ((pin_old = _tone_pin) != pin)
-			_noTone(pin_old);
+		_noTone(_tone_pin, false);
 		pinMode(pin, OUTPUT_DOWN);
 		ret = ZunoErrorOk;
 	}
@@ -544,7 +543,7 @@ ZunoError_t tone(uint8_t pin, uint16_t freq, uint32_t duration) {
 	ret = _tone_pre(pin, freq);
 	if (duration != 0x0 && ret == ZunoErrorOk) {
 		delay(duration);
-		_noTone(pin);
+		_noTone(pin, true);
 	}
 	TONE_PWM_EXIT();
 	return (ret);

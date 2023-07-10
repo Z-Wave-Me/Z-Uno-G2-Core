@@ -32,7 +32,7 @@ tools.zprog.upload.pattern="{runtime.tools.zme_make.path}/zme_make" upload "{bui
 
 # ZUNO compile patterns
 # ----------------------
-recipe.hooks.sketch.prebuild.1.pattern = "{tools.zprog.cmd.path}" build "{build.path}/{build.project_name}" -S "{tools.zprog.cmd.cores}" -S "{tools.zprog.cmd.libraries}"  -S "{tools.zprog.cmd.include}" -B  "{build.path}" -T "{tools.zprog.cmd.bin}" -O "arduino_ide" -lcl "{tools.zprog.cmd.clang_lib}" -O BO:-DARDUINO=152 -O BO:-DARDUINO_ARCH_ZUNOG2 -O BO:-DZME_ZUNOG2 -O LO:-lm
+recipe.hooks.sketch.prebuild.1.pattern = "{tools.zprog.cmd.path}" build "{build.path}/{build.project_name}" -S "{tools.zprog.cmd.cores}" -S "{tools.zprog.cmd.libraries}"  -S "{tools.zprog.cmd.include}" -B  "{build.path}" -T "{tools.zprog.cmd.bin}" -O "arduino_ide" -lcl "{tools.zprog.cmd.clang_lib}" -O BO:-DARDUINO=152 -O BO:-DARDUINO_ARCH_ZUNOG2 -O BO:-DZME_ZUNOG2 -O LO:-lm -C "{build.chiptype}"
 
 recipe.c.o.pattern="{tools.zprog.cmd.path}" arduino_dummy -t "{source_file} {object_file}" -q
 recipe.cpp.o.pattern="{tools.zprog.cmd.path}" arduino_dummy  -t "{source_file} {object_file}" -q

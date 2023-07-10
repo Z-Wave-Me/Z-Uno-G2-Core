@@ -25,7 +25,6 @@ uint8_t defaultBatteryHandler(void) {
 }
 #endif
 
-// MULTI_CHIP
 #if defined(ADC_COUNT) && (ADC_COUNT > 0)
 #define ZUNO_ANALOG_READ_REFERENCE_STRUCT		ADC_Ref_TypeDef
 static ADC_Res_TypeDef  __adc_resolution2Mode(uint8_t res){

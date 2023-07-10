@@ -472,10 +472,14 @@ static ZunoError_t _tone(uint8_t pin, uint16_t freq) {
 		#if defined(TONE_TIMER_NUMBER_1)
 		real_pin = getRealPin(pin);
 		real_port = getRealPort(pin);
-		if (timer == TONE_TIMER_NUMBER_0)
+		if (timer == TONE_TIMER_NUMBER_0) {
+			GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_0].ROUTEEN = TONE_TIMER_ROUTEPEN_NUMBER_0;
 			GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_0].CC0ROUTE = (real_port << _GPIO_TIMER_CC0ROUTE_PORT_SHIFT) | (real_pin << _GPIO_TIMER_CC0ROUTE_PIN_SHIFT);
-		else
+		}
+		else {
+			GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_1].ROUTEEN = TONE_TIMER_ROUTEPEN_NUMBER_1;
 			GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_1].CC0ROUTE = (real_port << _GPIO_TIMER_CC0ROUTE_PORT_SHIFT) | (real_pin << _GPIO_TIMER_CC0ROUTE_PIN_SHIFT);
+		}
 		#else
 		timer->ROUTELOC0 = getLocationTimer0AndTimer1Chanell(pin, TONE_CHANNEL);
 		#endif
@@ -504,12 +508,17 @@ static ZunoError_t _tone(uint8_t pin, uint16_t freq) {
 static ZunoError_t _tone_pre(uint8_t pin, uint16_t freq) {
 	ZunoError_t						ret;
 	SyncPeripheryCaptureStatus_t	status;
+	bool							disable;
 
 	if (pin > ZUNO_PIN_LAST_INDEX)
 		return (ZunoErrorInvalidPin);
 	_analogWriteDisable(pin);//disable pwm
 	if (freq == 0) {
-		_noTone(_tone_pin, false);
+		if (_tone_pin != pin)
+			disable = true;
+		else
+			disable = false;
+		_noTone(_tone_pin, disable);
 		pinMode(pin, OUTPUT_DOWN);
 		ret = ZunoErrorOk;
 	}
@@ -522,8 +531,6 @@ static ZunoError_t _tone_pre(uint8_t pin, uint16_t freq) {
 				#if defined(TONE_TIMER_NUMBER_1)
 				_tone_Init(TONE_TIMER_NUMBER_0);
 				_tone_Init(TONE_TIMER_NUMBER_1);
-				GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_0].ROUTEEN = TONE_TIMER_ROUTEPEN_NUMBER_0;
-				GPIO->TIMERROUTE[TONE_TIMER_FD_NUMBER_1].ROUTEEN = TONE_TIMER_ROUTEPEN_NUMBER_0;
 				#else
 				_tone_Init(TONE_TIMER_NUMBER_0);
 				TONE_TIMER_NUMBER_0->ROUTEPEN = TONE_TIMER_ROUTEPEN_NUMBER_0;

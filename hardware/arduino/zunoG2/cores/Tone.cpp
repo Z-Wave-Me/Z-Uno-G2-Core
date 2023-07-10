@@ -509,7 +509,6 @@ static ZunoError_t _tone_pre(uint8_t pin, uint16_t freq) {
 		return (ZunoErrorInvalidPin);
 	_analogWriteDisable(pin);//disable pwm
 	if (freq == 0) {
-		Serial0.println("freq == 0");
 		_noTone(_tone_pin, false);
 		pinMode(pin, OUTPUT_DOWN);
 		ret = ZunoErrorOk;

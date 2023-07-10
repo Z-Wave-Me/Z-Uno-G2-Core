@@ -7,6 +7,7 @@ menu.TXPower=TX Power
 menu.RFLogging=RF Logging
 menu.CleanNVM=Clean NVM
 menu.UpdateLicense=License update
+menu.ChipType=Chip Type
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno2
 
@@ -93,3 +94,13 @@ zuno2.menu.UpdateLicense.Off    = Disabled
 zuno2.menu.UpdateLicense.On.build.lic     = 1
 zuno2.menu.UpdateLicense.Off.build.lic    = 0
 
+zuno2.menu.ChipType.ZGM130 = ZGM130 (gen2)
+zuno2.menu.ChipType.ZGM230A = ZGM230A (gen3)
+zuno2.menu.ChipType.ZGM230B = ZGM230B (b2b)
+zuno2.menu.ChipType.EFR32ZG23_2B = EFR32ZG232B (b2b)
+zuno2.menu.ChipType.EFR32ZG23_1B = EFR32ZG231B (b2b)
+zuno2.menu.ChipType.ZGM130.build.chiptype = ZGM130S037HGN1
+zuno2.menu.ChipType.ZGM230A.build.chiptype = ZGM230SA27HGN
+zuno2.menu.ChipType.ZGM230B.build.chiptype = ZGM230SB27HGN
+zuno2.menu.ChipType.EFR32ZG23_2B.build.chiptype = EFR32ZG23B020F512IM48
+zuno2.menu.ChipType.EFR32ZG23_1B.build.chiptype = EFR32ZG23B010F512IM48

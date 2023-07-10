@@ -28,8 +28,21 @@ typedef enum							SyncMaster_e
 	SyncMasterBtn,
 	SyncMasterLesenseClass,
 	SyncMasterCrcClass,
-	SyncMasterDht
+	SyncMasterDht,
+	SyncMasterAnalogRead,
 }										SyncMaster_t;
+
+typedef enum							SyncPeripheryCaptureStatus_e
+{
+	SyncPeripheryCaptureStatusBad,
+	SyncPeripheryCaptureStatusOk,
+	SyncPeripheryCaptureStatusAlredy,
+}										SyncPeripheryCaptureStatus_t;
+
+typedef struct							SyncPeripheryCapture_s
+{
+	SyncMaster_t						master;
+}										SyncPeripheryCapture_t;
 
 typedef struct							ZunoSync_s
 {
@@ -61,6 +74,9 @@ void zunoSyncReleseRead(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t
 ZunoError_t zunoSyncLockWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
 void zunoSyncReleseWrite(ZunoSync_t *lpLock, SyncMaster_t value, volatile uint8_t *lpKey);
 
+SyncPeripheryCaptureStatus_t zunoPeripheryCapture(volatile SyncPeripheryCapture_t *lp, SyncMaster_t master);
+void zunoPeripheryRelese(volatile SyncPeripheryCapture_t *lp, SyncMaster_t master);
+
 extern ZunoSync_t gSyncUSART0;
 extern ZunoSync_t gSyncUSART1;
 extern ZunoSync_t gSyncUSART2;
@@ -74,5 +90,9 @@ extern ZunoSync_t gSyncIC0;
 extern ZunoSync_t gSyncIC1;
 extern ZunoSync_t gSyncCSEN;
 extern ZunoSync_t gSyncLeUart;
+
+extern volatile SyncPeripheryCapture_t gSyncVirtualTimer0;
+extern volatile SyncPeripheryCapture_t gSyncVirtualTimer1;
+
 
 #endif // SYNC_H

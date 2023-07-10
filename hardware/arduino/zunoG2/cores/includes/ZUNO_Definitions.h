@@ -13,7 +13,7 @@
 
 typedef enum
 {
-	ZunoErrorOk,//Good!!!
+	ZunoErrorOk = 1,//Good!!!
 	ZunoErrorTredIo,
 	ZunoErrorSyncTimeout,
 	ZunoErrorTimerAlredy,//the timer is already in use
@@ -22,7 +22,6 @@ typedef enum
 	ZunoErrorAttachSysHandler,//Not enough space in the handler pool
 	ZunoErrorBtnInvalidType,//Failed to change type
 	ZunoErrorBtnChangeMode,//Failed to change button operation mode
-	ZunoErrorInvalidValue,
 
 	/* do not change */
 	ZunoErrorDmaLimitChannel,//
@@ -30,7 +29,7 @@ typedef enum
 	ZunoErrorDmaUniqIdAlready,//
 	ZunoErrorDmaInvalidReconfig,//
 	/*                                         */
-
+	ZunoErrorInvalidValue,
 	ZunoErrorSyncInvalidType,
 	ZunoErrorSyncInvalidInit,
 	ZunoErrorSyncDeInit,

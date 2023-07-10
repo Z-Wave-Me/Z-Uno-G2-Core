@@ -16,6 +16,9 @@ ZunoSync_t gSyncIC1 = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncCSEN = ZUNO_SYNC_INIT_DEFAULT;
 ZunoSync_t gSyncLeUart = ZUNO_SYNC_INIT_DEFAULT;
 
+volatile SyncPeripheryCapture_t gSyncVirtualTimer0 = {SyncMasterFree};
+volatile SyncPeripheryCapture_t gSyncVirtualTimer1 = {SyncMasterFree};
+
 typedef enum							SyncMode_e
 {
 	SyncModeWrite = 1,
@@ -203,4 +206,29 @@ void zunoSysCriticalStatDump(SysCryticalStat_t * dump){
 }
 void zunoSysCriticalStatReset(){
 	memset(&g_sys_crytical_stat,0, sizeof(g_sys_crytical_stat));
+}
+
+SyncPeripheryCaptureStatus_t zunoPeripheryCapture(volatile SyncPeripheryCapture_t *lp, SyncMaster_t master) {
+	SyncPeripheryCaptureStatus_t				status;
+	volatile SyncMaster_t						master_old;
+
+	zunoEnterCritical();
+	master_old = lp->master;
+	if (master_old == SyncMasterFree) {
+		lp->master = master;
+		status = SyncPeripheryCaptureStatusOk;
+	}
+	else if (master_old == master)
+		status = SyncPeripheryCaptureStatusAlredy;
+	else
+		status = SyncPeripheryCaptureStatusBad;
+	zunoExitCritical();
+	return (status);
+}
+
+void zunoPeripheryRelese(volatile SyncPeripheryCapture_t *lp, SyncMaster_t master) {
+	zunoEnterCritical();
+	if (lp->master == master)
+		lp->master = SyncMasterFree;
+	zunoExitCritical();
 }

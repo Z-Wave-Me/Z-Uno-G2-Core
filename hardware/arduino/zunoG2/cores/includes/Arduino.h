@@ -14,7 +14,6 @@
 #include "binary.h" // to make somebody which doesn't use hexadecimal values happy
 #include "em_device.h"
 #include "em_gpio.h"
-#include "em_adc.h"
 #include "ZWSupport.h"
 #include "HardwareSerial.h"
 #include "LeUartClass.h"
@@ -121,20 +120,8 @@ inline void zunoSetProductID(uint16_t product_id){
 /* Clock/Time */
 #include "zuno_time.h"
 
-
-// MULTI_CHIP
-#if defined(ADC_COUNT) && (ADC_COUNT > 0)
-void analogReference(ADC_Ref_TypeDef ref);
-#endif
-void analogReadResolution(uint8_t bits);
-void analogWriteResolution(uint8_t bits);
-int  analogRead(uint8_t pin);
-
-// MULTI_CHIP
-#if defined(ADC_COUNT) && (ADC_COUNT > 0)
-void analogAcqTime(ADC_AcqTime_TypeDef acqtime);
-#endif
-
+/* Analog read */
+#include "zuno_analog_read.h"
 
 /* EEPROM */
 #define EEPROM_SKETH_ADDR								0x0

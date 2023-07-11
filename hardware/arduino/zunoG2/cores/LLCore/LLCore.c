@@ -130,7 +130,6 @@ typedef void zuno_user_sysevent_handler(ZUNOSysEvent_t * ev);
 */
 
 ZUNOSetupSysState_t * g_zuno_sys;
-ZUNOOnDemandHW_t g_zuno_odhw_cfg;
 ZUNOSleepData_t g_sleep_data;
 // prototypes 
 void loop();

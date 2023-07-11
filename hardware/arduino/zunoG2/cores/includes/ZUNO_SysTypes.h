@@ -197,16 +197,6 @@ typedef struct HandlerFunc_s{
 	uint32_t code_offset;
 }HandlerFunc_t;
 
-typedef struct ZUNOOnDemandHW_s {
-	volatile uint8_t	keyGPT;
-	struct
-	{
-		bool					bExtInit: 1;
-	};
-	//HandlerFunc_t		h_sys_handler[MAX_AVAILIABLE_SYSHANDLERS];// HANDLERS
-} ZUNOOnDemandHW_t;
-extern ZUNOOnDemandHW_t g_zuno_odhw_cfg;
-
 #define MAX_SLEEP_TIMERS 2
 typedef struct ZUNOSleepData_s{
     uint32_t timeout;

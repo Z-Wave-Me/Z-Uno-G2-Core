@@ -46,13 +46,14 @@ void zunoExtIntCallbackRegister(uint8_t interruptPin, void (*userFunc)(void)) {
 }
 
 static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc)(void), uint8_t mode) {
+	static uint8_t				bExtInit = false;
 	ZunoError_t					ret;
 	uint8_t						risingEdge;
 	uint8_t						fallingEdge;
 	uint8_t						port;
 	uint8_t						pin;
 
-	if (g_zuno_odhw_cfg.bExtInit == false) {
+	if (bExtInit == false) {
 		if (!zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_ODD, (void *)_IRQDispatcher)) 
 			return ZunoErrorAttachSysHandler;
 		if (!zunoAttachSysHandler(ZUNO_HANDLER_IRQ, ZUNO_IRQVEC_GPIO_EVEN, (void *)_IRQDispatcher)) {
@@ -63,7 +64,7 @@ static inline ZunoError_t _attachInterrupt(uint8_t interruptPin, void (*userFunc
 		NVIC_EnableIRQ(GPIO_ODD_IRQn);
 		NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
 		NVIC_EnableIRQ(GPIO_EVEN_IRQn);
-		g_zuno_odhw_cfg.bExtInit = true;
+		bExtInit = true;
 	}
 	zunoExitCritical();
 	switch (mode) {

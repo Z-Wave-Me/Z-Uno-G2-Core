@@ -14,12 +14,14 @@
 #define GPT_TIMER_CLOCK					cmuClock_WTIMER0
 #define GPT_TIMER_IRQ					WTIMER0_IRQn
 #define GPT_TIMER_HANDLER_ID			ZUNO_IRQVEC_WTIMER0
+#define GPT_TIMER_32_BIT
 #endif
 #if TIMER_COUNT == 0x5
 #define GPT_TIMER						TIMER4
 #define GPT_TIMER_CLOCK					cmuClock_TIMER4
 #define GPT_TIMER_IRQ					TIMER4_IRQn
 #define GPT_TIMER_HANDLER_ID			ZUNO_IRQVEC_TIMER4
+#define GPT_TIMER_16_BIT
 #endif
 
 static ZunoSync_t _sync = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterGPT);
@@ -27,6 +29,10 @@ static volatile uint8_t _key = true;
 static uint32_t _freq_timer_clock = 0x0;
 static uint16_t _interval = 0x0;
 static uint8_t _flags = 0x0;
+#if defined(GPT_TIMER_16_BIT)
+static uint8_t _count_rep = 0x0;
+static uint8_t _count_rep_max = 0x0;
+#endif
 
 static uint32_t _get_top_freq(uint16_t interval) {
 	uint64_t							out;
@@ -39,6 +45,7 @@ static uint32_t _get_top_freq(uint16_t interval) {
 	return (out / 4000000);//4MHz
 }
 
+#if defined(GPT_TIMER_16_BIT)
 static TIMER_Prescale_TypeDef _getPrescale(size_t freq) {
 	uint8_t					i;
 
@@ -63,14 +70,19 @@ static TIMER_Prescale_TypeDef _getPrescale(size_t freq) {
 	return ((TIMER_Prescale_TypeDef)((0x1 << i) - 0x1));
 	#endif
 }
+#endif
 
 static void _set_top_timer(uint16_t interval) {
+	#if defined(GPT_TIMER_16_BIT)
 	static TIMER_Prescale_TypeDef			timer_prescale_old = (TIMER_Prescale_TypeDef)0x0;
-	uint32_t								freq;
 	TIMER_Prescale_TypeDef					timer_prescale;
+	uint8_t									count;
 	TIMER_Init_TypeDef						timerInit;
+	#endif
+	uint32_t								freq;
 
 	freq = _get_top_freq(interval);
+	#if defined(GPT_TIMER_16_BIT)
 	timer_prescale = _getPrescale(freq);
 	#if defined (_TIMER_CFG_PRESC_MASK)
 	freq = freq / (timer_prescale + 0x1);
@@ -80,27 +92,53 @@ static void _set_top_timer(uint16_t interval) {
 	#endif
 	if (TIMER_TopGet(GPT_TIMER) == freq && timer_prescale_old == timer_prescale)
 		return ;
+	#endif
+	#if defined(GPT_TIMER_32_BIT)
+	if (TIMER_TopGet(GPT_TIMER) == freq)
+		return ;
+	#endif
+	#if defined(GPT_TIMER_16_BIT)
+	count = 0x1;
+	while (true) {
+		if (freq / count <= 0xFFFF)
+			break ;
+		count++;
+	}
+	freq = freq / count;
+	_count_rep_max = count - 0x1;
+	_count_rep = 0x0;
 	timer_prescale_old = timer_prescale;
 	timerInit = TIMER_INIT_DEFAULT;
 	timerInit.prescale = timer_prescale;
 	TIMER_Init(GPT_TIMER, &timerInit);
+	#endif
+	#if defined(GPT_TIMER_32_BIT)
+	TIMER_Enable(GPT_TIMER, false);
+	#endif
 	TIMER_TopSet(GPT_TIMER, freq);
 	TIMER_Enable(GPT_TIMER, true);
 }
 
-static void _timer_handler(void *p) {
-	TIMER_TypeDef				*timer;
+static void _timer_handler(void) {
+	#if defined(GPT_TIMER_16_BIT)
+	uint8_t							count;
+	#endif
 
 	if (_freq_timer_clock == 0x0)
 		return ;
-	timer = GPT_TIMER;
+	#if defined(GPT_TIMER_16_BIT)
+	if ((count = _count_rep) < _count_rep_max) {
+		_count_rep = count + 0x1;
+		return ;
+	}
+	_count_rep = 0x0;
+	#endif
 	if ((_flags & ZUNO_GPT_CYCLIC) == 0) {
-		TIMER_Enable(timer, false);
+		TIMER_Enable(GPT_TIMER, false);
 	} else {
 		_set_top_timer(_interval);
 	}
 	zunoSysHandlerCall(ZUNO_HANDLER_GPT, ZUNO_GPT_BASIC);
-	(void)p;
 }
 
 static void _deInit(void) {

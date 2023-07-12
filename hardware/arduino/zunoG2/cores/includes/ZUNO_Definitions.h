@@ -528,44 +528,6 @@ enum {
 
 #define NOTIFICATION_EVENT_PARAM_ADD                    0xEF
 
-// Meter
-#define ZUNO_METER_TYPE_ELECTRIC	                    0x01
-#define ZUNO_METER_TYPE_GAS		                        0x02
-#define ZUNO_METER_TYPE_WATER		                    0x03
-#define ZUNO_METER_RESETABLE		                    0x80
-#define ZUNO_METER_ELECTRIC_SCALE_KWH	                 0x00
-#define ZUNO_METER_ELECTRIC_SCALE_KVAH		             0x01
-#define ZUNO_METER_ELECTRIC_SCALE_WATTS		             0x02
-#define ZUNO_METER_ELECTRIC_SCALE_PULSECOUNT		     0x03
-#define ZUNO_METER_ELECTRIC_SCALE_VOLTS		     		 0x04
-#define ZUNO_METER_ELECTRIC_SCALE_AMPS		     		 0x05
-#define ZUNO_METER_ELECTRIC_SCALE_POWERFACTOR		     0x06
-#define ZUNO_METER_ELECTRIC_SCALE_MST		  			 0x07
-#define ZUNO_METER_GAS_SCALE_METERS3	                 0x00
-#define ZUNO_METER_GAS_SCALE_FEET3		             	 0x01
-#define ZUNO_METER_GAS_SCALE_PULSECOUNT		    		 0x03
-#define ZUNO_METER_WATER_SCALE_METERS3	                 0x00
-#define ZUNO_METER_WATER_SCALE_FEET3		             0x01
-#define ZUNO_METER_WATER_SCALE_GALLONS		             0x02
-#define ZUNO_METER_WATER_SCALE_PULSECOUNT		    	 0x03
-#define ZUNO_METER_WATER_SCALE_MST		    	 		 0x07
-#define METER_PRECISION_ZERO_DECIMALS 					 0x00
-#define METER_PRECISION_ONE_DECIMAL 					 0x01
-#define METER_PRECISION_TWO_DECIMALS 					 0x02
-#define METER_PRECISION_THREE_DECIMALS 					 0x03
-#define METER_RESET_ENABLE 								 0x01
-#define METER_RESET_DISABLE 							 0x00
-#define METER_SIZE_ONE_BYTE 							 0x01
-#define METER_SIZE_TWO_BYTES 							 0x02
-#define METER_SIZE_FOUR_BYTES 							 0x04
-#define METER_PROPERTIES_COMBINER(SCALE,SIZE,PRECISION) \
-			(((SIZE-1) & 0x03) << 6)| \
-			((SCALE & 0x07)) | \
-			((PRECISION & 0x07) << 3)
-
-#define METER_EMPTY_RESETTER							
-
-
 // Meter TBL Monitor
 #define ZUNO_METER_TBL_MONITOR_TYPE_ELECTRIC_SINGLE				0x01
 #define ZUNO_METER_TBL_MONITOR_TYPE_GAS							0x02

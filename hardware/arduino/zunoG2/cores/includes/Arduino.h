@@ -24,6 +24,7 @@
 #include "pgmspace.h"
 #include "SysHandlerMap.h"
 #include "zuno_gpio.h"
+#include "ZWCCMeter.h"
 
 enum{
   ZUNO_SECUREPARAM_OFF = 0,

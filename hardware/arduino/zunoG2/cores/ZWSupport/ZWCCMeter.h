@@ -3,6 +3,57 @@
 #include "Arduino.h"
 #include "ZWSupport.h"
 
+#ifdef ZUNO_STATICGATHERING_PHASE
+#define ZUNO_METER(TYPE, RESETABLE, SCALE, SIZE, PRECISION, GETTER, RESETTER) {ZUNO_METER_CHANNEL_NUMBER, TYPE | ((RESETABLE&0x01) << 7), METER_PROPERTIES_COMBINER(SCALE, SIZE, PRECISION), (void*)GETTER, (void*)RESETTER, (void*)0, (void*)0}
+#endif
+
+#define ZUNO_METER_TYPE_ELECTRIC								0x01
+#define ZUNO_METER_ELECTRIC_SCALE_KWH							0x00
+#define ZUNO_METER_ELECTRIC_SCALE_KVAH							0x01
+#define ZUNO_METER_ELECTRIC_SCALE_WATTS							0x02
+#define ZUNO_METER_ELECTRIC_SCALE_PULSECOUNT					0x03
+#define ZUNO_METER_ELECTRIC_SCALE_VOLTS							0x04
+#define ZUNO_METER_ELECTRIC_SCALE_AMPS							0x05
+#define ZUNO_METER_ELECTRIC_SCALE_POWERFACTOR					0x06
+#define ZUNO_METER_TYPE_GAS										0x02
+#define ZUNO_METER_GAS_SCALE_METERS3							0x00
+#define ZUNO_METER_GAS_SCALE_FEET3								0x01
+#define ZUNO_METER_GAS_SCALE_PULSECOUNT							0x03
+#define ZUNO_METER_TYPE_WATER									0x03
+#define ZUNO_METER_WATER_SCALE_METERS3							0x00
+#define ZUNO_METER_WATER_SCALE_FEET3							0x01
+#define ZUNO_METER_WATER_SCALE_GALLONS							0x02
+#define ZUNO_METER_WATER_SCALE_PULSECOUNT						0x03
+#define ZUNO_METER_TYPE_HEATING									0x04
+#define ZUNO_METER_HEATING_SCALE_KWH							0x00
+#define ZUNO_METER_TYPE_COOLING									0x05
+#define ZUNO_METER_COOLING_SCALE_KWH							0x00
+#define METER_RESET_ENABLE										0x01
+#define METER_RESET_DISABLE										0x00
+#define ZUNO_METER_RESETABLE									0x80
+#define METER_EMPTY_RESETTER							
+#define METER_PRECISION_ZERO_DECIMALS							0x00
+#define METER_PRECISION_ONE_DECIMAL								0x01
+#define METER_PRECISION_TWO_DECIMALS							0x02
+#define METER_PRECISION_THREE_DECIMALS							0x03
+#define METER_SIZE_ONE_BYTE										0x01
+#define METER_SIZE_TWO_BYTES									0x02
+#define METER_SIZE_FOUR_BYTES									0x04
+#define METER_PROPERTIES_COMBINER(SCALE,SIZE,PRECISION) \
+			(((SIZE-1) & 0x03) << 6)| \
+			((SCALE & 0x07)) | \
+			((PRECISION & 0x07) << 3)
+
+#define GET_SCALE2(params) ((params & 0x04) << 5)
+#define GET_SCALE1(params) ((params & 0x03) << 3)
+#define GET_SCALE(params) (params & 0x07)
+#define GET_SIZE(params) ((params >> 6) + 1)
+#define GET_PRECISION(params) ((params << 2) & 0xE0)
+
+#define COMBINE_PARAMS(params) (GET_SCALE1(params) | GET_SIZE(params) | GET_PRECISION(params))
+
+
+// cmd class
 #define METER_GET               0x01
 #define METER_REPORT            0x02
 #define METER_SUPPORTED_GET     0x03
@@ -81,14 +132,6 @@
 #define METER_SUPPORTED_REPORT_PROPERTIES1_METER_RESET_BIT_MASK                          0x80
 #define METER_SUPPORTED_REPORT_PROPERTIES2_SCALE_SUPPORTED_0_MASK                        0x7F
 #define METER_SUPPORTED_REPORT_PROPERTIES2_M_S_T_BIT_MASK                                0x80
-
-#define GET_SCALE2(params) ((params & 0x04) << 5)
-#define GET_SCALE1(params) ((params & 0x03) << 3)
-#define GET_SCALE(params) (params & 0x07)
-#define GET_SIZE(params) ((params >> 6) + 1)
-#define GET_PRECISION(params) ((params << 2) & 0xE0)
-
-#define COMBINE_PARAMS(params) (GET_SCALE1(params) | GET_SIZE(params) | GET_PRECISION(params))
 
 /************************************************************/
 /* Meter Get command class structs */                       

@@ -4,8 +4,27 @@
 #include "ZWSupport.h"
 
 #ifdef ZUNO_STATICGATHERING_PHASE
-#define ZUNO_METER(TYPE, RESETABLE, SCALE, SIZE, PRECISION, GETTER, RESETTER) {ZUNO_METER_CHANNEL_NUMBER, TYPE | ((RESETABLE&0x01) << 7), METER_PROPERTIES_COMBINER(SCALE, SIZE, PRECISION), (void*)GETTER, (void*)RESETTER, (void*)0, (void*)0}
+#define ZUNO_METER(TYPE, RESETABLE, SCALE, SIZE, PRECISION, GETTER, RESETTER) {ZUNO_METER_CHANNEL_NUMBER,\
+		((TYPE << ZUNO_METER_SUBTYPE_TYPE_SHIFT) & ZUNO_METER_SUBTYPE_TYPE_MASK) | ((RESETABLE << ZUNO_METER_SUBTYPE_RESETABLE_SHIFT) & ZUNO_METER_SUBTYPE_RESETABLE_MASK),\
+		((SCALE << ZUNO_METER_PARAMETR_SCALE_SHIFT) & ZUNO_METER_PARAMETR_SCALE_MASK) |\
+		(((SIZE - 0x1) << ZUNO_METER_PARAMETR_SIZE_SHIFT) & ZUNO_METER_PARAMETR_SIZE_MASK) |\
+		((PRECISION << ZUNO_METER_PARAMETR_PRECISION_SHIFT) & ZUNO_METER_PARAMETR_PRECISION_MASK),\
+		(void*)GETTER, (void*)RESETTER, (void*)0, (void*)0}
 #endif
+
+
+#define ZUNO_METER_SUBTYPE_TYPE_SHIFT							0x00
+#define ZUNO_METER_SUBTYPE_TYPE_MASK							(0x0F << ZUNO_METER_SUBTYPE_TYPE_SHIFT)
+#define ZUNO_METER_SUBTYPE_RESETABLE_SHIFT						0x07
+#define ZUNO_METER_SUBTYPE_RESETABLE_MASK						(0x01 << ZUNO_METER_SUBTYPE_RESETABLE_SHIFT)
+#define ZUNO_METER_PARAMETR_SCALE_SHIFT							0x00
+#define ZUNO_METER_PARAMETR_SCALE_MASK							(0x0F << ZUNO_METER_PARAMETR_SCALE_SHIFT)
+#define ZUNO_METER_PARAMETR_SIZE_SHIFT							0x04
+#define ZUNO_METER_PARAMETR_SIZE_MASK							(0x03 << ZUNO_METER_PARAMETR_SIZE_SHIFT)
+#define ZUNO_METER_PARAMETR_PRECISION_SHIFT						0x06
+#define ZUNO_METER_PARAMETR_PRECISION_MASK						(0x03 << ZUNO_METER_PARAMETR_PRECISION_SHIFT)
+
+#define ZUNO_METER_SCALE_MST									0x07
 
 #define ZUNO_METER_TYPE_ELECTRIC								0x01
 #define ZUNO_METER_ELECTRIC_SCALE_KWH							0x00
@@ -15,6 +34,8 @@
 #define ZUNO_METER_ELECTRIC_SCALE_VOLTS							0x04
 #define ZUNO_METER_ELECTRIC_SCALE_AMPS							0x05
 #define ZUNO_METER_ELECTRIC_SCALE_POWERFACTOR					0x06
+#define ZUNO_METER_ELECTRIC_SCALE_KVAR							(ZUNO_METER_SCALE_MST + 0x0)
+#define ZUNO_METER_ELECTRIC_SCALE_KVARH							(ZUNO_METER_SCALE_MST + 0x1)
 #define ZUNO_METER_TYPE_GAS										0x02
 #define ZUNO_METER_GAS_SCALE_METERS3							0x00
 #define ZUNO_METER_GAS_SCALE_FEET3								0x01
@@ -28,9 +49,9 @@
 #define ZUNO_METER_HEATING_SCALE_KWH							0x00
 #define ZUNO_METER_TYPE_COOLING									0x05
 #define ZUNO_METER_COOLING_SCALE_KWH							0x00
+#define ZUNO_METER_RESETABLE									0x80
 #define METER_RESET_ENABLE										0x01
 #define METER_RESET_DISABLE										0x00
-#define ZUNO_METER_RESETABLE									0x80
 #define METER_EMPTY_RESETTER							
 #define METER_PRECISION_ZERO_DECIMALS							0x00
 #define METER_PRECISION_ONE_DECIMAL								0x01
@@ -39,18 +60,6 @@
 #define METER_SIZE_ONE_BYTE										0x01
 #define METER_SIZE_TWO_BYTES									0x02
 #define METER_SIZE_FOUR_BYTES									0x04
-#define METER_PROPERTIES_COMBINER(SCALE,SIZE,PRECISION) \
-			(((SIZE-1) & 0x03) << 6)| \
-			((SCALE & 0x07)) | \
-			((PRECISION & 0x07) << 3)
-
-#define GET_SCALE2(params) ((params & 0x04) << 5)
-#define GET_SCALE1(params) ((params & 0x03) << 3)
-#define GET_SCALE(params) (params & 0x07)
-#define GET_SIZE(params) ((params >> 6) + 1)
-#define GET_PRECISION(params) ((params << 2) & 0xE0)
-
-#define COMBINE_PARAMS(params) (GET_SCALE1(params) | GET_SIZE(params) | GET_PRECISION(params))
 
 
 // cmd class
@@ -383,6 +392,15 @@ typedef union								ZwMeterReportV3Frame_u {//For more convenient support, seve
 	ZwMeterReportV3Byte3Frame_t				byte3;
 	ZwMeterReportV3Byte4Frame_t				byte4;
 }											ZwMeterReportV3Frame_t;
+
+typedef struct								ZwMeterReportV6Frame_s
+{
+	uint8_t									cmdClass;/* The command class */
+	uint8_t									cmd;/* The command */
+	uint8_t									properties1;/* masked byte */
+	uint8_t									properties2;/* masked byte */
+	uint8_t									meterValue[];
+}											ZwMeterReportV6Frame_t;
 
 typedef union								ZwMeterReportFrame_u {//For more convenient support, several versions of commands
 	ZwMeterReportV1Frame_t					v1;

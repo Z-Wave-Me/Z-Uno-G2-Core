@@ -195,7 +195,7 @@ static void _zunoGPTEnable(uint8_t bEnable) {
 	if (_freq_timer_clock == 0x0)
 		return ;
 	if (bEnable == true) {
-		if ((interval = _interval) != 0x0)
+		if ((interval = _interval) == 0x0)
 			interval = GPT_DEFAULT_INTERVAL;
 		_set_top_timer(interval);
 	}

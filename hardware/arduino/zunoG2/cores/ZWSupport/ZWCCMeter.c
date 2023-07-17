@@ -85,19 +85,21 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 	if (paket != NULL && len == sizeof(cmd->v1))
 		;
 	else
-		properties1 = properties1 | (_get_rate(channel) << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | ((scale_device & 0x4) << 0x5);
+		properties1 = properties1 | (_get_rate(channel) << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | (((scale_device >= ZUNO_METER_SCALE_MST ? ZUNO_METER_SCALE_MST: scale_device) & 0x4) << 0x5);
 	report->properties1 = properties1;
 	channel_size = _get_size(channel) ;
-	report->properties2 = channel_size | ((_get_precision(channel) << METER_REPORT_PROPERTIES2_PRECISION_SHIFT) & METER_REPORT_PROPERTIES2_PRECISION_MASK) | ((scale_device << METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK);
-	if (scale_device >= ZUNO_METER_SCALE_MST)
-		scale_device = scale_device - ZUNO_METER_SCALE_MST;
+	report->properties2 = channel_size | ((_get_precision(channel) << METER_REPORT_PROPERTIES2_PRECISION_SHIFT) & METER_REPORT_PROPERTIES2_PRECISION_MASK) | (((scale_device >= ZUNO_METER_SCALE_MST ? ZUNO_METER_SCALE_MST: scale_device) << METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK);
 	value = zuno_universalGetter1P(channel);
 	lp = &report->meterValue[0x0];
 	_zme_memcpy(lp, (uint8_t *)&value, channel_size);
 	lp[channel_size] = 0x0;//deltaTime1
 	lp[channel_size + 0x1] = 0x0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
-	lp[channel_size + 0x2] = scale_device;
-	report_paket->len = sizeof(report[0x0]) + channel_size + 0x2 + 0x1;//+2 - deltaTime +1 - scale2
+	if (scale_device >= ZUNO_METER_SCALE_MST) {
+		scale_device = scale_device - ZUNO_METER_SCALE_MST;
+		channel_size++;//+1 - scale2
+		lp[channel_size + 0x1] = scale_device;
+	}
+	report_paket->len = sizeof(report[0x0]) + channel_size + 0x2;//+2 - deltaTime 
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -114,9 +116,9 @@ static int _reset(size_t channel, const ZwMeterResetFrame_t *cmd, size_t len) {
 			break ;
 		default:
 			scale_device = _get_scale(channel);
-			if (cmd->v6.properties1 != (((scale_device & 0x4) << 0x5) | (_get_rate(channel) << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | _get_type(channel)))
+			if (cmd->v6.properties1 != ((((scale_device >= ZUNO_METER_SCALE_MST ? ZUNO_METER_SCALE_MST: scale_device) & 0x4) << 0x5) | (_get_rate(channel) << METER_REPORT_PROPERTIES1_RATE_TYPE_SHIFT) | _get_type(channel)))
 				return (ZUNO_COMMAND_BLOCKED);
-			if (((cmd->v6.properties2 & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK) >> METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) != ((scale_device << METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK))
+			if (((cmd->v6.properties2 & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK) >> METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) != (((scale_device >= ZUNO_METER_SCALE_MST ? ZUNO_METER_SCALE_MST: scale_device) << METER_REPORT_PROPERTIES2_SCALE_BITS_10_SHIFT) & METER_REPORT_PROPERTIES2_SCALE_BITS_10_MASK))
 				return (ZUNO_COMMAND_BLOCKED);
 			size = _get_size(channel);
 			if (scale_device >= ZUNO_METER_SCALE_MST && cmd->v6.meterValue[size] != (scale_device - ZUNO_METER_SCALE_MST))
@@ -159,7 +161,7 @@ static int _support_metter(uint8_t channel, ZUNOCommandPacketReport_t *frame_rep
 	scale = _get_scale(channel);
 	if (scale < ZUNO_METER_SCALE_MST) {
 		properties2 = 0x1 << scale;
-		numberOfScaleSupportedBytesToFollow = 0x0;
+		numberOfScaleSupportedBytesToFollow = -1;
 	}
 	else {
 		properties2 = METER_SUPPORTED_REPORT_PROPERTIES2_M_S_T_BIT_MASK;

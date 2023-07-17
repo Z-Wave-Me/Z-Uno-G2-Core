@@ -873,7 +873,6 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	LOGGING_UART.print("INCOMING  "); 
 	zuno_dbgdumpZWPacakge(cmd);
 	#endif
-	zunoReportHandler(cmd);
 	ZWQIncomingStat(cmd);
 	if (_zunoS2PkgFilter(cmd))
 		return (ZUNO_COMMAND_BLOCKED);

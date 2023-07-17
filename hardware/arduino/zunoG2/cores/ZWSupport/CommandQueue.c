@@ -108,6 +108,7 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 	LOGGING_UART.print(") OUTGOING PACKAGE: ");
 	zuno_dbgdumpZWPacakge(p);
 	#endif
+	zunoReportHandler(p);
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
 		uint8_t mapped_channel = p->src_zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
         p->src_zw_channel = 0;

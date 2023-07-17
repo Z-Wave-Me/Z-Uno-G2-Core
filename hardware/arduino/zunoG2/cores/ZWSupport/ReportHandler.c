@@ -4,6 +4,7 @@
 float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
 	uint32_t				number;
 	float					out;
+	size_t 					factor;
 
 	switch (len) {
 		case sizeof(uint16_t):
@@ -16,7 +17,10 @@ float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
 			number = array[0];
 			break ;
 	}
-	out = (int32_t)number / (10 * (10 * precision));
+	factor = 0x1;
+	while(precision-- != 0x0)
+		factor = factor * 10;
+	out = number / factor;
 	return (out);
 }
 
@@ -70,6 +74,7 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd) {
 	report_data.cmdClass = cmdClass;
 	report_data.channelSource = cmd->src_zw_channel;
 	report_data.nodeIdSource = cmd->src_node;
+	report_data.len = cmd->len;
 	report_data.rawReportData = cmd->cmd;
 	zunoSysHandlerCall(ZUNO_HANDLER_REPORT, sub_type, &report_data);
 }

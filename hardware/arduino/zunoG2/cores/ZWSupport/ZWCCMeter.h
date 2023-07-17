@@ -205,194 +205,6 @@ typedef union								ZwMeterResetFrame_u {//For more convenient support, several
 	ZW_METER_RESET_1BYTE_V6_FRAME			v6;
 }											ZwMeterResetFrame_t;
 
-
-/************************************************************/
-/* Meter Report byte command class structs */              
-/************************************************************/
-typedef struct								ZwMeterReportV1Byte1Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									meterType;/**/
-	uint8_t									properties1;/* masked byte */
-	uint8_t									meterValue1;
-}											ZwMeterReportV1Byte1Frame_t;
-
-typedef struct								ZwMeterReportV1Byte2Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									meterType;/**/
-	uint8_t									properties1;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;/* LSB */
-}											ZwMeterReportV1Byte2Frame_t;
-
-typedef struct								ZwMeterReportV1Byte3Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									meterType;/**/
-	uint8_t									properties1;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;/* LSB */
-}											ZwMeterReportV1Byte3Frame_t;
-
-typedef struct								ZwMeterReportV1Byte4Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									meterType;/**/
-	uint8_t									properties1;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;
-	uint8_t									meterValue4;/* LSB */
-}											ZwMeterReportV1Byte4Frame_t;
-
-typedef union								ZwMeterReportV1Frame_u {//For more convenient support, several versions of commands
-	ZwMeterReportV1Byte1Frame_t				byte1;
-	ZwMeterReportV1Byte2Frame_t				byte2;
-	ZwMeterReportV1Byte3Frame_t				byte3;
-	ZwMeterReportV1Byte4Frame_t				byte4;
-}											ZwMeterReportV1Frame_t;
-
-
-typedef struct								ZwMeterReportV2Byte1Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;
-}											ZwMeterReportV2Byte1Frame_t;
-
-typedef struct								ZwMeterReportV2Byte2Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;/* LSB */
-}											ZwMeterReportV2Byte2Frame_t;
-
-typedef struct								ZwMeterReportV2Byte3Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;
-	uint8_t									previousMeterValue3;/* LSB */
-}											ZwMeterReportV2Byte3Frame_t;
-
-typedef struct								ZwMeterReportV2Byte4Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;
-	uint8_t									meterValue4;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;
-	uint8_t									previousMeterValue3;
-	uint8_t									previousMeterValue4;/* LSB */
-}											ZwMeterReportV2Byte4Frame_t;
-
-typedef union								ZwMeterReportV2Frame_u {//For more convenient support, several versions of commands
-	ZwMeterReportV2Byte1Frame_t				byte1;
-	ZwMeterReportV2Byte2Frame_t				byte2;
-	ZwMeterReportV2Byte3Frame_t				byte3;
-	ZwMeterReportV2Byte4Frame_t				byte4;
-}											ZwMeterReportV2Frame_t;
-
-typedef struct								ZwMeterReportV3Byte1Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;
-}											ZwMeterReportV3Byte1Frame_t;
-
-typedef struct								ZwMeterReportV3Byte2Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;/* LSB */
-}											ZwMeterReportV3Byte2Frame_t;
-
-typedef struct								ZwMeterReportV3Byte3Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;
-	uint8_t									previousMeterValue3;/* LSB */
-}											ZwMeterReportV3Byte3Frame_t;
-
-typedef struct								ZwMeterReportV3Byte4Frame_s
-{
-	uint8_t									cmdClass;/* The command class */
-	uint8_t									cmd;/* The command */
-	uint8_t									properties1;/* masked byte */
-	uint8_t									properties2;/* masked byte */
-	uint8_t									meterValue1;/* MSB */
-	uint8_t									meterValue2;
-	uint8_t									meterValue3;
-	uint8_t									meterValue4;/* LSB */
-	uint8_t									deltaTime1;/* MSB */
-	uint8_t									deltaTime2;/* LSB */
-	uint8_t									previousMeterValue1;/* MSB */
-	uint8_t									previousMeterValue2;
-	uint8_t									previousMeterValue3;
-	uint8_t									previousMeterValue4;/* LSB */
-}											ZwMeterReportV3Byte4Frame_t;
-
-typedef union								ZwMeterReportV3Frame_u {//For more convenient support, several versions of commands
-	ZwMeterReportV3Byte1Frame_t				byte1;
-	ZwMeterReportV3Byte2Frame_t				byte2;
-	ZwMeterReportV3Byte3Frame_t				byte3;
-	ZwMeterReportV3Byte4Frame_t				byte4;
-}											ZwMeterReportV3Frame_t;
-
 typedef struct								ZwMeterReportV6Frame_s
 {
 	uint8_t									cmdClass;/* The command class */
@@ -402,13 +214,18 @@ typedef struct								ZwMeterReportV6Frame_s
 	uint8_t									meterValue[];
 }											ZwMeterReportV6Frame_t;
 
-typedef union								ZwMeterReportFrame_u {//For more convenient support, several versions of commands
-	ZwMeterReportV1Frame_t					v1;
-	ZwMeterReportV2Frame_t					v2;
-	ZwMeterReportV3Frame_t					v3;
-}											ZwMeterReportFrame_t;
-
 int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket);
+
+uint8_t __meter_get_scale(const ZwMeterReportV6Frame_t *report);
+
+#define REPORT_METER_TYPE(report_data)						(((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->properties1 & METER_PROPERTIES_TYPE_MASK)
+#define REPORT_METER_SIZE(report_data)						(((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->properties2 & METER_PROPERTIES_SIZE_MASK)
+#define REPORT_METER_SCALE(report_data)						__meter_get_scale((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)
+#define REPORT_METER_PRECISION(report_data)					(((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->properties2 >> METER_PROPERTIES_PRECISION_SHIFT)
+#define REPORT_METER_VALUE_1B(report_data)					(((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x0])
+#define REPORT_METER_VALUE_2B(report_data)					((uint16_t)(((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x0] << 0x8) | ((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x1])
+#define REPORT_METER_VALUE_4B(report_data)					((uint32_t)((((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x0] << 0x18) | (((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x1] << 0x10) | (((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x2] << 0x8) | ((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x3]))
+#define REPORT_METER_VALUE(report_data)						zunoFixToFloat(REPORT_METER_SIZE(report_data), REPORT_METER_PRECISION(report_data), &((ZwMeterReportV6Frame_t *)((ReportAuxData_t *)report_data)->rawReportData)->meterValue[0x0])
 
 #endif // __ZWCC_METER_H__

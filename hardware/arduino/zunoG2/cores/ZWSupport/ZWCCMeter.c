@@ -48,6 +48,20 @@ static uint8_t _get_precision(uint8_t channel) {
 }
 
 
+uint8_t __meter_get_scale(const ZwMeterReportV6Frame_t *report) {
+	uint8_t								scale;
+	const uint8_t						*lp;
+	uint32_t							channel_size;
+
+	scale = (report->properties1 & METER_PROPERTIES_SCALE_MSB_MASK) >> METER_PROPERTIES_SCALE_MSB_SHIFT;
+	scale = scale | (report->properties2 & METER_PROPERTIES_SCALE_LSB_MASK) >> METER_PROPERTIES_SCALE_LSB_SHIFT;
+	if (scale != ZUNO_METER_SCALE_MST)
+		return (scale);
+	channel_size = report->properties2 & METER_PROPERTIES_SIZE_MASK;
+	lp = &report->meterValue[0x0];
+	return (scale + lp[channel_size + 0x2]);
+}
+
 int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket) {//v6
 	ZwMeterReportV6Frame_t				*report;
 	uint32_t							channel_size;
@@ -93,7 +107,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 	lp = &report->meterValue[0x0];
 	_zme_memcpy(lp, (uint8_t *)&value, channel_size);
 	lp[channel_size] = 0x0;//deltaTime1
-	lp[channel_size + 0x1] = 0x0;//deltaTime2 if deltaTime == 0 previousMeterValue not support
+	lp[channel_size + 0x1] = 0x0;//deltaTime2 if deltaTime == 0 previousMeterValue not support // update __meter_get_scale - if change
 	if (scale_device >= ZUNO_METER_SCALE_MST) {
 		scale_device = scale_device - ZUNO_METER_SCALE_MST;
 		channel_size++;//+1 - scale2

@@ -8,6 +8,7 @@ menu.RFLogging=RF Logging
 menu.CleanNVM=Clean NVM
 menu.UpdateLicense=License update
 menu.ChipType=Chip Type
+menu.UARTBaudrate=Serial Baudrate
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno2
 
@@ -104,3 +105,12 @@ zuno2.menu.ChipType.ZGM230A.build.chiptype = ZGM230SA27HGN
 zuno2.menu.ChipType.ZGM230B.build.chiptype = ZGM230SB27HGN
 zuno2.menu.ChipType.EFR32ZG23_2B.build.chiptype = EFR32ZG23B020F512IM48
 zuno2.menu.ChipType.EFR32ZG23_1B.build.chiptype = EFR32ZG23B010F512IM48
+
+zuno2.menu.UARTBaudrate.STD =  230kB (default)
+zuno2.menu.UARTBaudrate.HIGH = 460kB (high)
+zuno2.menu.UARTBaudrate.ULTRA = 921kB (ultra)
+zuno2.menu.UARTBaudrate.LOW = 115kb (legacy)
+zuno2.menu.UARTBaudrate.STD.build.baud = 0
+zuno2.menu.UARTBaudrate.HIGH.build.baud = 1
+zuno2.menu.UARTBaudrate.ULTRA.build.baud = 2
+zuno2.menu.UARTBaudrate.LOW.build.baud = 3

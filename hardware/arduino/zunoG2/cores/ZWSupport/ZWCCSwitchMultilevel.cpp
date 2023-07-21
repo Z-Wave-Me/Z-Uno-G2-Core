@@ -8,9 +8,18 @@
 void zunoSwitchColorSaveSet(uint8_t channel, void *value);
 uint8_t zunoSwitchColorSaveGet(uint8_t channel);
 
-void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
+void __zunoWindowCoveringSet(uint8_t channel, uint8_t value);
+uint8_t __zunoWindowCoveringGet(uint8_t channel);
+
+void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, uint8_t value) {
     uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+
     switch (type) {
+        #ifdef WITH_CC_WINDOW_COVERING
+        case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+            __zunoWindowCoveringSet(zuno_ch, value);
+            break;
+        #endif
         #ifdef WITH_CC_SWITCH_COLOR
         case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
             zunoSwitchColorSaveSet(zuno_ch, &value);
@@ -22,10 +31,16 @@ void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, int32_t value) {
     }
 }
 
-int32_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {
-	int32_t								value;
+uint8_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {
+	uint8_t								value;
+
 	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
 	switch (type) {
+		#ifdef WITH_CC_WINDOW_COVERING
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			value = __zunoWindowCoveringGet(zuno_ch);
+			break;
+		#endif
 		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 			value = zunoSwitchColorSaveGet(zuno_ch);

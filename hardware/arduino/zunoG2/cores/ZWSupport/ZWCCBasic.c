@@ -37,6 +37,9 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			value = value ? 0xFF : 0x00;// Map the value right way
 			break;
 		#endif
+		#ifdef WITH_CC_WINDOW_COVERING
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+		#endif
 		#ifdef WITH_CC_SWITCH_COLOR
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 		#endif

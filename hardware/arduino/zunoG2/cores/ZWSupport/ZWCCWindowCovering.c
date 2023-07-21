@@ -94,11 +94,12 @@ static void _start_level_set(uint8_t channel, uint8_t current_level, uint8_t tar
 			lpDur_b->currentValue = current_level;
 			lpDur_b->targetValue = targetValue;
 			zunoExitCritical();
-			zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp, frame_report);
+			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
 			zunoEnterCritical();
 		}
 	}
 	zunoExitCritical();
+	(void)duration;
 }
 
 static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
@@ -232,6 +233,8 @@ static void _get_set(uint8_t channel, ZW_WINDOW_COVERING_REPORT_FRAME *report, u
 		duration = zuno_CCTimerTable8(currentValue * lpDur_b->step);
 	}
 	currentValue = zuno_universalGetter2P(channel, parameterId);
+	if (duration == 0x0)
+		targetValue = currentValue;
 	report->currentValue = currentValue;
 	report->targetValue = targetValue;
 	report->duration = duration;

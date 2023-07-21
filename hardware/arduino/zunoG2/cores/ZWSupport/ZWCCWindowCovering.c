@@ -443,16 +443,22 @@ void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t 
 
 void __zunoWindowCoveringSet(uint8_t channel, uint8_t value) {
 	uint32_t													mask;
+	uint32_t													parameterId_mask;
 	uint8_t														parameterId;
 	VG_WINDOW_COVERING_SET_VG									vg;
 
-	mask = _get_parameter_mask(channel);
-	parameterId = ZUNO_CFG_CHANNEL(channel).sub_type;
-	if ((mask & (0x1 << parameterId)) == 0x0)
-		return ;
-	vg.parameterId = parameterId;
 	vg.value = value;
-	_set_duration_0(channel, &vg, 0x1);
+	mask = _get_parameter_mask(channel);
+	parameterId = 0x0;
+	while (mask != 0x0) {
+		parameterId_mask = 0x1 << parameterId;
+		if ((mask & parameterId_mask) != 0x0) {
+			mask = mask ^ parameterId_mask;
+			vg.parameterId = parameterId;
+			_set_duration_0(channel, &vg, 0x1);
+		}
+		parameterId++;
+	}
 }
 
 uint8_t __zunoWindowCoveringGet(uint8_t channel) {

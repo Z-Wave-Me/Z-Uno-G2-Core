@@ -24,6 +24,8 @@
 #define APPLICATION_BUSY_TRY_AGAIN_IN_WAIT_TIME_SECONDS                                  0x01
 #define APPLICATION_BUSY_REQUEST_QUEUED_EXECUTED_LATER                                   0x02
 
+#define PLAIN_ASSOC_MAP 0x80
+
 /************************************************************/
 /* Application Rejected Request command class structs */    
 /************************************************************/

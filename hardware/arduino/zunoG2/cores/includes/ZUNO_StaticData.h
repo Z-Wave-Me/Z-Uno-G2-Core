@@ -245,7 +245,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_INFO_SIGN(NAME, INFO, MN, MX, DEF)	\
@@ -259,7 +260,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER(NAME, MN, MX, DEF)	\
@@ -273,7 +275,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_SIGN(NAME, MN, MX, DEF)	\
@@ -287,7 +290,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_1B(NAME, MN, MX, DEF)	\
@@ -301,7 +305,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_1B_SIGN(NAME, MN, MX, DEF)	\
@@ -315,7 +320,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_2B(NAME, MN, MX, DEF)	\
@@ -329,7 +335,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_2B_SIGN(NAME, MN, MX, DEF)	\
@@ -343,7 +350,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_1B_INFO(NAME, INFO, MN, MX, DEF)	\
@@ -357,7 +365,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_1B_INFO_SIGN(NAME, INFO, MN, MX, DEF)	\
@@ -371,7 +380,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_2B_INFO(NAME, INFO,  MN, MX, DEF)	\
@@ -385,7 +395,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #define ZUNO_CONFIG_PARAMETER_2B_INFO_SIGN(NAME, INFO,  MN, MX, DEF)	\
@@ -399,7 +410,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 	.format = ZUNO_CFG_PARAMETER_FORMAT_SIGNED,\
 	.readOnly = false,\
 	.altering = false,\
-	.advanced = false\
+	.advanced = false,\
+	.hiden_search = false\
 }\
 
 #endif // ZUNO_STATIC_DATA_H

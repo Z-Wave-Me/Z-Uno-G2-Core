@@ -38,8 +38,9 @@ const ZunoCFGParameter_t CFGPARAM_DEFAULT =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = false
-}; 
+	.advanced = false,
+	.hiden_search = false
+};
 // Default method for zuno configuration parameter's metadata
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 	static ZunoCFGParameter_t param_data;
@@ -59,6 +60,24 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 }
 
 // System side parameters information
+#if defined(CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL						(true)
+#else
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL						(false)
+#endif
+
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_SECURITY							CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
+#ifdef SECURITY_CONFIG_PARAM
+#undef CONFIGPARAMETERS_HIDEN_SEARCH_SYS_SECURITY
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_SECURITY							(true)
+#endif
+
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD						CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
+#if defined(CERT_BUILD)
+#undef CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
+#define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD					(true)
+#endif
+
 const ZunoCFGParameter_t SYSCFGPARAM1 =
 {
 	.name = "Debug mode",
@@ -70,7 +89,8 @@ const ZunoCFGParameter_t SYSCFGPARAM1 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
 const ZunoCFGParameter_t SYSCFGPARAM2 =
 {
@@ -83,9 +103,9 @@ const ZunoCFGParameter_t SYSCFGPARAM2 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
-#ifdef SECURITY_CONFIG_PARAM
 const ZunoCFGParameter_t SYSCFGPARAM7 =
 {
 	.name = "Security",
@@ -97,9 +117,9 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = true,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_SECURITY
 };
-#endif
 const ZunoCFGParameter_t SYSCFGPARAM8 =
 {
 	.name = "RF logging",
@@ -111,7 +131,8 @@ const ZunoCFGParameter_t SYSCFGPARAM8 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 }; 
 #if defined(SKETCH_FLAGS) and (SKETCH_FLAGS == HEADER_FLAGS_REBOOT_CFG)
 #pragma message "parameter 9 DEBUG version"
@@ -126,7 +147,8 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
 };
 #else
 const ZunoCFGParameter_t SYSCFGPARAM9 =
@@ -140,7 +162,8 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
 };
 #endif
 const ZunoCFGParameter_t SYSCFGPARAM11 =
@@ -154,7 +177,8 @@ const ZunoCFGParameter_t SYSCFGPARAM11 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
 const ZunoCFGParameter_t SYSCFGPARAM20 =
 {
@@ -167,33 +191,27 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
 	.readOnly = false,
 	.altering = false,
-	.advanced = true
+	.advanced = true,
+	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
 };
-const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
-	#if !defined(CONFIGPARAMETERS_DISABLE_SYS_PARAMETR)
+
+static const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 	switch(param){
 		case ZUNO_SYSCFGPARAM_DBG:
 			return &SYSCFGPARAM1;
 		case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
 			return &SYSCFGPARAM2;
-		#ifdef SECURITY_CONFIG_PARAM
 		case ZUNO_SYSCFGPARAM_SECURITY:
 			return &SYSCFGPARAM7;
-		#endif
 		case ZUNO_SYSCFGPARAM_LOGGING:
 			return &SYSCFGPARAM8;
-		#if !defined(CERT_BUILD)
 		case ZUNO_SYSCFGPARAM_FREQUENCY:
 			return &SYSCFGPARAM9;
-		#endif
 		case ZUNO_SYSCFGPARAM_REPORT_TIME:
 			return &SYSCFGPARAM11;
-		#if !defined(CERT_BUILD)
 		case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
 			return &SYSCFGPARAM20;
-		#endif
 	}
-	#endif
 	// Return user-defined callback result for user-defined parameters
 	return  zunoCFGParameter(param);
 }
@@ -414,7 +432,7 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 	report->v4.byte4.parameterNumber1 = parameterNumber1;
 	report->v4.byte4.parameterNumber2 = parameterNumber2;
 	parameter = (parameterNumber1 << 8) | parameterNumber2;
-	if ((cfg = zunoCFGParameterProxy(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
+	if ((cfg = zunoCFGParameterProxy(parameter)) == ZUNO_CFG_PARAMETER_UNKNOWN || cfg->hiden_search == true) {
 		properties1 = 0;
 		end = (ZwConfigurationPropertiesPeportByte4FrameV4End_t *)&report->v4.byte4.minValue1;
 		end->properties2 = CONFIGURATION_PROPERTIES_REPORT_PROPERTIES2_NO_BULK_SUPPORT_BIT_MASK;
@@ -433,7 +451,7 @@ static int _configuration_properties_get(ZwConfigurationPropertiesGetFrame_t *cm
 	report->v4.byte4.properties1 = properties1;
 	parameter++;
 	for(; parameter < CONFIGPARAM_MAX_PARAM; parameter++){
-		if ((cfg = zunoCFGParameterProxy(parameter)) != ZUNO_CFG_PARAMETER_UNKNOWN)
+		if ((cfg = zunoCFGParameterProxy(parameter)) != ZUNO_CFG_PARAMETER_UNKNOWN && cfg->hiden_search != true)
 			break;
 	}
 	if (parameter >= CONFIGPARAM_MAX_PARAM)

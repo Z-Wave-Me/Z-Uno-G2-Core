@@ -517,7 +517,7 @@ static int _configuration_default_reset(void) {
 
 	for(int i=0x0; i< CONFIGPARAM_MAX_PARAM; i++){
 		cfg = zunoCFGParameterProxy(i);
-		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN) {
+		if (cfg != ZUNO_CFG_PARAMETER_UNKNOWN && cfg->hiden_search != true) {
 			if (i < CONFIGPARAM_MIN_PARAM)
 				_saveSysParam(i, cfg->defaultValue);
 			else

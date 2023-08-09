@@ -1,6 +1,8 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 
+#define PLAIN_ASSOC_MAP                     0x80
+
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
 static uint32_t last_controller_package_time = 0;
 #ifdef LOGGING_UART
@@ -119,7 +121,7 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 	}
     if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
         return; // do not send association with multichannel encap to plain group
-	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
+    zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t * p){
     // revert back cmd addr

@@ -108,13 +108,17 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 	LOGGING_UART.print(") OUTGOING PACKAGE: ");
 	zuno_dbgdumpZWPacakge(p);
 	#endif
-	zunoReportHandler(p);
+    bool b_plain_assoc = (p->dst_zw_channel == PLAIN_ASSOC_MAP); // It's a plain associtaion 
+    p->dst_zw_channel &= ~(PLAIN_ASSOC_MAP); // Remove plain assoc value
+	zunoReportHandler(p); // ?: Self loop
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
 		uint8_t mapped_channel = p->src_zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
         p->src_zw_channel = 0;
 		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
 		p->src_zw_channel = mapped_channel;
 	}
+    if(b_plain_assoc &&  (p->dst_zw_channel != 0))
+        return; // do not send association with multichannel encap to plain group
 	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t * p){

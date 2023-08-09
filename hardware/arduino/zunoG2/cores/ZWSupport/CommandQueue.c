@@ -1,8 +1,6 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 
-#define PLAIN_ASSOC_MAP                     0x80
-
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
 static uint32_t last_controller_package_time = 0;
 #ifdef LOGGING_UART

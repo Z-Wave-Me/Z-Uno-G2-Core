@@ -1,6 +1,8 @@
 #ifndef ZWCC_SUPER_VISION_H
 #define ZWCC_SUPER_VISION_H
 
+#define APPLICATION_STATUS_VERSION                                                             0x01
+
 #include "ZWSupport.h"
 #include "ZWCCTimer.h"
 

@@ -117,7 +117,7 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
 		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
 		p->src_zw_channel = mapped_channel;
 	}
-    if(b_plain_assoc &&  (p->dst_zw_channel != 0))
+    if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
         return; // do not send association with multichannel encap to plain group
 	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }

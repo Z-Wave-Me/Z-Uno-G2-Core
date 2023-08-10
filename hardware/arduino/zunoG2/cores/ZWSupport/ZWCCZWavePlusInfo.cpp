@@ -2,14 +2,22 @@
 #include "ZWSupport.h"
 #include "ZWCCZWavePlusInfo.h"
 
-
 void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon);
+void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) ;
 
-static void _get_info(uint8_t type, ZwZwavePlusInfoOut_t *icon) {
+static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
+	uint8_t								type;
+
+	type = ZUNO_CFG_CHANNEL(channel).type;
 	switch (type) {
 		#if defined(WITH_CC_SOUND_SWITCH)
 		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
 			zuno_CCSoundSwitchGetIcon(icon);
+			break ;
+		#endif
+		#if defined(WITH_CC_SENSOR_MULTILEVEL)
+		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
+			zuno_CCSensorMultilevelGetIcon(channel, icon);
 			break ;
 		#endif
 		default:
@@ -33,7 +41,6 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 			return ZUNO_COMMAND_BLOCKED;
 	}
 	#endif
-	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(cmd->dst_zw_channel);
 	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
@@ -51,7 +58,7 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	}
 	report->v2.roleType = roleType;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
-	_get_info(ch_data->type, &icon);
+	_get_info(zuno_findChannelByZWChannelIndexChannel(cmd->dst_zw_channel), &icon);
 	report->v2.installerIconType1 = icon.installerIconType >> 8;
 	report->v2.installerIconType2 = icon.installerIconType & 0xFF;
 	report->v2.userIconType1 = icon.userIconType >> 8;

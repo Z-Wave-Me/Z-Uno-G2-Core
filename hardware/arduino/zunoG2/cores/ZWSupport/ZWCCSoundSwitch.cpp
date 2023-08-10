@@ -139,7 +139,7 @@ static int _soundSwitchConfigurationSet(const ZW_SOUND_SWITCH_CONFIGURATION_SET_
 	SOUND_SWITCH_DEFAULT_VOLUME(channel) = volume;
 	if (volume != 0x0)
 		SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel) = volume;
-	fillOutgoingReportPacketAsyncReport(&frame_report, channel);
+	fillOutgoingReportPacketAsync(&frame_report, channel);
 	_soundSwitchConfigurationReport(channel, &frame_report);
 	zunoSendZWPackage(&frame_report.packet);
 	return (ZUNO_COMMAND_PROCESSED);

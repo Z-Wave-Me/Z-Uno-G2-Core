@@ -355,8 +355,8 @@
             ],
             "generic_type":"GENERIC_TYPE_AV_CONTROL_POINT",
             "specific_type":"SPECIFIC_TYPE_SOUND_SWITCH",
-            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_id":"ICON_TYPE_UNASSIGNED",
+            "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"

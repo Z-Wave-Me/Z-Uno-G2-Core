@@ -3,10 +3,26 @@
 #include "ZWCCZWavePlusInfo.h"
 
 
+void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon);
+
+static void _get_info(uint8_t type, ZwZwavePlusInfoOut_t *icon) {
+	switch (type) {
+		#if defined(WITH_CC_SOUND_SWITCH)
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			zuno_CCSoundSwitchGetIcon(icon);
+			break ;
+		#endif
+		default:
+			type--;
+			icon->installerIconType = ZUNO_DEV_TYPES[type].icon;
+			icon->userIconType = ZUNO_DEV_TYPES[type].app_icon;
+			break ;
+	}
+}
+
 static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwavePlusInfoReportFrame_t		*report;
-	size_t								installerIconType;
-	size_t								userIconType;
+	ZwZwavePlusInfoOut_t				icon;
 	size_t								roleType;
 
 	
@@ -18,7 +34,6 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	}
 	#endif
 	ZUNOChannel_t * ch_data =  zuno_findChannelByZWChannel(cmd->dst_zw_channel);
-	uint8_t type_index = ch_data->type -1;
 	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
@@ -36,12 +51,11 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	}
 	report->v2.roleType = roleType;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
-	installerIconType = ZUNO_DEV_TYPES[type_index].icon;
-	userIconType = ZUNO_DEV_TYPES[type_index].app_icon;
-	report->v2.installerIconType1 = installerIconType >> 8;
-	report->v2.installerIconType2 = installerIconType & 0xFF;
-	report->v2.userIconType1 = userIconType >> 8;
-	report->v2.userIconType2 = userIconType & 0xFF;
+	_get_info(ch_data->type, &icon);
+	report->v2.installerIconType1 = icon.installerIconType >> 8;
+	report->v2.installerIconType2 = icon.installerIconType & 0xFF;
+	report->v2.userIconType1 = icon.userIconType >> 8;
+	report->v2.userIconType2 = icon.userIconType & 0xFF;
 	frame_report->packet.len = sizeof(report->v2);
 	// Use security policy as we were asked. It fixes some controllers S2 problems...
 	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;

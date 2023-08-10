@@ -344,7 +344,7 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ICON_TYPE_GENERIC_FAN_SWITCH                                         0x0400   //Fan Switch  Device Type
 																		   
 #define ICON_TYPE_GENERIC_GATEWAY                                            0x0500   //Gateway  Device Type
-																		   
+
 #define ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH                                0x0600   //Light Dimmer Switch  Device Type
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_PLUGIN                        0x0601	  //Light Dimmer, implemented as a plugin device 
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_WALL_OUTLET	                 0x0602	  //Light Dimmer, implemented as a wall outlet

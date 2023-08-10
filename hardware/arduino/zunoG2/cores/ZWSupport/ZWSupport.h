@@ -116,7 +116,6 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 //byte getMaxChannelTypes();
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
-void fillOutgoingReportPacketAsyncReport(ZUNOCommandPacketReport_t *frame_report, size_t channel);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void ZWCCSetup();
 void zunoRFLogger(ZUNOSysEvent_t * ev);

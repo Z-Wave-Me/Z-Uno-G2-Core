@@ -31,6 +31,10 @@ static const byte NOTIFICATION_MAPPER[] = {
 	NOTIFICATION_TYPE_BURGLAR_ALARM,		NOTIFICATION_EVENT_TAMPER_OBJECTMOVED
 };
 
+static uint8_t _get_sensor_index(uint8_t channel) {
+	return (ZUNO_CFG_CHANNEL(channel).sub_type);
+}
+
 int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet){
 	uint32_t							eeprom_mask;
 	size_t								index;
@@ -48,7 +52,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 	report = (ZwNotificationReportFrame_t *)&packet->cmd[0x0];
 	packet->len = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
-	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
+	index = (_get_sensor_index(channel)) << 1;
 	if(cmd != NULL) {
 		cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
 		if(cmd->len >= 4 && (notificationType = cmd_get->notificationType) != NOTIFICATION_MAPPER[index] && (notificationType != 0xFF))
@@ -118,7 +122,7 @@ static int _set(size_t channel, ZwNotificationSetFrame_t *cmd, ZUNOCommandPacket
 	uint32_t					eeprom_mask;
 	size_t						notificationStatus;
 
-	if(cmd->notificationType != NOTIFICATION_MAPPER[(ZUNO_CFG_CHANNEL(channel).sub_type) << 1])
+	if(cmd->notificationType != NOTIFICATION_MAPPER[(_get_sensor_index(channel)) << 1])
 		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL, frame_report));
 	notificationStatus = cmd->notificationStatus;
 	if((notificationStatus != NOTIFICATION_OFF_VALUE) && (notificationStatus != NOTIFICATION_ON_VALUE))
@@ -141,7 +145,7 @@ static int _supported_get(size_t channel, ZUNOCommandPacketReport_t *frame_repor
 	report->properties1 = ((NOTIFICATION_TYPE_MAX >> 3) + 1);
 	frame_report->packet.len = sizeof(ZwNotificationSupportedReportFrame_t) + report->properties1;
 	memset(&report->bitMask[0], 0x0, ((NOTIFICATION_TYPE_MAX >> 3) + 1));
-	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[(ZUNO_CFG_CHANNEL(channel).sub_type) << 1], report->properties1);
+	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[(_get_sensor_index(channel)) << 1], report->properties1);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -154,7 +158,7 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd,Z
 	report = (ZwEventSupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = EVENT_SUPPORTED_REPORT; set in - fillOutgoingPacket
-	index = (ZUNO_CFG_CHANNEL(channel).sub_type) << 1;
+	index = (_get_sensor_index(channel)) << 1;
 	notificationType = cmd->notificationType;
 	report->notificationType = notificationType;
 	if(notificationType != NOTIFICATION_MAPPER[index] || notificationType == 0xFF) {
@@ -198,3 +202,42 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComma
 	}
 	return (rs);
 }
+
+
+#define ICON_TYPE_GENERIC_SENSOR_NOTIFICATION                                0x0C00   //Sensor Notification Device Type
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SMOKE_ALARM                   0x0C01   //Sensor Notification Device Type (Notification type Smoke Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CO_ALARM                      0x0C02   //Sensor Notification Device Type (Notification type CO Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CO2_ALARM                     0x0C03   //Sensor Notification Device Type (Notification type CO2 Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HEAT_ALARM                    0x0C04   //Sensor Notification Device Type (Notification type Heat Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WATER_ALARM                   0x0C05   //Sensor Notification Device Type (Notification type Water Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_ACCESS_CONTROL                0x0C06   //Sensor Notification Device Type (Notification type Access Control)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HOME_SECURITY                 0x0C07   //Sensor Notification Device Type (Notification type Home Security)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_POWER_MANAGEMENT              0x0C08   //Sensor Notification Device Type (Notification type Power Management)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SYSTEM                        0x0C09   //Sensor Notification Device Type (Notification type System)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_EMERGENCY_ALARM               0x0C0A   //Sensor Notification Device Type (Notification type Emergency Alarm)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CLOCK                         0x0C0B   //Sensor Notification Device Type (Notification type Clock)
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_APPLIANCE                     0x0C0C
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HOME_HEALTH                   0x0C0D
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SIREN                         0x0C0E
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WATER_VALVE                   0x0C0F
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WEATHER_ALARM                 0x0C10
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_IRRIGATION                    0x0C11
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_GAS_ALARM                     0x0C12
+
+#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_LAST                          ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_GAS_ALARM
+
+#include "ZWCCZWavePlusInfo.h"
+
+
+void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
+	uint8_t							notificationType;
+	uint16_t						icon_type;
+
+	notificationType = NOTIFICATION_MAPPER[_get_sensor_index(channel) << 0x1];
+	icon_type = ICON_TYPE_GENERIC_SENSOR_NOTIFICATION;
+	if (notificationType <= (ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_LAST - ICON_TYPE_GENERIC_SENSOR_NOTIFICATION))
+		icon_type = icon_type + notificationType;
+	icon->installerIconType = icon_type;
+	icon->userIconType = icon_type;
+}
+

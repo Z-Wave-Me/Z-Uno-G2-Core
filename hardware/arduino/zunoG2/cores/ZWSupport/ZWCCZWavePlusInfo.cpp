@@ -4,6 +4,7 @@
 
 void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon);
 void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) ;
+void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon);
 
 static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
 	uint8_t								type;
@@ -18,6 +19,11 @@ static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
 		#if defined(WITH_CC_SENSOR_MULTILEVEL)
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
 			zuno_CCSensorMultilevelGetIcon(channel, icon);
+			break ;
+		#endif
+		#if defined(WITH_CC_NOTIFICATION)
+		case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
+			zuno_CCNotificationGetIcon(channel, icon);
 			break ;
 		#endif
 		default:

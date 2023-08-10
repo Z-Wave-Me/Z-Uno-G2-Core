@@ -192,7 +192,7 @@ void zunoStartRadioTest(RadioTestType_t mode, ZWaveRegion_t region, uint32_t tim
 #include "ZWCCConfiguration_define.h"
 
 /* Associations */
-void zunoAddAssociation(byte type, uint32_t params);
+void zunoAddAssociation(byte type, uint8_t channel);
 const char *zunoAssociationGroupName(uint8_t groupIndex);
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value);
 void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_t start_stop);

@@ -212,6 +212,12 @@ void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon)
 	icon->userIconType = icon_type;
 }
 
+#include "ZWCCAssociation.h"
+
+void zuno_CCSensorMultilevelGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi) {
+	agi->profile1 = COMMAND_CLASS_SENSOR_MULTILEVEL;
+	agi->profile2 = _get_sensor_type(channel);
+}
 
 #endif // WITH_CC_SENSOR_MULTILEVEL
 

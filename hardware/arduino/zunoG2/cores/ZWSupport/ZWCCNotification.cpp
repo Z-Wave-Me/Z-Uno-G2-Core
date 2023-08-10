@@ -241,3 +241,9 @@ void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
 	icon->userIconType = icon_type;
 }
 
+#include "ZWCCAssociation.h"
+
+void zuno_CCNotificationGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi) {
+	agi->profile1 = COMMAND_CLASS_NOTIFICATION;
+	agi->profile2 = NOTIFICATION_MAPPER[_get_sensor_index(channel) << 0x1];
+}

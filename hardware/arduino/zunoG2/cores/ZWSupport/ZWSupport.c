@@ -1112,19 +1112,23 @@ byte zunoAddChannel(byte type, byte subtype, uint32_t options) {
 	return ch_i;
 }
 
-ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
+uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch) {
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
 		if(zw_ch == 0) {
 			if(ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT)
-				return &(ZUNO_CFG_CHANNEL(i));
+				return ((i));
 		} else {
 			uint8_t naked_channel = ZUNO_CFG_CHANNEL(i).zw_channel & (~ZWAVE_CHANNEL_MAPPED_BIT);
 			if(naked_channel == zw_ch)
-				return &(ZUNO_CFG_CHANNEL(i));
+				return ((i));
 		}
 		
 	}
-	return &(ZUNO_CFG_CHANNEL(0));
+	return ((0));
+}
+
+ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
+	return &(ZUNO_CFG_CHANNEL(zuno_findChannelByZWChannelIndexChannel(zw_ch)));
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {

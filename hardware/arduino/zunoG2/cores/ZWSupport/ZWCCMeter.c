@@ -208,4 +208,13 @@ int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacke
 	}
 	return (rs);
 }
+
+#include "ZWCCAssociation.h"
+
+void zuno_CCMeterGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi) {
+	agi->profile1 = COMMAND_CLASS_METER;
+	agi->profile2 = _get_type(channel);
+}
+
+
 // #endif

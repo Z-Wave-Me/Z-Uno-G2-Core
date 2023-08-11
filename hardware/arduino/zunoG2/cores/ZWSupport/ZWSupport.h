@@ -112,6 +112,7 @@ typedef struct				ZUNOCommandPacketReport_s
 }							ZUNOCommandPacketReport_t;
 
 ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
+uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 //byte getMaxChannelTypes();
@@ -344,7 +345,7 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ICON_TYPE_GENERIC_FAN_SWITCH                                         0x0400   //Fan Switch  Device Type
 																		   
 #define ICON_TYPE_GENERIC_GATEWAY                                            0x0500   //Gateway  Device Type
-																		   
+
 #define ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH                                0x0600   //Light Dimmer Switch  Device Type
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_PLUGIN                        0x0601	  //Light Dimmer, implemented as a plugin device 
 #define ICON_TYPE_SPECIFIC_LIGHT_DIMMER_SWITCH_WALL_OUTLET	                 0x0602	  //Light Dimmer, implemented as a wall outlet
@@ -371,64 +372,9 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define ICON_TYPE_GENERIC_REMOTE_CONTROL_SIMPLE                              0x0B00   //Remote Control Simple Device Type
 #define ICON_TYPE_SPECIFIC_REMOTE_CONTROL_SIMPLE_KEYFOB                      0x0B01   //Remote Control Simple Device Type (Key fob)
 																		   
-#define ICON_TYPE_GENERIC_SENSOR_NOTIFICATION                                0x0C00   //Sensor Notification Device Type
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SMOKE_ALARM                   0x0C01   //Sensor Notification Device Type (Notification type Smoke Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CO_ALARM                      0x0C02   //Sensor Notification Device Type (Notification type CO Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CO2_ALARM                     0x0C03   //Sensor Notification Device Type (Notification type CO2 Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HEAT_ALARM                    0x0C04   //Sensor Notification Device Type (Notification type Heat Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WATER_ALARM                   0x0C05   //Sensor Notification Device Type (Notification type Water Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_ACCESS_CONTROL                0x0C06   //Sensor Notification Device Type (Notification type Access Control)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HOME_SECURITY                 0x0C07   //Sensor Notification Device Type (Notification type Home Security)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_POWER_MANAGEMENT              0x0C08   //Sensor Notification Device Type (Notification type Power Management)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SYSTEM                        0x0C09   //Sensor Notification Device Type (Notification type System)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_EMERGENCY_ALARM               0x0C0A   //Sensor Notification Device Type (Notification type Emergency Alarm)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_CLOCK                         0x0C0B   //Sensor Notification Device Type (Notification type Clock)
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_APPLIANCE                     0x0C0C
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_HOME_HEALTH                   0x0C0D
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_SIREN                         0x0C0E
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WATER_VALVE                   0x0C0F
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_WEATHER_ALARM                 0x0C10
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_IRRIGATION                    0x0C11
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_GAS_ALARM                     0x0C12
-#define ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_MULTIDEVICE                   0x0CFF   //Sensor Notification Device Type (Bundled Notification functions)
-																		   
+
 #define ICON_TYPE_GENERIC_SENSOR_MULTILEVEL                                  0x0D00   //Sensor Multilevel Device Type
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_AIR_TEMPERATURE                 0x0D01   //Sensor Multilevel Device Type (Sensor type Air Temperature)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_GENERAL_PURPOSE_VALUE           0x0D02   //Sensor Multilevel Device Type (Sensor type General Purpose Value)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_LUMINANCE                       0x0D03   //Sensor Multilevel Device Type (Sensor type Luminance)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_POWER                           0x0D04   //Sensor Multilevel Device Type (Sensor type Power)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_HUMIDITY                        0x0D05   //Sensor Multilevel Device Type (Sensor type Humidity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_VELOCITY                        0x0D06   //Sensor Multilevel Device Type (Sensor type Velocity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_DIRECTION                       0x0D07   //Sensor Multilevel Device Type (Sensor type Direction)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ATMOSPHERIC_PRESSURE            0x0D08   //Sensor Multilevel Device Type (Sensor type Atmospheric Pressure)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_BAROMETRIC_PRESSURE             0x0D09   //Sensor Multilevel Device Type (Sensor type Barometric Pressure)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_SOLOR_RADIATION                 0x0D0A   //Sensor Multilevel Device Type (Sensor type Solar Radiation)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_DEW_POINT                       0x0D0B   //Sensor Multilevel Device Type (Sensor type Dew Point)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_RAIN_RATE                       0x0D0C   //Sensor Multilevel Device Type (Sensor type Rain Rate)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TIDE_LEVEL                      0x0D0D   //Sensor Multilevel Device Type (Sensor type Tide Level)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_WEIGHT                          0x0D0E   //Sensor Multilevel Device Type (Sensor type Weight)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_VOLTAGE                         0x0D0F   //Sensor Multilevel Device Type (Sensor type Voltage)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_CURRENT                         0x0D10   //Sensor Multilevel Device Type (Sensor type Current)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_CO2_LEVEL                       0x0D11   //Sensor Multilevel Device Type (Sensor type CO2 Level)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_AIR_FLOW                        0x0D12   //Sensor Multilevel Device Type (Sensor type Air Flow)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TANK_CAPACITY                   0x0D13   //Sensor Multilevel Device Type (Sensor type Tank Capacity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_DISTANCE                        0x0D14   //Sensor Multilevel Device Type (Sensor type Distance)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ANGLE_POSITION                  0x0D15   //Sensor Multilevel Device Type (Sensor type Angle Position)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ROTATION                        0x0D16   //Sensor Multilevel Device Type (Sensor type Rotation)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_WATER_TEMPERATURE               0x0D17   //Sensor Multilevel Device Type (Sensor type Water Temperature)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_SOIL_TEMPERATURE                0x0D18   //Sensor Multilevel Device Type (Sensor type Soil Temperature)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_SEISMIC_INTENSITY               0x0D19   //Sensor Multilevel Device Type (Sensor type Seismic Intensity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_SEISMIC_MAGNITUDE               0x0D1A   //Sensor Multilevel Device Type (Sensor type Seismic Magnitude)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ULTRAVIOLET                     0x0D1B   //Sensor Multilevel Device Type (Sensor type Ultraviolet)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ELECTRICAL_RESISTIVITY          0x0D1C   //Sensor Multilevel Device Type (Sensor type Electrical Resistivity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_ELECTRICAL_CONDUCTIVITY         0x0D1D   //Sensor Multilevel Device Type (Sensor type Electrical Conductivity)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_LOUDNESS                        0x0D1E   //Sensor Multilevel Device Type (Sensor type Loudness)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_MOISTURE                        0x0D1F   //Sensor Multilevel Device Type (Sensor type Moisture)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_FREQUENCY                       0x0D20   //Sensor Multilevel Device Type (Sensor type Frequency)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TIME                            0x0D21   //Sensor Multilevel Device Type (Sensor type Time )
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_TARGET_TEMPERATURE              0x0D22   //Sensor Multilevel Device Type (Sensor type Target Temperature)
-#define ICON_TYPE_SPECIFIC_SENSOR_MULTILEVEL_MULTIDEVICE                     0x0DFF   //Sensor Multilevel Device Type (Bundled Sensor functions)
-																		   
+
 #define ICON_TYPE_GENERIC_SET_TOP_BOX                                        0x0E00   //Set Top Box Device Type
 																		   
 #define ICON_TYPE_GENERIC_SIREN                                              0x0F00   //Siren Device Type

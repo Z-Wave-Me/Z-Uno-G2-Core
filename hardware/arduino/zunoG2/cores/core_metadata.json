@@ -213,8 +213,8 @@
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_NOTIFICATION",
             "specific_type":"SPECIFIC_TYPE_NOTIFICATION_SENSOR",
-            "icon_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
-            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_NOTIFICATION",
+            "icon_id":"ICON_TYPE_UNASSIGNED",
+            "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
@@ -227,8 +227,8 @@
             ],
             "generic_type":"GENERIC_TYPE_SENSOR_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_ROUTING_SENSOR_MULTILEVEL",
-            "icon_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
-            "icon_app_id":"ICON_TYPE_GENERIC_SENSOR_MULTILEVEL",
+            "icon_id":"ICON_TYPE_UNASSIGNED",
+            "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
@@ -355,8 +355,8 @@
             ],
             "generic_type":"GENERIC_TYPE_AV_CONTROL_POINT",
             "specific_type":"SPECIFIC_TYPE_SOUND_SWITCH",
-            "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
+            "icon_id":"ICON_TYPE_UNASSIGNED",
+            "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE"],
             "preproc_flags":[],
             "cluster_rule":"${type}"

@@ -430,3 +430,20 @@ int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report) {
 	report->duration = duration;
 	return (ZUNO_COMMAND_ANSWERED);
 }
+
+#include "ZWCCZWavePlusInfo.h"
+
+#define ICON_TYPE_GENERIC_SOUND_SWITCH										0x2200
+#define ICON_TYPE_SPECIFIC_SOUND_SWITCH_DOORBELL							0x2201
+#define ICON_TYPE_SPECIFIC_SOUND_SWITCH_CHIME								0x2202
+#define ICON_TYPE_SPECIFIC_SOUND_SWITCH_ALARM_CLOCK							0x2203
+
+void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon) {
+	uint16_t								installerIconType;
+	uint16_t								userIconType;
+
+	installerIconType = ICON_TYPE_GENERIC_SOUND_SWITCH;
+	userIconType = ICON_TYPE_GENERIC_SOUND_SWITCH;
+	icon->installerIconType = installerIconType;
+	icon->userIconType = userIconType;
+}

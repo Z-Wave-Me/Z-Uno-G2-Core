@@ -172,4 +172,10 @@ typedef struct									ZwAssociationSetFrame_s
 	uint8_t										nodeId[];
 }												ZwAssociationSetFrame_t;
 
+typedef struct								ZwAssociationInfoOut_s
+{
+	uint8_t									profile1;
+	uint8_t									profile2;
+}											ZwAssociationInfoOut_t;
+
 #endif // ZWCC_ASSOCIATION_H

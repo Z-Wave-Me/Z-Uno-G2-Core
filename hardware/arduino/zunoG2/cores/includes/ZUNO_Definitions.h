@@ -702,14 +702,42 @@ typedef struct												ZunoMeterTblHistoryValue_s
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_MOISTURE                                            0x1F
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_FREQUENCY                                           0x20
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_TIME                                                0x21
-
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_TARGET_TEMPERATURE                                  0x22
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_PARTICULATE_MATTER_2_5                              0x23
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_FORMALDEHYDE_CH2O_LEVEL                             0x24
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_RADON_CONCENTRATION                                 0x25
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_METHANE_DENSITY_CH4                                 0x26
 #define ZUNO_SENSOR_MULTILEVEL_TYPE_VOLATILE_ORGANIC_COMPOUND                           0x27
-#define ZUNO_SENSOR_MULTILEVEL_TYPE_CARBON_MONOXIDE_CO                           		0x28
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_CARBON_MONOXIDE_CO                                  0x28
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_SOIL_HUMIDITY                                       0x29
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_SOIL_REACTIVITY                                     0x2A
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_SOIL_SALINITY                                       0x2B
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_HEART_RATE                                          0x2C
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_BLOOD_PRESSURE                                      0x2D
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_MUSCLE_MASS                                         0x2E
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_FAT_MASS                                            0x2F
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_BONE_MASS                                           0x30
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_TOTAL_BODY_WATER                                    0x31
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_BASIS_METABOLIC_RATE                                0x32
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_BODY_MASS_INDEX                                     0x33
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_ACCELERATION_X_AXIS                                 0x34
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_ACCELERATION_Y_AXIS                                 0x35
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_ACCELERATION_Z_AXIS                                 0x36
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_SMOKE_DENSITY                                       0x37
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_FLOW                                          0x38
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_DENSITY                                       0x39
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_RF_SIGNAL_STRENGTH                                  0x3A
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_PARTICULATE_MATTER_10                               0x3B
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_RESPIRATORY_RATE                                    0x3C
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_RELATIVE_MODULATION_LEVEL                           0x3D
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_BOILER_WATER_TEMPERATURE                            0x3E
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_DOMESTIC_HOT_WATER_TEMPERATURE                      0x3F
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_OUTSIDE_TEMPERATURE                                 0x40
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_EXHAUST_TEMPERATURE                                 0x41
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_CHLORINE_LEVEL                                0x42
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_ACIDITY                                       0x43
+#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_OXIDATION_REDUCTION_POTENTIAL                 0x44
 
-#define ZUNO_SENSOR_MULTILEVEL_TYPE_WATER_FLOW                           				0x37
 
 //Sensor Multilevel scales,sizes,precisions
 #define SENSOR_MULTILEVEL_PRECISION_ZERO_DECIMALS 									0x00

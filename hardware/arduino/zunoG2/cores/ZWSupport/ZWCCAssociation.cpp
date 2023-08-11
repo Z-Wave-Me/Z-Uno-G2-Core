@@ -178,11 +178,22 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd, ZUNOComma
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+#define ASSOCIATION_TYPE_SHIFT						0x0
+#define ASSOCIATION_TYPE_MASK						0x7
+#define ASSOCIATION_CHANNEL_SHIFT					0x3
+#define ASSOCIATION_CHANNEL_MASK					0xF8
+
+void zuno_CCSensorMultilevelGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi);
+void zuno_CCNotificationGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi);
+void zuno_CCMeterGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi);
+
 static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwAssociationGroupInfoGetFrame_t *in, ZUNOCommandPacketReport_t *frame_report) {
 	uint8_t									groupIndex;
 	uint8_t									groupIndex_end;
 	ZwAssociationGroupInfoReportFrame_t		*lp;
 	size_t									count;
+	uint8_t									channel;
+	ZwAssociationInfoOut_t					agi;
 
 	lp = (ZwAssociationGroupInfoReportFrame_t *)frame_report->packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
@@ -214,8 +225,37 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 				break ;
 			default:
 				lp->variantgroup[count].groupingIdentifier = groupIndex;
-				lp->variantgroup[count].profile1 = 0x20;
-				lp->variantgroup[count].profile2 = ZUNO_CFG_ASSOCIATION(groupIndex - 2).type;
+				channel = (ZUNO_CFG_ASSOCIATION(groupIndex - 2).type & ASSOCIATION_CHANNEL_MASK) >> ASSOCIATION_CHANNEL_SHIFT;
+				if (channel == 0x0) {
+					agi.profile1 = 0x0;
+					agi.profile2 = 0x0;
+				}
+				else {
+					channel--;
+					switch (ZUNO_CFG_CHANNEL(channel).type) {
+						#if defined(WITH_CC_SENSOR_MULTILEVEL)
+						case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
+							zuno_CCSensorMultilevelGetProfile(channel, &agi);
+							break ;
+						#endif
+						#if defined(WITH_CC_NOTIFICATION)
+						case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
+							zuno_CCNotificationGetProfile(channel, &agi);
+							break ;
+						#endif
+						#if defined(WITH_CC_METER)
+						case ZUNO_METER_CHANNEL_NUMBER:
+							zuno_CCMeterGetProfile(channel, &agi);
+							break ;
+						#endif
+						default:
+							agi.profile1 = 0x0;
+							agi.profile2 = 0x0;
+							break ;
+					}
+				}
+				lp->variantgroup[count].profile1 = agi.profile1;
+				lp->variantgroup[count].profile2 = agi.profile2;
 				break ;
 		}
 		lp->variantgroup[count].mode = 0x0;
@@ -386,7 +426,7 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 	}
 	else
 	{
-		switch (ZUNO_CFG_ASSOCIATION(groupIndex - 2).type) {
+		switch ((ZUNO_CFG_ASSOCIATION(groupIndex - 2).type & ASSOCIATION_TYPE_MASK) >> ASSOCIATION_TYPE_SHIFT) {
 			case ZUNO_ASSOC_BASIC_SET_NUMBER:
 				command[0] = COMMAND_CLASS_BASIC;
 				command[1] = BASIC_SET;
@@ -437,14 +477,13 @@ int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacket
 	return (rs);
 }
 
-void zunoAddAssociation(byte type, uint32_t params) {
+void zunoAddAssociation(byte type, uint8_t channel) {
 	uint8_t						num;
 
-	if (type == 0 || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
+	if (type == 0 || type > 0x4 || channel > 0x1F || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
 		return ;
 	ZUNO_CFG_ASSOCIATION_COUNT++;
-	ZUNO_CFG_ASSOCIATION(num).type = type;
-	(void)params;
+	ZUNO_CFG_ASSOCIATION(num).type = (type << ASSOCIATION_TYPE_SHIFT) | (channel << ASSOCIATION_CHANNEL_SHIFT);
 }
 
 static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {

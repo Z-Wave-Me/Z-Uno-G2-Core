@@ -811,8 +811,11 @@ void zunoCommitCfg(){
 	#if defined(WITH_CC_BASIC)
 	zunoBasicSaveInit();
 	#endif
-	#ifdef WITH_CC_SWITCH_COLOR
+	#if defined(WITH_CC_SWITCH_COLOR)
 	zunoSwitchColorSaveInit();
+	#endif
+	#if defined(WITH_CC_SOUND_SWITCH)
+	zunoSoundSwitchSaveInit();
 	#endif
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }

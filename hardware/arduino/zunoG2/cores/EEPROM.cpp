@@ -3,12 +3,12 @@
 
 int EEPROMClass::put(uint32_t address, void *value, uint16_t val_size)
 {
-    return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, true, address, val_size, value);
+    return (int)(zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, true, address, val_size, value) == 0);
 }
 
 int EEPROMClass::get(uint32_t address, void *value, uint16_t val_size)
 {
-    return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, false, address, val_size, value);
+    return (int)(zunoSysCall(ZUNO_SYSFUNC_EEPROM_IO, 4, false, address, val_size, value) == 0);
 }
 
 byte EEPROMClass::read(uint32_t address)

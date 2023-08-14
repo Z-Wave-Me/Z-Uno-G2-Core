@@ -5,7 +5,7 @@
 #include "ZWSupport.h"
 
 /* Association command class commands */
-#define ASSOCIATION_VERSION                                                              0x02
+#define ASSOCIATION_VERSION                                                              0x03
 #define ASSOCIATION_GET                                                                  0x02
 #define ASSOCIATION_GROUPINGS_GET                                                        0x05
 #define ASSOCIATION_GROUPINGS_REPORT                                                     0x06
@@ -16,7 +16,7 @@
 #define ASSOCIATION_SPECIFIC_GROUP_REPORT                                                0x0C
 
 /* Multi Channel Association command class commands */
-#define MULTI_CHANNEL_ASSOCIATION_VERSION                                                0x03
+#define MULTI_CHANNEL_ASSOCIATION_VERSION                                                0x04
 #define MULTI_CHANNEL_ASSOCIATION_GET                                                    0x02
 #define MULTI_CHANNEL_ASSOCIATION_GROUPINGS_GET                                          0x05
 #define MULTI_CHANNEL_ASSOCIATION_GROUPINGS_REPORT                                       0x06

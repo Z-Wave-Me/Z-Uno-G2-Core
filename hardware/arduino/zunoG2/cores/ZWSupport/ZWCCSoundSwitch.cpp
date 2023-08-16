@@ -5,6 +5,14 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSuperVision.h"
 
+#if defined(WITH_CC_SOUND_SWITCH)
+typedef struct								ZwSoundSwitchSave_s
+{
+	uint8_t									volume;
+	uint8_t									volume_save;
+	uint8_t									toneIdentifier;
+}											ZwSoundSwitchSave_t;
+
 typedef enum								SoundSwitchPlayTimerStatus_e
 {
 	SoundSwitchPlayTimerStatusIdle,
@@ -63,6 +71,47 @@ static const ZunoSoundSwitchParameter_t *_soundSwitchParameter(const ZunoSoundSw
 	return (&parameter_array->parametr[index - 0x1]);
 }
 
+void zunoSoundSwitchSaveInit(void) {
+	uint8_t					buffer[EEPROM_SWITCH_SOUND_SAVE_SIZE];
+	uint8_t					channel;
+	uint8_t					volume;
+	uint8_t					toneIdentifier;
+	ZwSoundSwitchSave_t		*switch_save;
+
+	channel = 0x0;
+	while (channel < ZUNO_CFG_CHANNEL_COUNT) {
+		if (ZUNO_CFG_CHANNEL(channel).type == ZUNO_SOUND_SWITCH_CHANNEL_NUMBER) {
+			switch_save = (ZwSoundSwitchSave_t *)&buffer[channel * sizeof(switch_save[0x0])];
+			if ((volume = SOUND_SWITCH_DEFAULT_VOLUME(channel)) > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
+				volume = SOUND_SWITCH_DEFAULT_VOLUME_VALUE;
+			switch_save->volume = volume;
+			switch_save->volume_save = volume;
+			toneIdentifier = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel);
+			if (_soundSwitchParameter(_soundSwitchGetParameterArray(channel), toneIdentifier) == 0x0)
+				toneIdentifier = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER_VALUE;
+			switch_save->toneIdentifier = toneIdentifier;
+		}
+		channel++;
+	}
+	zunoEEPROMWrite(EEPROM_SWITCH_SOUND_SAVE_ADDR, sizeof(buffer), &buffer[0x0]);
+}
+
+void zunoSoundSwitchSaveSet(uint8_t channel, const ZwSoundSwitchSave_t *switch_save) {
+	zunoEEPROMWrite(EEPROM_SWITCH_SOUND_SAVE_ADDR + (channel * sizeof(switch_save[0x0])), sizeof(switch_save[0x0]), (byte *)switch_save);
+}
+
+
+void zunoSoundSwitchSaveGet(uint8_t channel, ZwSoundSwitchSave_t *switch_save) {
+	zunoEEPROMRead(EEPROM_SWITCH_SOUND_SAVE_ADDR + (channel * sizeof(switch_save[0x0])), sizeof(switch_save[0x0]), (byte *)switch_save);
+	if (switch_save->volume > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
+		switch_save->volume = SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX;
+	if (switch_save->volume_save > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
+		switch_save->volume_save = SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX;
+	if (_soundSwitchParameter(_soundSwitchGetParameterArray(channel), switch_save->toneIdentifier) == 0x0)
+		switch_save->toneIdentifier = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER_VALUE;
+}
+
+
 static int _soundSwitchTonesNumberReport(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	const ZunoSoundSwitchParameterArray_t					*parameter_array;
 	ZW_SOUND_SWITCH_TONES_NUMBER_REPORT_V2_FRAME			*report;
@@ -112,12 +161,14 @@ static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRA
 
 static int _soundSwitchConfigurationReport(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_SOUND_SWITCH_CONFIGURATION_REPORT_V2_FRAME						*report;
+	ZwSoundSwitchSave_t													switch_save;
 
+	zunoSoundSwitchSaveGet(channel, &switch_save);
 	report = (ZW_SOUND_SWITCH_CONFIGURATION_REPORT_V2_FRAME *)frame_report->packet.cmd;
 	report->cmdClass = COMMAND_CLASS_SOUND_SWITCH;
 	report->cmd = SOUND_SWITCH_CONFIGURATION_REPORT;
-	report->volume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
-	report->defaultToneIdentifer = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel);
+	report->volume = switch_save.volume;
+	report->defaultToneIdentifer = switch_save.toneIdentifier;
 	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -126,37 +177,26 @@ static int _soundSwitchConfigurationSet(const ZW_SOUND_SWITCH_CONFIGURATION_SET_
 	ZUNOCommandPacketReport_t											frame_report;
 	size_t																defaultToneIdentifier;
 	size_t																volume;
+	ZwSoundSwitchSave_t													switch_save;
 
+	zunoSoundSwitchSaveGet(channel, &switch_save);
 	if ((volume = frame->volume) == 0xFF)
-		volume = SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel);
+		volume = switch_save.volume_save;
 	if (volume > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if ((defaultToneIdentifier = frame->defaultToneIdentifier) != 0x0) {
 		if (_soundSwitchParameter(_soundSwitchGetParameterArray(channel), defaultToneIdentifier) == 0x0)
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
-		SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel) = defaultToneIdentifier;
+		switch_save.toneIdentifier = defaultToneIdentifier;
 	}
-	SOUND_SWITCH_DEFAULT_VOLUME(channel) = volume;
+	switch_save.volume = volume;
 	if (volume != 0x0)
-		SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel) = volume;
+		switch_save.volume_save = volume;
+	zunoSoundSwitchSaveSet(channel, &switch_save);
 	fillOutgoingReportPacketAsync(&frame_report, channel);
 	_soundSwitchConfigurationReport(channel, &frame_report);
 	zunoSendZWPackage(&frame_report.packet);
 	return (ZUNO_COMMAND_PROCESSED);
-}
-
-void _soundSwitchDefault(size_t channel) {
-	size_t									volume;
-
-	if (SOUND_SWITCH_DEFAULT_TEST(channel) == true)
-		return ;
-	SOUND_SWITCH_DEFAULT_TEST(channel) = true;
-	if ((volume = SOUND_SWITCH_DEFAULT_VOLUME(channel)) > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
-		volume = SOUND_SWITCH_DEFAULT_VOLUME_VALUE;
-	SOUND_SWITCH_DEFAULT_VOLUME(channel) = volume;
-	SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel) = volume;
-	if (_soundSwitchParameter(_soundSwitchGetParameterArray(channel), SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel)) == 0x0)
-		SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel) = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER_VALUE;
 }
 
 static void _lock(const ZunoSoundSwitchParameterArray_t *parameter_array, uint64_t ms) {
@@ -195,24 +235,26 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	const ZunoSoundSwitchParameterArray_t					*parameter_array;
 	const ZunoSoundSwitchParameter_t						*parameter;
 	int														result;
+	ZwSoundSwitchSave_t										switch_save;
 
 	parameter_array = _soundSwitchGetParameterArray(channel);
 	result = ZUNO_COMMAND_PROCESSED;
 	if (toneIdentifier == 0x0)//stop any
 		playCommandToneVolume = 0x0;
 	else {
+		zunoSoundSwitchSaveGet(channel, &switch_save);
 		if (_soundSwitchParameter(parameter_array, toneIdentifier) == 0x0) {
 			if (toneIdentifier != 0xFF)
 				result = ZUNO_COMMAND_BLOCKED_FAILL;
-			toneIdentifier = SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel);
+			toneIdentifier = switch_save.toneIdentifier;
 		}
 		if (playCommandToneVolume == 0x0)
-			playCommandToneVolume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
+			playCommandToneVolume = switch_save.volume;
 		else if (playCommandToneVolume == 0xFF) {
 			if ((playCommandToneVolume = parameter_array->play->playCommandToneVolume) == 0x0)
-				playCommandToneVolume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
+				playCommandToneVolume = switch_save.volume;
 			if (playCommandToneVolume == 0x0)
-				playCommandToneVolume = SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel);
+				playCommandToneVolume = switch_save.volume_save;
 		}
 	}
 	_soundSwitchTonePlaySetStop(parameter_array, channel);
@@ -251,10 +293,12 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 static int _soundSwitchTonePlaySet(const ZwSoundSwitchTonePlayFrame_t *frame, size_t channel, size_t len) {
 	size_t													toneIdentifier;
 	size_t													playCommandToneVolume;
+	ZwSoundSwitchSave_t										switch_save;
 
 	switch (len) {
 		case sizeof(frame->v1):
-			playCommandToneVolume = SOUND_SWITCH_DEFAULT_VOLUME(channel);
+			zunoSoundSwitchSaveGet(channel, &switch_save);
+			playCommandToneVolume = switch_save.volume;
 			toneIdentifier = frame->v1.toneIdentifier;
 			break ;
 		case sizeof(frame->v2):
@@ -271,7 +315,6 @@ static int _soundSwitchTonePlaySet(const ZwSoundSwitchTonePlayFrame_t *frame, si
 int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
-	_soundSwitchDefault(channel);
 	switch (ZW_CMD) {
 		case SOUND_SWITCH_TONE_PLAY_GET_V2:
 			_zunoMarkChannelRequested(channel);
@@ -391,7 +434,10 @@ void zuno_CCSoundSwitchTimer(void) {
 }
 
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier) {
-	return (_soundSwitchTonePlaySetAdd(channel, toneIdentifier, SOUND_SWITCH_DEFAULT_VOLUME(channel), true));
+	ZwSoundSwitchSave_t								switch_save;
+
+	zunoSoundSwitchSaveGet(channel, &switch_save);
+	return (_soundSwitchTonePlaySetAdd(channel, toneIdentifier, switch_save.volume, true));
 }
 
 int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report) {
@@ -447,3 +493,5 @@ void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon) {
 	icon->installerIconType = installerIconType;
 	icon->userIconType = userIconType;
 }
+
+#endif//WITH_CC_SOUND_SWITCH

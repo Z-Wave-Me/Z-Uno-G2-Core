@@ -30,9 +30,7 @@
 #define SOUND_SWITCH_TONE_PLAY_REPORT_V2                                                 0x0A
 
 #define SOUND_SWITCH_DEFAULT_VOLUME(channel)						ZUNO_CFG_CHANNEL(channel).sub_type
-#define SOUND_SWITCH_DEFAULT_VOLUME_SAVE(channel)					ZUNO_CFG_CHANNEL(channel).params[0x1]
 #define SOUND_SWITCH_DEFAULT_TONE_INDENTIFER(channel)				ZUNO_CFG_CHANNEL(channel).params[0x0]
-#define SOUND_SWITCH_DEFAULT_TEST(channel)							ZUNO_CFG_CHANNEL(channel).params[0x2]
 #define SOUND_SWITCH_DEFAULT_VOLUME_VALUE							(0x32)
 #define SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX						(0x64)
 #define SOUND_SWITCH_DEFAULT_TONE_INDENTIFER_VALUE					(0x1)
@@ -235,5 +233,6 @@ static constexpr uint16_t _soundSwitchGetParameterCountDurationMs(const ZunoSoun
 int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
+void zunoSoundSwitchSaveInit(void);
 
 #endif// ZWCC_SOUND_SWITCH_H

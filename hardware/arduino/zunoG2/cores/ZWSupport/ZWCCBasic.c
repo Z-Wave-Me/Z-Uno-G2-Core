@@ -142,6 +142,9 @@ int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacke
 	}
 	return rs;
 }
+// !!!!
+#define EEPROM_BASIC_SAVE_SIZE 32
+#define EEPROM_BASIC_SAVE_ADDR 0x100
 
 void zunoBasicSaveInit(void) {
 	uint8_t					buffer_basic[EEPROM_BASIC_SAVE_SIZE];

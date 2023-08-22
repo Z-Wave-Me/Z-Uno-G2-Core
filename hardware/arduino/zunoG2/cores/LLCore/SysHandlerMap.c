@@ -101,6 +101,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     va_end (args);
                     break;
             case ZUNO_HANDLER_IRQ:{
+                    //return NULL;
                     va_start (args, sub_type);
                     IOQueueMsg_t * p_msg = va_arg(args,IOQueueMsg_t *);
                     ((zuno_irq_handler*)(base_addr))((void*)p_msg->param);
@@ -108,6 +109,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     }
                     break;
             case ZUNO_HANDLER_EXTINT:
+                    //return NULL;
                     va_start (args, sub_type);
                     ((zuno_void_handler_ext_int*)(base_addr))((uint8_t)va_arg(args,size_t));
                     va_end (args);

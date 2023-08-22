@@ -174,11 +174,20 @@ void znThread::start(threadcodefunc_t func, void *param ) {
 	}
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern "C" void zuno_malloc_lock(void) {
+void __malloc_lock(void) __attribute__((used));
+void __malloc_lock(void) {
 	zunoEnterCritical();
 }
 
-extern "C" void zuno_malloc_unlock(void) {
+void __malloc_unlock(void) __attribute__((used));
+void __malloc_unlock(void) {
 	zunoExitCritical();
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -111,7 +111,6 @@ typedef struct				ZUNOCommandPacketReport_s
 	uint8_t					data[MAX_ZW_PACKAGE];
 }							ZUNOCommandPacketReport_t;
 
-ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);

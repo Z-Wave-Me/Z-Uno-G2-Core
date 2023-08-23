@@ -706,6 +706,8 @@ static void _zunoAddBaseCCS(byte ccs) {
 
 void _fillZWaveData(uint8_t secure_param){
 	ZwZwavePlusInfoIcon_t						icon;
+	ZwZwavePlusInfoType_t						info_type;
+
 	// Fill base CCs into NIF
 	memcpy(g_zuno_sys->zw_protocol_data->CCLstNSIS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def));
 	g_zuno_sys->zw_protocol_data->CCLstNSIS_cnt = sizeof(zuno_cmdClassListNSIS_Def);
@@ -750,9 +752,9 @@ void _fillZWaveData(uint8_t secure_param){
 		g_zuno_sys->zw_protocol_data->device_icon = ICON_TYPE_GENERIC_REMOTE_CONTROL_SIMPLE;
 	} else {
 		__zuno_CCZWavePlusGetIcon(0x0, &icon);
-		uint8_t type = ZUNO_CFG_CHANNEL(0).type-1;
-		g_zuno_sys->zw_protocol_data->generic_type = ZUNO_DEV_TYPES[type].gen_type;
-		g_zuno_sys->zw_protocol_data->specific_type = ZUNO_DEV_TYPES[type].spec_type;
+		__zuno_CCZWavePlusGetType(0x0, &info_type);
+		g_zuno_sys->zw_protocol_data->generic_type = info_type.genericDeviceClass;
+		g_zuno_sys->zw_protocol_data->specific_type = info_type.specificDeviceClass;
 		g_zuno_sys->zw_protocol_data->device_icon = icon.installerIconType;
 	}
 	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
@@ -1119,23 +1121,19 @@ byte zunoAddChannel(byte type, byte subtype, uint32_t options) {
 	return ch_i;
 }
 
-uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch) {
+uint8_t zuno_findChannelByZWChannelIndexChannel(byte endpoint) {
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
-		if(zw_ch == 0) {
+		if(endpoint == 0) {
 			if(ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT)
 				return ((i));
 		} else {
 			uint8_t naked_channel = ZUNO_CFG_CHANNEL(i).zw_channel & (~ZWAVE_CHANNEL_MAPPED_BIT);
-			if(naked_channel == zw_ch)
+			if(naked_channel == endpoint)
 				return ((i));
 		}
 		
 	}
-	return ((0));
-}
-
-ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch) {
-	return &(ZUNO_CFG_CHANNEL(zuno_findChannelByZWChannelIndexChannel(zw_ch)));
+	return ((UNKNOWN_CHANNEL));
 }
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {

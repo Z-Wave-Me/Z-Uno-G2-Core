@@ -499,3 +499,18 @@ void zuno_CCWindowCoveringGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) 
 	icon->installerIconType = installerIconType;
 	icon->userIconType = userIconType;
 }
+
+void zuno_CCWindowCoveringGetType(uint8_t channel, ZwZwavePlusInfoType_t *type) {
+	uint32_t						mask;
+	uint8_t							specificDeviceClass;
+
+	mask = _get_parameter_mask(channel);
+	if ((mask & 0x55555555) != 0x0) {
+		specificDeviceClass = SPECIFIC_TYPE_CLASS_B_MOTOR_CONTROL;
+	}
+	else {
+		specificDeviceClass = SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL;
+	}
+	type->genericDeviceClass = GENERIC_TYPE_SWITCH_MULTILEVEL;
+	type->specificDeviceClass = specificDeviceClass;
+}

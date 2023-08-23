@@ -364,8 +364,8 @@
         {   
             "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":14,
             "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
-            "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
-            "specific_type":"SPECIFIC_TYPE_CLASS_C_MOTOR_CONTROL",
+            "generic_type":"SPECIFIC_TYPE_NOT_USED",
+            "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_UNASSIGNED",
             "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],

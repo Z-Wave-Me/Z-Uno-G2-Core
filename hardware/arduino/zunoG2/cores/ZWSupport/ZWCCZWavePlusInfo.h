@@ -59,7 +59,14 @@ typedef struct								ZwZwavePlusInfoIcon_s
 	uint16_t								userIconType;
 }											ZwZwavePlusInfoIcon_t;
 
+typedef struct								ZwZwavePlusInfoType_s
+{
+	uint8_t									genericDeviceClass;/**/
+	uint8_t									specificDeviceClass;/**/
+}											ZwZwavePlusInfoType_t;
+
 int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
+void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type);
 
 #endif//ZWCC_ZWAVE_PLUS_INFO

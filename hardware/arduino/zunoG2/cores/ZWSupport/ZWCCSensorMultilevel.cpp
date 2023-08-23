@@ -200,7 +200,7 @@ int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 
 
 
-void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
+void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t							sensorType;
 	uint16_t						icon_type;
 

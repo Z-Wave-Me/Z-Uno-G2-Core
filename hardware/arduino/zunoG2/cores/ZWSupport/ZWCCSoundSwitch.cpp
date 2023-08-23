@@ -484,7 +484,7 @@ int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report) {
 #define ICON_TYPE_SPECIFIC_SOUND_SWITCH_CHIME								0x2202
 #define ICON_TYPE_SPECIFIC_SOUND_SWITCH_ALARM_CLOCK							0x2203
 
-void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon) {
+void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoIcon_t *icon) {
 	uint16_t								installerIconType;
 	uint16_t								userIconType;
 

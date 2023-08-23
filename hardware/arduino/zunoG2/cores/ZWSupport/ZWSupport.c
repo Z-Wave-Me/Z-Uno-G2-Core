@@ -705,6 +705,7 @@ static void _zunoAddBaseCCS(byte ccs) {
 }
 
 void _fillZWaveData(uint8_t secure_param){
+	ZwZwavePlusInfoIcon_t						icon;
 	// Fill base CCs into NIF
 	memcpy(g_zuno_sys->zw_protocol_data->CCLstNSIS, zuno_cmdClassListNSIS_Def, sizeof(zuno_cmdClassListNSIS_Def));
 	g_zuno_sys->zw_protocol_data->CCLstNSIS_cnt = sizeof(zuno_cmdClassListNSIS_Def);
@@ -748,10 +749,11 @@ void _fillZWaveData(uint8_t secure_param){
 		g_zuno_sys->zw_protocol_data->specific_type = SPECIFIC_TYPE_REMOTE_CONTROL_SIMPLE;
 		g_zuno_sys->zw_protocol_data->device_icon = ICON_TYPE_GENERIC_REMOTE_CONTROL_SIMPLE;
 	} else {
+		__zuno_CCZWavePlusGetIcon(0x0, &icon);
 		uint8_t type = ZUNO_CFG_CHANNEL(0).type-1;
 		g_zuno_sys->zw_protocol_data->generic_type = ZUNO_DEV_TYPES[type].gen_type;
 		g_zuno_sys->zw_protocol_data->specific_type = ZUNO_DEV_TYPES[type].spec_type;
-		g_zuno_sys->zw_protocol_data->device_icon = ZUNO_DEV_TYPES[type].icon;
+		g_zuno_sys->zw_protocol_data->device_icon = icon.installerIconType;
 	}
 	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
 	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){

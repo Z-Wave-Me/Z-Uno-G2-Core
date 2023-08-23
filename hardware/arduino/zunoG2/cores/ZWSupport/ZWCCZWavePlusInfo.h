@@ -53,12 +53,13 @@ typedef union								ZwZwavePlusInfoReportFrame_u {//For more convenient support
 	ZwZwavePlusInfoReportV2Frame_t			v2;
 }											ZwZwavePlusInfoReportFrame_t;
 
-typedef struct								ZwZwavePlusInfoOut_s
+typedef struct								ZwZwavePlusInfoIcon_s
 {
 	uint16_t								installerIconType;
 	uint16_t								userIconType;
-}											ZwZwavePlusInfoOut_t;
+}											ZwZwavePlusInfoIcon_t;
 
 int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 
 #endif//ZWCC_ZWAVE_PLUS_INFO

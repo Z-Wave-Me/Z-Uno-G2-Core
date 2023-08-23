@@ -22,10 +22,10 @@ static uint32_t _get_parameter_mask(uint8_t channel) {
 	uint32_t								mask;
 
 	memcpy(&mask, &ZUNO_CFG_CHANNEL(channel).params[0x0], sizeof(mask));
-	// if ((mask & 0x55555555) != 0x0)
-	// 	return (mask & (0x55555555 & WINDOW_COVERING_PARAMETER_ID_MASK));
-	// return (mask & (0xAAAAAAAA & WINDOW_COVERING_PARAMETER_ID_MASK));
-	return (mask);
+	if ((mask & 0x55555555) != 0x0)
+		return (mask & (0x55555555 & WINDOW_COVERING_PARAMETER_ID_MASK));
+	return (mask & (0xAAAAAAAA & WINDOW_COVERING_PARAMETER_ID_MASK));
+	// return (mask);
 }
 
 static int _supported_report(uint8_t channel, ZUNOCommandPacketReport_t *frame_report) {
@@ -472,4 +472,30 @@ uint8_t __zunoWindowCoveringGet(uint8_t channel) {
 		return (0x0);
 	currentValue = zuno_universalGetter2P(channel, parameterId);
 	return (currentValue);
+}
+
+#include "ZWCCZWavePlusInfo.h"
+
+#define ICON_TYPE_GENERIC_WINDOW_COVERING_NO_POSITION_ENDPOINT               0x1800   //Window Covering No Position/Endpoint  Device Type
+																		   
+#define ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE                     0x1900   //Window Covering Endpoint Aware Device Type
+																		   
+#define ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE            0x1A00   //Window Covering Position/Endpoint Aware Device Type
+
+void zuno_CCWindowCoveringGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
+	uint32_t						mask;
+	uint16_t						installerIconType;
+	uint16_t						userIconType;
+
+	mask = _get_parameter_mask(channel);
+	if ((mask & 0x55555555) != 0x0) {
+		installerIconType = ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE;
+		userIconType = ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE;
+	}
+	else {
+		installerIconType = ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE;
+		userIconType = ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE;
+	}
+	icon->installerIconType = installerIconType;
+	icon->userIconType = userIconType;
 }

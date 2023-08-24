@@ -295,6 +295,31 @@ void printSystemEvent(ZUNOSysEvent_t * evnt ){
     }
 }
 #endif
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+void processEnergySaveEvents(ZUNOSysEvent_t * evnt){
+    switch(evnt->event){
+            case ZUNO_SYS_EVENT_LEARNSTARTED:
+                zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
+                _zunoSleepOnInclusionStart();
+                break;
+            case ZUNO_SYS_EVENT_OTA_STARTED:
+                _zunoSleepOnFWUpgradeStart();
+                break;
+            case ZUNO_SYS_EVENT_OTA_FINISHED:
+                _zunoSleepOnFWUpgradeStop();
+                break;
+            case ZUNO_SYS_EVENT_LEARNSTATUS:
+                if(evnt->params[0] == INCLUSION_STATUS_SUCESS)
+                        zunoKickSleepTimeout(ZUNO_SLEEP_INTERVIEW_TIMEOUT);
+                _zunoSleepOnInclusionComplete();
+                break;
+            case ZUNO_SYS_EVENT_STAY_AWAKE:
+                if(zunoGetSleepingMode() & DEVICE_CONFIGURATION_FLAGS_FLIRS)
+                    zunoKickSleepTimeout(ZUNO_SLEEP_FLIRS_TIMEOUT);
+                break;
+    }
+}
+#endif // defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 void * zunoJumpTable(int vec, void * data) {
   
     byte sub_handler_type = 0x00;
@@ -329,7 +354,6 @@ void * zunoJumpTable(int vec, void * data) {
             return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
-                
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;
                 #ifdef LOGGING_DBG
                 printSystemEvent(evnt);
@@ -338,24 +362,7 @@ void * zunoJumpTable(int vec, void * data) {
                 SysServiceEvent(evnt);
                 #endif
                 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
-                if(evnt->event == ZUNO_SYS_EVENT_LEARNSTARTED){
-                    zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
-                     _zunoSleepOnInclusionStart();
-                }
-                if(evnt->event == ZUNO_SYS_EVENT_OTA_STARTED){
-                    _zunoSleepOnFWUpgradeStart();
-                }
-                if(evnt->event == ZUNO_SYS_EVENT_OTA_FINISHED){
-                    _zunoSleepOnFWUpgradeStop();
-                }
-                if(evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS){
-                    //if(evnt->params[0] == INCLUSION_STATUS_IN_PROGRESS)
-                    //else 
-                    if(evnt->params[0] == INCLUSION_STATUS_SUCESS)
-                        zunoKickSleepTimeout(ZUNO_SLEEP_INTERVIEW_TIMEOUT);
-                    _zunoSleepOnInclusionComplete();
-                       
-                }
+                processEnergySaveEvents(evnt);
                 #endif
                 // Clean when device was excluded
                 if( (evnt->event == ZUNO_SYS_EVENT_LEARNSTATUS) && 
@@ -363,8 +370,6 @@ void * zunoJumpTable(int vec, void * data) {
                     (evnt->params[1] == 0)){
                     initCCSDataDefault();
                 }
-                
-                
                 zunoRFLogger(evnt);
             }
             break;

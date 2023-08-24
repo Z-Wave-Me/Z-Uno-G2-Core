@@ -229,7 +229,7 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComma
 #include "ZWCCZWavePlusInfo.h"
 
 
-void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
+void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t							notificationType;
 	uint16_t						icon_type;
 

@@ -111,7 +111,6 @@ typedef struct				ZUNOCommandPacketReport_s
 	uint8_t					data[MAX_ZW_PACKAGE];
 }							ZUNOCommandPacketReport_t;
 
-ZUNOChannel_t * zuno_findChannelByZWChannel(byte zw_ch);
 uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
 byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
@@ -397,12 +396,6 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 																		   
 #define ICON_TYPE_GENERIC_WHOLE_HOME_METER_SIMPLE                            0x1700   //Whole Home Meter Simple Device Type
 																		   
-#define ICON_TYPE_GENERIC_WINDOW_COVERING_NO_POSITION_ENDPOINT               0x1800   //Window Covering No Position/Endpoint  Device Type
-																		   
-#define ICON_TYPE_GENERIC_WINDOW_COVERING_ENDPOINT_AWARE                     0x1900   //Window Covering Endpoint Aware Device Type
-																		   
-#define ICON_TYPE_GENERIC_WINDOW_COVERING_POSITION_ENDPOINT_AWARE            0x1A00   //Window Covering Position/Endpoint Aware Device Type
-
 #define ICON_TYPE_GENERIC_REPEATER                                           0x1B00   //Repeater Device Type 
 
 #define ICON_TYPE_GENERIC_DIMMER_WALL_SWITCH	                             0x1C00	  //Wall Switch

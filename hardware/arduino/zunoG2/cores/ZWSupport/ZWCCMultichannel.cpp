@@ -29,23 +29,24 @@ static void zuno_initMchData() {
 
 
 static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
-	ZUNOChannel_t								*channel;
+	uint8_t										channel;
 	size_t										endpoint;
 	size_t										type_index;
 	ZwMultiChannelCapabilityReportFrame_t		*report;
 	uint8_t										*commandClass;
+	ZwZwavePlusInfoType_t						info_type;
 
 	endpoint = cmd->properties1 & 0x7F;
 	// Get the info about selected endpoint
-	if((channel = zuno_findChannelByZWChannel(endpoint)) == NULL)// According to z-wave specification we must to ignore unsupported end points numbers - see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
+	if((channel = zuno_findChannelByZWChannelIndexChannel(endpoint)) == UNKNOWN_CHANNEL)// According to z-wave specification we must to ignore unsupported end points numbers - see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
 		return (ZUNO_COMMAND_BLOCKED);
 	report = (ZwMultiChannelCapabilityReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->cmd = MULTI_CHANNEL_CAPABILITY_REPORT; set in - fillOutgoingPacket
 	report->properties1 = endpoint; // The index of selected endpoint
-	type_index = zuno_findChannelType(channel->type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
-	report->genericDeviceClass = ZUNO_DEV_TYPES[type_index].gen_type;
-	report->specificDeviceClass = ZUNO_DEV_TYPES[type_index].spec_type;
+	__zuno_CCZWavePlusGetType(channel, &info_type);
+	report->genericDeviceClass = info_type.genericDeviceClass;
+	report->specificDeviceClass = info_type.specificDeviceClass;
 	commandClass = &report->commandClass[0];
 	commandClass = zuno_AddCommonClassMinimal(commandClass);
 	#ifdef MODERN_MULTICHANNEL_S2
@@ -91,13 +92,13 @@ static int _point_get(ZUNOCommandPacketReport_t *frame_report) {
 }
 
 static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+	ZwZwavePlusInfoType_t						info_type;
 	ZwMultiChannelEndPointFindReportFrame_t		*report;
 	size_t										genericDeviceClass;
 	size_t										specificDeviceClass;
 	uint8_t										*end_point;
 	size_t										i;
 	size_t										max;
-	size_t										type;
 
 	genericDeviceClass = cmd->genericDeviceClass;
 	specificDeviceClass = cmd->specificDeviceClass;
@@ -116,15 +117,16 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport
 	}
 	else if (specificDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {
 		while (i <= max) {
-			if (ZUNO_DEV_TYPES[ZUNO_CFG_CHANNEL(i - 1).type - 1].gen_type == genericDeviceClass)
+			__zuno_CCZWavePlusGetType(i - 1, &info_type);
+			if (info_type.genericDeviceClass == genericDeviceClass)
 				end_point++[0] = i;
 			i++;
 		}
 	}
 	else {
 		while (i <= max) {
-			type = ZUNO_CFG_CHANNEL(i - 1).type - 1;
-			if (ZUNO_DEV_TYPES[type].gen_type == genericDeviceClass && ZUNO_DEV_TYPES[type].spec_type == specificDeviceClass)
+			__zuno_CCZWavePlusGetType(i - 1, &info_type);
+			if (info_type.genericDeviceClass == genericDeviceClass && info_type.specificDeviceClass == specificDeviceClass)
 				end_point++[0] = i;
 			i++;
 		}

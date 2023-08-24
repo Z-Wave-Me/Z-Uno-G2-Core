@@ -2,11 +2,12 @@
 #include "ZWSupport.h"
 #include "ZWCCZWavePlusInfo.h"
 
-void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoOut_t *icon);
-void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon) ;
-void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoOut_t *icon);
+void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoIcon_t *icon);
+void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) ;
+void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
+void zuno_CCWindowCoveringGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 
-static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
+void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t								type;
 
 	type = ZUNO_CFG_CHANNEL(channel).type;
@@ -26,6 +27,11 @@ static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
 			zuno_CCNotificationGetIcon(channel, icon);
 			break ;
 		#endif
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			zuno_CCWindowCoveringGetIcon(channel, icon);
+			break ;
+		#endif
 		default:
 			type--;
 			icon->installerIconType = ZUNO_DEV_TYPES[type].icon;
@@ -34,11 +40,31 @@ static void _get_info(uint8_t channel, ZwZwavePlusInfoOut_t *icon) {
 	}
 }
 
+void zuno_CCWindowCoveringGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
+
+void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type) {
+	uint8_t								type;
+
+	type = ZUNO_CFG_CHANNEL(channel).type;
+	switch (type) {
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			zuno_CCWindowCoveringGetType(channel, info_type);
+			break ;
+		#endif
+		default:
+			type--;
+			info_type->genericDeviceClass = ZUNO_DEV_TYPES[type].gen_type;
+			info_type->specificDeviceClass = ZUNO_DEV_TYPES[type].spec_type;
+			break ;
+	}
+}
+
 static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwavePlusInfoReportFrame_t		*report;
-	ZwZwavePlusInfoOut_t				icon;
+	ZwZwavePlusInfoIcon_t				icon;
 	size_t								roleType;
-
+	uint8_t								channel;
 	
 	#ifdef MODERN_MULTICHANNEL_S2
 	if ((cmd->zw_rx_secure_opts == SECURITY_KEY_NONE) &&
@@ -47,6 +73,9 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 			return ZUNO_COMMAND_BLOCKED;
 	}
 	#endif
+	channel = zuno_findChannelByZWChannelIndexChannel(cmd->dst_zw_channel);
+	if (channel == UNKNOWN_CHANNEL)
+		channel = 0x0;
 	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
@@ -64,7 +93,7 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	}
 	report->v2.roleType = roleType;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
-	_get_info(zuno_findChannelByZWChannelIndexChannel(cmd->dst_zw_channel), &icon);
+	__zuno_CCZWavePlusGetIcon(channel, &icon);
 	report->v2.installerIconType1 = icon.installerIconType >> 8;
 	report->v2.installerIconType2 = icon.installerIconType & 0xFF;
 	report->v2.userIconType1 = icon.userIconType >> 8;

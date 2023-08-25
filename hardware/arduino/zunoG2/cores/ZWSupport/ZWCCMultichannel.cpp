@@ -69,6 +69,7 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandP
 	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE) 
 	#endif
 	{
+		type_index = zuno_findChannelType(ZUNO_CFG_CHANNEL(channel).type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
 		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
 		if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
 			commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;

@@ -46,6 +46,8 @@ bool zunoSendBatteryReportHandler() {
 	report = (ZwBatteryReportFrame_t *)&frame.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_BATTERY;
 	report->cmd = BATTERY_REPORT;
+	if (batteryLevel == 0x0)
+		batteryLevel = 0xFF;//The value 0xFF MUST indicate a low-battery warning.
 	report->batteryLevel = batteryLevel;
 	frame.packet.len = sizeof(report[0x0]);
 	zunoSendZWPackage(&frame.packet);

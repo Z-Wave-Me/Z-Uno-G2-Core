@@ -353,8 +353,8 @@ static int _configuration_get(ZwConfigurationGetFrame_t *cmd, ZUNOCommandPacketR
 	param = cmd->parameterNumber;
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN) {
 		// User asks about unknown parameter, lets return the first existed parameter
-		for(param = CONFIGPARAM_MIN_PARAM; param < CONFIGPARAM_MAX_PARAM; param++){
-			if ((cfg = zunoCFGParameterProxy(param)) != ZUNO_CFG_PARAMETER_UNKNOWN)
+		for(param = 0x0; param < CONFIGPARAM_MAX_PARAM; param++){
+			if ((cfg = zunoCFGParameterProxy(param)) != ZUNO_CFG_PARAMETER_UNKNOWN && cfg->hiden_search != true)
 				break;
 		}
 		if (param >= CONFIGPARAM_MAX_PARAM)

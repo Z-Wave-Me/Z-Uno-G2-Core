@@ -4,6 +4,7 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchMultilevel.h"
 
+#ifdef WITH_CC_BASIC
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier);
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
@@ -163,3 +164,4 @@ uint8_t zunoBasicSaveGet(uint8_t channel) {
 	zunoEEPROMRead(EEPROM_BASIC_SAVE_ADDR + channel, 0x1, &value);
 	return (value);
 }
+#endif

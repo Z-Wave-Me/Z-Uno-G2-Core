@@ -131,7 +131,7 @@ void zuno_CCTimer(uint32_t ticks) {
 	_exe(&frame_report);
 	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)
-	if((ticks & 0x7) == 0) // Once in ~80ms 
+	if((ticks & 0x3) == 0) // Once in ~40ms 
 		zuno_CCSoundSwitchTimer();
 	#endif
 	if((ticks & 0x3) == 0) // Once in ~40ms 

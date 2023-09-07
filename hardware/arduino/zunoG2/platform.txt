@@ -47,7 +47,7 @@ recipe.objcopy.hex.pattern="{tools.zprog.cmd.path}" arduino_dummy -q
 preproc.includes.flags=
 recipe.preproc.includes="{tools.zprog.cmd.path}" arduino_dummy -q
 preproc.macros.flags=
-recipe.preproc.macros= "{tools.zprog.cmd.path}" arduino_preproc  "{source_file}" "{tools.zprog.cmd.cores}"
+recipe.preproc.macros= "{tools.zprog.cmd.path}" arduino_preproc  "{source_file}" "{tools.zprog.cmd.cores}" -o "{preprocessed_file_path}"
 
 
 # Compute size

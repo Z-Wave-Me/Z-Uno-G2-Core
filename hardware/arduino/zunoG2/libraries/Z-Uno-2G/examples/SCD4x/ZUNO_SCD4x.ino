@@ -103,8 +103,8 @@ void loop() {
 
       if (zunoLoadCFGParam(PARAM_FACTORY_RESET) == 1) 
       {
-        Serial.println("FACTORY RESET");
-        //SCD4x.perfomFactoryReset();
+        Serial.println("FACTORY RESET (inactive - see comment!");
+        //SCD4x.perfomFactoryReset();                // REMOVE COMMENT IF YOU WANT TO ENABLE FEATURE !
         zunoReboot();
       }
     }

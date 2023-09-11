@@ -97,12 +97,10 @@ void __triade2HStr(uint8_t b, char * symb){
   if(b > 10)
     *symb = 'A' + (b-10); 
 }
-void __int16toHStr(uint16_t  val, char * &str) {
+void __int16toHStr(uint16_t  val, char * str) {
     int i;
-    str += 4; // Use the descend byte order
-    for(i=0;i<4;i++,str--,val>>=4)
-      __triade2HStr(val & 0x0F, str);
-    str += 4; // Fill the next field
+    for(i=0;i<4;i++,val>>=4)
+      __triade2HStr(val & 0x0F, &str[3-i]);
 }
 bool ZUNO_SCD4x::getSerialNumber(void) {
   if (!sendCmd(SCD4x_CMD_GSER, 1))
@@ -115,7 +113,9 @@ bool ZUNO_SCD4x::getSerialNumber(void) {
     uint16_t rs;
     _extract2BytesValue(rs);
     __int16toHStr(rs, p_str);
+    p_str += 4;
   }
+  *p_str = '\0';
   if (_comError != COMMUNICATION_ERROR_OK) {
     strcpy(_serialNumber, "error");
     return false;

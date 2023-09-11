@@ -37,6 +37,10 @@
 #define SCD4x_CMD_PWDN  0x36e0		// cmd power_down
 #define SCD4x_CMD_WKUP  0x36f6		// cmd wake_up
 
+#define COMMUNICATION_ERROR_OK  0
+#define COMMUNICATION_ERROR_I2C 1
+#define COMMUNICATION_ERROR_CRC 2
+#define MAX_SN_LENGTH           18
 
 class ZUNO_SCD4x
 {
@@ -54,7 +58,7 @@ class ZUNO_SCD4x
   bool setAmbientPressure(uint32_t ambPressure);
   bool setAutomaticSelfCalibrationEnabled(uint16_t ASCEnabled);
   bool getAutomaticSelfCalibrationEnabled(void);
-  bool perform_forced_recalibration(uint16_t targetCO2ppm);
+  bool performFocedRecalibraion(uint16_t targetCO2ppm);
   bool startLowPowerPeriodicMeasurement(void);
   bool PersistSettings(void);
   bool getSerialNumber(void);
@@ -66,24 +70,33 @@ class ZUNO_SCD4x
   bool wakeUp(void);
   bool getSensorData(void);           // read all sensor properties
 
-	// sensor properties
-  uint16_t CO2;
-	float Temp;
-	float Hum;
-  float TempOffset;
-  uint8_t comError;               // 1- I2C error, 2- CRC error
-  uint16_t sensorASC;
-  uint16_t sensorAlt;
-  float CO2Correction;
-  String SerialNumber;
-
+  // Sensor values extractors
+  uint16_t getCO2() const { return _CO2;};
+  float    getTemperature() const { return _Temp; };
+  float    getHumidity() const { return _Hum; };
+  void     copySerialNumber(char * str) const { strncpy(str, _serialNumber, MAX_SN_LENGTH); };
+  uint8_t  getLastError() const { return _comError; };
+  uint16_t getSensorAltValue() const {return _sensorAlt; };
+  float    getTempOffsetValue() const {return _TempOffset; };
+  uint16_t getASCValue() const {return _sensorASC; };
+  
   private:
-	uint16_t crc;
+  // sensor properties
+  uint16_t _CO2;
+	float _Temp;
+	float _Hum;
+  float _TempOffset;
+  uint8_t _comError;               // 1- I2C error, 2- CRC error
+  uint16_t _sensorASC;
+  uint16_t _sensorAlt;
+  float _CO2Correction;
+  char  _serialNumber[MAX_SN_LENGTH];
+  // methods
   bool sendCmd(uint16_t cmdCode, uint16_t delayMs);
   bool sendCmd(uint16_t cmdCode, uint16_t parameter, uint16_t delayMs);
   uint16_t readDbyte(uint16_t registerAddress, uint16_t delayMs = 1);
   uint8_t calcCRC8(uint8_t data[], uint8_t len);
-  void arrayToString(byte array[], uint8_t len, char strBuffer[]);
+  bool _extract2BytesValue(uint16_t & result);
+  
 };
-
-#endif
+#endif // ZUNO_SCD4x_h

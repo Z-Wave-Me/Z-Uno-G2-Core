@@ -13,6 +13,8 @@
 #pragma message "ZUNO_PIN_V==802 (SDK BRD4205B)"
 #elif ZUNO_PIN_V == 803
 #pragma message "ZUNO_PIN_V==803 (RYSE BRD)"
+#elif ZUNO_PIN_V == 804
+#pragma message "ZUNO_PIN_V==804 (ZGM8202 BRD)"
 #else
     #error ZUNO_PIN_V
 #endif

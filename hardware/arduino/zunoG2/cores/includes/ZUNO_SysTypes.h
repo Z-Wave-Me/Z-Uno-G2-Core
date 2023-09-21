@@ -103,29 +103,30 @@ typedef struct ZUNOSysConfigData_s {
 	uint8_t     ifreq_deffered;
 }ZUNOSysConfigData_t;
 typedef struct ZUNOFWHeader_s{
-	uint8_t 	sign[MAX_FWHEADER_SIGN];
-	uint8_t     size;
-	uint32_t	build_timestamp;
-	uint32_t    build_sequence;
-	uint16_t    hw_id;
-	uint16_t    version;
-	uint8_t     hw_button_pin;
-	uint8_t     hw_led1_pin;
-	uint8_t     hw_led2_pin;
-	uint8_t     hw_uled_pin;
-	uint8_t     hw_sapi_tx_pin;
-	uint8_t     hw_sapi_rx_pin;
-	uint8_t     hw_sapi_uart_number;
-	uint8_t     hw_console_tx_pin;
-	uint8_t     hw_console_rx_pin;
-	uint8_t     hw_console_uart_number;
-	uint16_t    vendor_id;
-	uint16_t    product_type_id;
-	uint32_t    flags;
-	uint8_t     default_region;
-	uint32_t    crc32;
+    uint8_t 	sign[MAX_FWHEADER_SIGN];
+    uint8_t     size;
+    uint32_t	build_timestamp;
+    uint32_t    build_sequence;
+    uint16_t    hw_id;
+    uint16_t    version;
+    uint8_t     hw_button_pin;
+    uint8_t     hw_led1_pin;
+    uint8_t     hw_led2_pin;
+    uint8_t     hw_uled_pin;
+    uint8_t     hw_sapi_tx_pin;
+    uint8_t     hw_sapi_rx_pin;
+    uint8_t     hw_sapi_uart_number;
+    uint8_t     hw_console_tx_pin;
+    uint8_t     hw_console_rx_pin;
+    uint8_t     hw_console_uart_number;
+    uint16_t    vendor_id;
+    uint16_t    product_type_id;
+    uint8_t     max_rf_power;
+    uint32_t    flags;
+    uint8_t     default_region;
+    uint64_t    default_license;
+    uint32_t    crc32;
 } __attribute__((aligned(1),packed)) ZUNOFWHeader_t ;
-
 // System variables mapping
 typedef struct ZUNOSetupSysState_s {
 	uint8_t wakeup_reason;

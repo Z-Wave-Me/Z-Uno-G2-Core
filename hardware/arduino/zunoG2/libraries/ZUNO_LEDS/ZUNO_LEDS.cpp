@@ -178,7 +178,7 @@ void ZunoLed::_setLed(size_t name, uint8_t mode) {
 		e = &b[list->num_groups];
 		while (b < e) {
 			list->current_mode = mode;
-			digitalWrite(b->led_pin, ((b->bInverted == true) ? !mode : mode));
+			digitalWrite(b->led_pin, ((b->bInverted) ? !mode : mode));
 			b++;
 		}
 	}

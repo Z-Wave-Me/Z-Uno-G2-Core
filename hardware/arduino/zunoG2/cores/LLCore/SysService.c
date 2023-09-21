@@ -22,9 +22,24 @@ typedef struct ServiceData_s{
 }ServiceData_t;
 ServiceData_t g_service_data;
 
+#define _SYSBUTTON g_zuno_sys->fw_static_header->hw_button_pin
+#define _SYSLED_ACTIVITY g_zuno_sys->fw_static_header->hw_led1_pin
+#define _SYSLED_LEARN g_zuno_sys->fw_static_header->hw_led2_pin
+
 __WEAK void zunoSysServiceLedInit(void) {
-	Led.addLed(SYSLED_LEARN, SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t));
-	Led.addLed(SYSLED_ACTIVITY, SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t));
+    bool b_iverted = ((g_zuno_sys->fw_static_header->flags & FWHEADER_FLAGS_INVERT_LEDS) != 0);
+    //Serial0.print("INVERTED LEDS:");  
+    //Serial0.println(b_iverted);
+
+	Led.addLed(_SYSLED_ACTIVITY, 
+               SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t), 
+               b_iverted);
+    Led.off(_SYSLED_ACTIVITY);
+	Led.addLed(_SYSLED_LEARN, 
+               SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t),
+               b_iverted);
+    Led.off(_SYSLED_LEARN);
+    
 }
 
 __WEAK void zunoSysServiceLedOff(uint8_t pin) {
@@ -41,15 +56,15 @@ __WEAK void zunoSysServiceLedSetMode(uint8_t pin, uint8_t mode) {
 
 void SysReconfigLeds(){
     if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
-        zunoSysServiceLedOff(SYSLED_ACTIVITY);
+        zunoSysServiceLedOff(_SYSLED_ACTIVITY);
     } else {
         if(zunoGetSleepingMode()){
             #ifdef LOGGING_DBG
             //LOGGING_UART.println("*** DEVICE IS SLEEPING");
             #endif
-            zunoSysServiceLedOn(SYSLED_ACTIVITY);
+            zunoSysServiceLedOn(_SYSLED_ACTIVITY);
         } else {
-            zunoSysServiceLedSetMode(SYSLED_ACTIVITY, SYSLED_LEARN_MODE_BLINK);
+            zunoSysServiceLedSetMode(_SYSLED_ACTIVITY, SYSLED_LEARN_MODE_BLINK);
         }
     }
 }
@@ -60,16 +75,17 @@ void SysSetLearnLedMode(uint8_t mode, uint32_t timeout){
     LOGGING_UART.print(" TIMEOUT:"); 
     LOGGING_UART.println(timeout, HEX);
     #endif
-    zunoSysServiceLedSetMode(SYSLED_LEARN, mode);
+    zunoSysServiceLedSetMode(_SYSLED_LEARN, mode);
     g_service_data.led_learn_timeout = millis()+timeout;
 }
 void SysStopLearnLed(){
     g_service_data.led_learn_timeout = 0;
-    zunoSysServiceLedOff(SYSLED_LEARN);
+    zunoSysServiceLedOff(_SYSLED_LEARN);
 }
 void SysServiceInit(){
 	zunoSysServiceLedInit();
-    Btn.addButton(SYSBUTTON);
+    if(_SYSBUTTON != 0xFF) // The button is enabled for this configuration
+        Btn.addButton(_SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     SysReconfigLeds();
@@ -79,29 +95,31 @@ static void _setSysCntrlState(uint8_t mode, uint32_t timeout){
     g_service_data.cntrl_timeout = millis()+timeout;
 }
 void SysServiceTimer(){
-    switch(g_service_data.cntrl_mode){
-        case SYS_SVC_MODE_NORMAL:
-            if(Btn.isTripleClick(SYSBUTTON)){
-                zunoStartLearn(SYS_LEARN_TIMEOUT, true);
-            }
-            if(Btn.isLongClick(SYSBUTTON)){
-                _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
-                SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
-            }
-            break;
-        case SYS_SVC_MODE_SUBMENU:
-            if(Btn.isTripleClick(SYSBUTTON)){
-                zunoResetLocally();
-            }
-            if(Btn.isSingleClick(SYSBUTTON)){
-                zunoStartLearn(SYS_LEARN_TIMEOUT, false);
-            }
-            break;
-        case SYS_SVC_MODE_LEARN:
-            if(Btn.isSingleClick(SYSBUTTON)){
-                zunoStartLearn(0xFF, true); // Cancel learn mode
-            }
-            break;
+    if(_SYSBUTTON != 0xFF){
+        switch(g_service_data.cntrl_mode){
+            case SYS_SVC_MODE_NORMAL:
+                if(Btn.isTripleClick(_SYSBUTTON)){
+                    zunoStartLearn(SYS_LEARN_TIMEOUT, true);
+                }
+                if(Btn.isLongClick(_SYSBUTTON)){
+                    _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
+                    SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
+                }
+                break;
+            case SYS_SVC_MODE_SUBMENU:
+                if(Btn.isTripleClick(_SYSBUTTON)){
+                    zunoResetLocally();
+                }
+                if(Btn.isSingleClick(_SYSBUTTON)){
+                    zunoStartLearn(SYS_LEARN_TIMEOUT, false);
+                }
+                break;
+            case SYS_SVC_MODE_LEARN:
+                if(Btn.isSingleClick(_SYSBUTTON)){
+                    zunoStartLearn(0xFF, true); // Cancel learn mode
+                }
+                break;
+        }
     }
     if((g_service_data.cntrl_timeout != 0) && 
         (millis() > g_service_data.cntrl_timeout)){
@@ -129,8 +147,8 @@ void SysServiceEvent(ZUNOSysEvent_t * ev){
     }
 }
 void SysServiceSleep(){
-    zunoSysServiceLedOff(SYSLED_LEARN);
-    zunoSysServiceLedOff(SYSLED_ACTIVITY);
+    zunoSysServiceLedOff(_SYSLED_LEARN);
+    zunoSysServiceLedOff(_SYSLED_ACTIVITY);
 }
 void SysServiceWUP(){
     SysReconfigLeds();

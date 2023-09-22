@@ -22,14 +22,12 @@ typedef struct ServiceData_s{
 }ServiceData_t;
 ServiceData_t g_service_data;
 
-#define _SYSBUTTON g_zuno_sys->fw_static_header->hw_button_pin
-#define _SYSLED_ACTIVITY g_zuno_sys->fw_static_header->hw_led1_pin
-#define _SYSLED_LEARN g_zuno_sys->fw_static_header->hw_led2_pin
+#define _SYSBUTTON          SYSBUTTON       //g_zuno_sys->fw_static_header->hw_button_pin
+#define _SYSLED_ACTIVITY    SYSLED_ACTIVITY //g_zuno_sys->fw_static_header->hw_led1_pin
+#define _SYSLED_LEARN       SYSLED_LEARN    //g_zuno_sys->fw_static_header->hw_led2_pin
 
 __WEAK void zunoSysServiceLedInit(void) {
     bool b_iverted = ((g_zuno_sys->fw_static_header->flags & FWHEADER_FLAGS_INVERT_LEDS) != 0);
-    //Serial0.print("INVERTED LEDS:");  
-    //Serial0.println(b_iverted);
 
 	Led.addLed(_SYSLED_ACTIVITY, 
                SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t), 

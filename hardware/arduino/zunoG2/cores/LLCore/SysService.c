@@ -32,11 +32,9 @@ __WEAK void zunoSysServiceLedInit(void) {
 	Led.addLed(_SYSLED_ACTIVITY, 
                SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t), 
                b_iverted);
-    Led.off(_SYSLED_ACTIVITY);
 	Led.addLed(_SYSLED_LEARN, 
                SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t),
                b_iverted);
-    Led.off(_SYSLED_LEARN);
     
 }
 

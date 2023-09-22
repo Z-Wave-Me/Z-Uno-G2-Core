@@ -16,6 +16,7 @@ ZunoLed::ZunoLed(void) {
 ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uint8_t num_modes, uint8_t bInverted) {
 	ZunoLedListGroups_t			*list;
 	ZunoError_t					ret;
+	int							mode;
 
 	ret = ZunoErrorOk;
 	if ((list = this->_addLedPre(led_pin, 1, &ret)) != 0) {
@@ -23,7 +24,11 @@ ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uin
 		list->array[0].led_pin = led_pin;
 		list->array[0].led_modes = led_modes;
 		list->array[0].bInverted = bInverted;
-		pinMode(led_pin, OUTPUT);
+		if (bInverted == true)
+			mode = OUTPUT_UP;
+		else
+			mode = OUTPUT_DOWN;
+		pinMode(led_pin, mode);
 		this->_addList(list);
 	}
 	return (ret);
@@ -35,6 +40,8 @@ ZunoError_t ZunoLed::addLed(const ZunoLedModeGroups_t *led_groups, uint8_t num_g
 	ZunoLedListGroups_t			*list;
 	ZunoError_t					ret;
 	uint8_t						led_pin;
+	int							mode;
+	uint8_t						bInverted;
 
 	ret = ZunoErrorOk;
 	if ((list = this->_addLedPre((size_t)led_groups, num_groups, &ret)) != 0) {
@@ -43,10 +50,15 @@ ZunoError_t ZunoLed::addLed(const ZunoLedModeGroups_t *led_groups, uint8_t num_g
 		array = &list->array[0];
 		while (led_groups < led_groups_end) {
 			array->led_modes = led_groups->led_modes;
-			array->bInverted = led_groups->bInverted;
+			bInverted = led_groups->bInverted;
+			array->bInverted = bInverted;
 			led_pin = led_groups->led_pin;
 			array->led_pin = led_pin;
-			pinMode(led_pin, OUTPUT);
+			if (bInverted == true)
+				mode = OUTPUT_UP;
+			else
+				mode = OUTPUT_DOWN;
+			pinMode(led_pin, mode);
 			array++;
 			led_groups++;
 		}

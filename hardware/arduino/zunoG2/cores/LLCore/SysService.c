@@ -27,14 +27,12 @@ ServiceData_t g_service_data;
 #define _SYSLED_LEARN       SYSLED_LEARN    //g_zuno_sys->fw_static_header->hw_led2_pin
 
 __WEAK void zunoSysServiceLedInit(void) {
-    bool b_iverted = ((g_zuno_sys->fw_static_header->flags & FWHEADER_FLAGS_INVERT_LEDS) != 0);
-
 	Led.addLed(_SYSLED_ACTIVITY, 
                SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t), 
-               b_iverted);
+               SYS_LED_INVERT);
 	Led.addLed(_SYSLED_LEARN, 
                SYSLED_MODES, sizeof(SYSLED_MODES)/sizeof(ZunoLedMode_t),
-               b_iverted);
+               SYS_LED_INVERT);
     
 }
 

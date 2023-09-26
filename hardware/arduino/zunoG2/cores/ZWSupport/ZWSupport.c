@@ -879,6 +879,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	ZWQIncomingStat(cmd);
 	if (_zunoS2PkgFilter(cmd))
 		return (ZUNO_COMMAND_BLOCKED);
+	zunoReportHandler(cmd);
 	result = ZUNO_UNKNOWN_CMD;
 	g_rcv_context.bMulticast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) != 0;
 	g_rcv_context.bBroadcast = (cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0;

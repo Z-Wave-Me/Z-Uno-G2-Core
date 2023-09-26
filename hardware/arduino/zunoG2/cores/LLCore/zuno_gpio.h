@@ -80,6 +80,11 @@
 	#error ZUNO_PIN_V
 #endif
 
+#if ZUNO_PIN_V == 804
+	#define SYS_LED_INVERT						true
+#else
+	#define SYS_LED_INVERT						false
+#endif
 
 // Universal aport index
 const uint8_t g_aport_pa0_pf7_all[] = {//APORT3Y APORT3X APORT1Y APORT1X

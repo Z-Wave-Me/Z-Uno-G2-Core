@@ -334,7 +334,7 @@
         },
         {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
-            "cc_flags":["WITH_CC_SWITCH_COLOR", "WITH_CC_SWITCH_MULTILEVEL"],
+            "cc_flags":["WITH_CC_SWITCH_COLOR", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",

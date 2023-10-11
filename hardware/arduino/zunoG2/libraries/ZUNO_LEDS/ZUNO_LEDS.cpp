@@ -19,8 +19,8 @@ ZunoError_t ZunoLed::addLed(uint8_t led_pin, const ZunoLedMode_t *led_modes, uin
 	int							mode;
 
 	ret = ZunoErrorOk;
-		list->num_modes = num_modes;
 	if ((list = this->_addLedPre(led_pin, 1, &ret)) != 0) {
+		list->num_modes = num_modes;
 		list->array[0].led_pin = led_pin;
 		list->array[0].led_modes = led_modes;
 		list->array[0].bInverted = bInverted;

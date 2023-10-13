@@ -1,6 +1,14 @@
 #include <SysService.h>
 #include "ZUNO_LEDS.h"
+#ifdef ZUNO_OLD_BUTTONS
 #include "ZUNO_Buttons.h"
+#define BTN_OBJ Btn
+#define LONG_CLICK_FUNC isLongClick
+#else
+#include "ZMEButtons.h"
+#define BTN_OBJ ZBtn
+#define LONG_CLICK_FUNC isHolded
+#endif
 #include "ZWCCResetLocally.h"
 #include "Debug.h"
 #include "em_core.h"
@@ -79,7 +87,7 @@ void SysStopLearnLed(){
 void SysServiceInit(){
 	zunoSysServiceLedInit();
     if(_SYSBUTTON != 0xFF) // The button is enabled for this configuration
-        Btn.addButton(_SYSBUTTON);
+        BTN_OBJ.addButton(_SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     SysReconfigLeds();
@@ -92,24 +100,24 @@ void SysServiceTimer(){
     if(_SYSBUTTON != 0xFF){
         switch(g_service_data.cntrl_mode){
             case SYS_SVC_MODE_NORMAL:
-                if(Btn.isTripleClick(_SYSBUTTON)){
+                if(BTN_OBJ.isTripleClick(_SYSBUTTON)){
                     zunoStartLearn(SYS_LEARN_TIMEOUT, true);
                 }
-                if(Btn.isLongClick(_SYSBUTTON)){
+                if(BTN_OBJ.LONG_CLICK_FUNC(_SYSBUTTON)){
                     _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
                     SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
                 }
                 break;
             case SYS_SVC_MODE_SUBMENU:
-                if(Btn.isTripleClick(_SYSBUTTON)){
+                if(BTN_OBJ.isTripleClick(_SYSBUTTON)){
                     zunoResetLocally();
                 }
-                if(Btn.isSingleClick(_SYSBUTTON)){
+                if(BTN_OBJ.isSingleClick(_SYSBUTTON)){
                     zunoStartLearn(SYS_LEARN_TIMEOUT, false);
                 }
                 break;
             case SYS_SVC_MODE_LEARN:
-                if(Btn.isSingleClick(_SYSBUTTON)){
+                if(BTN_OBJ.isSingleClick(_SYSBUTTON)){
                     zunoStartLearn(0xFF, true); // Cancel learn mode
                 }
                 break;

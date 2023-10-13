@@ -54,22 +54,6 @@ bool ZMEVirtButtons::isIdled() {
     zunoExitCritical();
     return ret;
 }
-bool ZMEVirtButtons::process(uint8_t channel) {
-    bool changed;
-    zunoEnterCritical();
-    ZMEButtonState_t * s  = _extractChannelState(channel);
-    if(s != NULL){
-        bool pressed = isChannelPressed(channel, s->custom_data);
-        changed = _process(pressed, s);
-    } else {
-        #if defined(LOGGING_DBG) &&ZME_BUTTONS_DBG
-        LOGGING_UART.print("*** NO STATE FOR:");
-        LOGGING_UART.println(channel);
-        #endif
-    }
-    zunoExitCritical();
-    return changed;
-}
 bool ZMEVirtButtons::_process(bool pressed, ZMEButtonState_t * s){
     //#if defined(LOGGING_DBG) && ZME_BUTTONS_DBG
     uint32_t dbg_start_state = s->state;
@@ -257,22 +241,16 @@ void * ZMEVirtButtons::extractCustomData(uint8_t channel){
     return d;
 }
 // ZMEPinButtons
-ZMEGPIOButtons::ZMEGPIOButtons(ZMEPinButtonHandlingType handling_type,
+ZMEGPIOButtons::ZMEGPIOButtons(
                        uint8_t  max_clicks,
                        uint32_t debounce_interval, 
                        uint32_t multiclick_interval,
-                       uint32_t hold_interval):
+                       uint32_t hold_interval,
+                       bool enableHandling):
                        ZMEVirtButtons(max_clicks, debounce_interval, multiclick_interval, hold_interval),
                        ZMEHandlerMapper(SYS_HANLER_MAPPER_TIMER | SYS_HANLER_MAPPER_WAKE) {
 
-    _handle_type = handling_type;
-    if(handling_type == ZMEBUTTON_HANDLE_AUTO){
-        if(zunoGetSleepingMode() == 0){
-            _handle_type = ZMEBUTTON_HANDLE_TIMERPOLL;
-        } else {
-            _handle_type = ZMEBUTTON_HANDLE_INT;
-        }
-    }
+    _handling_enable = enableHandling;
 }
 static void _DummyIntHandler() {
 }
@@ -341,12 +319,12 @@ bool ZMEGPIOButtons::isChannelPressed(uint8_t channel, void  * custom_data) {
 }
 void ZMEGPIOButtons::handleSysTimer(uint32_t ticks) {
     (void) ticks;
-    if( _handle_type == ZMEBUTTON_HANDLE_NONE)
+    if(!_handling_enable)
         return;
     poll();
 }
 void ZMEGPIOButtons::handleSysWake(){
-    if( _handle_type == ZMEBUTTON_HANDLE_NONE)
+    if(!_handling_enable)
         return;
     poll();
     #if defined(LOGGING_DBG) &&ZME_BUTTONS_DBG
@@ -354,4 +332,4 @@ void ZMEGPIOButtons::handleSysWake(){
     #endif
 }
 
-ZMEGPIOButtons ZBtn(DEFAULT_BTN_HANDLE_MODE);
+ZMEGPIOButtons ZBtn;

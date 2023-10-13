@@ -85,26 +85,26 @@ size_t Print::print(unsigned int n, int base)
   return print((unsigned long) n, base);
 }
 
-size_t Print::print(long n, int base)
-{
-  if (base == 0) {
+size_t Print::print(long n, int base){
+  if (base == 0)
     return write(n);
-  } else if (base == 10) {
+  if (base == 10) {
     if (n < 0) {
       int t = print('-');
       n = -n;
       return printNumber(n, 10) + t;
     }
     return printNumber(n, 10);
-  } else {
-    return printNumber(n, base);
-  }
+  } 
+  return printNumber(n, base);
+  
 }
 
 size_t Print::print(unsigned long n, int base)
 {
-  if (base == 0) return write(n);
-  else return printNumber(n, base);
+  if (base == 0) 
+    return write(n);
+  return printNumber(n, base);
 }
 
 size_t Print::print(double n, int digits)
@@ -280,14 +280,18 @@ size_t Print::printFloat(float number, uint8_t digits) {
 }
 
 uint8_t Print::fixPrint(long n, uint8_t precision) {
-	size_t 				factor = 1;
-	size_t				count;
+	int 		factor = 1;
+	size_t				count=0;
 	while(precision--){
 		factor *= 10;
 	}
-	count = print((long) n/factor);
+  if(n < 0){
+    count += print("-");
+    n = -n;
+  }
+	count += printNumber(n/factor, 10);
 	count += print(".");
-	count += print((long) n%factor);
+	count += printNumber(n%factor, 10);
 	return count;
 }
 

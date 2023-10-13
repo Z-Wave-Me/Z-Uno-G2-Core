@@ -68,7 +68,6 @@ class ZMEVirtButtons{
     void clearEvents(uint8_t channel);
     void clearEvents();
     // External polling/processing
-    bool process(uint8_t channel);
     void poll();
     // External event handling using callback-function
     void setEventCallback(ZMEButtonHandlerFunc_t f){_ext_handler = f;};
@@ -94,12 +93,7 @@ class ZMEVirtButtons{
         uint32_t _multi_click_interval; 
         uint32_t _hold_click_interval;   
 };
-enum ZMEPinButtonHandlingType{
-   ZMEBUTTON_HANDLE_NONE,
-   ZMEBUTTON_HANDLE_TIMERPOLL,
-   ZMEBUTTON_HANDLE_INT,
-   ZMEBUTTON_HANDLE_AUTO
-};
+
 enum ZMEPinButtonFlags{
    ZMEBUTTON_PIN_FLAG_INVERTED=1,
    ZMEBUTTON_PIN_FLAG_PULL=2,
@@ -115,17 +109,17 @@ enum ZMEPinButtonFlags{
 
 class ZMEGPIOButtons: public ZMEVirtButtons, protected ZMEHandlerMapper {
     public:
-        ZMEGPIOButtons(ZMEPinButtonHandlingType handling_type = ZMEBUTTON_HANDLE_AUTO,
-                       uint8_t  max_clicks=3,
+        ZMEGPIOButtons(uint8_t  max_clicks=3,
                        uint32_t debounce_interval=ZME_BUTTONS_DEFAULT_DEBOUNCE, 
                        uint32_t multiclick_interval=ZME_BUTTONS_DEFAULT_MULTICLICK,
-                       uint32_t hold_interval=ZME_BUTTONS_DEFAULT_HOLDINTERVAL);
+                       uint32_t hold_interval=ZME_BUTTONS_DEFAULT_HOLDINTERVAL,
+                       bool enableHandling = true);
         bool addButton(uint8_t pin_number, uint32_t flags=DEFAULT_BTN_FLAGS);
     protected:
         virtual bool isChannelPressed(uint8_t channel, void  * custom_data);
         virtual void handleSysTimer(uint32_t ticks);
         virtual void handleSysWake();
-        ZMEPinButtonHandlingType _handle_type;
+        bool _handling_enable;
 
     
 };

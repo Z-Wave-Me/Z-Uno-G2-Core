@@ -2,6 +2,7 @@
 #include "LinkedList.h"
 #include "Debug.h"
 #include "LLCore.h"
+#include "HandlerMapper.h"
 extern ZUNOCodeHeader_t g_zuno_codeheader;
 static ZNLinkedList_t * g_syshandler_map = NULL;
 static HandlerFunc_t  * findHandlerByType(byte type, byte sub_type, void *handler = NULL, int *index = NULL){
@@ -67,58 +68,110 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     va_list args;
     ZNLinkedList_t * e;
     HandlerFunc_t  * h;
+    ZMEHandlerMapper * p_mapper;
+    byte *	 base_addr;
     for(e=g_syshandler_map; e; e=e->next){
+         p_mapper = NULL;
          h = (HandlerFunc_t *) e->data;
-         if(h->main_type != type)
-            continue;
-         if((h->sub_type != sub_type) && (h->sub_type != 0xFF)) // 0xFF is a "wild card"
-            continue;
-         
-         byte *	 base_addr = (byte*)h->code_offset;
-         if(base_addr < (( byte *)&g_zuno_codeheader)){
-            #ifdef LOGGING_DBG
-            LOGGING_UART.print("*** WRONG HANDLER ");
-            LOGGING_UART.print(type);
-            LOGGING_UART.print(" ADDR:");
-            LOGGING_UART.println((uint32_t)base_addr, HEX);
-            #endif
-            continue;
+        //  #ifdef LOGGING_DBG
+        //  LOGGING_UART.print("*** PMAPPER T1: ");
+        //  LOGGING_UART.print(h->main_type);
+        //  LOGGING_UART.print(" T2: ");
+        //  LOGGING_UART.print(type);
+        //  LOGGING_UART.print(" H: ");
+        //  LOGGING_UART.println((uint32_t)h->code_offset, HEX);
+        //  #endif
+         if(h->main_type == ZUNO_HANDLER_OBJ_MAPPER){
+            p_mapper = (ZMEHandlerMapper*)h->code_offset;
+            // #ifdef LOGGING_DBG
+            // LOGGING_UART.print("*** PMAPPER ADDR: ");
+            // LOGGING_UART.println((uint32_t)p_mapper, HEX);
+            // #endif
+            if(p_mapper == NULL)
+                continue;
+            bool bs = p_mapper->isEventSupported(type);
+            // #ifdef LOGGING_DBG
+            // LOGGING_UART.print("*** BS: ");
+            // LOGGING_UART.println(bs);
+            // #endif
+            if(!bs)
+                continue;
+         } else {
+            if(h->main_type != type)
+                continue;
+            if((h->sub_type != sub_type) && (h->sub_type != 0xFF)) // 0xFF is a "wild card"
+                continue;
+            base_addr = (byte*)h->code_offset;
+            if(base_addr < (( byte *)&g_zuno_codeheader)){
+                #ifdef LOGGING_DBG
+                LOGGING_UART.print("*** WRONG HANDLER ");
+                LOGGING_UART.print(type);
+                LOGGING_UART.print(" ADDR:");
+                LOGGING_UART.println((uint32_t)base_addr, HEX);
+                #endif
+                continue;
+            }
          }
          switch(type){
-            case ZUNO_HANDLER_SYSTIMER:
+            case ZUNO_HANDLER_SYSTIMER:{
                     va_start (args, sub_type);
-                    ((zuno_user_systimer_handler*)(base_addr))(va_arg(args,uint32_t));
+                    uint32_t ticks = va_arg(args,uint32_t);
+                    if(p_mapper)
+                        p_mapper->handleSysTimer(ticks);
+                    else
+                        ((zuno_user_systimer_handler*)(base_addr))(ticks);
                     va_end (args);
+                    }
                     break;
             case ZUNO_HANDLER_REPORT:
                     va_start (args, sub_type);
                     ((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
                     va_end (args);
                     break;
-            case ZUNO_HANDLER_SYSEVENT:
+            case ZUNO_HANDLER_SYSEVENT: {
                     va_start (args, sub_type);
-                    ((zuno_user_sysevent_handler*)(base_addr))(va_arg(args,ZUNOSysEvent_t*));
+                    ZUNOSysEvent_t* ev = va_arg(args,ZUNOSysEvent_t*);
+                    if(p_mapper)
+                        p_mapper->handleSysEvent(ev);
+                    else
+                        ((zuno_user_sysevent_handler*)(base_addr))(ev);
                     va_end (args);
+                    }
                     break;
             case ZUNO_HANDLER_IRQ:{
                     //return NULL;
                     va_start (args, sub_type);
                     IOQueueMsg_t * p_msg = va_arg(args,IOQueueMsg_t *);
-                    ((zuno_irq_handler*)(base_addr))((void*)p_msg->param);
+                    if(p_mapper)
+                        p_mapper->handleSysIRQ(p_msg);
+                    else
+                        ((zuno_irq_handler*)(base_addr))((void*)p_msg->param);
                     va_end (args);
                     }
                     break;
-            case ZUNO_HANDLER_EXTINT:
+            case ZUNO_HANDLER_EXTINT:{
                     //return NULL;
                     va_start (args, sub_type);
-                    ((zuno_void_handler_ext_int*)(base_addr))((uint8_t)va_arg(args,size_t));
+                    uint8_t pin_index = (uint8_t)va_arg(args,size_t);
+                    if(p_mapper)
+                        p_mapper->handleExtInt(pin_index);
+                    else
+                        ((zuno_void_handler_ext_int*)(base_addr))(pin_index);
                     va_end (args);
+                    }
                     break;
             case ZUNO_HANDLER_GPT:
             case ZUNO_HANDLER_SLEEP:
             case ZUNO_HANDLER_WUP:
             case ZUNO_HANDLER_NOTIFICATON_TIME_STAMP:
-                    ((zuno_void_handler*)(base_addr))();
+                    if(p_mapper) {
+                        if(type == ZUNO_HANDLER_SLEEP)
+                            p_mapper->handleSysSleep();
+                        else 
+                            p_mapper->handleSysWake();
+                    }
+                    else
+                        ((zuno_void_handler*)(base_addr))();
                     break;
             case ZUNO_HANDLER_ZW_CFG:
                     va_start (args, sub_type);

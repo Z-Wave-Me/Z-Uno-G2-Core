@@ -183,6 +183,7 @@ extern void (*__fini_array_start []) (void) __attribute__((weak));
 extern void (*__fini_array_end []) (void) __attribute__((weak));
 
 static void LLInit(void *data) {
+    // default configuration values
     #ifndef NO_DEFAULT_PIN_SETUP
     for (int i=0; i <= ZUNO_PIN_LAST_INDEX; i++){
 		#ifdef LOGGING_DBG
@@ -204,7 +205,7 @@ static void LLInit(void *data) {
     for(uint32_t * p=&__bss_start__; p<&__bss_end__; p++){
         *p = 0;
     }
-    
+    g_zuno_sys = (ZUNOSetupSysState_t*)data;
     for (uint32_t * b = (uint32_t *)&__preinit_array_start; b < ((uint32_t *)&__preinit_array_end); b++) {
         ((void (*)())b[0])();
         WDOG_Feed();
@@ -213,8 +214,7 @@ static void LLInit(void *data) {
         ((void (*)())b[0])();
         WDOG_Feed();
     }
-    // default configuration values
-	g_zuno_sys = (ZUNOSetupSysState_t*)data;
+    
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
 	if ((EEPROM_CONFIGURATION_ADDR + EEPROM_CONFIGURATION_SIZE) > EEPROM_MAX_SIZE) {
@@ -394,12 +394,12 @@ void * zunoJumpTable(int vec, void * data) {
         case ZUNO_JUMPTBL_IRQ:{
                 IOQueueMsg_t * p_msg = (IOQueueMsg_t *)data;
                 sub_handler_type = p_msg->type;
-                #ifdef LOGGING_DBG
-	            LOGGING_UART.print("*** _IRQ:");
-                LOGGING_UART.print(p_msg->type);
-                LOGGING_UART.print(" P:");
-                LOGGING_UART.print(p_msg->param);
-	            #endif
+                // #ifdef LOGGING_DBG
+	            // LOGGING_UART.print("*** _IRQ:");
+                // LOGGING_UART.print(p_msg->type);
+                // LOGGING_UART.print(" P:");
+                // LOGGING_UART.print(p_msg->param);
+	            // #endif
                 // Awake code if user had sent device to sleep, but interrupt has triggered
                 zunoAwakeUsrCode();
             }

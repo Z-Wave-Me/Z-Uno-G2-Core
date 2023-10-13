@@ -145,7 +145,10 @@ bool zunoIsSystemThread(void * handle){
 	if(handle == NULL){
 		handle = zunoGetCurrentThreadHandle();
 	}
-	#if defined(SYSTHREAD_INT_ONLY)
+	#if defined(NO_SYS_THREAD)
+	#pragma message "SystemThread: Usecured DGB mode!!!"
+	return false;
+	#elif defined(SYSTHREAD_INT_ONLY)
 	#pragma message "SystemThread: INT"
 	return zunoIsIOThread(handle); 
 	#elif defined(SYSTHREAD_TIMER_AND_INT)

@@ -7,5 +7,7 @@ typedef struct ZNLinkedList_s{
 } ZNLinkedList_t;
 bool znllPushBack(ZNLinkedList_t** l, void * d);
 void * znllRemove(ZNLinkedList_t** l, int index);
+void * znllRemoveP(ZNLinkedList_t** l, void * d);
+
 int znllCount(ZNLinkedList_t* l);
 #endif // ZUNO_SIMPLE_LINKEDLIST

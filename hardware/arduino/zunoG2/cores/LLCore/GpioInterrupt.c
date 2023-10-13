@@ -25,14 +25,19 @@ static uint8_t _getPort(uint8_t pin) {
 static void _IRQDispatcher(void * p) {
 	uint32_t						irqIdx;
 	uint32_t iflags = (uint32_t)p;
-	#ifdef LOGGING_DBG
-	LOGGING_UART.print("*** _IRQDispatcher:");
-    LOGGING_UART.println(iflags);
-	#endif
+	// #ifdef LOGGING_DBG
+	// LOGGING_UART.print("*** _IRQDispatcher:");
+    // LOGGING_UART.println(iflags);
+	// #endif
 	while (iflags != 0U) {/* check for all flags set in IF register */
 		irqIdx = SL_CTZ(iflags);
 		iflags &= ~(1 << irqIdx);/* clear flag*/
-		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx, getPin(_getPort(irqIdx), irqIdx));
+		uint8_t pin = getPin(_getPort(irqIdx), irqIdx);
+		// #ifdef LOGGING_DBG
+		// LOGGING_UART.print("***PINI:");
+    	// LOGGING_UART.println(pin);
+		// #endif
+		zunoSysHandlerCall(ZUNO_HANDLER_EXTINT, irqIdx, pin);
 	}
 }
 static inline ZunoError_t _CallbackRegister(uint8_t intNo, void (*userFunc)(void)) {

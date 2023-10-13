@@ -30,6 +30,27 @@ static int _znllCount(ZNLinkedList_t* l){
     return count;
 }
 
+void * znllRemoveP(ZNLinkedList_t** l, void * d){
+    zunoEnterCritical();
+    ZNLinkedList_t* e = *l;
+    ZNLinkedList_t* p = NULL;
+    for(e = *l; e; p=e,e=e->next){
+        if(e->data == d)
+            break;
+    }
+    if(e){
+        if(p != NULL){
+            p->next = e->next;
+        } else {
+            *l = e->next;
+        }
+    } else {
+      d = NULL;
+    }
+    zunoExitCritical();
+    return d;
+}
+
 void * znllRemove(ZNLinkedList_t** l, int index){
     ZNLinkedList_t* e = *l;
     ZNLinkedList_t* p = NULL;

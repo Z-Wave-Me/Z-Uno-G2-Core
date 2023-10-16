@@ -910,6 +910,9 @@ void _zunoSleepOnInclusionComplete(){
         LOGGING_UART.println("INCLUSION COMPLETED");
         #endif
     }
+    #if ZUNO_AFTER_INCLUSION_SLEEP_TIMEOUT > 0
+    zunoKickSleepTimeout(ZUNO_AFTER_INCLUSION_SLEEP_TIMEOUT);
+    #endif
     zunoEnterCritical();
     g_sleep_data.inclusion_latch = false;
     zunoExitCritical();

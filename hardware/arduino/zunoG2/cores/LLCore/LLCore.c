@@ -896,6 +896,9 @@ void _zunoSleepOnWUPStop(){
     #endif
 
 }
+bool zunoIsIclusionLatchClosed(){
+    return g_sleep_data.inclusion_latch;
+}
 void _zunoSleepOnInclusionStart(){
     #ifdef LOGGING_DBG
     LOGGING_UART.println("INCLUDE STARTED");

@@ -1224,6 +1224,7 @@ void zunoSendWakeUpNotification(){
 	__setSyncMapChannel(&g_channels_data.sys_reports, SYSREPORT_MAP_WAKEUP_BIT);
 }
 bool _zunoIsWUPLocked();
+bool zunoIsIclusionLatchClosed();
 void zunoSendReportHandler(uint32_t ticks) {
 	ZUNOCommandPacketReport_t									frame;
 
@@ -1261,7 +1262,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 		if((usr_reports == 0) && 
 	    	((sys_reports & (~(1 << SYSREPORT_MAP_WAKEUP_BIT))) == 0)){
 				if(__zunoDispatchPendingWUPReport()){
-					zuno_sendWUP_NotificationReport();
+					if(!zunoIsIclusionLatchClosed()) // If inclusion process started there is no need to send WUPNotification
+						zuno_sendWUP_NotificationReport();
 					return;
 			}
 		}

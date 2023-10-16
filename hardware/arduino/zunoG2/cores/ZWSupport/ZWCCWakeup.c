@@ -29,13 +29,15 @@ static void __zunoSetupWUPTimeout() {
 	#endif
 	zunoSetWUPTimer(save.wakeUpIntervalStepSeconds);
 }
-
+bool zunoIsIclusionLatchClosed();
 void zuno_sendWUP_NotificationReport() {
 	ZunoWakeUpSave_t				save;
 	size_t						wake_nodeid;
 	ZUNOCommandPacketReport_t	frame;
 
 	if(zunoNID() == 0)
+		return;
+	if(zunoIsIclusionLatchClosed())
 		return;
 	if(_zunoIsWUPLocked()){
 		// We have already sent WakeUp notofication and controller haven't responded to it

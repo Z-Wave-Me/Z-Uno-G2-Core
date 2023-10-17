@@ -85,6 +85,7 @@ bool ZMEVirtButtons::_process(bool pressed, ZMEButtonState_t * s){
             if(millis() > s->state_timeout){
                 _pushEvent(s, ((uint8_t)ZMEBUTTON_EVENT_HOLD));
                 s->state = ZMEBUTTON_STATE_HOLD;
+                s->last_hold_start = millis();
             }
             if(!pressed){
                 if(s->num_clicks >= _max_clicks){
@@ -110,6 +111,7 @@ bool ZMEVirtButtons::_process(bool pressed, ZMEButtonState_t * s){
             break;
         case ZMEBUTTON_STATE_HOLD:
             if(!pressed){
+                s->last_hold_start = millis()-s->last_hold_start + _hold_click_interval;
                 s->state = ZMEBUTTON_STATE_IDLE;
                 _pushEvent(s, ((uint8_t)ZMEBUTTON_EVENT_HOLD_RELEASE));
                 break;
@@ -229,6 +231,29 @@ bool ZMEVirtButtons::addButton(uint8_t channel, void * custom_data){
         return true;
     free(s);
     return false;
+}
+bool ZMEVirtButtons::isHolding(uint8_t channel){
+    bool rt = false;
+    zunoEnterCritical();
+    ZMEButtonState_t * s  = _extractChannelState(channel);
+    if(s != NULL){
+        rt = (s->state == ZMEBUTTON_STATE_HOLD);
+    }
+    zunoExitCritical();
+    return rt;
+}
+uint32_t ZMEVirtButtons::currentHoldTime(uint8_t channel){
+    uint32_t rt = 0;
+    zunoEnterCritical();
+    ZMEButtonState_t * s  = _extractChannelState(channel);
+    if(s != NULL){
+        if(s->state == ZMEBUTTON_STATE_HOLD)
+            rt = millis() - s->last_hold_start + _hold_click_interval;
+        else
+            rt = s->last_hold_start;
+    }
+    zunoExitCritical();
+    return rt;
 }
 void * ZMEVirtButtons::extractCustomData(uint8_t channel){
     void * d;

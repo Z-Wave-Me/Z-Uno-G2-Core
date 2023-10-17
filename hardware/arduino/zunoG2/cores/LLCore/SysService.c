@@ -3,11 +3,9 @@
 #ifdef ZUNO_OLD_BUTTONS
 #include "ZUNO_Buttons.h"
 #define BTN_OBJ Btn
-#define LONG_CLICK_FUNC isLongClick
 #else
 #include "ZMEButtons.h"
 #define BTN_OBJ ZBtn
-#define LONG_CLICK_FUNC isHolded
 #endif
 #include "ZWCCResetLocally.h"
 #include "Debug.h"
@@ -103,10 +101,19 @@ void SysServiceTimer(){
                 if(BTN_OBJ.isTripleClick(_SYSBUTTON)){
                     zunoStartLearn(SYS_LEARN_TIMEOUT, true);
                 }
-                if(BTN_OBJ.LONG_CLICK_FUNC(_SYSBUTTON)){
+                #if ZUNO_OLD_BUTTONS
+                if(Btn.isLongClick(_SYSBUTTON)){
                     _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
                     SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
                 }
+                #else 
+                if(ZBtn.isHoldReleased(_SYSBUTTON)){
+                    if(ZBtn.currentHoldTime(_SYSBUTTON) >= ZUNO_ADV_MENU_TIMEOUT){
+                        _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
+                        SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
+                    }
+                }
+                #endif
                 break;
             case SYS_SVC_MODE_SUBMENU:
                 if(BTN_OBJ.isTripleClick(_SYSBUTTON)){

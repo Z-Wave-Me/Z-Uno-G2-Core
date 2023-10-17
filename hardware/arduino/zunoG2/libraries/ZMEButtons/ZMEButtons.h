@@ -9,7 +9,7 @@
 #define ZME_BUTTONS_INVALID_CHANNEL 0xFF
 #define ZME_BUTTONS_DEFAULT_DEBOUNCE 20
 #define ZME_BUTTONS_DEFAULT_MULTICLICK 200
-#define ZME_BUTTONS_DEFAULT_HOLDINTERVAL 700
+#define ZME_BUTTONS_DEFAULT_HOLDINTERVAL 2000
 
 #define ZME_BUTTONS_MAX_PULSE_LIST  16
 #define ZME_BUTTONS_MAX_EVENT_LIST  8
@@ -43,6 +43,7 @@ typedef struct ZMEButtonState_s{
     ZMEButtonLocalState   state;
     uint32_t              state_timeout;
     uint8_t               num_clicks;
+    uint32_t              last_hold_start;
     ZMEButtonEven_t   event[ZME_BUTTONS_MAX_EVENTS];
 }ZMEButtonState_t;
 typedef void (*ZMEButtonHandlerFunc_t)(uint8_t channel, ZMEButtonEventType event);
@@ -60,8 +61,9 @@ class ZMEVirtButtons{
     bool isTripleClick(uint8_t channel) { return _popEvent(channel, ZMEBUTTON_EVENT_TRIPLE_CLICK);};
     bool isNClick(uint8_t channel, uint8_t n) {return _popEvent(channel, ZMEBUTTON_EVENT_CLICK+n-1);};
     bool isHolded(uint8_t channel) { return _popEvent(channel, ZMEBUTTON_EVENT_HOLD);};
+    bool isHolding(uint8_t channel);
+    uint32_t currentHoldTime(uint8_t channel);
     bool isHoldReleased(uint8_t channel) { return _popEvent(channel, ZMEBUTTON_EVENT_HOLD_RELEASE);};
-    
     bool isReleased(uint8_t channel);
     bool isIdled(uint8_t channel);
     bool isIdled();

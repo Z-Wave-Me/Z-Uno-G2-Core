@@ -83,12 +83,16 @@ void SysStopLearnLed(){
     zunoSysServiceLedOff(_SYSLED_LEARN);
 }
 void SysServiceInit(){
+    #ifndef NO_SYS_LEDS
 	zunoSysServiceLedInit();
+    #endif
     if(_SYSBUTTON != 0xFF) // The button is enabled for this configuration
         BTN_OBJ.addButton(_SYSBUTTON);
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
+    #ifndef NO_SYS_LEDS
     SysReconfigLeds();
+    #endif
 }
 static void _setSysCntrlState(uint8_t mode, uint32_t timeout){
     g_service_data.cntrl_mode = mode;
@@ -104,13 +108,17 @@ void SysServiceTimer(){
                 #if ZUNO_OLD_BUTTONS
                 if(Btn.isLongClick(_SYSBUTTON)){
                     _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
+                    #ifndef NO_SYS_LEDS
                     SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
+                    #endif
                 }
                 #else 
                 if(ZBtn.isHoldReleased(_SYSBUTTON)){
                     if(ZBtn.currentHoldTime(_SYSBUTTON) >= ZUNO_ADV_MENU_TIMEOUT){
                         _setSysCntrlState(SYS_SVC_MODE_SUBMENU, SUBMENU_TIMEOUT);
+                        #ifndef NO_SYS_LEDS
                         SysSetLearnLedMode(SYSLED_LEARN_MODE_SUBMENU_READY, SUBMENU_TIMEOUT);
+                        #endif
                     }
                 }
                 #endif
@@ -137,30 +145,40 @@ void SysServiceTimer(){
     }
     if((g_service_data.led_learn_timeout != 0) && 
         (millis() > g_service_data.led_learn_timeout)){
-        #ifdef LOGGING_DBG
-        LOGGING_UART.println("***LEARN LED STOPPED");
-        #endif
+        #ifndef NO_SYS_LEDS
+            #ifdef LOGGING_DBG
+            LOGGING_UART.println("***LEARN LED STOPPED");
+            #endif
         SysStopLearnLed();
+        #endif
     }
 }
 void SysServiceEvent(ZUNOSysEvent_t * ev){
     switch(ev->event){
         case ZUNO_SYS_EVENT_LEARNSTARTED:
+            #ifndef NO_SYS_LEDS
             SysSetLearnLedMode(SYSLED_LEARN_MODE_INCLUSION, SYS_LEARN_TIMEOUT * 1000UL);
+            #endif
             _setSysCntrlState(SYS_SVC_MODE_LEARN, SYS_LEARN_TIMEOUT * 1000UL);
             break;
         case ZUNO_SYS_EVENT_LEARNSTATUS:
             g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
+            #ifndef NO_SYS_LEDS
             SysStopLearnLed();
+            #endif
             break;
     }
 }
 void SysServiceSleep(){
+    #ifndef NO_SYS_LEDS
     zunoSysServiceLedOff(_SYSLED_LEARN);
     zunoSysServiceLedOff(_SYSLED_ACTIVITY);
+    #endif
 }
 void SysServiceWUP(){
+    #ifndef NO_SYS_LEDS
     SysReconfigLeds();
+    #endif
 }
 
 CORE_irqState_t CORE_EnterAtomic(void) __attribute__ ((alias("CORE_EnterCritical")));

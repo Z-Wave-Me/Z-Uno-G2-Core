@@ -157,7 +157,7 @@ void ZWQProcess(){
     queue_bit_mask = 0x0;
     for(e=g_zwpkg_queue, qi=0; e!= NULL && qi < queue_sz; e=e->next, qi++){
         p = (ZUNOCommandPacket_t *) e->data;
-       
+        #ifdef SYQUEUE_CNT_BARRIER
         uint32_t system_queue_count = g_zuno_sys->rstat_pkgs_queued - g_zuno_sys->rstat_pkgs_processed; //s.pkgs_queued - s.pkgs_processed;
         if(system_queue_count >= MAX_SYS_QUEUE_PKGS){
             #ifdef LOGGING_DBG
@@ -170,6 +170,7 @@ void ZWQProcess(){
             #endif
             break;
         }
+        #endif // SYQUEUE_CNT_BARRIER
         uint8_t q_ch = p->flags & ZUNO_PACKETFLAGS_PRIORITY_MASK; 
         // #ifdef LOGGING_DBG
 		// LOGGING_UART.print("*** QCH:");

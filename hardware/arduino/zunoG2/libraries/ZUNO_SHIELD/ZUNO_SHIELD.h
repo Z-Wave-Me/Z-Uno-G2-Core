@@ -13,6 +13,10 @@ typedef enum {
     SHIELD_ADC_JUMPER_I5V,
     SHIELD_ADC_JUMPER_I12V
 } ShieldADCJumper_t;
+
+#define PWM_CHANNEL(PIN) (PIN - PWM1)
+#define PWM_CHANNEL_MASK(PIN) (1 << PWM_CHANNEL(PIN))
+
 class ZUNOShield{
     public:
         ZUNOShield(ShieldPowerMode_t pm = SHIELD_POWER_12V);

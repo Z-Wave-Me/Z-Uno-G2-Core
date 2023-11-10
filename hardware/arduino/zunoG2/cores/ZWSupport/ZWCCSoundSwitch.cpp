@@ -32,6 +32,17 @@ __WEAK void zunoSoundSwitchStop(uint8_t channel) {
 	(void)channel;
 }
 
+__WEAK void zunoSoundSwitchPlayExt(uint8_t channel, uint8_t toneIdentifier, uint8_t volume, size_t freq) {
+	zunoSoundSwitchPlay(channel, volume, freq);
+	(void)toneIdentifier;
+}
+
+__WEAK void zunoSoundSwitchStopExt(uint8_t channel, uint8_t toneIdentifier) {
+	zunoSoundSwitchStop(channel);
+	(void)toneIdentifier;
+}
+
+
 extern const ZunoSoundSwitchParameterArray_t __start__switch_cc_array_list;
 extern const ZunoSoundSwitchParameterArray_t __stop__switch_cc_array_list;
 
@@ -226,7 +237,7 @@ static void _soundSwitchTonePlaySetStop(const ZunoSoundSwitchParameterArray_t *p
 	zunoEnterCritical();
 	_lock(parameter_array, 0x0);
 	zunoExitCritical();
-	zunoSoundSwitchStop(channel + 0x1);
+	zunoSoundSwitchStopExt(channel + 0x1, toneIdentifier);
 }
 
 static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, size_t playCommandToneVolume, uint8_t bReport) {
@@ -275,7 +286,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	if (time_stamp == 0x0) {
 		return (result);
 	}
-	zunoSoundSwitchPlay(channel + 0x1, playCommandToneVolume, parameter->duration->freq);
+	zunoSoundSwitchPlayExt(channel + 0x1, toneIdentifier, playCommandToneVolume, parameter->duration->freq);
 	zunoEnterCritical();
 	_lock(parameter_array, time_stamp);
 	parameter_array->play->parameter = parameter;
@@ -420,10 +431,10 @@ void zuno_CCSoundSwitchTimer(void) {
 					play->time_stamp = (rtcc_micros() / 1000) + ms;
 					switch (status) {
 						case SoundSwitchPlayTimerStatusOn:
-							zunoSoundSwitchStop(channel + 0x1);
+							zunoSoundSwitchStopExt(channel + 0x1, play->toneIdentifier);
 							break ;
 						case SoundSwitchPlayTimerStatusOff:
-							zunoSoundSwitchPlay(channel + 0x1, play->playCommandToneVolume, duration[index].freq);
+							zunoSoundSwitchPlayExt(channel + 0x1, play->toneIdentifier, play->playCommandToneVolume, duration[index].freq);
 							break ;
 					}
 				}

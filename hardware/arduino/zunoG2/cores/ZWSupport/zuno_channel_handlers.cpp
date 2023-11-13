@@ -149,8 +149,8 @@ bool _zunoAppendChannelHandler(byte ch, byte value_size, byte type, void *handle
 	const zuno_handler_single_gettersetter_t			*single_gettersetter;
 	const zuno_handler_multi_getter_t					*multi_getter;
 	const zuno_handler_multi_gettersetter_t				*multi_gettersetter;
-	const zuno_handler_single_thermostat_t				*single_thermostat;
-	const zuno_handler_multi_thermostat_t				*multi_thermostat;
+	const zuno_handler_single_dgs_t				*single_thermostat;
+	const zuno_handler_multi_dgs_t				*multi_thermostat;
 
 	if (ch >= ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 		return (false);
@@ -226,7 +226,7 @@ bool _zunoAppendChannelHandler(byte ch, byte value_size, byte type, void *handle
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
 			if ((channel_handler = (ZUnoChannelHandler_t *)malloc((sizeof(ZUnoChannelHandler_t) + (sizeof(ZUnoChannelHandlerArray_t) * 0x4)))) == NULL)
 				return (false);
-			single_thermostat = (const zuno_handler_single_thermostat_t *)handler;
+			single_thermostat = (const zuno_handler_single_dgs_t *)handler;
 			channel_handler->array[0x0].handler = single_thermostat->getter1;
 			channel_handler->array[0x0].flag = 0x0;
 			channel_handler->array[0x1].handler = single_thermostat->setter1;
@@ -241,7 +241,7 @@ bool _zunoAppendChannelHandler(byte ch, byte value_size, byte type, void *handle
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
 			if ((channel_handler = (ZUnoChannelHandler_t *)malloc((sizeof(ZUnoChannelHandler_t) + (sizeof(ZUnoChannelHandlerArray_t) * 0x4)))) == NULL)
 				return (false);
-			multi_thermostat = (const zuno_handler_multi_thermostat_t *)handler;
+			multi_thermostat = (const zuno_handler_multi_dgs_t *)handler;
 			channel_handler->array[0x0].handler = multi_thermostat->getter1;
 			channel_handler->array[0x0].flag = ZUNO_CHANNEL_HANDLERS_FLAGS_MULTI;
 			channel_handler->array[0x1].handler = multi_thermostat->setter1;
@@ -459,12 +459,12 @@ int32_t zuno_universalGetter1P(byte zuno_ch) {
 		}
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
 		{
-			zuno_handler_single_thermostat_t *p_gs = (zuno_handler_single_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+			zuno_handler_single_dgs_t *p_gs = (zuno_handler_single_dgs_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 			return zuno_callGetter(val_type, UNKNOWN_CHANNEL, p_gs->getter1);
 		}
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
 		{
-			zuno_handler_multi_thermostat_t *p_mgs = (zuno_handler_multi_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+			zuno_handler_multi_dgs_t *p_mgs = (zuno_handler_multi_dgs_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 			return zuno_callGetter(val_type, zuno_ch-p_mgs->offset, p_mgs->getter1);
 		}
 	}
@@ -497,12 +497,12 @@ void zuno_universalSetter1P(byte zuno_ch, int32_t value) {
 			}
 			break;
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT: {
-				zuno_handler_single_thermostat_t *p_gs = (zuno_handler_single_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+				zuno_handler_single_dgs_t *p_gs = (zuno_handler_single_dgs_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 				zuno_callSetter(val_type, UNKNOWN_CHANNEL, p_gs->setter1, value);
 			}
 			break;
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT: {
-				zuno_handler_multi_thermostat_t * p_mgs = (zuno_handler_multi_thermostat_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
+				zuno_handler_multi_dgs_t * p_mgs = (zuno_handler_multi_dgs_t *) g_zuno_channelhandlers_map[zuno_ch].p_handler;
 				zuno_callSetter(val_type, zuno_ch-p_mgs->offset, p_mgs->setter1, value);
 			}
 			break;
@@ -559,9 +559,9 @@ uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
 			return _callGetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->getter, value);
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
-			return _callGetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_thermostat_t *)lp)->getter2, value);
+			return _callGetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->getter2, value);
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
-			return _callGetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_thermostat_t *)lp)->offset, ((zuno_handler_multi_thermostat_t *)lp)->getter2, value);
+			return _callGetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->getter2, value);
 	}
 	return 0;
 }
@@ -621,10 +621,10 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 			_callSetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
-			_callSetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_thermostat_t *)lp)->setter2, value, value_add);
+			_callSetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->setter2, value, value_add);
 			break;
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
-			_callSetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_thermostat_t *)lp)->offset, ((zuno_handler_multi_thermostat_t *)lp)->setter2, value, value_add);
+			_callSetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->setter2, value, value_add);
 			break;
 	}
 }

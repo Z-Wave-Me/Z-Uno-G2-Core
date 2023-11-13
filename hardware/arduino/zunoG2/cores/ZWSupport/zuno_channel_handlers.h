@@ -15,19 +15,19 @@ typedef struct zuno_handler_multi_gettersetter_s{
     void * setter;
     uint8_t offset;
 }zuno_handler_multi_gettersetter_t;
-typedef struct		zuno_handler_single_thermostat_s {
+typedef struct		zuno_handler_single_dgs_s {
 	void			*getter1;
 	void			*setter1;
 	void			*getter2;
 	void			*setter2;
-} zuno_handler_single_thermostat_t;
-typedef struct		zuno_handler_multi_thermostat_s {
+} zuno_handler_single_dgs_t;
+typedef struct		zuno_handler_multi_dgs_s {
 	void			*getter1;
 	void			*setter1;
 	void			*getter2;
 	void			*setter2;
 	uint8_t			offset;
-}	zuno_handler_multi_thermostat_t;
+}	zuno_handler_multi_dgs_t;
 typedef struct		zuno_handler_soundswitch_s {
 	void            *tone_info;
 	void			*play;

@@ -192,6 +192,7 @@ inline int zunoEEPROMErase(void) {return (int)zunoSysCall(ZUNO_SYSFUNC_EEPROM_ER
 
 
 /* Z-Wave protocol support */
+void zunoReconfigStaticChannels();
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
 void zunoCommitCfg();
 #include "zuno_channel_handlers.h"

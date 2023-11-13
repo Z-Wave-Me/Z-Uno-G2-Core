@@ -20,15 +20,19 @@ typedef struct		zuno_handler_single_thermostat_s {
 	void			*setter1;
 	void			*getter2;
 	void			*setter2;
-}					zuno_handler_single_thermostat_t;
+} zuno_handler_single_thermostat_t;
 typedef struct		zuno_handler_multi_thermostat_s {
 	void			*getter1;
 	void			*setter1;
 	void			*getter2;
 	void			*setter2;
 	uint8_t			offset;
-}					zuno_handler_multi_thermostat_t;
-
+}	zuno_handler_multi_thermostat_t;
+typedef struct		zuno_handler_soundswitch_s {
+	void            *tone_info;
+	void			*play;
+	void			*stop;
+} zuno_handler_soundswitch_t;
 // SINGLE_GETTER
 typedef uint8_t zuno_singlegetter1ub_t(void);
 typedef uint16_t zuno_singlegetter2ub_t(void);
@@ -102,7 +106,10 @@ enum
 	CHANNEL_HANDLER_SINGLE_GETTERSETTER_2P,
 	CHANNEL_HANDLER_MULTI_GETTERSETTER_2P,
 	CHANNEL_HANDLER_SINGLE_THERMOSTAT,
-	CHANNEL_HANDLER_MULTI_THERMOSTAT
+	CHANNEL_HANDLER_MULTI_THERMOSTAT,
+	CHANNEL_HANDLER_SOUNDSWITCH,
+	CHANNEL_HANDLER_SINGLE_WINDOWCOVERING,
+	CHANNEL_HANDLER_MULTI_WINDOWCOVERING
 };
 
 
@@ -132,5 +139,5 @@ typedef struct ZUnoChannelHandler_s
 void zunoAppendChannelHandler(byte ch, byte value_size, byte type, void * handler);
 void zunoAppendChannelHandlerEx(uint8_t channel, const ZUnoChannelHandler_t *handler);
 int32_t zuno_universalGetterSetter(uint8_t zuno_ch, uint8_t index, uint8_t argc, ...);
-
+void * zunoExtractChannelHandlerPtr(uint8_t zuno_ch, uint8_t * type);
 #endif//ZUNO_CHANNEL_HANDLERS_H

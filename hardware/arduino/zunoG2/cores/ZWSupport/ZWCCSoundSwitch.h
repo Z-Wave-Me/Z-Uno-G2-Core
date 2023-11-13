@@ -187,7 +187,7 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 		.parametr = &_switch_cc_parameter_##CHANNEL[0x0],									\
 		.play = &_switch_cc_parameter_play_##CHANNEL,									\
 		.count = ((sizeof(_switch_cc_parameter_##CHANNEL) / sizeof(_switch_cc_parameter_##CHANNEL[0x0]))),			\
-		.channel = CHANNEL\
+		/*.channel = CHANNEL*/\ 
 	};\
 
 

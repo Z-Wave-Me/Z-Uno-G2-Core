@@ -142,7 +142,11 @@ void LLDestroy() {
 // this is managing using "preproc" util
 void zuno_static_autosetup();
 #endif
-
+void zunoReconfigStaticChannels() {
+    #ifdef WITH_AUTOSETUP
+    zuno_static_autosetup();
+    #endif
+}
 #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 void _zunoSysSleep();
 #endif

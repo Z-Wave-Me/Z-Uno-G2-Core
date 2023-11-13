@@ -411,6 +411,13 @@ void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 			break;
 	}
 }
+void * zunoExtractChannelHandlerPtr(uint8_t zuno_ch, uint8_t * type){
+	if(zuno_ch>ZUNO_CFG_CHANNEL_COUNT)
+		return 0;
+	if(type != NULL)
+		*type = g_zuno_channelhandlers_map[zuno_ch].descriptor & HANDLER_DESCRIPTOR_TYPE_MASK;
+	return g_zuno_channelhandlers_map[zuno_ch].p_handler;
+}
 int32_t zuno_universalGetter1P(byte zuno_ch) {
 	if(zuno_ch>ZUNO_CFG_CHANNEL_COUNT)
 		return 0;

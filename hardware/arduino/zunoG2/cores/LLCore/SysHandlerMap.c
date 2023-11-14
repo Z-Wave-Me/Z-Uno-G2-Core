@@ -70,6 +70,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     HandlerFunc_t  * h;
     ZMEHandlerMapper * p_mapper;
     byte *	 base_addr;
+    base_addr = NULL;
     for(e=g_syshandler_map; e; e=e->next){
          p_mapper = NULL;
          h = (HandlerFunc_t *) e->data;
@@ -103,6 +104,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                 continue;
             base_addr = (byte*)h->code_offset;
             if(base_addr < (( byte *)&g_zuno_codeheader)){
+                base_addr = NULL;
                 #ifdef LOGGING_DBG
                 LOGGING_UART.print("*** WRONG HANDLER ");
                 LOGGING_UART.print(type);
@@ -112,6 +114,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                 continue;
             }
          }
+         if (base_addr == NULL)
+            return (NULL);
          switch(type){
             case ZUNO_HANDLER_SYSTIMER:{
                     va_start (args, sub_type);

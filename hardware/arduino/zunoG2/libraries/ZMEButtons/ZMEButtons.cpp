@@ -30,6 +30,8 @@ bool ZMEVirtButtons::removeButton(uint8_t channel){
 
 bool ZMEVirtButtons::isReleased(uint8_t channel) {
     void * d = extractCustomData(channel);
+    if (d == NULL)
+        return (true);
     return !isChannelPressed(channel, d);
 }
 bool ZMEVirtButtons::isIdled(uint8_t channel) {
@@ -262,6 +264,8 @@ void * ZMEVirtButtons::extractCustomData(uint8_t channel){
     if(s!=NULL){
         d = s->custom_data;
     }
+    else
+        d = NULL;
     zunoExitCritical();
     return d;
 }

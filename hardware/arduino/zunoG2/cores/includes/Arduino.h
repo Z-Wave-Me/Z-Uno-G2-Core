@@ -25,6 +25,7 @@
 #include "SysHandlerMap.h"
 #include "zuno_gpio.h"
 #include "ZWCCMeter.h"
+#include "ZWCCSoundSwitch.h"
 
 enum{
   ZUNO_SECUREPARAM_OFF = 0,

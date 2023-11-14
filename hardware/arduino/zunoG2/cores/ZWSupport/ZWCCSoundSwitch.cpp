@@ -4,6 +4,7 @@
 #include "ZWCCBasic.h"
 #include "ZWCCTimer.h"
 #include "ZWCCSuperVision.h"
+#include "zuno_channel_handlers.h"
 
 #if defined(WITH_CC_SOUND_SWITCH)
 typedef struct								ZwSoundSwitchSave_s
@@ -14,55 +15,53 @@ typedef struct								ZwSoundSwitchSave_s
 }											ZwSoundSwitchSave_t;
 
 uint64_t rtcc_micros(void);
-
-__WEAK void zunoSoundSwitchPlay(uint8_t channel, uint8_t volume, size_t freq) {
-	(void)channel;
-	(void)volume;
-	(void)freq;
-}
-
-__WEAK void zunoSoundSwitchStop(uint8_t channel) {
-	(void)channel;
-}
-
-__WEAK void zunoSoundSwitchPlayExt(uint8_t channel, uint8_t toneIdentifier, uint8_t volume, size_t freq) {
-	zunoSoundSwitchPlay(channel, volume, freq);
-	(void)toneIdentifier;
-}
-
-__WEAK void zunoSoundSwitchStopExt(uint8_t channel, uint8_t toneIdentifier) {
-	zunoSoundSwitchStop(channel);
-	(void)toneIdentifier;
-}
-
-
-extern const ZunoSoundSwitchParameterArray_t __start__switch_cc_array_list;
-extern const ZunoSoundSwitchParameterArray_t __stop__switch_cc_array_list;
-
-ZUNO_SETUP_SOUND_SWITCH(255,
+ZUNO_SETUP_SOUND_SWITCH(_switch_cc_parameter_array_255,
 	ZUNO_SETUP_SOUND_SWITCH_TONE("Unknown", 10)
 );
 
-__WEAK const ZunoSoundSwitchParameterArray_t *zunoSoundSwitchGetParameterArrayUser(size_t channel) {
-	const ZunoSoundSwitchParameterArray_t			*iter;
+static const zuno_handler_soundswitch_t *_get_handler(size_t channel) {
+	const zuno_handler_soundswitch_t			*iter;
+	uint8_t										type;
 
-	channel++;
-	iter = &__start__switch_cc_array_list;
-	while (iter < &__stop__switch_cc_array_list) {
-		if (iter->channel == channel)
-			return (iter);
-		iter++;
-	}
+	iter = (const zuno_handler_soundswitch_t *)zunoExtractChannelHandlerPtr(channel - 0x1, &type);
+	if (iter != NULL && type == CHANNEL_HANDLER_SOUNDSWITCH)
+		return (iter);
 	return (NULL);
 }
 
-static const ZunoSoundSwitchParameterArray_t *_soundSwitchGetParameterArray(size_t channel) {
-	const ZunoSoundSwitchParameterArray_t			*iter;
 
-	iter = zunoSoundSwitchGetParameterArrayUser(channel);
-	if (iter != NULL)
-		return (iter);
-	return (&_switch_cc_parameter_array_255);
+static void _zunoSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t volume) {
+	const zuno_handler_soundswitch_t				*handler;
+	void											(*play)(uint8_t melody_id, uint8_t volume);
+
+	handler = _get_handler(channel);
+	if (handler == NULL)
+		return ;
+	play = (void(*)(uint8_t, uint8_t))handler->play;
+	play(toneIdentifier, volume);
+}
+
+static void _zunoSoundSwitchStop(uint8_t channel, uint8_t toneIdentifier) {
+	const zuno_handler_soundswitch_t				*handler;
+	void											(*stop)(uint8_t melody_id);
+
+	handler = _get_handler(channel);
+	if (handler == NULL)
+		return ;
+	stop = (void(*)(uint8_t))handler->stop;
+	stop(toneIdentifier);
+}
+
+
+static const ZunoSoundSwitchParameterArray_t *_soundSwitchGetParameterArray(size_t channel) {
+	const zuno_handler_soundswitch_t				*handler;
+	const ZunoSoundSwitchParameterArray_t			*(*tone_info)(void);
+
+	handler = _get_handler(channel);
+	if (handler == NULL)
+		return (_switch_cc_parameter_array_255());
+	tone_info = (const ZunoSoundSwitchParameterArray_t *(*)(void))handler->tone_info;
+	return (tone_info());
 }
 
 static const ZunoSoundSwitchParameter_t *_soundSwitchParameter(const ZunoSoundSwitchParameterArray_t *parameter_array, size_t index) {
@@ -223,7 +222,7 @@ static void _soundSwitchTonePlaySetStop(const ZunoSoundSwitchParameterArray_t *p
 	zunoEnterCritical();
 	_lock(parameter_array, 0x0);
 	zunoExitCritical();
-	zunoSoundSwitchStopExt(channel + 0x1, toneIdentifier);
+	_zunoSoundSwitchStop(channel + 0x1, toneIdentifier);
 }
 
 static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, size_t playCommandToneVolume, uint8_t bReport) {
@@ -272,7 +271,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	if (time_stamp == 0x0) {
 		return (result);
 	}
-	zunoSoundSwitchPlayExt(channel + 0x1, toneIdentifier, playCommandToneVolume, 0);
+	_zunoSoundSwitchPlay(channel + 0x1, toneIdentifier, playCommandToneVolume);
 	zunoEnterCritical();
 	_lock(parameter_array, time_stamp);
 	parameter_array->play->parameter = parameter;
@@ -345,7 +344,7 @@ void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t pla
 		return ;
 	if (ZUNO_CFG_CHANNEL(channel).type != ZUNO_SOUND_SWITCH_CHANNEL_NUMBER)
 		return ;
-	_soundSwitchTonePlaySetAdd(channel, toneIdentifier, playCommandToneVolume, false);
+	_soundSwitchTonePlaySetAdd(channel + 0x1, toneIdentifier, playCommandToneVolume, false);
 }
 
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet) {

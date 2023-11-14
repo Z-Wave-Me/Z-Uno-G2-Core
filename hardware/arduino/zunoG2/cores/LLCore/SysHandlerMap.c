@@ -71,6 +71,7 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
     ZMEHandlerMapper * p_mapper;
     byte *	 base_addr;
     base_addr = NULL;
+    p_mapper = NULL;
     for(e=g_syshandler_map; e; e=e->next){
          p_mapper = NULL;
          h = (HandlerFunc_t *) e->data;
@@ -114,10 +115,10 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                 continue;
             }
          }
-         if (base_addr == NULL)
-            return (NULL);
          switch(type){
             case ZUNO_HANDLER_SYSTIMER:{
+                    if (base_addr == NULL && p_mapper == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     uint32_t ticks = va_arg(args,uint32_t);
                     if(p_mapper)
@@ -128,11 +129,15 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     }
                     break;
             case ZUNO_HANDLER_REPORT:
+                    if (base_addr == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     ((zuno_user_zuno_handler_report*)(base_addr))(va_arg(args,ReportAuxData_t *));
                     va_end (args);
                     break;
             case ZUNO_HANDLER_SYSEVENT: {
+                    if (base_addr == NULL && p_mapper == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     ZUNOSysEvent_t* ev = va_arg(args,ZUNOSysEvent_t*);
                     if(p_mapper)
@@ -143,7 +148,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     }
                     break;
             case ZUNO_HANDLER_IRQ:{
-                    //return NULL;
+                    if (base_addr == NULL && p_mapper == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     IOQueueMsg_t * p_msg = va_arg(args,IOQueueMsg_t *);
                     if(p_mapper)
@@ -154,7 +160,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                     }
                     break;
             case ZUNO_HANDLER_EXTINT:{
-                    //return NULL;
+                    if (base_addr == NULL && p_mapper == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     uint8_t pin_index = (uint8_t)va_arg(args,size_t);
                     if(p_mapper)
@@ -168,6 +175,8 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
             case ZUNO_HANDLER_SLEEP:
             case ZUNO_HANDLER_WUP:
             case ZUNO_HANDLER_NOTIFICATON_TIME_STAMP:
+                    if (base_addr == NULL && p_mapper == NULL)
+                        return (result);
                     if(p_mapper) {
                         if(type == ZUNO_HANDLER_SLEEP)
                             p_mapper->handleSysSleep();
@@ -178,11 +187,15 @@ void * zunoSysHandlerCall(uint8_t type, uint8_t sub_type, ...){
                         ((zuno_void_handler*)(base_addr))();
                     break;
             case ZUNO_HANDLER_ZW_CFG:
+                    if (base_addr == NULL)
+                        return (result);
                     va_start (args, sub_type);
                     ((zuno_configuartionhandler_t*)(base_addr))((uint8_t)va_arg(args,uint32_t), va_arg(args,uint32_t));
                     va_end (args);
                     break;
             case ZUNO_HANDLER_ZW_BATTERY:
+                    if (base_addr == NULL)
+                        return (result);
                     result = (void*)(((zuno_battery_handler_t*)(base_addr))());
                     break;
             default:

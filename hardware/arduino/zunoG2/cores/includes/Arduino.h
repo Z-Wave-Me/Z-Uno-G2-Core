@@ -26,7 +26,7 @@
 #include "zuno_gpio.h"
 #include "ZWCCMeter.h"
 #include "ZWCCSoundSwitch.h"
-
+#include "ZWCCWindowCovering.h"
 enum{
   ZUNO_SECUREPARAM_OFF = 0,
   ZUNO_SECUREPARAM_ON = 1,

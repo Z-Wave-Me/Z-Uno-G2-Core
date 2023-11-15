@@ -23,7 +23,7 @@ static const zuno_handler_soundswitch_t *_get_handler(size_t channel) {
 	const zuno_handler_soundswitch_t			*iter;
 	uint8_t										type;
 
-	iter = (const zuno_handler_soundswitch_t *)zunoExtractChannelHandlerPtr(channel - 0x1, &type);
+	iter = (const zuno_handler_soundswitch_t *)zunoExtractChannelHandlerPtr(channel, &type);
 	if (iter != NULL && type == CHANNEL_HANDLER_SOUNDSWITCH)
 		return (iter);
 	return (NULL);
@@ -227,7 +227,7 @@ static void _soundSwitchTonePlaySetStop(const ZunoSoundSwitchParameterArray_t *p
 	zunoEnterCritical();
 	_lock(parameter_array, 0x0);
 	zunoExitCritical();
-	_zunoSoundSwitchStop(channel + 0x1, toneIdentifier);
+	_zunoSoundSwitchStop(channel, toneIdentifier);
 }
 
 static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, size_t playCommandToneVolume, uint8_t bReport) {
@@ -276,7 +276,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	if (time_stamp == 0x0) {
 		return (result);
 	}
-	_zunoSoundSwitchPlay(channel + 0x1, toneIdentifier, playCommandToneVolume);
+	_zunoSoundSwitchPlay(channel, toneIdentifier, playCommandToneVolume);
 	zunoEnterCritical();
 	_lock(parameter_array, time_stamp);
 	parameter_array->play->parameter = parameter;
@@ -349,7 +349,7 @@ void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t pla
 		return ;
 	if (ZUNO_CFG_CHANNEL(channel).type != ZUNO_SOUND_SWITCH_CHANNEL_NUMBER)
 		return ;
-	_soundSwitchTonePlaySetAdd(channel + 0x1, toneIdentifier, playCommandToneVolume, false);
+	_soundSwitchTonePlaySetAdd(channel, toneIdentifier, playCommandToneVolume, false);
 }
 
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet) {

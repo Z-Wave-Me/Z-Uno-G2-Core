@@ -5,19 +5,7 @@
 static uint8_t _save_batteryLevel = 0xFF;
 
 void zuno_CCBattery_OnSetup(){
-    switch (zunoGetWakeReason()) {
-        case ZUNO_WAKEUP_REASON_POR:
-        case ZUNO_WAKEUP_REASON_WUT_EM4:
-        case ZUNO_WAKEUP_REASON_EXT_EM4:
-        case ZUNO_WAKEUP_REASON_WUT_EM2:
-        case ZUNO_WAKEUP_REASON_EXT_EM2:
-        case ZUNO_WAKEUP_REASON_SOFTRESET:
-        case ZUNO_WAKEUP_REASON_PIN:
-            zunoSendBatteryReport();
-            break ;
-        default:
-            break ;
-    }
+    zunoSendBatteryReport();
 }
 
 

@@ -5,14 +5,7 @@
 static uint8_t _save_batteryLevel = 0xFF;
 
 void zuno_CCBattery_OnSetup(){
-    if ((zunoGetWakeReason() == ZUNO_WAKEUP_REASON_POR) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM4) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM4) ||
-    (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_WUT_EM2) ||
-      (zunoGetWakeReason() == ZUNO_WAKEUP_REASON_EXT_EM2)
-      ){
-        zunoSendBatteryReport();
-    }
+    zunoSendBatteryReport();
 }
 
 

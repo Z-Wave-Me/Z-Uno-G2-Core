@@ -290,7 +290,15 @@ int HardwareSerial::peek(void) {
 int HardwareSerial::read(void) {
 	return (this->_readLock(true));
 }
-
+void    HardwareSerial::_busyWaitingDMA(){
+	uint32_t mx_timeout = millis() + 500;
+	while (!(_configTable->STATUS[0x0] & HARDWARE_SERIAL_STATUS_TXC)){/* Check that transmit buffer is empty */
+		__NOP();
+		if(millis() > mx_timeout){
+					break;
+		}
+	}
+}
 size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 	const ZunoHardwareSerialConfig_t			*config;
 	const uint8_t								*e;
@@ -308,14 +316,12 @@ size_t HardwareSerial::write(const uint8_t *b, size_t count) {
 		while (b < e) {
 			config->TXDATA[0x0] = (uint32_t)b++[0];
 			delay(ms);
-			while (!(config->STATUS[0x0] & HARDWARE_SERIAL_STATUS_TXC))/* Check that transmit buffer is empty */
-				__NOP();
+			_busyWaitingDMA();
 		}
 	}
 	else if ((channel = LdmaClass::transferSingle(b, (void*)(config->TXDATA), count, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncOne, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(ms);
-		while (!(config->STATUS[0x0] & HARDWARE_SERIAL_STATUS_TXC))/* Check that transmit buffer is empty */
-			__NOP();
+		_busyWaitingDMA();
 		LdmaClass::transferStop(channel);
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);
@@ -353,8 +359,7 @@ void HardwareSerial::memset(uint8_t c, size_t n) {
 		return ;
 	if ((channel = LdmaClass::transferSingle(&c, (void*)(config->TXDATA), n, config->dmaSignalWrite, ldmaCtrlSizeByte, ldmaCtrlSrcIncNone, ldmaCtrlDstIncNone, &array)) >= 0x0) {
 		delay(this->countWaitingMs(n));
-		while (!(config->STATUS[0x0] & HARDWARE_SERIAL_STATUS_TXC))/* Check that transmit buffer is empty */
-			__NOP();
+		_busyWaitingDMA();
 		LdmaClass::transferStop(channel);
 	}
 	zunoSyncReleseWrite(config->lpLock, SyncMasterHadwareSerial, &this->_lpKey);

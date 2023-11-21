@@ -108,7 +108,7 @@ class HardwareSerial : public Stream {
 		inline size_t							write(long n) { return write((uint8_t)n); }
 		inline size_t							write(unsigned int n) { return write((uint8_t)n); }
 		inline size_t							write(int n) { return write((uint8_t)n); }
-		
+		void                                    _busyWaitingDMA();
 		void									memset(uint8_t c, size_t n);//max 2048 * 255
 		
 		virtual size_t							write(const uint8_t *b, size_t count);

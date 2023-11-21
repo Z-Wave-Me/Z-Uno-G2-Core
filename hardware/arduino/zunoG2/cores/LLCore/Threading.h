@@ -22,6 +22,16 @@ typedef struct _znSysQData_s{
 typedef struct _znSysThData_s{
     uint8_t __data[0x4c];
 }_znSysThData_t;
+typedef struct irq_reg_stack_s {
+    uint32_t r0;
+    uint32_t r1;
+    uint32_t r2;
+    uint32_t r3;
+    uint32_t r12;
+    uint32_t lr;
+    uint32_t pc;
+    uint32_t psr;
+}irq_reg_stack_t; //Указатель на текущее значение стека(SP)
 // -----------------------------------------------------------------------
 
 // -----------------------------------------------------------------------
@@ -90,6 +100,8 @@ bool zunoIsSystemThread(void * handle=NULL);
 bool zunoIsIOThread(void * handle=NULL);
 bool zunoIsMainThread(void * handle=NULL);
 void * zunoGetSysThreadHandle(ZunoSysThreadType_t type);
+irq_reg_stack_t * extractThreadIRQStack(void * handle);
+uint32_t zmeExtractSketchTLB();
 
 
 inline void *zunoGetCurrentThreadHandle() {

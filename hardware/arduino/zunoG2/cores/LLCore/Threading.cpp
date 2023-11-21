@@ -91,6 +91,26 @@ znMessageQueue::znMessageQueue(uint32_t msg_size, uint32_t queuesize, void *queu
 static ZNLinkedList_t * g_user_threadlst = NULL;
 static void * g_timerThread = NULL;
 static void * g_commandThread = NULL;
+irq_reg_stack_t * _extractThreadIRQStack(uint32_t * tcb){
+    uint32_t * stk_ptr = ((uint32_t*)tcb[0]);
+    bool is_fpu_frame;
+    #ifdef ZWAVE_SERIES_800
+      is_fpu_frame = ((stk_ptr[2] & 0x10) == 0);
+      stk_ptr += 11; // end_of_stack, control, exc_ret, r4-r11
+    #else
+      is_fpu_frame = ((stk_ptr[9] & 0x10) == 0);
+      stk_ptr += 10; // control, r4-r11, exc_ret
+    #endif
+    if(is_fpu_frame)
+      stk_ptr += 16; // FPU registers
+    return  (irq_reg_stack_t*)stk_ptr;
+}
+irq_reg_stack_t * extractThreadIRQStack(void * handle){
+	return _extractThreadIRQStack((uint32_t*)handle);
+}
+uint32_t zmeExtractSketchTLB(){
+	return (uint32_t)zunoSysCall(ZUNO_SYSFUNC_DBGMUX, 1, 0);
+}
 void * zunoGetSysThreadHandle(ZunoSysThreadType_t type){
 	switch(type){
 		case SYS_THREAD_MAIN:

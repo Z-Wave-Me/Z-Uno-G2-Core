@@ -794,6 +794,19 @@ void _zunoSysSleep(){
             zunoSysCall(ZUNO_SYSFUNC_PERSISTENT_TIMER_CONTROL, 2, i,  val);
         }
 }
+void __monitorMainThread(){
+  #ifdef LOGGING_DBG
+  uint32_t tlb_ptr = zmeExtractSketchTLB();
+  LOGGING_UART.println("--- loop()");
+  LOGGING_UART.print("TLB:");
+  LOGGING_UART.println(tlb_ptr, HEX);
+  irq_reg_stack_t * regs =  extractThreadIRQStack((void*)&tlb_ptr);
+  LOGGING_UART.print("  PC:");
+  LOGGING_UART.println(regs->pc, HEX);
+  LOGGING_UART.print("  LR:");
+  LOGGING_UART.println(regs->lr, HEX);
+  #endif
+}
 
 static uint8_t __zunoSleepingUpd(){
     #ifndef NO_BTN_CHECK_BEFORE_SLEEP
@@ -854,17 +867,21 @@ static uint8_t __zunoSleepingUpd(){
     zunoSetSleepTimeout(ZUNO_SLEEPLOCK_SYSTEM, ZUNO_AWAKETIMEOUT_SLEEPNOW);
     */
 }
+
  static void _zunoSleepingUpd(){
     static uint32_t count =0;
     uint8_t v = __zunoSleepingUpd();
     (void)v;
     #ifdef LOGGING_DBG
     if((count & 0x3F) == 0){
+        
         LOGGING_UART.print("***SLP (");
         LOGGING_UART.print((uint32_t)zunoGetCurrentThreadHandle(), HEX);
         LOGGING_UART.print("):");
         LOGGING_UART.println(v);
-    }
+    }   
+    // if((count & 0xFF) == 0)
+    //     __monitorMainThread();
     #endif
     count++;
  }

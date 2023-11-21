@@ -150,7 +150,6 @@ typedef struct						ZunoSoundSwitchParameterPlay_s
 	const ZunoSoundSwitchParameter_t	*parameter;
 	uint8_t							toneIdentifier;
 	uint8_t							playCommandToneVolume;
-	uint8_t							bReport;
 }									ZunoSoundSwitchParameterPlay_t;
 
 typedef struct								ZunoSoundSwitchParameterArray_s
@@ -179,7 +178,6 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 		.parameter = NULL,														\
 		.toneIdentifier = 0x0,													\
 		.playCommandToneVolume = 0x0,											\
-		.bReport = false														\
 	};\
 	static const ZunoSoundSwitchParameterArray_t &_switch_cc_parameter_array_##TONES = \
 	{ \
@@ -199,6 +197,7 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
+void zuno_CCSoundSwitchStop(uint8_t channel);
 void zunoSoundSwitchSaveInit(void);
 
 #endif// ZWCC_SOUND_SWITCH_H

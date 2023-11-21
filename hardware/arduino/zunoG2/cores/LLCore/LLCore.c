@@ -348,6 +348,12 @@ void * zunoJumpTable(int vec, void * data) {
             checkSystemCriticalStat(); // Self check after each loop
             #endif
             #if (SKETCH_FLAGS_LOOP_DELAY>0)
+            #ifdef LOGGING_DBG
+	        LOGGING_UART.print("*** LOOP DL:");
+            LOGGING_UART.println(SKETCH_FLAGS_LOOP_DELAY);
+                // LOGGING_UART.print(" P:");
+                // LOGGING_UART.print(p_msg->param);
+	        #endif
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             #endif
             break;
@@ -837,7 +843,9 @@ static uint8_t __zunoSleepingUpd(){
     }
     
     #ifdef LOGGING_DBG
-    LOGGING_UART.println("CORE CODE: GO SLEEP>>>");
+    LOGGING_UART.print("CORE CODE (");
+    LOGGING_UART.print((uint32_t)zunoGetCurrentThreadHandle(), HEX);
+    LOGGING_UART.println(") GO SLEEP!");
     #endif
     g_zuno_sys->sleep_latches = SLEEP_UNLOCKED;
     return 0;
@@ -852,7 +860,9 @@ static uint8_t __zunoSleepingUpd(){
     (void)v;
     #ifdef LOGGING_DBG
     if((count & 0x3F) == 0){
-        LOGGING_UART.print("***SLP:");
+        LOGGING_UART.print("***SLP (");
+        LOGGING_UART.print((uint32_t)zunoGetCurrentThreadHandle(), HEX);
+        LOGGING_UART.print("):");
         LOGGING_UART.println(v);
     }
     #endif

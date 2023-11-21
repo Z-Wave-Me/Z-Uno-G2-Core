@@ -149,7 +149,6 @@ void ZWQProcess(){
 	int queue_sz = znllCount(g_zwpkg_queue);
     #ifdef LOGGING_DBG
     if((queue_sz > 0) && ((count_n & 0x3F) == 0)){
-
 	    LOGGING_UART.print("CommandQueue Size:");
         LOGGING_UART.println(queue_sz);
     }

@@ -128,6 +128,7 @@ ZunoError_t zunoSyncOpen(ZunoSync_t *lpLock, SyncMaster_t value, ZunoError_t (*f
 		if ((master = lpLock->master) == SyncMasterOpenClose) {
 			zunoExitCritical();
 			delay(1);
+			count ++;
 			continue ;
 		}
 		if (lpKey[0] == true) {

@@ -762,10 +762,10 @@ typedef struct												ZunoMeterTblHistoryValue_s
 
 // Air temperature
 #define SENSOR_MULTILEVEL_SCALE_CELSIUS 											0x00 
+#define SENSOR_MULTILEVEL_SCALE_FAHRENHEIT	 										0x01
 //General purpose
 #define SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE									0x00 
 #define SENSOR_MULTILEVEL_SCALE_DIMENSIONLESS_VALUE									0x01 
-
 //Luminance
 #define SENSOR_MULTILEVEL_SCALE_LUX													0x01
 //Power
@@ -807,10 +807,7 @@ typedef struct												ZunoMeterTblHistoryValue_s
 #define SENSOR_MULTILEVEL_SCALE_PERCENTAGE_VALUE								0x00
 //Rotation
 #define SENSOR_MULTILEVEL_SCALE_REVOLUTION_PER_MINUTE  							0x00
-//Water temperature
-#define SENSOR_MULTILEVEL_SCALE_CELSIUS											0x00
-//Soil temperature
-#define SENSOR_MULTILEVEL_SCALE_CELSIUS											0x00
+
 //Seismic intensity 
 #define SENSOR_MULTILEVEL_SCALE_MERCALLI										0x00
 //Seismic magnitude 
@@ -827,8 +824,6 @@ typedef struct												ZunoMeterTblHistoryValue_s
 #define SENSOR_MULTILEVEL_SCALE_HERTZ											0x00
 //Time
 #define SENSOR_MULTILEVEL_SCALE_SECOND											0x00
-//Target temperature
-#define SENSOR_MULTILEVEL_SCALE_CELSIUS											0x00
 #define SENSOR_MULTILEVEL_SCALE_LITERS_PER_HOUR									0x00
 
 //Sensor Multilevel Properties

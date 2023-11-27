@@ -348,11 +348,9 @@ void * zunoJumpTable(int vec, void * data) {
             checkSystemCriticalStat(); // Self check after each loop
             #endif
             #if (SKETCH_FLAGS_LOOP_DELAY>0)
-            #ifdef LOGGING_DBG
+            #if defined(LOGGING_DBG) && defined(DGB_LOOP_ACTIVITY)
 	        LOGGING_UART.print("*** LOOP DL:");
             LOGGING_UART.println(SKETCH_FLAGS_LOOP_DELAY);
-                // LOGGING_UART.print(" P:");
-                // LOGGING_UART.print(p_msg->param);
 	        #endif
             delay(SKETCH_FLAGS_LOOP_DELAY); // to avoid starvation
             #endif

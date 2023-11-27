@@ -782,13 +782,12 @@ void _resetUserChannels(){
 void _zunoLoadUserChannels(){
 	zunoEEPROMRead(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 	uint16_t crc16 = _calcCfg16Crc();
-	/*
-	#ifdef LOGGING_DBG
+	#if defined(LOGGING_DBG) && defined(DEBUG_CHANNEL_DATA)
 	LOGGING_UART.print("CRC16:");
 	LOGGING_UART.println(crc16, HEX);
 	LOGGING_UART.print("--- LOAD CHANNELS ---");
 	LOGGING_UART.dumpPrint(&g_zuno_zw_cfg, sizeof(g_zuno_zw_cfg));
-	#endif*/
+	#endif
 	if(crc16 != g_zuno_zw_cfg.crc16){
 		#ifdef LOGGING_DBG
 		LOGGING_UART.println("*** Wrong channels CRC!. Clear data.");
@@ -799,18 +798,18 @@ void _zunoLoadUserChannels(){
 }
 void _zunoSaveUserChannels(){
 	g_zuno_zw_cfg.crc16 = _calcCfg16Crc();
-	/*
-	#ifdef LOGGING_DBG
+	
+	#if defined(LOGGING_DBG) && defined(DEBUG_CHANNEL_DATA)
 	LOGGING_UART.print("--- SAVE CHANNELS ---");
 	LOGGING_UART.dumpPrint(&g_zuno_zw_cfg, sizeof(g_zuno_zw_cfg));
 	LOGGING_UART.print("CRC16:");
 	LOGGING_UART.println(g_zuno_zw_cfg.crc16, HEX);
-	#endif*/
+	#endif
 	zunoEEPROMWrite(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 }
 void zunoCommitCfg(){
-	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
 	_zunoSaveUserChannels();
+	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
 	#if defined(WITH_CC_BASIC)
 	zunoBasicSaveInit();
 	#endif

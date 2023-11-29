@@ -2,6 +2,7 @@
 #include "ZWCCConfiguration.h"
 #include "ZWCCSuperVision.h"
 #include "SysService.h"
+#include "Debug.h"
 
 #define CONFIGPARAM_MIN_PARAM				0x40
 #define CONFIGPARAM_MAX_PARAM				(CONFIGPARAM_MIN_PARAM + (EEPROM_CONFIGURATION_SIZE / 0x4))
@@ -338,9 +339,18 @@ static void _saveSysParam(size_t param, uint32_t  value){
                		break;
 	}
 	if(update){
+		#ifdef LOGGING_DBG
+	    LOGGING_UART.print("*** UPD CFG. HFLG:");
+        LOGGING_UART.println(g_zuno_codeheader.flags,HEX);
+		LOGGING_UART.print(" RBT: ");
+		LOGGING_UART.println(reboot);
+	    #endif
 		zunoUpdateSysConfig(true, false);
 	}
 	if(reboot && (g_zuno_codeheader.flags & HEADER_FLAGS_REBOOT_CFG)){
+		#ifdef LOGGING_DBG
+	    LOGGING_UART.println("*** REBOOT");
+	    #endif
 		zunoReboot(false);
 	}
 }

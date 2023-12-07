@@ -27,37 +27,10 @@ typedef enum				ZunoCFGTypeHandler_e
 }							ZunoCFGTypeHandler_t;
 
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) __attribute__ ((weak));
-// DEFAULT metada for configuration parameters
-const ZunoCFGParameter_t CFGPARAM_DEFAULT =
-{
-	.name = "Parameter NN",
-	.info = "Custom configuration parameter",
-	.minValue = 0x0,
-	.maxValue = -1,
-	.defaultValue = 0x7FFFFFFF,
-	.size = ZUNO_CFG_PARAMETER_SIZE_32BIT,
-	.format = ZUNO_CFG_PARAMETER_FORMAT_UNSIGNED,
-	.readOnly = false,
-	.altering = false,
-	.advanced = false,
-	.hiden_search = false
-};
 // Default method for zuno configuration parameter's metadata
 const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
-	static ZunoCFGParameter_t param_data;
-	static char               alternative_name[32];
-	memcpy(&param_data, &CFGPARAM_DEFAULT, sizeof(ZunoCFGParameter_t));
-	strcpy(alternative_name, param_data.name);
-	param_data.name = alternative_name;
-	if((param >= CONFIGPARAM_MAX_PARAM) || 
-		(param < CONFIGPARAM_MIN_PARAM))
-		return (ZUNO_CFG_PARAMETER_UNKNOWN);
-	char* p_nn  = strstr(param_data.name, "NN");
-	if(p_nn == NULL)
-		return (const ZunoCFGParameter_t *)&param_data;
-	p_nn[0] = '0' + (param / 10) % 10;
-	p_nn[1] = '0' + (param % 10);
-	return (const ZunoCFGParameter_t *)&param_data;
+	return (ZUNO_CFG_PARAMETER_UNKNOWN);
+	(void)param;
 }
 
 // System side parameters information

@@ -1,20 +1,16 @@
 #include "Arduino.h"
 #include "zuno_gpio.h"
 
-#if ZUNO_PIN_V == 3
-#pragma message "ZUNO_PIN_V==3"
-#elif ZUNO_PIN_V == 4
-#pragma message "ZUNO_PIN_V==4"
-#elif ZUNO_PIN_V == 6
-#pragma message "ZUNO_PIN_V==6"
-#elif ZUNO_PIN_V == 800
-#pragma message "ZUNO_PIN_V==800 (SDK BRD4210A)"
-#elif ZUNO_PIN_V == 802
-#pragma message "ZUNO_PIN_V==802 (SDK BRD4205B)"
-#elif ZUNO_PIN_V == 803
-#pragma message "ZUNO_PIN_V==803 (RYSE BRD)"
-#elif ZUNO_PIN_V == 804
-#pragma message "ZUNO_PIN_V==804 (ZGM8202 BRD)"
+#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
+#pragma message "ZUNO_PIN_V==0x704"
+#elif ZUNO_PIN_V == 0x800
+#pragma message "ZUNO_PIN_V==0x800 (SDK BRD4210A)"
+#elif ZUNO_PIN_V == 0x802
+#pragma message "ZUNO_PIN_V==0x802 (SDK BRD4205B)"
+#elif ZUNO_PIN_V == 0x803
+#pragma message "ZUNO_PIN_V==0x803 (RYSE BRD)"
+#elif ZUNO_PIN_V == 0x804
+#pragma message "ZUNO_PIN_V==0x804 (ZGM8202 BRD)"
 #else
     #error ZUNO_PIN_V
 #endif

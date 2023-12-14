@@ -51,12 +51,10 @@ extern unsigned long __bss_end__;
 extern unsigned long __HeapBase;
 extern unsigned long __HeapLimit;
 
-#if (ZUNO_PIN_V == 6 || ZUNO_PIN_V == 704)
+#if (ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704)
 #define ZUNO_HW_ID_VERS (0x704)
-#elif (ZUNO_PIN_V >= 800)
-#define ZUNO_HW_ID_VERS (0x800 + (ZUNO_PIN_V - 800))
 #else
-#error "ZUNO_PIN_V"
+#define ZUNO_HW_ID_VERS (ZUNO_PIN_V)
 #endif
 #ifndef ZUNO_SKETCH_BUILD_TS
 #define ZUNO_SKETCH_BUILD_TS 0

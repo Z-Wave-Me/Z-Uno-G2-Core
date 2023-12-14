@@ -40,7 +40,7 @@
 #define HIGH				1
 #define LOW					0
 
-#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 704
+#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -49,7 +49,7 @@
 	#define LED_BUILTIN         13
 
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 802 || ZUNO_PIN_V == 803  || ZUNO_PIN_V == 800 || ZUNO_PIN_V == 804
+#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x804
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -62,7 +62,7 @@
 	#error ZUNO_PIN_V
 #endif
 
-#if ZUNO_PIN_V == 804
+#if ZUNO_PIN_V == 0x804
 	#define SYS_LED_INVERT						true
 #else
 	#define SYS_LED_INVERT						false
@@ -108,7 +108,7 @@ typedef struct	PinDef_s
 // D = 3
 // E = 4
 // F = 5
-#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 704
+#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     // LEFT SIDE
     {2, 8},//0 - PC8 - 0 
@@ -144,7 +144,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     {1, 15},//28 - PB15 - green
     {1, 14}//29 - PB14 - red
 };
-#elif ZUNO_PIN_V == 800
+#elif ZUNO_PIN_V == 0x800
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//00 - PA00
 	{0, 1},//01 - PA01
@@ -177,7 +177,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{1, 2},//28 - PB02 - led1_pin
 	{3, 3},//29 - PD03 - led2_pin
 };
-#elif ZUNO_PIN_V == 802
+#elif ZUNO_PIN_V == 0x802
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//00 - PA00
 	{0, 1},//01 - PA01
@@ -210,7 +210,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{1, 2},//28 - PB02 - led1_pin
 	{3, 3},//29 - PD03 - led2_pin
 };
-#elif ZUNO_PIN_V == 803
+#elif ZUNO_PIN_V == 0x803
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//00 - PA00
 	{0, 1},//01 - PA01
@@ -243,7 +243,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{1, 2},//28 - PB02 - led1_pin
 	{3, 3},//29 - PD03 - led2_pin
 };
-#elif ZUNO_PIN_V == 804 // ZGM8202 board
+#elif ZUNO_PIN_V == 0x804 // ZGM8202 board
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//00 - PA00
 	{0, 1},//01 - PA01

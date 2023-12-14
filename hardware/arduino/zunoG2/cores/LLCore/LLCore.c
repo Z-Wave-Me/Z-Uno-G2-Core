@@ -51,14 +51,12 @@ extern unsigned long __bss_end__;
 extern unsigned long __HeapBase;
 extern unsigned long __HeapLimit;
 
-#if (ZUNO_PIN_V < 4)
-#define ZUNO_HW_ID_VERS (0x700 + ZUNO_PIN_V)
-#elif ((ZUNO_PIN_V >= 4) && (ZUNO_PIN_V <= 7))
+#if (ZUNO_PIN_V == 6 || ZUNO_PIN_V == 704)
 #define ZUNO_HW_ID_VERS (0x704)
 #elif (ZUNO_PIN_V >= 800)
 #define ZUNO_HW_ID_VERS (0x800 + (ZUNO_PIN_V - 800))
 #else
-#define ZUNO_HW_ID_VERS (ZUNO_PIN_V)
+#error "ZUNO_PIN_V"
 #endif
 #ifndef ZUNO_SKETCH_BUILD_TS
 #define ZUNO_SKETCH_BUILD_TS 0
@@ -66,22 +64,7 @@ extern unsigned long __HeapLimit;
 #ifndef DBG_CONSOLE_PIN
 #ifdef LOGGING_DBG
 #define DBG_CONSOLE_PIN 0xFE //  Use a default one for the board
-    /*
-    #if ZUNO_PIN_V == 0
-    #define DBG_CONSOLE_PIN 0x27 // C7
-    #elif ZUNO_PIN_V == 1
-    #define DBG_CONSOLE_PIN 0x00 // A0  
-    #elif ZUNO_PIN_V == 2
-    #define DBG_CONSOLE_PIN 0x00 // A0
-    #elif ZUNO_PIN_V == 3
-    #define DBG_CONSOLE_PIN 0x2B // C11
-    #elif ZUNO_PIN_V == 4
-    #define DBG_CONSOLE_PIN 0x3D // D13
-    #elif ZUNO_PIN_V == 6
-    #define DBG_CONSOLE_PIN 0x3D // D13
-    #else
-    #define DBG_CONSOLE_PIN 0xFF
-    #endif */
+
 #else
     #define DBG_CONSOLE_PIN 0xFF
 #endif // LOGGING_DBG

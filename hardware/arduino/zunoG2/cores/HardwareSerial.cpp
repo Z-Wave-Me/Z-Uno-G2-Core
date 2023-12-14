@@ -207,23 +207,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig, uint8
 		#endif
 		#if USART_COUNT >= 3
 		case ZunoHardwareSerialUsart2:
-			#if ZUNO_PIN_V == 3
-				static const ZunoHardwareSerialConfig_t configTable_usart1 =
-				{
-					.usart = USART1,
-					.TXDATA = &USART1->TXDATA,
-					.FRAME = &USART1->FRAME,
-					.RXDATA = &USART1->RXDATA,
-					.STATUS = &USART1->STATUS,
-					.lpLock = &gSyncUSART1,
-					.dmaSignalWrite = ldmaPeripheralSignal_USART1_TXBL,
-					.dmaSignalRead = ldmaPeripheralSignal_USART1_RXDATAV,
-					.bus_clock = cmuClock_USART1,
-					.fd = 0x1,
-					.type = ZunoHardwareSerialTypeUsart
-				};
-				configTable = &configTable_usart1;
-			#else
 				static const ZunoHardwareSerialConfig_t configTable_usart2 =
 				{
 					.usart = USART2,
@@ -239,7 +222,6 @@ HardwareSerial::HardwareSerial(ZunoHardwareSerialNumConfig_t numberConfig, uint8
 					.type = ZunoHardwareSerialTypeUsart
 				};
 				configTable = &configTable_usart2;
-			#endif
 			break ;
 		#endif
 	}

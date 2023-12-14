@@ -1,12 +1,8 @@
 #include "Arduino.h"
 #include "zuno_gpio.h"
 
-#if ZUNO_PIN_V == 3
-#pragma message "ZUNO_PIN_V==3"
-#elif ZUNO_PIN_V == 4
-#pragma message "ZUNO_PIN_V==4"
-#elif ZUNO_PIN_V == 6
-#pragma message "ZUNO_PIN_V==6"
+#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 704
+#pragma message "ZUNO_PIN_V==704"
 #elif ZUNO_PIN_V == 800
 #pragma message "ZUNO_PIN_V==800 (SDK BRD4210A)"
 #elif ZUNO_PIN_V == 802

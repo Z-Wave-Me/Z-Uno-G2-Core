@@ -44,6 +44,7 @@ void * znllRemoveP(ZNLinkedList_t** l, void * d){
         } else {
             *l = e->next;
         }
+        free(e);
     } else {
       d = NULL;
     }

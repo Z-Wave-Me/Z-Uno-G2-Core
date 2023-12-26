@@ -287,6 +287,17 @@ bool zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event) {
 	return (out);
 }
 
+void zuno_CCCentralSceneRemoveAll(void) {
+	void												*data;
+
+	while (true) {
+		data = znllRemove(&_central_scene, 0x0);
+		if (data == NULL)
+			break;
+		free(data);
+	}
+}
+
 typedef struct								ZunoCentralSceneConfig_s
 {
 	bool									slow_mode;

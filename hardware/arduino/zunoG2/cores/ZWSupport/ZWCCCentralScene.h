@@ -109,6 +109,7 @@ typedef struct									ZwCentralSceneSupportedReportFrame_s
 
 bool zuno_CCCentralSceneAdd(uint32_t uuid, uint32_t mask);
 bool zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event);
+void zuno_CCCentralSceneRemoveAll(void);
 
 int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 

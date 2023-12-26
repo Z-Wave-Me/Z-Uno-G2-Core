@@ -221,6 +221,10 @@ static void LLInit(void *data) {
 	#endif
 	void __g_zuno_indicator_init(void);
 	__g_zuno_indicator_init();
+	#if defined(WITH_CC_CENTRAL_SCENE)
+	void zunoCentralSceneSaveLoad(void);
+	zunoCentralSceneSaveLoad();
+	#endif
 	g_sketch_inited = false;
 }
 #ifdef LOGGING_DBG

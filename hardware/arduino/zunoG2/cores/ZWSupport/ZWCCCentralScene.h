@@ -106,49 +106,10 @@ typedef struct									ZwCentralSceneSupportedReportFrame_s
 	uint8_t										supportedKeyAttributesForScene[];/**/
 }												ZwCentralSceneSupportedReportFrame_t;
 
-typedef struct						ZunoCentralSceneParameter_s
-{
-	const char						*name;
-}									ZunoCentralSceneParameter_t;
 
-typedef struct						ZunoCentralSceneParameterTimer_s
-{
-	uint64_t						ms;
-}									ZunoCentralSceneParameterTimer_t;
-
-typedef struct								ZunoCentralSceneParameterArray_s
-{
-	ZunoCentralSceneParameterTimer_t		*timer;
-	uint8_t									mask;
-	uint8_t									count;
-}											ZunoCentralSceneParameterArray_t;
-
-const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArray(size_t channel);
-
-#define ZUNO_SETUP_CENTRAL_SCENE(MASK, ...) 	\
-	const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArrayUser(void) {					\
-		static const ZunoCentralSceneParameter_t _central_scene_parameter[]= \
-		{ \
-			__VA_ARGS__, \
-		};\
-		static ZunoCentralSceneParameterTimer_t _central_scene_parameter_timer[((sizeof(_central_scene_parameter) / sizeof(_central_scene_parameter[0x0])))]; \
-		static const ZunoCentralSceneParameterArray_t _central_scene_parameter_array = \
-		{ \
-			.timer = &_central_scene_parameter_timer[0x0],									\
-			.mask = MASK, \
-			.count = ((sizeof(_central_scene_parameter) / sizeof(_central_scene_parameter[0x0])))			\
-		};\
-		return (&_central_scene_parameter_array);					\
-	}					\
-
-
-#define ZUNO_SETUP_CENTRAL_SCENE_SET()	\
-{\
-	.name = 0x0\
-}\
-
+bool zuno_CCCentralSceneAdd(uint32_t uuid, uint32_t mask);
+bool zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event);
 
 int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
-void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event);
 
 #endif// ZWCC_CENTRAL_SCENE_H

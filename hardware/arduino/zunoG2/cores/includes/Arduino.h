@@ -150,6 +150,11 @@ inline void zunoSetProductID(uint16_t product_id){
 #define EEPROM_SWITCH_SOUND_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->switch_sound[0x0])
 #define EEPROM_SWITCH_SOUND_SAVE_SIZE					(3 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 #endif
+#if defined(WITH_CC_CENTRAL_SCENE)
+#define EEPROM_CENTRAL_SCENE_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->central_scene[0x0])
+#define EEPROM_CENTRAL_SCENE_SAVE_SIZE					(1)
+#endif
+
 #define EEPROM_USER_CHANNELS_EEPROM_ADDR				((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->zuno_zw_cfg)
 #define EEPROM_USER_CHANNELS_EEPROM_SIZE				sizeof(g_zuno_zw_cfg)
 
@@ -181,6 +186,9 @@ typedef struct									ZwEepromSketh_s
 	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)
 	uint8_t										switch_sound[EEPROM_SWITCH_SOUND_SAVE_SIZE];
+	#endif
+	#if defined(WITH_CC_CENTRAL_SCENE)
+	uint8_t										central_scene[EEPROM_CENTRAL_SCENE_SAVE_SIZE];
 	#endif
 	ZUNOZWConfiguation_t						zuno_zw_cfg;
 	ZwEepromSkethConfigParam_t					config_param;

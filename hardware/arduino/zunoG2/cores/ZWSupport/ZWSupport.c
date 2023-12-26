@@ -819,6 +819,10 @@ void zunoCommitCfg(){
 	#if defined(WITH_CC_SOUND_SWITCH)
 	zunoSoundSwitchSaveInit();
 	#endif
+	#if defined(WITH_CC_CENTRAL_SCENE)
+	void zunoCentralSceneSaveInit(void);
+	zunoCentralSceneSaveInit();
+	#endif
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }
 static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){

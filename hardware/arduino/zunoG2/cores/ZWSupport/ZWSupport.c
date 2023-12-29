@@ -819,6 +819,10 @@ void zunoCommitCfg(){
 	#if defined(WITH_CC_SOUND_SWITCH)
 	zunoSoundSwitchSaveInit();
 	#endif
+	#if defined(WITH_CC_CENTRAL_SCENE)
+	void zunoCentralSceneSaveInit(void);
+	zunoCentralSceneSaveInit();
+	#endif
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }
 static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
@@ -1087,15 +1091,8 @@ void initCCSDataDefault() {
 	zuno_CCWakeup_OnDefault();
 	#endif
 }
-// Adds user-defined command class support to main end-point NIF and Secure NIF. Be careful with that! 
+// Now you need to use defined. Example WITH_CC_CENTRAL_SCENE for CENTRAL_SCENE
 bool zunoAddBaseCCS(byte ccs, byte version){
-	// !!! FIX
-	/*
-	if(ZUNO_CFG_BASE_CCS_NUM >= ZUNO_MAX_CUSTOM_CCS)
-		return false;
-	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).cc = ccs;
-	ZUNO_CFG_BASECCS(ZUNO_CFG_BASE_CCS_NUM).version = version;
-	ZUNO_CFG_BASE_CCS_NUM++;*/
 	return true;
 	(void)ccs;
 	(void)version;

@@ -1,16 +1,73 @@
 #include "Arduino.h"
 #include "ZWSupport.h"
 #include "ZWCCCentralScene.h"
+#include "LinkedList.h"
 
-__WEAK const ZunoCentralSceneParameterArray_t *zunoCentralSceneGetParameterArrayUser(void) {
-	static ZunoCentralSceneParameterTimer_t _central_scene_parameter_timer[0x1];
-	static const ZunoCentralSceneParameterArray_t _central_scene_parameter_array =
-	{
-		.timer = &_central_scene_parameter_timer[0x0],
-		.mask = CENTRAL_SCENE_KEY_ALL_MASK, 
-		.count = ((sizeof(_central_scene_parameter_timer) / sizeof(_central_scene_parameter_timer[0x0])))
-	};
-	return (&_central_scene_parameter_array);
+#if defined(WITH_CC_CENTRAL_SCENE)
+
+#if (CENTRAL_SCENE_KEY_ALL_MASK) > 0xFF
+#error "ENTRAL_SCENE range"
+#else
+#define CENTRAL_SCENE_KEY_ATR_LEN				1
+#define CENTRAL_SCENE_KEY_ATR_MAX_COUNT			((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwCentralSceneSupportedReportFrame_t)) / CENTRAL_SCENE_KEY_ATR_LEN)
+
+typedef struct								ZunoCentralSceneParameterList_s
+{
+	uint64_t								ms;
+	uint32_t								uuid;
+	uint32_t								mask;
+}											ZunoCentralSceneParameterList_t;
+
+#endif
+
+// ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT
+
+static ZNLinkedList_t *_central_scene = NULL;
+
+static bool _zuno_CCCentralSceneAdd(uint32_t uuid, uint32_t mask) {
+	ZunoCentralSceneParameterList_t						*parameter;
+	uint32_t											test_mask;
+	const ZNLinkedList_t								*linked_list;
+	const ZunoCentralSceneParameterList_t				*parameter_list;
+	size_t												count;
+
+	if ((mask & CENTRAL_SCENE_KEY_ALL_MASK) != mask)
+		return (false);
+	test_mask = mask & (CENTRAL_SCENE_KEY_HELD_DOWN_MASK | CENTRAL_SCENE_KEY_RELEASED_MASK);
+	if (test_mask != 0x0 && test_mask != (CENTRAL_SCENE_KEY_HELD_DOWN_MASK | CENTRAL_SCENE_KEY_RELEASED_MASK))
+		return (false);
+	linked_list = _central_scene;
+	count = 0x0;
+	while (linked_list != NULL) {
+		parameter_list = (const ZunoCentralSceneParameterList_t *)linked_list->data;
+		if (parameter_list->uuid == uuid)
+			break ;
+		count++;
+		linked_list = linked_list->next;
+	}
+	if (linked_list != NULL)
+		return (false);
+	if (count > (CENTRAL_SCENE_KEY_ATR_MAX_COUNT))
+		return (false);
+	if ((parameter = (ZunoCentralSceneParameterList_t *)malloc(sizeof(parameter[0x0]))) == NULL)
+		return (false);
+	parameter->ms = 0x0;
+	parameter->uuid = uuid;
+	parameter->mask = mask;
+	if (znllPushBack(&_central_scene, parameter) == false) {
+		free(parameter);
+		return (false);
+	}
+	return (true);
+}
+
+bool zuno_CCCentralSceneAdd(uint32_t uuid, uint32_t mask) {
+	bool									out;
+
+	zunoEnterCritical();
+	out = _zuno_CCCentralSceneAdd(uuid, mask);
+	zunoExitCritical();
+	return (out);
 }
 
 static uint8_t _lock_count = 0x0;
@@ -19,21 +76,27 @@ static uint8_t _slow_mode = true;
 uint64_t rtcc_micros(void);
 
 static int _central_scene_supported_report(ZUNOCommandPacketReport_t *frame_report) {
-	const ZunoCentralSceneParameterArray_t						*parametr_array;
 	ZwCentralSceneSupportedReportFrame_t						*report;
-	uint32_t													support_prop_mask;
-	size_t														len;
+	const ZNLinkedList_t										*linked_list;
+	const ZunoCentralSceneParameterList_t						*parameter_list;
+	size_t														i;
 
 	report = (ZwCentralSceneSupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE; set in - fillOutgoingPacket
 	// report->cmd = CENTRAL_SCENE_SUPPORTED_REPORT_V3; set in - fillOutgoingPacket
-	parametr_array = zunoCentralSceneGetParameterArrayUser();
-	support_prop_mask = parametr_array->mask;
-	len = ((((sizeof(support_prop_mask) * 0x8) - __builtin_clz(support_prop_mask)) >> 0x3) + 0x1);
-	report->supportedScenes = parametr_array->count;
-	report->properties1 = CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_SLOW_REFRESH_SUPPORT_BIT_MASK_V3 | CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_IDENTICAL_BIT_MASK_V3 |((len << CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_SHIFT_V3) & CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_MASK_V3);
-	memcpy(&report->supportedKeyAttributesForScene[0x0], (uint8_t *)&support_prop_mask, len);
-	frame_report->packet.len = sizeof(report[0x0]) + len;
+	zunoEnterCritical();
+	i = 0x0;
+	linked_list = _central_scene;
+	while (linked_list != NULL) {
+		parameter_list = (const ZunoCentralSceneParameterList_t *)linked_list->data;
+		memcpy(&report->supportedKeyAttributesForScene[i * CENTRAL_SCENE_KEY_ATR_LEN], (uint8_t *)&parameter_list->mask, CENTRAL_SCENE_KEY_ATR_LEN);
+		i++;
+		linked_list = linked_list->next;
+	}
+	zunoExitCritical();
+	report->supportedScenes = i;
+	report->properties1 = CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_SLOW_REFRESH_SUPPORT_BIT_MASK_V3 |((CENTRAL_SCENE_KEY_ATR_LEN << CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_SHIFT_V3) & CENTRAL_SCENE_SUPPORTED_REPORT_PROPERTIES1_NUMBER_OF_BIT_MASK_BYTES_MASK_V3);
+	frame_report->packet.len = sizeof(report[0x0]) + (i * CENTRAL_SCENE_KEY_ATR_LEN);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -53,6 +116,7 @@ static int _central_scene_configuration_report(ZUNOCommandPacketReport_t *frame_
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+static void _zunoCentralSceneSaveSet(bool slow_mode);
 static int _central_scene_configuration_set(const ZW_CENTRAL_SCENE_CONFIGURATION_SET_V3_FRAME *frame) {
 	size_t														properties1;
 	size_t														slow_mode;
@@ -62,7 +126,7 @@ static int _central_scene_configuration_set(const ZW_CENTRAL_SCENE_CONFIGURATION
 		slow_mode = true;
 	else
 		slow_mode = false;
-	_slow_mode  = slow_mode;
+	_zunoCentralSceneSaveSet(slow_mode);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -86,11 +150,11 @@ int zuno_CCCentralSceneHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport
 	return (rs);
 }
 
-static void _lock(ZunoCentralSceneParameterTimer_t *timer, uint64_t ms) {
+static void _lock(ZunoCentralSceneParameterList_t *parameter_list, uint64_t ms) {
 	
 	uint64_t								ms_old;
 
-	ms_old = timer->ms;
+	ms_old = parameter_list->ms;
 	if (ms == 0x0) {
 		if (ms_old != 0x0) {
 			if (--_lock_count == 0x0)
@@ -103,39 +167,42 @@ static void _lock(ZunoCentralSceneParameterTimer_t *timer, uint64_t ms) {
 				g_sleep_data.latch++;
 		}
 	}
-	timer->ms = ms;
+	parameter_list->ms = ms;
 }
 
+static void _zuno_CCCentralSceneReport_held_down(ZunoCentralSceneParameterList_t *parameter_list, uint8_t sceneNumber);
+
 void zuno_CCCentralSceneTimer(void) {
-	const ZunoCentralSceneParameterArray_t						*parametr_array;
-	uint64_t													ms;
-	uint64_t													ms_old;
-	ZunoCentralSceneParameterTimer_t							*timer_b;
-	ZunoCentralSceneParameterTimer_t							*timer_e;
+	const ZNLinkedList_t								*linked_list;
+	ZunoCentralSceneParameterList_t						*parameter_list;
+	size_t												sceneNumber;
+	uint64_t											ms;
+	uint64_t											ms_old;
 
 	if (_lock_count == 0x0)
 		return ;
-	parametr_array = zunoCentralSceneGetParameterArrayUser();
-	timer_b = &parametr_array->timer[0x0];
-	timer_e = &parametr_array->timer[parametr_array->count];
 	ms = (rtcc_micros() / 1000);
-	while (timer_b < timer_e) {
-		ms_old = timer_b->ms;
+	zunoEnterCritical();
+	sceneNumber = 0x1;
+	linked_list = _central_scene;
+	while (linked_list != NULL) {
+		parameter_list = (ZunoCentralSceneParameterList_t *)linked_list->data;
+		ms_old = parameter_list->ms;
 		if (ms_old != 0 && ms_old <= ms)
-			zuno_CCCentralSceneReport(timer_b - &parametr_array->timer[0x0] + 0x1, CENTRAL_SCENE_KEY_HELD_DOWN);
-		timer_b++;
+			_zuno_CCCentralSceneReport_held_down(parameter_list, sceneNumber);
+		sceneNumber++;
+		linked_list = linked_list->next;
 	}
+	zunoExitCritical();
 }
 
-static void _CCCentralSceneReport(uint8_t sceneNumber, uint8_t event, const ZunoCentralSceneParameterArray_t *parametr_array, uint64_t ms) {
+static void _CCCentralSceneReport_common(uint8_t event, ZunoCentralSceneParameterList_t *parameter_list, uint64_t ms, uint8_t sceneNumber) {
 	static uint8_t												sequenceNumber = 0x0;
 	ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME						*report;
 	size_t														properties1;
 	ZUNOCommandPacketReport_t									frame;
 
-	zunoEnterCritical();
-	_lock(&parametr_array->timer[sceneNumber- 0x1], ms);
-	zunoExitCritical();
+	_lock(parameter_list, ms);
 	fillOutgoingReportPacketAsync(&frame, 0x0);
 	report = (ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME *)&frame.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE;
@@ -151,15 +218,22 @@ static void _CCCentralSceneReport(uint8_t sceneNumber, uint8_t event, const Zuno
 	zunoSendZWPackage(&frame.packet);
 }
 
-void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event) {
-	const ZunoCentralSceneParameterArray_t						*parametr_array;
-	uint64_t													ms;
+static void _zuno_CCCentralSceneReport_held_down(ZunoCentralSceneParameterList_t *parameter_list, uint8_t sceneNumber) {
+	uint64_t									ms;
 
-	parametr_array = zunoCentralSceneGetParameterArrayUser();
-	if ((parametr_array->mask & (0x1 << event)) == 0x0)
-		return ;
-	if (sceneNumber > parametr_array->count || sceneNumber == 0x0)
-		return ;
+	if (_slow_mode == true)
+		ms = CENTRAL_SCENE_UPDATE_MS_SLOW;
+	else
+		ms = CENTRAL_SCENE_UPDATE_MS_FAST;
+	ms = ms + (rtcc_micros() / 1000);
+	_CCCentralSceneReport_common(CENTRAL_SCENE_KEY_HELD_DOWN, parameter_list, ms, sceneNumber);
+}
+
+static bool _zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event) {
+	const ZNLinkedList_t								*linked_list;
+	ZunoCentralSceneParameterList_t						*parameter_list;
+	size_t												sceneNumber;
+
 	switch (event) {
 		case CENTRAL_SCENE_KEY_PRESSED_1:
 		case CENTRAL_SCENE_KEY_PRESSED_2:
@@ -167,18 +241,88 @@ void zuno_CCCentralSceneReport(uint8_t sceneNumber, uint8_t event) {
 		case CENTRAL_SCENE_KEY_PRESSED_4:
 		case CENTRAL_SCENE_KEY_PRESSED_5:
 		case CENTRAL_SCENE_KEY_RELEASED:
-			_CCCentralSceneReport(sceneNumber, event, parametr_array, 0x0);
+		case CENTRAL_SCENE_KEY_HELD_DOWN:
+			break ;
+		default:
+			return (false);
+			break ;
+	}
+	sceneNumber = 0x1;
+	linked_list = _central_scene;
+	while (linked_list != NULL) {
+		parameter_list = (ZunoCentralSceneParameterList_t *)linked_list->data;
+		if (parameter_list->uuid == uuid)
+			break ;
+		sceneNumber++;
+		linked_list = linked_list->next;
+	}
+	if (linked_list == NULL)
+		return (false);
+	if ((parameter_list->mask & (0x1 << event)) == 0x0)
+		return (false);
+	switch (event) {
+		case CENTRAL_SCENE_KEY_PRESSED_1:
+		case CENTRAL_SCENE_KEY_PRESSED_2:
+		case CENTRAL_SCENE_KEY_PRESSED_3:
+		case CENTRAL_SCENE_KEY_PRESSED_4:
+		case CENTRAL_SCENE_KEY_PRESSED_5:
+		case CENTRAL_SCENE_KEY_RELEASED:
+			_CCCentralSceneReport_common(event, parameter_list, 0x0, sceneNumber);
 			break ;
 		case CENTRAL_SCENE_KEY_HELD_DOWN:
-			if (_slow_mode == true)
-				ms = CENTRAL_SCENE_UPDATE_MS_SLOW;
-			else
-				ms = CENTRAL_SCENE_UPDATE_MS_FAST;
-			ms = ms + (rtcc_micros() / 1000);
-			_CCCentralSceneReport(sceneNumber, event, parametr_array, ms);
+			_zuno_CCCentralSceneReport_held_down(parameter_list, sceneNumber);
 			break ;
 		default:
 			break ;
 	}
-
+	return (true);
 }
+
+bool zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event) {
+	bool									out;
+
+	zunoEnterCritical();
+	out = _zuno_CCCentralSceneReport(uuid, event);
+	zunoExitCritical();
+	return (out);
+}
+
+void zuno_CCCentralSceneRemoveAll(void) {
+	void												*data;
+
+	while (true) {
+		data = znllRemove(&_central_scene, 0x0);
+		if (data == NULL)
+			break;
+		free(data);
+	}
+}
+
+typedef struct								ZunoCentralSceneConfig_s
+{
+	bool									slow_mode;
+}											ZunoCentralSceneConfig_t;
+
+static void _zunoCentralSceneSaveSet(bool slow_mode) {
+	uint8_t								buffer[EEPROM_CENTRAL_SCENE_SAVE_SIZE];
+	ZunoCentralSceneConfig_t			*config;
+
+	config = (ZunoCentralSceneConfig_t *)&buffer[0x0];
+	config->slow_mode = slow_mode;
+	_slow_mode = slow_mode;
+	zunoEEPROMWrite(EEPROM_CENTRAL_SCENE_SAVE_ADDR, EEPROM_CENTRAL_SCENE_SAVE_SIZE, &buffer[0x0]);
+}
+
+void zunoCentralSceneSaveInit(void) {
+	_zunoCentralSceneSaveSet(true);
+}
+
+void zunoCentralSceneSaveLoad(void) {
+	uint8_t								buffer[EEPROM_CENTRAL_SCENE_SAVE_SIZE];
+	ZunoCentralSceneConfig_t			*config;
+
+	zunoEEPROMRead(EEPROM_CENTRAL_SCENE_SAVE_ADDR, EEPROM_CENTRAL_SCENE_SAVE_SIZE, &buffer[0x0]);
+	config = (ZunoCentralSceneConfig_t *)&buffer[0x0];
+	_slow_mode = config->slow_mode;
+}
+#endif//WITH_CC_CENTRAL_SCENE

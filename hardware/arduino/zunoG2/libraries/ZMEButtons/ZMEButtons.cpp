@@ -1,5 +1,6 @@
  #include "ZMEButtons.h"
  #include "Debug.h"
+ #include "ZWCCCentralScene.h"
  #ifndef ZME_BUTTONS_DBG
  #define ZME_BUTTONS_DBG 0
  #endif
@@ -158,6 +159,10 @@ bool  ZMEVirtButtons::_popEvent(uint8_t channel, uint8_t type) {
 void  ZMEVirtButtons::_pushEvent(ZMEButtonState_t * s, uint8_t type) {
     uint8_t  oldest_event_i = 0xFF;
     uint32_t oldest_event_ts = 0;
+    innerProcessChannelEvent(s, type);
+    if(_ext_handler != NULL){
+        _ext_handler(s->channel, (ZMEButtonEventType)type);
+    }
     for(int i=0;i<ZME_BUTTONS_MAX_EVENTS;i++){
         if(s->event[i].type == ZMEBUTTON_EVENT_NONE){
             oldest_event_i = i;
@@ -337,6 +342,15 @@ bool ZMEGPIOButtons::addButton(uint8_t pin_number, uint32_t flags) {
             return false;
         }
     }
+    #ifdef WITH_CC_CENTRAL_SCENE
+    if(flags & ZMEBUTTON_PIN_FLAG_CENTRAL_SCENE){
+        uint32_t mask = (CENTRAL_SCENE_KEY_RELEASED_MASK | CENTRAL_SCENE_KEY_HELD_DOWN_MASK | CENTRAL_SCENE_KEY_PRESSED_1_MASK);
+        for(int i=0;i<_max_clicks-1;i++){
+            mask |= (1 << (CENTRAL_SCENE_KEY_PRESSED_2 + i));
+        }
+        zuno_CCCentralSceneAdd(pin_number, mask);
+    }
+    #endif
     return ZMEVirtButtons::addButton(pin_number, (void*) btn_data);
 }
 bool ZMEGPIOButtons::isChannelPressed(uint8_t channel, void  * custom_data) {
@@ -358,6 +372,33 @@ void ZMEGPIOButtons::handleSysWake(){
     poll();
     #if defined(LOGGING_DBG) &&ZME_BUTTONS_DBG
     LOGGING_UART.println("BTN:WAKEPOLL");
+    #endif
+}
+uint8_t _mapBtnEvent2CSEvent(uint8_t event){
+    if((event >= ZMEBUTTON_EVENT_DOUBLE_CLICK) && 
+       (event <= ((event - ZMEBUTTON_EVENT_DOUBLE_CLICK)+3))) {
+            return CENTRAL_SCENE_KEY_PRESSED_2 + (event - ZMEBUTTON_EVENT_DOUBLE_CLICK);
+    }
+    switch(event){
+        case ZMEBUTTON_EVENT_CLICK:
+            return CENTRAL_SCENE_KEY_PRESSED_1;
+        case ZMEBUTTON_EVENT_HOLD:
+            return CENTRAL_SCENE_KEY_HELD_DOWN;
+        case ZMEBUTTON_EVENT_HOLD_RELEASE:
+            return CENTRAL_SCENE_KEY_RELEASED;
+    }
+    return 0xFF;
+}
+void ZMEGPIOButtons::innerProcessChannelEvent(ZMEButtonState_t * s, uint8_t type){
+    (void)s;
+    (void)type;
+    #ifdef WITH_CC_CENTRAL_SCENE
+    #message "ZMEButtons library built with CentralScene suppoort"
+    if((*((uint32_t*)s->custom_data)) & ZMEBUTTON_PIN_FLAG_CENTRAL_SCENE){
+        uint8_t mapped_event = _mapBtnEvent2CSEvent(type);
+        if(mapped_event != 0xFF)
+            zuno_CCCentralSceneReport(s->channel, mapped_event);
+    }
     #endif
 }
 

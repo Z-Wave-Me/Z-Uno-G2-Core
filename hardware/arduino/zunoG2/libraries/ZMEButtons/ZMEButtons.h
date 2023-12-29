@@ -89,8 +89,9 @@ class ZMEVirtButtons{
         bool         _popEvent(uint8_t channel, uint8_t type);
         void         _pushEvent(ZMEButtonState_t * s, uint8_t type);
         ZMEButtonState_t *  _extractChannelState(uint8_t channel);
-    private:
+    protected:
         uint8_t             _max_clicks;
+    private:
         ZNLinkedList_t     * button_states;
         ZMEButtonHandlerFunc_t _ext_handler;
         uint32_t _debounce_interval;

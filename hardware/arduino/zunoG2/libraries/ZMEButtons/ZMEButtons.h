@@ -1,7 +1,8 @@
 #ifndef ZME_BUTTONS
 #define ZME_BUTTONS
-#include "LinkedList.h"
+
 #include "Arduino.h"
+#include "LinkedList.h"
 #include "HandlerMapper.h"
 
 
@@ -82,13 +83,15 @@ class ZMEVirtButtons{
         bool _process(bool pressed, ZMEButtonState_t * s);
         virtual bool isChannelPressed(uint8_t channel, void  * custom_data)=0;
         virtual bool addButton(uint8_t channel, void * custom_data);
+        virtual void innerProcessChannelEvent(ZMEButtonState_t * s, uint8_t type)=0;
         void * extractCustomData(uint8_t channel);
     private:
-        bool                _popEvent(uint8_t channel, uint8_t type);
-        static void         _pushEvent(ZMEButtonState_t * s, uint8_t type);
+        bool         _popEvent(uint8_t channel, uint8_t type);
+        void         _pushEvent(ZMEButtonState_t * s, uint8_t type);
         ZMEButtonState_t *  _extractChannelState(uint8_t channel);
-    private:
+    protected:
         uint8_t             _max_clicks;
+    private:
         ZNLinkedList_t     * button_states;
         ZMEButtonHandlerFunc_t _ext_handler;
         uint32_t _debounce_interval;
@@ -97,14 +100,15 @@ class ZMEVirtButtons{
 };
 
 enum ZMEPinButtonFlags{
-   ZMEBUTTON_PIN_FLAG_INVERTED=1,
-   ZMEBUTTON_PIN_FLAG_PULL=2,
-   ZMEBUTTON_PIN_FLAG_FILTER=4,
-   ZMEBUTTON_PIN_FLAG_EM2_WAKE=8
+   ZMEBUTTON_PIN_FLAG_INVERTED=0x01,
+   ZMEBUTTON_PIN_FLAG_PULL=0x02,
+   ZMEBUTTON_PIN_FLAG_FILTER=0x04,
+   ZMEBUTTON_PIN_FLAG_EM2_WAKE=0x08,
+   ZMEBUTTON_PIN_FLAG_CENTRAL_SCENE=0x10
 };
 #define MAX_IRQ_VECPIN_MAPPING 16
 #define DEFAULT_BTN_FLAGS (ZMEBUTTON_PIN_FLAG_INVERTED | ZMEBUTTON_PIN_FLAG_PULL| ZMEBUTTON_PIN_FLAG_FILTER)
-#define DEFAULT_BTN_FLAGS_EM2 (DEFAULT_BTN_FLAGS | ZMEBUTTON_PIN_FLAG_EM2_WAKE)
+#define DEFAULT_BTN_FLAGS_EM2 (DEFAULT_BTN_FLAGS | ZMEBUTTON_PIN_FLAG_EM2_WAKE )
 #ifndef DEFAULT_BTN_HANDLE_MODE 
 #define DEFAULT_BTN_HANDLE_MODE ZMEBUTTON_HANDLE_AUTO
 #endif
@@ -121,6 +125,7 @@ class ZMEGPIOButtons: public ZMEVirtButtons, protected ZMEHandlerMapper {
         virtual bool isChannelPressed(uint8_t channel, void  * custom_data);
         virtual void handleSysTimer(uint32_t ticks);
         virtual void handleSysWake();
+        virtual void innerProcessChannelEvent(ZMEButtonState_t * s, uint8_t type);
         bool _handling_enable;
 
     

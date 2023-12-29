@@ -173,7 +173,6 @@ typedef struct							ZunoNeoList_s
 	uint8_t								freq_timer;
 	uint8_t								array[];
 }										ZunoNeoList_t;
-
 class NeoPixelClass {
 	public:
 		NeoPixelClass(void);

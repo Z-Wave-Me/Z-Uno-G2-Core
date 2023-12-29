@@ -3,8 +3,12 @@
 
 #if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 #pragma message "ZUNO_PIN_V==0x704"
+#elif ZUNO_PIN_V == 0x701
+#pragma message "ZUNO_PIN_V==0x701. u-fairy.com module"
 #elif ZUNO_PIN_V == 0x800
 #pragma message "ZUNO_PIN_V==0x800 (SDK BRD4210A)"
+#elif ZUNO_PIN_V == 0x801
+#pragma message "ZUNO_PIN_V==0x800 (SDK BRD4210A+EXT_NVM)"
 #elif ZUNO_PIN_V == 0x802
 #pragma message "ZUNO_PIN_V==0x802 (SDK BRD4205B)"
 #elif ZUNO_PIN_V == 0x803

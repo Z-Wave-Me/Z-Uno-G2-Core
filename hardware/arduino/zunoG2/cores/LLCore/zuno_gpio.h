@@ -49,7 +49,14 @@
 	#define LED_BUILTIN         13
 
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x804
+#elif ZUNO_PIN_V == 0x701
+	#define SCL                 0
+	#define SDA                 1
+	#define SCL1                23
+	#define SDA1                25
+	#define LED_BUILTIN         13
+	#define ZUNO_PIN_LAST_INDEX	27
+#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -144,6 +151,42 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     {1, 15},//28 - PB15 - green
     {1, 14}//29 - PB14 - red
 };
+#elif ZUNO_PIN_V == 0x701
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+    // LEFT SIDE
+    {2, 8},//0 - PC8 - 0 
+    {2, 9},//1 - PC9 - 1 
+    {5, 2},//2 - PCF2  - 2 
+    {5, 6},//3 - PF6 - A0 
+    {5, 7},//4 - PF7 - A1 
+    {3, 9},//5 - PD9 - A2 
+    {3, 10},//6 - PD10 -A3
+    {5, 2},//7 - PF2 - 7
+    {5, 5},//8 - PF5 - 8
+    // RIGHT SIDE
+    {3, 11},//9 - PD11 - 9
+    {3, 12},//10 - PD12 - 10
+    {3, 14},//11 - PD14 - 11
+    {3, 15},//12 - PD15 - 12
+    {0, 0},//13 - PA0 - PWM1 and ARDURINO LED
+    {0, 1},//14 - PA1 - PWM2
+    {0, 2},//15 - PA2 - PWM3
+    {0, 3},//16 - PA3 - PWM4
+    {0, 4},//17 - PA4 - 17
+    {1, 13},//18 - PB13 - 18
+    {1, 12},//19 - PB12 - 19 
+    {1, 11},//20 - PB11 - 20 
+    {2, 6},//21 - PC6 - 21
+    {2, 7},//22 - PC7 - 22
+    {2, 10},//23 - PC10 - BTN
+    {2, 7},//24 - PC7 - TX0
+    {2, 11},//25 - PC11 - RX0
+    // DO NOT USE !!!
+    {5, 4},//26 - PF4 - USB Serial rx
+    {5, 3},//27 - PF3 - USB Serial tx
+    {3, 11},//28 - PD12 - green
+    {3, 12}//29 - PD11 - red
+};
 #elif ZUNO_PIN_V == 0x800
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 0},//00 - PA00
@@ -174,6 +217,39 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 2},//25 - PD02 - RX0
 	{0, 8},//26 - PA06 - sapi_tx_pin
 	{0, 9},//27 - PA07 - sapi_rx_pin
+	{1, 2},//28 - PB02 - led1_pin
+	{3, 3},//29 - PD03 - led2_pin
+};
+#elif ZUNO_PIN_V == 0x801
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{0, 0},//00 - PA00
+	{0, 1},//01 - PA01
+	{0, 2},//02 - PA02
+	{0, 3},//03 - PA03
+	{0, 4},//04 - PA04
+	{0, 8},//05 - PA08
+	{2, 8},//06 - PC08
+	{2, 2},//07 - PC02 - TX1
+	{2, 9},//08 - PC09 - RX1
+	{0, 6},//09 - PA06
+	{0,10},//10 - PA10
+	{1, 0},//11 - PB00
+	{2, 5},//12 - PC05
+	{0, 7},//13 - PB02
+	{1, 3},//14 - PB03
+	{1, 4},//15 - PB04
+	{1, 5},//16 - PB05
+	{1, 6},//17 - PB06
+	{2, 0},//18 - PC00
+	{2, 6},//19 - PC06
+	{0, 8},//20 - PA08
+	{2, 3},//21 - PC03
+	{2, 4},//22 - PC04
+	{1, 1},//23 - PB01 - button_pin
+	{2, 1},//24 - PC01 - TX0
+	{3, 2},//25 - PD02 - RX0
+	{0, 5},//26 - PA05 - sapi_tx_pin
+	{0, 0},//27 - PA00 - sapi_rx_pin
 	{1, 2},//28 - PB02 - led1_pin
 	{3, 3},//29 - PD03 - led2_pin
 };

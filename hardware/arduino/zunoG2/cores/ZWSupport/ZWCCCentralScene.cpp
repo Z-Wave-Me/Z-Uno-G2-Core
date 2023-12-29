@@ -208,10 +208,7 @@ static void _CCCentralSceneReport_common(uint8_t event, ZunoCentralSceneParamete
 	report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE;
 	report->cmd = CENTRAL_SCENE_NOTIFICATION;
 	report->sequenceNumber = sequenceNumber++;
-	if (_slow_mode == true)
-		properties1 = CENTRAL_SCENE_CONFIGURATION_SET_PROPERTIES1_SLOW_REFRESH_BIT_MASK_V3;
-	else
-		properties1 = 0x0;
+	properties1 = (_slow_mode) ? CENTRAL_SCENE_CONFIGURATION_SET_PROPERTIES1_SLOW_REFRESH_BIT_MASK_V3 : 0;
 	report->properties1 = properties1 | event;
 	report->sceneNumber = sceneNumber;
 	frame.packet.len = sizeof(report[0x0]);

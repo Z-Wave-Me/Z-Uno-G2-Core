@@ -130,5 +130,23 @@ class ZMEGPIOButtons: public ZMEVirtButtons, protected ZMEHandlerMapper {
 
     
 };
+class DimmableSwitchBtnController{
+  public:
+    DimmableSwitchBtnController( uint8_t btn_pin_number, 
+                              uint8_t channel_number,
+                              uint8_t * switch_level);
+    void begin(uint8_t btn_flags = DEFAULT_BTN_FLAGS);
+    void end();
+    void process();
+  private:
+    uint8_t _btn_pin_number;
+    uint8_t _channel_number;
+    uint8_t * _plevel;
+    bool    _dim_up;
+    uint8_t _start_level;
+    void _dimLevel(bool up);
+    uint8_t _dimDiff(uint8_t start_level, bool up);
+  
+};
 extern ZMEGPIOButtons ZBtn;
 #endif // ZME_BUTTONS

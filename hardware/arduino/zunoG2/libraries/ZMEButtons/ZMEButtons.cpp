@@ -409,4 +409,56 @@ void ZMEGPIOButtons::innerProcessChannelEvent(ZMEButtonState_t * s, uint8_t type
     #endif
 }
 
+// ------------------------------------------------------------------------------
+// class DimmableSwitchBtnController 
+// ------------------------------------------------------------------------------
+DimmableSwitchBtnController::DimmableSwitchBtnController( uint8_t btn_pin_number, 
+                              uint8_t channel_number,
+                              uint8_t * switch_level) {
+      _btn_pin_number = btn_pin_number;
+      _channel_number = channel_number;
+      _plevel = switch_level;
+}
+void DimmableSwitchBtnController::begin(uint8_t btn_flags){
+    ZBtn.addButton(_btn_pin_number, btn_flags);
+}
+void DimmableSwitchBtnController::end(){
+    ZBtn.removeButton(_btn_pin_number);
+}
+void DimmableSwitchBtnController::process(){
+    if (ZBtn.isSingleClick(_btn_pin_number)) {
+         *_plevel =  (*_plevel > 0) ? 0 : 99; 
+        zunoSendReport(_channel_number);
+    }
+    if (ZBtn.isHolded(_btn_pin_number)) {
+        _dim_up = (*_plevel != 99);
+        _start_level = *_plevel;
+    }
+    if (ZBtn.isHolding(_btn_pin_number)) {
+        _dimLevel(_dim_up);
+        if(_dimDiff(_start_level, _dim_up) > 10){
+           _start_level = *_plevel;
+           zunoSendReport(_channel_number);
+        }
+    }
+    if (ZBtn.isHoldReleased(_btn_pin_number)) {
+         zunoSendReport(_channel_number);
+    }
+}
+void DimmableSwitchBtnController::_dimLevel(bool up){
+    int level = *_plevel;
+    if(up){
+        level += 2;
+        if(level > 99)
+            level = 99;
+    } else {
+        level -= 2;
+        if(level < 0)
+            level = 0;
+    }
+    *_plevel = (uint8_t)level;
+}
+uint8_t DimmableSwitchBtnController::_dimDiff(uint8_t start_level, bool up){
+    return (up) ? *_plevel - start_level : start_level - *_plevel;
+}
 ZMEGPIOButtons ZBtn;

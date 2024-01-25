@@ -15,6 +15,8 @@
 #pragma message "ZUNO_PIN_V==0x803 (RYSE BRD)"
 #elif ZUNO_PIN_V == 0x804
 #pragma message "ZUNO_PIN_V==0x804 (ZGM8202 BRD)"
+#elif ZUNO_PIN_V == 0x805
+#pragma message "ZUNO_PIN_V==0x805 (Z-Uno3 R1 )"
 #else
     #error ZUNO_PIN_V
 #endif

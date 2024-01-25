@@ -56,7 +56,7 @@
 	#define SDA1                25
 	#define LED_BUILTIN         13
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804
+#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804  || ZUNO_PIN_V == 0x805
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -351,6 +351,39 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 5},//27 - PC05 - sapi_rx_pin
 	{0, 4},//28 - PA04 - led1_pin
 	{0, 6},//29 - PA06 - led2_pin
+};
+#elif ZUNO_PIN_V == 0x805 // ZGM8202 board
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{3, 2},//00 - PD02
+	{3, 1},//01 - PD01
+	{2, 1},//02 - PC01
+	{2, 4},//03 - PC04
+	{2, 5},//04 - PC05
+	{2, 6},//05 - PC06
+	{2, 7},//06 - PC07
+	{2, 8},//07 - PC08 - TX1
+	{2, 9},//08 - PC09 - RX1
+	{1, 6},//09 - PB06
+	{1, 3},//10 - PB03
+	{1, 2},//11 - PB02
+	{1, 1},//12 - PB01
+	{1, 0},//13 - PB00
+	{0, 0},//14 - PA00
+	{0, 4},//15 - PA04
+	{0, 5},//16 - PA05
+	{0, 6},//17 - PA06
+	{0, 7},//18 - PA07
+	{3, 5},//19 - PD05
+	{0, 3},//20 - PA03
+	{3, 4},//21 - PD04
+	{3, 3},//22 - PD03
+	{3, 0},//23 - PD00 - button_pin
+	{1, 4},//24 - PB04 - TX0
+	{1, 5},//25 - PB05 - RX0
+	{2, 2},//26 - PC02 - sapi_tx_pin
+	{2, 3},//27 - PC03 - sapi_rx_pin
+	{0,10},//28 - PA10 - led1_pin
+	{0, 8},//29 - PA08 - led2_pin
 };
 #else
     #error ZUNO_PIN_V

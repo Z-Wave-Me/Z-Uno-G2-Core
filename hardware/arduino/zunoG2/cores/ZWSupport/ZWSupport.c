@@ -31,6 +31,7 @@
 #include "ZWCCResetLocally.h"
 #include "ZWCCWindowCovering.h"
 #include "ZWCCManufacturerSpecific.h"
+#include "ZWCCScheduleEntryLock.h"
 #include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
@@ -77,6 +78,9 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE,
   #endif
+  #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+  COMMAND_CLASS_SCHEDULE_ENTRY_LOCK,
+  #endif
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE,
   #endif
@@ -105,6 +109,9 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   COMMAND_CLASS_APPLICATION_STATUS,
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE,
+  #endif
+  #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+  COMMAND_CLASS_SCHEDULE_ENTRY_LOCK,
   #endif
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE,
@@ -408,6 +415,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPac
 			#ifdef WITH_CC_CENTRAL_SCENE
 			case COMMAND_CLASS_CENTRAL_SCENE:
 				result = zuno_CCCentralSceneHandler(cmd, frame_report);
+				break;
+			#endif
+			#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+			case COMMAND_CLASS_SCHEDULE_ENTRY_LOCK:
+				result = zuno_CCScheduleEntryLockHandler(cmd, frame_report);
 				break;
 			#endif
 			#ifdef WITH_CC_TIME_PARAMETERS

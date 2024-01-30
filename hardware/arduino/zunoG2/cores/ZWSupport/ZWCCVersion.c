@@ -30,7 +30,7 @@
 #include "ZWCCCentralScene.h"
 #include "ZWCCResetLocally.h"
 #include "ZWCCWindowCovering.h"
-
+#include "ZWCCScheduleEntryLock.h"
 
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd);
 
@@ -102,6 +102,9 @@ static const uint8_t zuno_CCVesrions[] = {
   #endif
   #ifdef WITH_CC_CENTRAL_SCENE
   COMMAND_CLASS_CENTRAL_SCENE, CENTRAL_SCENE_VERSION,
+  #endif
+  #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+  COMMAND_CLASS_SCHEDULE_ENTRY_LOCK, SCHEDULE_ENTRY_LOCK_VERSION,
   #endif
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE, USER_CODE_VERSION,

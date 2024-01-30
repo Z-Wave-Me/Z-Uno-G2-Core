@@ -13,7 +13,8 @@
 #include <CommandQueue.h>
 #include <SysService.h>
 
-static_assert(sizeof(ZwEepromSketh_t) <= EEPROM_MAX_SIZE, "EEPROM overflow!!!");
+static_assert(sizeof(ZwEepromSketh_t) <= EEPROM_MAX_SIZE, "EEPROM - overflow!!!");
+static_assert(sizeof(ZwEepromSkethCommon_t) == EEPROM_SKETH_SIZE, "EEPROM USER CODE - overflow!!!");
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32

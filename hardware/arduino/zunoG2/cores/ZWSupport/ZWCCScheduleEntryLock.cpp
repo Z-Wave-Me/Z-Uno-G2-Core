@@ -13,6 +13,9 @@ static_assert(SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING <= 0xFF, "SCHEDULE
 
 static_assert(SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY > 0x0 || SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY > 0x0 || SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING > 0x0, "SCHEDULE_ENTRY_LOCK - minimum one slot!!!");
 
+#define SCHEDULE_ENTRY_LOCK_ADDR_TIME_OFFSET		(SCHEDULE_ENTRY_LOCK_ADDR)
+#define SCHEDULE_ENTRY_LOCK_ADDR_COMMON				(SCHEDULE_ENTRY_LOCK_ADDR_TIME_OFFSET + sizeof(ScheduleEntryLockSaveTimeOffset_t))
+
 typedef struct _ZW_SCHEDULE_ENTRY_TYPE_SUPPORTED_REPORT_V3_FRAME_
 {
     uint8_t   cmdClass;                     /* The command class */
@@ -110,7 +113,7 @@ static void _schedule_entry_lock_week_day_get(uint16_t userIdentifier, uint8_t s
 
 	userIdentifier--;
 	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
 	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
 	scheduleSlotId--;
 	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].week_day[scheduleSlotId];
@@ -164,7 +167,7 @@ static void _schedule_entry_lock_year_day_get(uint16_t userIdentifier, uint8_t s
 
 	userIdentifier--;
 	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
 	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
 	scheduleSlotId--;
 	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].year_day[scheduleSlotId];
@@ -218,7 +221,7 @@ static void _schedule_entry_lock_daily_repeating_get(uint16_t userIdentifier, ui
 
 	userIdentifier--;
 	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
 	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
 	scheduleSlotId--;
 	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].dayily_repeating[scheduleSlotId];
@@ -255,11 +258,37 @@ static int _extended_schedule_entry_lock_daily_repeating_report(const ScheduleEn
 	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v4(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	// report->cmdClass = SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET; set in - fillOutgoingPacket
-	// report->cmd = SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT; set in - fillOutgoingPacket
+	// report->cmdClass = EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET; set in - fillOutgoingPacket
+	// report->cmd = EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT; set in - fillOutgoingPacket
 	report_daily_repeating = (ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t *)&report->data[0x0];
 	_schedule_entry_lock_daily_repeating_get(userIdentifier, in->pre.scheduleSlotId, report_daily_repeating);
 	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_daily_repeating[0x0]);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+typedef struct					ScheduleEntryLockTimeOffsetReport_s
+{
+	uint8_t						cmdClass;/* The command class */
+	uint8_t						cmd;/* The command */
+	ScheduleEntryLockSaveTimeOffsetInfo_t	info;
+}								ScheduleEntryLockTimeOffsetReport_t;
+
+static int _schedule_entry_lock_time_offset_report(ZUNOCommandPacketReport_t *frame_report) {
+	ScheduleEntryLockTimeOffsetReport_t							*report;
+	uint16_t													crc16;
+	ScheduleEntryLockSaveTimeOffset_t							time_offset;
+
+	report = (ScheduleEntryLockTimeOffsetReport_t *)frame_report->packet.cmd;
+	// report->cmdClass = SCHEDULE_ENTRY_LOCK_TIME_OFFSET_GET; set in - fillOutgoingPacket
+	// report->cmd = SCHEDULE_ENTRY_LOCK_TIME_OFFSET_REPORT; set in - fillOutgoingPacket
+	zunoEEPROMRead(SCHEDULE_ENTRY_LOCK_ADDR_TIME_OFFSET, sizeof(time_offset), (byte *)&time_offset);
+	crc16 = CrcClass::crc16_ccitt_aug(&time_offset.info, sizeof(time_offset.info));
+	if (memcmp(&crc16, &time_offset.crc16[0x0], sizeof(crc16)) != 0x0) {
+		memset(&report->info, 0x0, sizeof(report->info));
+	}
+	else
+		report->info = time_offset.info;
+	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -267,6 +296,9 @@ int zuno_CCScheduleEntryLockHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketR
 	int								rs;
 
 	switch (ZW_CMD) {
+		case SCHEDULE_ENTRY_LOCK_TIME_OFFSET_GET:
+			rs = _schedule_entry_lock_time_offset_report(frame_report);
+			break ;
 		case EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET:
 			rs = _extended_schedule_entry_lock_daily_repeating_report((const ScheduleEntryLockV4GetSlotInfo_t *)&cmd->cmd[0x0], frame_report);
 			break ;

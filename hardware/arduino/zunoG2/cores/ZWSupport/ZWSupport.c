@@ -35,6 +35,7 @@
 #include "CommandQueue.h"
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
+#include "ZWCCTime.h"
 
 #define DYNAMIC_CCS_SUPPORT 1
 CrcClass mCrc; 
@@ -90,6 +91,9 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
   #endif
+  #ifdef WITH_CC_TIME
+  COMMAND_CLASS_TIME,
+  #endif
 };
 static const uint8_t zuno_cmdClassListNSNI_Def[] =
 {
@@ -121,6 +125,9 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   #endif
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
+  #endif
+  #ifdef WITH_CC_TIME
+  COMMAND_CLASS_TIME,
   #endif
 };
 
@@ -425,6 +432,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPac
 			#ifdef WITH_CC_TIME_PARAMETERS
 			case COMMAND_CLASS_TIME_PARAMETERS:
 				result = zuno_CCTimerParametrsHandler(cmd, frame_report);
+				break ;
+			#endif
+			#ifdef WITH_CC_TIME
+			case COMMAND_CLASS_TIME:
+				result = zuno_CCTimeHandler(cmd, frame_report);
 				break ;
 			#endif
 			#ifdef WITH_CC_AUTHENTICATION

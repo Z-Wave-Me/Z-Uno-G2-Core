@@ -6,6 +6,11 @@
 #define EEPROM_SKETH_ADDR								0x0
 #define EEPROM_SKETH_SIZE								0xE00
 
+#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+#define SCHEDULE_ENTRY_LOCK_ADDR						((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.schedule_entry_lock)
+#define SCHEDULE_ENTRY_LOCK_SIZE						(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.schedule_entry_lock))
+#endif
+
 #define EEPROM_USER_CODE_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code[0x0])
 #define EEPROM_USER_CODE_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code))
 
@@ -45,21 +50,20 @@
 #define EEPROM_MAX_SIZE									0x1300
 
 #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
-
 #ifndef SCHEDULE_ENTRY_LOCK_NUMBER
-#define SCHEDULE_ENTRY_LOCK_NUMBER											0x2
+#define SCHEDULE_ENTRY_LOCK_NUMBER											35
 #endif
 
 #ifndef SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY
-#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY							0x9
+#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY							0x2
 #endif
 
 #ifndef SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY
-#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY							0x9
+#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY							0x2
 #endif
 
 #ifndef SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING
-#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING						0x9
+#define SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING						0x2
 #endif
 
 
@@ -95,16 +99,39 @@ typedef struct				ScheduleEntryLockSaveUserIdentifierDayilyRepeating_s
 	uint8_t					durationMinute;
 }							ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t;
 
-typedef struct				ScheduleEntryLockSaveUserIdentifier_s
+typedef struct				ScheduleEntryLockSaveUserIdentifierMaskInfo_s
 {
-	uint8_t													crc16[0x2];//lsb - Msb
+	uint8_t													enabled;
 	uint8_t													week_day_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
 	uint8_t													year_day_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
 	uint8_t													dayily_repeating_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING + 0x7) & (0x0 - 0x8)) / 0x8)];
-	ScheduleEntryLockSaveUserIdentifierWeekDay_t			week_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY];
-	ScheduleEntryLockSaveUserIdentifierYearDay_t			year_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY];
-	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t	dayily_repeating[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING];
-}							ScheduleEntryLockSaveUserIdentifier_t;
+}							ScheduleEntryLockSaveUserIdentifierMaskInfo_t;
+
+typedef struct				ScheduleEntryLockSaveUserIdentifierWeekDayCrc_s
+{
+	uint8_t													crc16[0x2];//lsb - Msb
+	ScheduleEntryLockSaveUserIdentifierWeekDay_t			info;
+}							ScheduleEntryLockSaveUserIdentifierWeekDayCrc_t;
+
+typedef struct				ScheduleEntryLockSaveUserIdentifierYearDayCrc_s
+{
+	uint8_t													crc16[0x2];//lsb - Msb
+	ScheduleEntryLockSaveUserIdentifierYearDay_t			info;
+}							ScheduleEntryLockSaveUserIdentifierYearDayCrc_t;
+
+typedef struct				ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_s
+{
+	uint8_t													crc16[0x2];//lsb - Msb
+	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t	info;
+}							ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_t;
+
+typedef struct				ScheduleEntryLockSaveUserId_s
+{
+	ScheduleEntryLockSaveUserIdentifierWeekDayCrc_t			week_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY];
+	ScheduleEntryLockSaveUserIdentifierYearDayCrc_t			year_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY];
+	ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_t	dayily_repeating[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING];
+}							ScheduleEntryLockSaveUserId_t;
+
 
 #define SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT						0x2
 
@@ -114,20 +141,18 @@ typedef struct				ScheduleEntryLockSaveMask_s
 	uint8_t					mask[SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT];
 }							ScheduleEntryLockSaveMask_t;
 
-typedef struct				ScheduleEntryLockSave_s
+typedef struct				ScheduleEntryLockSaveCommon_s
 {
-	ScheduleEntryLockSaveMask_t					user_identifier_mask[((((SCHEDULE_ENTRY_LOCK_NUMBER + ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8))) / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)))];
-	ScheduleEntryLockSaveUserIdentifier_t		user_identifier[SCHEDULE_ENTRY_LOCK_NUMBER];
-}							ScheduleEntryLockSave_t;
+	ScheduleEntryLockSaveMask_t			user_id_mask[((((SCHEDULE_ENTRY_LOCK_NUMBER + ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8))) / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)))];
+	ScheduleEntryLockSaveUserId_t		user_id[SCHEDULE_ENTRY_LOCK_NUMBER];
+}							ScheduleEntryLockSaveCommon_t;
 
 #endif//WITH_CC_SCHEDULE_ENTRY_LOCK
 
 typedef struct									ZwEepromSkethCommonInfo_s
 {
 	#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
-	#ifndef SCHEDULE_ENTRY_LOCK_EXTERNAL
-	ScheduleEntryLockSaveUserIdentifier_t		schedule_entry_lock[SCHEDULE_ENTRY_LOCK_NUMBER];
-	#endif
+	ScheduleEntryLockSaveCommon_t				schedule_entry_lock;
 	#endif
 }												ZwEepromSkethCommonInfo_t;
 

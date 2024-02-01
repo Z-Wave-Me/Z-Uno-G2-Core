@@ -21,6 +21,14 @@
 #define SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET                                          0x0E
 #define SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT                                       0x0F
 #define SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_SET                                          0x10
+
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_GET                               0x13
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_REPORT                            0x14
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_GET                               0x16
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_REPORT                            0x17
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET                                 0x19
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT                              0x1A
+
 /* Values used for Schedule Entry Lock Time Offset Report command */
 #define SCHEDULE_ENTRY_LOCK_TIME_OFFSET_REPORT_LEVEL_HOUR_TZO_MASK                       0x7F
 #define SCHEDULE_ENTRY_LOCK_TIME_OFFSET_REPORT_LEVEL_SIGN_TZO_BIT_MASK                   0x80

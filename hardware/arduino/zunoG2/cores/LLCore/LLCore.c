@@ -201,6 +201,9 @@ static void LLInit(void *data) {
         ((void (*)())b[0])();
         WDOG_Feed();
     }
+	#ifdef LOGGING_DBG
+	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
+	#endif
 	#ifdef WITH_AUTOSETUP
 	zuno_static_autosetup();
 	#endif

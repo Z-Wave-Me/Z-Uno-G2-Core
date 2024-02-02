@@ -116,9 +116,6 @@ static const uint8_t zuno_CCVesrions[] = {
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS, TIME_PARAMETERS_VERSION,
   #endif
-  #ifdef WITH_CC_TIME
-  COMMAND_CLASS_TIME, TIME_VERSION,
-  #endif
   #endif // DYNAMIC_CCS_SUPPORT
 };
 

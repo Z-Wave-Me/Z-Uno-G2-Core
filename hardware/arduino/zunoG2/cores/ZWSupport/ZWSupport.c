@@ -91,9 +91,6 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
   #endif
-  #ifdef WITH_CC_TIME
-  COMMAND_CLASS_TIME,
-  #endif
 };
 static const uint8_t zuno_cmdClassListNSNI_Def[] =
 {
@@ -125,9 +122,6 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   #endif
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
-  #endif
-  #ifdef WITH_CC_TIME
-  COMMAND_CLASS_TIME,
   #endif
 };
 

@@ -2,7 +2,6 @@
 #define ZUNO_TIME_H
 
 time_t zunoGetTimeStamp(void);
-bool zunoIsValidDate(void);
 void zunoSetTimeStamp(time_t timeUnix);
 
 void delay(dword ms);

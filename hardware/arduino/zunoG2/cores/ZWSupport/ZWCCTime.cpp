@@ -4,7 +4,7 @@
 
 #ifdef WITH_CC_TIME
 
-int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd) {
 	int								rs;
 
 	switch (ZW_CMD) {
@@ -13,7 +13,6 @@ int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *fram
 			break ;
 	}
 	return (rs);
-	(void)frame_report;
 	(void)cmd;
 }
 

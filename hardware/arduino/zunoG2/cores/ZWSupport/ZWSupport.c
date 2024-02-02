@@ -430,7 +430,7 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPac
 			#endif
 			#ifdef WITH_CC_TIME
 			case COMMAND_CLASS_TIME:
-				result = zuno_CCTimeHandler(cmd, frame_report);
+				result = zuno_CCTimeHandler(cmd);
 				break ;
 			#endif
 			#ifdef WITH_CC_AUTHENTICATION

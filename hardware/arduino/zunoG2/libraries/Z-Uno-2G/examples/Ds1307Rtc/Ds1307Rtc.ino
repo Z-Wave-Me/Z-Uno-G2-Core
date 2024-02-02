@@ -1,5 +1,4 @@
 #include "Ds1307Rtc.h"
-#include "Custom_timestamp.h"
 
 #define MY_SERIAL							Serial
 
@@ -16,8 +15,6 @@ void setup(void) {
 	uint8_t							bRun;
 	uint8_t							bSet;
 
-	if (zunoIsValidDate() == false)
-		zunoSetTimeStamp(ZUNO_SKETCH_BUILD_TS + 1 + (3 * 60 * 60));//+ (3 * 60 * 60) sec - Mck; + 1 sec  - build and load
 	MY_SERIAL.begin(115200);
 	MY_SERIAL.print("\n");
 	MY_SERIAL.println("Ds 1307 Rtc Example");

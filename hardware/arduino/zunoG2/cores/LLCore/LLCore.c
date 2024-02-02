@@ -201,6 +201,17 @@ static void LLInit(void *data) {
         ((void (*)())b[0])();
         WDOG_Feed();
     }
+	switch (zunoGetWakeReason()) {
+		case ZUNO_WAKEUP_REASON_WUT_EM4:
+		case ZUNO_WAKEUP_REASON_EXT_EM4:
+		case ZUNO_WAKEUP_REASON_EXT_EM2:
+		case ZUNO_WAKEUP_REASON_WUT_EM2:
+		case ZUNO_WAKEUP_REASON_RADIO_EM2:
+			break ;
+		default:
+			zunoSetTimeStamp(ZUNO_SKETCH_BUILD_TS);
+			break ;
+	}
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
 	#endif

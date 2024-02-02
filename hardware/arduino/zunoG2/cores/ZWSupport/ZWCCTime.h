@@ -28,6 +28,6 @@
 #define TIME_REPORT_PROPERTIES1_RESERVED_SHIFT                                           0x05
 #define TIME_REPORT_PROPERTIES1_RTC_FAILURE_BIT_MASK                                     0x80
 
-int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd);
 
 #endif// ZWCC_TIME_H

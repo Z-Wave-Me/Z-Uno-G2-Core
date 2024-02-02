@@ -22,10 +22,13 @@
 #define SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT                                       0x0F
 #define SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_SET                                          0x10
 
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_SET                               0x12
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_GET                               0x13
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_REPORT                            0x14
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_SET                               0x15
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_GET                               0x16
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_REPORT                            0x17
+#define EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_SET                                 0x18
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET                                 0x19
 #define EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT                              0x1A
 

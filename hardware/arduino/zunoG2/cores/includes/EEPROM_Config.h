@@ -99,37 +99,32 @@ typedef struct				ScheduleEntryLockSaveUserIdentifierDayilyRepeating_s
 	uint8_t					durationMinute;
 }							ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t;
 
-typedef struct				ScheduleEntryLockSaveUserIdentifierMaskInfo_s
+typedef struct				ScheduleEntryLockSaveUserIdentifierWeekDayMask_s
 {
-	uint8_t													enabled;
-	uint8_t													week_day_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
-	uint8_t													year_day_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
-	uint8_t													dayily_repeating_mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING + 0x7) & (0x0 - 0x8)) / 0x8)];
-}							ScheduleEntryLockSaveUserIdentifierMaskInfo_t;
+	uint8_t					crc16[0x2];//lsb - Msb
+	uint8_t					mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
+}							ScheduleEntryLockSaveUserIdentifierWeekDayMask_t;
 
-typedef struct				ScheduleEntryLockSaveUserIdentifierWeekDayCrc_s
+typedef struct				ScheduleEntryLockSaveUserIdentifierYearDayMask_s
 {
-	uint8_t													crc16[0x2];//lsb - Msb
-	ScheduleEntryLockSaveUserIdentifierWeekDay_t			info;
-}							ScheduleEntryLockSaveUserIdentifierWeekDayCrc_t;
+	uint8_t					crc16[0x2];//lsb - Msb
+	uint8_t					mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY + 0x7) & (0x0 - 0x8)) / 0x8)];
+}							ScheduleEntryLockSaveUserIdentifierYearDayMask_t;
 
-typedef struct				ScheduleEntryLockSaveUserIdentifierYearDayCrc_s
+typedef struct				ScheduleEntryLockSaveUserIdentifierDayilyRepeatingMask_s
 {
-	uint8_t													crc16[0x2];//lsb - Msb
-	ScheduleEntryLockSaveUserIdentifierYearDay_t			info;
-}							ScheduleEntryLockSaveUserIdentifierYearDayCrc_t;
-
-typedef struct				ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_s
-{
-	uint8_t													crc16[0x2];//lsb - Msb
-	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t	info;
-}							ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_t;
+	uint8_t					crc16[0x2];//lsb - Msb
+	uint8_t					mask[(((SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING + 0x7) & (0x0 - 0x8)) / 0x8)];
+}							ScheduleEntryLockSaveUserIdentifierDayilyRepeatingMask_t;
 
 typedef struct				ScheduleEntryLockSaveUserId_s
 {
-	ScheduleEntryLockSaveUserIdentifierWeekDayCrc_t			week_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY];
-	ScheduleEntryLockSaveUserIdentifierYearDayCrc_t			year_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY];
-	ScheduleEntryLockSaveUserIdentifierDayilyRepeatingCrc_t	dayily_repeating[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING];
+	ScheduleEntryLockSaveUserIdentifierWeekDayMask_t			week_day_mask;
+	ScheduleEntryLockSaveUserIdentifierYearDayMask_t			year_day_mask;
+	ScheduleEntryLockSaveUserIdentifierDayilyRepeatingMask_t	dayily_repeating_mask;
+	ScheduleEntryLockSaveUserIdentifierWeekDay_t			week_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY];
+	ScheduleEntryLockSaveUserIdentifierYearDay_t			year_day[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY];
+	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t	dayily_repeating[SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING];
 }							ScheduleEntryLockSaveUserId_t;
 
 

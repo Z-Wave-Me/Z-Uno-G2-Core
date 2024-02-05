@@ -5,7 +5,7 @@
 #ifdef WITH_CC_TIME
 
 #define TIME_PERIOD_FAIL_REPEAT							(1 * 60 * 1000 * 1000)//1 minute
-#define TIME_PERIOD_REPEAT								(8 * 60 * 60 * 1000 * 1000)//8 hours
+#define TIME_PERIOD_REPEAT								((uint64_t)8 * 60 * 60 * 1000 * 1000)//8 hours
 
 typedef enum							ZwCCTimeState_e
 {

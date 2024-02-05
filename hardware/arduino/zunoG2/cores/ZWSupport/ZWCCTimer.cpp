@@ -76,6 +76,7 @@ void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
 void zuno_CCSoundSwitchTimer(void);
 void zuno_CCIndicatorTimer(void);
 void zuno_CCCentralSceneTimer(void);
+void zuno_CCTimeHandlerTimer(void);
 
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
@@ -139,6 +140,10 @@ void zuno_CCTimer(uint32_t ticks) {
 	#if defined(WITH_CC_CENTRAL_SCENE)
 	if((ticks & 0x7) == 0) // Once in ~80ms 
 		zuno_CCCentralSceneTimer();
+	#endif
+	#if defined(WITH_CC_TIME)
+	if((ticks & 0x7) == 0) // Once in ~80ms 
+		zuno_CCTimeHandlerTimer();
 	#endif
 	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0){// Once in ~80ms - for 0x7
 		zunoSendReportHandler(ticks);

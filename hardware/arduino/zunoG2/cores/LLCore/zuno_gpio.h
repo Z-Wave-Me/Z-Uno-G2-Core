@@ -352,7 +352,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 4},//28 - PA04 - led1_pin
 	{0, 6},//29 - PA06 - led2_pin
 };
-#elif ZUNO_PIN_V == 0x805 // ZGM8202 board
+#elif ZUNO_PIN_V == 0x805 // Z-Uno based on 8th gen. chips
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{3, 2},//00 - PD02
 	{3, 1},//01 - PD01
@@ -382,8 +382,8 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{1, 5},//25 - PB05 - RX0
 	{2, 2},//26 - PC02 - sapi_tx_pin
 	{2, 3},//27 - PC03 - sapi_rx_pin
-	{0,10},//28 - PA10 - led1_pin
-	{0, 8},//29 - PA08 - led2_pin
+	{0,8},//28 - PA08 - led1_pin
+	{0,10},//29 - PA10 - led2_pin
 };
 #else
     #error ZUNO_PIN_V

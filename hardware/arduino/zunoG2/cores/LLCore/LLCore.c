@@ -13,6 +13,8 @@
 #include <CommandQueue.h>
 #include <SysService.h>
 
+static_assert(sizeof(ZwEepromSketh_t) <= EEPROM_MAX_SIZE, "EEPROM - overflow!!!");
+static_assert(sizeof(ZwEepromSkethCommon_t) == EEPROM_SKETH_SIZE, "EEPROM USER CODE - overflow!!!");
 
 #ifndef SKETCH_FLAGS_LOOP_DELAY
     #define SKETCH_FLAGS_LOOP_DELAY			32
@@ -199,14 +201,19 @@ static void LLInit(void *data) {
         ((void (*)())b[0])();
         WDOG_Feed();
     }
-    
+	switch (zunoGetWakeReason()) {
+		case ZUNO_WAKEUP_REASON_WUT_EM4:
+		case ZUNO_WAKEUP_REASON_EXT_EM4:
+		case ZUNO_WAKEUP_REASON_EXT_EM2:
+		case ZUNO_WAKEUP_REASON_WUT_EM2:
+		case ZUNO_WAKEUP_REASON_RADIO_EM2:
+			break ;
+		default:
+			zunoSetTimeStamp(ZUNO_SKETCH_BUILD_TS);
+			break ;
+	}
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
-	if ((EEPROM_CONFIGURATION_ADDR + EEPROM_CONFIGURATION_SIZE) > EEPROM_MAX_SIZE) {
-		LOGGING_UART.print("EEPROM: Exceeded memory limit!!!");
-		while (true)
-			__NOP();
-	}
 	#endif
 	#ifdef WITH_AUTOSETUP
 	zuno_static_autosetup();

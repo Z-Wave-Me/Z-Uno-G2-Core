@@ -2,7 +2,6 @@
 #include "zuno_time.h"
 #include "em_rtcc.h"
 #include "em_burtc.h"
-#include "Custom_timestamp.h"
 
 #define ZUNO_TIME_DELAY_MICROSECONDS_MIN				2000
 #define ZUNO_TIME_DELAY_MICROSECONDS_MAX				4000
@@ -28,18 +27,12 @@ uint64_t rtcc_micros(void) {
 	return (out);
 }
 
-bool zunoIsValidDate(void) {
-	if (RTCC->RET[0x1E].REG == 0x0)
-		return (false);
-	return (true);
-}
-
 time_t zunoGetTimeStamp(void) {
-	return (RTCC->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
+	return (RTCC->RET[0x1E].REG + (rtcc_micros() / 1000000));
 }
 
 void zunoSetTimeStamp(time_t timeUnix) {
-	RTCC->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
+	RTCC->RET[0x1E].REG = timeUnix - (rtcc_micros() / 1000000);
 }
 #endif//#if defined(RTCC_COUNT) && (RTCC_COUNT == 1)
 #if defined(BURTC_PRESENT)
@@ -62,18 +55,12 @@ uint64_t rtcc_micros(void) {
 	return (out);
 }
 
-bool zunoIsValidDate(void) {
-	if (BURAM->RET[0x1E].REG == 0x0)
-		return (false);
-	return (true);
-}
-
 time_t zunoGetTimeStamp(void) {
-	return (BURAM->RET[0x1E].REG + ZUNO_SKETCH_BUILD_TS + (rtcc_micros() / 1000000));
+	return (BURAM->RET[0x1E].REG + (rtcc_micros() / 1000000));
 }
 
 void zunoSetTimeStamp(time_t timeUnix) {
-	BURAM->RET[0x1E].REG = timeUnix - ZUNO_SKETCH_BUILD_TS -  (rtcc_micros() / 1000000);
+	BURAM->RET[0x1E].REG = timeUnix - (rtcc_micros() / 1000000);
 }
 #endif//#if defined(BURTC_PRESENT)
 

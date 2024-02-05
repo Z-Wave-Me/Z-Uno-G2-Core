@@ -6,6 +6,7 @@
 
 #ifndef ZUNO_PREPROC_PHASE
 	#include "Custom_defs.h"
+	#include "ZUNO_DependenciesCC.h"
 #endif
 
 #define ZUNO_UNO				1

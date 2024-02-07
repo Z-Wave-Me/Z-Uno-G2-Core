@@ -241,7 +241,12 @@ static int _stop_level(uint8_t channel) {// Stop Dimming
 	zunoExitCritical();
 	return (ZUNO_COMMAND_PROCESSED);
 }
-
+__attribute__((weak)) void zcustom_SWLStartStopHandler(uint8_t channel, bool start, bool up, uint8_t * cmd) {
+    (void) channel;
+	(void) start;
+	(void) up;
+	(void) cmd;
+}
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int									rs;
 
@@ -254,10 +259,22 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel, frame_report);
 			break ;
 		case SWITCH_MULTILEVEL_START_LEVEL_CHANGE:
+			{
+				ZwSwitchMultilevelStartLevelChangeFrame_t * pk = (ZwSwitchMultilevelStartLevelChangeFrame_t *)cmd->cmd;
+				zcustom_SWLStartStopHandler(channel, 
+											  true, 
+											  (pk->v1.properties1 & (1 << 6)) == 0, 
+											  (uint8_t*) cmd);
+			}
 			_start_level(channel, cmd, frame_report);
 			rs = ZUNO_COMMAND_PROCESSED;
 			break ;
 		case SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE:
+			zcustom_SWLStartStopHandler(channel, 
+										  false, 
+										  false, 
+										  (uint8_t*) cmd);
+			
 			rs = _stop_level(channel);
 			break ;
 		case SWITCH_MULTILEVEL_SUPPORTED_GET:

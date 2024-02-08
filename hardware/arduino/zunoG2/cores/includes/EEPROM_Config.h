@@ -6,6 +6,11 @@
 #define EEPROM_SKETH_ADDR								0x0
 #define EEPROM_SKETH_SIZE								0xE00
 
+#ifdef WITH_CC_USER_CREDENTIAL
+#define USER_CREDENTIAL_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential)
+#define USER_CREDENTIAL_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential))
+#endif
+
 #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
 #define SCHEDULE_ENTRY_LOCK_ADDR						((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.schedule_entry_lock)
 #define SCHEDULE_ENTRY_LOCK_SIZE						(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.schedule_entry_lock))
@@ -158,8 +163,13 @@ typedef struct				ScheduleEntryLockSaveCommon_s
 
 #endif//WITH_CC_SCHEDULE_ENTRY_LOCK
 
+#include "EEPROM_ConfigUserCredential.h"
+
 typedef struct									ZwEepromSkethCommonInfo_s
 {
+	#ifdef WITH_CC_USER_CREDENTIAL
+	UserCredentialSaveCommon_t					user_credential;
+	#endif
 	#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
 	ScheduleEntryLockSaveCommon_t				schedule_entry_lock;
 	#endif

@@ -1341,8 +1341,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print("REPORT CH:");
 		LOGGING_UART.print(ch);
-		//LOGGING_UART.print(" TYPE:");
-		//LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
+		LOGGING_UART.print(" TYPE:");
+		LOGGING_UART.println(ZUNO_CFG_CHANNEL(ch).type);
 		#endif
 		fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(ch).zw_channel);
 		__setSyncVar(&(g_channels_data.last_report_time[ch]), ticks);
@@ -1351,11 +1351,13 @@ void zunoSendReportHandler(uint32_t ticks) {
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+			case ZUNO_SIREN_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchBinaryReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			case ZUNO_BLINDS_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchMultilevelReport(ch, &frame.packet);
 				break;
 			#endif

@@ -36,6 +36,7 @@
 #include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
 #include "ZWCCTime.h"
+#include "ZWCCUserCredential.h"
 
 #define DYNAMIC_CCS_SUPPORT 1
 CrcClass mCrc; 
@@ -85,6 +86,9 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE,
   #endif
+  #ifdef WITH_CC_USER_CREDENTIAL
+  COMMAND_CLASS_USER_CREDENTIAL,
+  #endif
   #ifdef WITH_CC_ENTRY_CONTROL
   COMMAND_CLASS_ENTRY_CONTROL,
   #endif
@@ -116,6 +120,9 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   #endif
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE,
+  #endif
+  #ifdef WITH_CC_USER_CREDENTIAL
+  COMMAND_CLASS_USER_CREDENTIAL,
   #endif
   #ifdef WITH_CC_ENTRY_CONTROL
   COMMAND_CLASS_ENTRY_CONTROL,
@@ -448,6 +455,11 @@ static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPac
 				result = zuno_CCUserCodeHandler(cmd, frame_report);
 				break ;
 			#endif
+			#ifdef WITH_CC_USER_CREDENTIAL
+			case COMMAND_CLASS_USER_CREDENTIAL:
+				result = zuno_CCUserCredentialHandler(cmd, frame_report);
+				break ;
+			#endif
 			#ifdef WITH_CC_BATTERY
 			case COMMAND_CLASS_BATTERY:
 				result = zuno_CCBattery(cmd, frame_report);
@@ -607,6 +619,25 @@ static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd
 			if (cmd == USER_CODE_CAPABILITIES_GET_V2)
 				return (false);
 			if (cmd == USERS_NUMBER_GET_V2)
+				return (false);
+			return (true);
+			break ;
+		#endif
+		#ifdef WITH_CC_USER_CREDENTIAL
+		case COMMAND_CLASS_USER_CREDENTIAL:
+			if (cmd == USER_CREDENTIAL_CAPABILITIES_USER_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_CAPABILITIES_CREDENTIAL_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_USER_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_CREDENTIAL_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_ALL_USERS_CHECKSUM_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_USER_CHECKSUM_GET)
+				return (false);
+			if (cmd == USER_CREDENTIAL_TYPE_CHECKSUM_GET)
 				return (false);
 			return (true);
 			break ;

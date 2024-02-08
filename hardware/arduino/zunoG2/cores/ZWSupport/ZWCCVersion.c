@@ -32,6 +32,7 @@
 #include "ZWCCWindowCovering.h"
 #include "ZWCCScheduleEntryLock.h"
 #include "ZWCCTime.h"
+#include "ZWCCUserCredential.h"
 
 byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd);
 
@@ -109,6 +110,9 @@ static const uint8_t zuno_CCVesrions[] = {
   #endif
   #ifdef WITH_CC_USER_CODE
   COMMAND_CLASS_USER_CODE, USER_CODE_VERSION,
+  #endif
+  #ifdef WITH_CC_USER_CREDENTIAL
+  COMMAND_CLASS_USER_CREDENTIAL, USER_CREDENTIAL_VERSION,
   #endif
   #ifdef WITH_CC_ENTRY_CONTROL
   COMMAND_CLASS_ENTRY_CONTROL, ENTRY_CONTROL_VERSION,

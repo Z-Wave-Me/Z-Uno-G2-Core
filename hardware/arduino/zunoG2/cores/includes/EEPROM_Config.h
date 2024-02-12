@@ -163,12 +163,16 @@ typedef struct				ScheduleEntryLockSaveCommon_s
 
 #endif//WITH_CC_SCHEDULE_ENTRY_LOCK
 
+#include "EEPROM_ConfigUserCode.h"
 #include "EEPROM_ConfigUserCredential.h"
 
 typedef struct									ZwEepromSkethCommonInfo_s
 {
 	#ifdef WITH_CC_USER_CREDENTIAL
 	UserCredentialSaveCommon_t					user_credential;
+	#endif
+	#if !defined(WITH_CC_USER_CREDENTIAL) && defined(WITH_CC_USER_CODE)
+	UserCodeSaveCommon_t						user_code;
 	#endif
 	#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
 	ScheduleEntryLockSaveCommon_t				schedule_entry_lock;

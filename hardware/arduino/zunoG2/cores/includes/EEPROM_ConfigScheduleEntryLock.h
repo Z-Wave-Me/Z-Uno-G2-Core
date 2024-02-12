@@ -84,14 +84,6 @@ typedef struct				ScheduleEntryLockSaveUserId_s
 }							ScheduleEntryLockSaveUserId_t;
 
 
-#define SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT						0x2
-
-typedef struct				ScheduleEntryLockSaveMask_s
-{
-	uint8_t					crc16[0x2];//lsb - Msb
-	uint8_t					mask[SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT];
-}							ScheduleEntryLockSaveMask_t;
-
 typedef struct						ScheduleEntryLockSaveTimeOffsetInfo_s
 {
 	uint8_t							level;/* masked byte */
@@ -108,7 +100,6 @@ typedef struct						ScheduleEntryLockSaveTimeOffset_s
 typedef struct				ScheduleEntryLockSaveCommon_s
 {
 	ScheduleEntryLockSaveTimeOffset_t	time_offset;
-	ScheduleEntryLockSaveMask_t			user_id_mask[((((SCHEDULE_ENTRY_LOCK_NUMBER + ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8))) / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)))];
 	ScheduleEntryLockSaveUserId_t		user_id[SCHEDULE_ENTRY_LOCK_NUMBER];
 }							ScheduleEntryLockSaveCommon_t;
 

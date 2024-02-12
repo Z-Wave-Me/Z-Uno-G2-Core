@@ -124,14 +124,12 @@ static void _schedule_entry_lock_week_day_get(uint16_t userIdentifier, uint8_t s
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierWeekDayMask_t			week_day_mask;
 	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
 
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].week_day_mask;
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr);
+	addr = (uint32_t)&user_id[userIdentifier].week_day_mask;
 	zunoEEPROMRead(addr, sizeof(week_day_mask), (byte *)&week_day_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&week_day_mask.mask[0x0], sizeof(week_day_mask.mask));
 	scheduleSlotId--;
@@ -139,7 +137,7 @@ static void _schedule_entry_lock_week_day_get(uint16_t userIdentifier, uint8_t s
 		memset(report_week_day, 0xFF, sizeof(report_week_day[0x0]));
 		return ;
 	}
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].week_day[scheduleSlotId];
+	addr = (uint32_t)&user_id[userIdentifier].week_day[scheduleSlotId];
 	zunoEEPROMRead(addr, sizeof(report_week_day[0x0]), (byte *)report_week_day);
 }
 
@@ -179,14 +177,12 @@ static void _schedule_entry_lock_year_day_get(uint16_t userIdentifier, uint8_t s
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierYearDayMask_t			year_day_mask;
 	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
 
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].year_day_mask;
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr);
+	addr = (uint32_t)&user_id[userIdentifier].year_day_mask;
 	zunoEEPROMRead(addr, sizeof(year_day_mask), (byte *)&year_day_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&year_day_mask.mask[0x0], sizeof(year_day_mask.mask));
 	scheduleSlotId--;
@@ -194,7 +190,7 @@ static void _schedule_entry_lock_year_day_get(uint16_t userIdentifier, uint8_t s
 		memset(report_year_day, 0xFF, sizeof(report_year_day[0x0]));
 		return ;
 	}
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].year_day[scheduleSlotId];
+	addr = (uint32_t)&user_id[userIdentifier].year_day[scheduleSlotId];
 	zunoEEPROMRead(addr, sizeof(report_year_day[0x0]), (byte *)report_year_day);
 }
 
@@ -234,22 +230,20 @@ static void _schedule_entry_lock_daily_repeating_get(uint16_t userIdentifier, ui
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierDayilyRepeatingMask_t	dayily_repeating_mask;
 	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
 
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].dayily_repeating_mask;
+	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr);
+	addr = (uint32_t)&user_id[userIdentifier].dayily_repeating_mask;
 	zunoEEPROMRead(addr, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&dayily_repeating_mask.mask[0x0], sizeof(dayily_repeating_mask.mask));
 	scheduleSlotId--;
 	if (memcmp(&crc16, &dayily_repeating_mask.crc16[0x0], sizeof(crc16)) != 0x0 || (dayily_repeating_mask.mask[scheduleSlotId / 0x8] & (0x1 << (scheduleSlotId % 8))) == 0x0) {
-		memset(report_daily_repeating, 0xFF, sizeof(report_daily_repeating[0x0]));
+		report_daily_repeating->weekDayBitmask = 0x0;
 		return ;
 	}
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].dayily_repeating[scheduleSlotId];
+	addr = (uint32_t)&user_id[userIdentifier].dayily_repeating[scheduleSlotId];
 	zunoEEPROMRead(addr, sizeof(report_daily_repeating[0x0]), (byte *)report_daily_repeating);
 }
 
@@ -370,29 +364,27 @@ static uint16_t _schedule_entry_lock_test_set_slot_info_v4(const ScheduleEntryLo
 static void _daily_repeating_set(uint16_t userIdentifier, uint8_t scheduleSlotId, const ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t *daily_repeating, uint8_t setAction) {
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierDayilyRepeatingMask_t	dayily_repeating_mask;
-	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
-	uint8_t														mask;
 
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	scheduleSlotId--;
-	if (setAction == 0x1) {
-		addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].dayily_repeating[scheduleSlotId];
-		zunoEEPROMWrite(addr, sizeof(daily_repeating[0x0]), (byte *)daily_repeating);
-		mask = (0x1 << (scheduleSlotId % 8));
-	}
-	else
-		mask = ~(0x1 << (scheduleSlotId % 8));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].dayily_repeating_mask;
-	zunoEEPROMRead(addr, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
-	dayily_repeating_mask.mask[scheduleSlotId / 0x8] = dayily_repeating_mask.mask[scheduleSlotId / 0x8] | mask;
+	zunoEEPROMRead((uint32_t)&user_id[userIdentifier].dayily_repeating_mask, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&dayily_repeating_mask.mask[0x0], sizeof(dayily_repeating_mask.mask));
-	memcpy(&dayily_repeating_mask.crc16[0x0], &crc16, sizeof(dayily_repeating_mask.crc16));
-	zunoEEPROMWrite(addr, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
+	if (memcmp(&crc16, &dayily_repeating_mask.crc16[0x0], sizeof(crc16)) != 0x0) {
+		memset(&dayily_repeating_mask.mask[0x0], 0x0, sizeof(dayily_repeating_mask.mask));
+	}
+	scheduleSlotId--;
+	dayily_repeating_mask.mask[scheduleSlotId / 0x8] = dayily_repeating_mask.mask[scheduleSlotId / 0x8] & (~(0x1 << (scheduleSlotId % 8)));
+	crc16 = CrcClass::crc16_ccitt_aug(&dayily_repeating_mask.mask[0x0], sizeof(dayily_repeating_mask.mask));
+	memcpy(&dayily_repeating_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].dayily_repeating_mask, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
+	if (setAction == 0x0)
+		return ;
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].dayily_repeating[scheduleSlotId], sizeof(daily_repeating[0x0]), (byte *)daily_repeating);
+	dayily_repeating_mask.mask[scheduleSlotId / 0x8] = dayily_repeating_mask.mask[scheduleSlotId / 0x8] | (0x1 << (scheduleSlotId % 8));
+	crc16 = CrcClass::crc16_ccitt_aug(&dayily_repeating_mask.mask[0x0], sizeof(dayily_repeating_mask.mask));
+	memcpy(&dayily_repeating_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].dayily_repeating_mask, sizeof(dayily_repeating_mask), (byte *)&dayily_repeating_mask);
 }
 
 static int _schedule_entry_lock_daily_repeating_set(const ScheduleEntryLockV3SetSlotInfo_t *in) {
@@ -420,29 +412,27 @@ static int _extended_schedule_entry_lock_daily_repeating_set(const ScheduleEntry
 static void _year_day_set(uint16_t userIdentifier, uint8_t scheduleSlotId, const ScheduleEntryLockSaveUserIdentifierYearDay_t *year_day, uint8_t setAction) {
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierYearDayMask_t			year_day_mask;
-	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
-	uint8_t														mask;
 
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	scheduleSlotId--;
-	if (setAction == 0x1) {
-		addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].year_day[scheduleSlotId];
-		zunoEEPROMWrite(addr, sizeof(year_day[0x0]), (byte *)year_day);
-		mask = (0x1 << (scheduleSlotId % 8));
-	}
-	else
-		mask = ~(0x1 << (scheduleSlotId % 8));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].year_day_mask;
-	zunoEEPROMRead(addr, sizeof(year_day_mask), (byte *)&year_day_mask);
-	year_day_mask.mask[scheduleSlotId / 0x8] = year_day_mask.mask[scheduleSlotId / 0x8] | mask;
+	zunoEEPROMRead((uint32_t)&user_id[userIdentifier].year_day_mask, sizeof(year_day_mask), (byte *)&year_day_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&year_day_mask.mask[0x0], sizeof(year_day_mask.mask));
-	memcpy(&year_day_mask.crc16[0x0], &crc16, sizeof(year_day_mask.crc16));
-	zunoEEPROMWrite(addr, sizeof(year_day_mask), (byte *)&year_day_mask);
+	if (memcmp(&crc16, &year_day_mask.crc16[0x0], sizeof(crc16)) != 0x0) {
+		memset(&year_day_mask.mask[0x0], 0x0, sizeof(year_day_mask.mask));
+	}
+	scheduleSlotId--;
+	year_day_mask.mask[scheduleSlotId / 0x8] = year_day_mask.mask[scheduleSlotId / 0x8] & (~(0x1 << (scheduleSlotId % 8)));
+	crc16 = CrcClass::crc16_ccitt_aug(&year_day_mask.mask[0x0], sizeof(year_day_mask.mask));
+	memcpy(&year_day_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].year_day_mask, sizeof(year_day_mask), (byte *)&year_day_mask);
+	if (setAction == 0x0)
+		return ;
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].year_day[scheduleSlotId], sizeof(year_day[0x0]), (byte *)year_day);
+	year_day_mask.mask[scheduleSlotId / 0x8] = year_day_mask.mask[scheduleSlotId / 0x8] | (0x1 << (scheduleSlotId % 8));
+	crc16 = CrcClass::crc16_ccitt_aug(&year_day_mask.mask[0x0], sizeof(year_day_mask.mask));
+	memcpy(&year_day_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].year_day_mask, sizeof(year_day_mask), (byte *)&year_day_mask);
 }
 
 static int _schedule_entry_lock_year_day_set(const ScheduleEntryLockV3SetSlotInfo_t *in) {
@@ -470,29 +460,27 @@ static int _extended_schedule_entry_lock_year_day_set(const ScheduleEntryLockV4S
 static void _week_day_set(uint16_t userIdentifier, uint8_t scheduleSlotId, const ScheduleEntryLockSaveUserIdentifierWeekDay_t *week_day, uint8_t setAction) {
 	const ScheduleEntryLockSaveUserId_t							*user_id;
 	ScheduleEntryLockSaveUserIdentifierWeekDayMask_t			week_day_mask;
-	uint32_t													addr;
-	size_t														offset;
 	uint16_t													crc16;
-	uint8_t														mask;
 
+	user_id = (const ScheduleEntryLockSaveUserId_t *)(SCHEDULE_ENTRY_LOCK_ADDR_COMMON);
 	userIdentifier--;
-	offset = userIdentifier / (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8);
-	addr = (SCHEDULE_ENTRY_LOCK_ADDR_COMMON) + (offset * sizeof(ScheduleEntryLockSaveMask_t)) + (offset * ((SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8) * sizeof(ScheduleEntryLockSaveUserId_t)));
-	user_id = (const ScheduleEntryLockSaveUserId_t *)(addr + sizeof(ScheduleEntryLockSaveMask_t));
-	scheduleSlotId--;
-	if (setAction == 0x1) {
-		addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].week_day[scheduleSlotId];
-		zunoEEPROMWrite(addr, sizeof(week_day[0x0]), (byte *)week_day);
-		mask = (0x1 << (scheduleSlotId % 8));
-	}
-	else
-		mask = ~(0x1 << (scheduleSlotId % 8));
-	addr = (uint32_t)&user_id[userIdentifier % (SCHEDULE_ENTRY_LOCK_NUMBER_MASK_LENGHT * 0x8)].week_day_mask;
-	zunoEEPROMRead(addr, sizeof(week_day_mask), (byte *)&week_day_mask);
-	week_day_mask.mask[scheduleSlotId / 0x8] = week_day_mask.mask[scheduleSlotId / 0x8] | mask;
+	zunoEEPROMRead((uint32_t)&user_id[userIdentifier].week_day_mask, sizeof(week_day_mask), (byte *)&week_day_mask);
 	crc16 = CrcClass::crc16_ccitt_aug(&week_day_mask.mask[0x0], sizeof(week_day_mask.mask));
-	memcpy(&week_day_mask.crc16[0x0], &crc16, sizeof(week_day_mask.crc16));
-	zunoEEPROMWrite(addr, sizeof(week_day_mask), (byte *)&week_day_mask);
+	if (memcmp(&crc16, &week_day_mask.crc16[0x0], sizeof(crc16)) != 0x0) {
+		memset(&week_day_mask.mask[0x0], 0x0, sizeof(week_day_mask.mask));
+	}
+	scheduleSlotId--;
+	week_day_mask.mask[scheduleSlotId / 0x8] = week_day_mask.mask[scheduleSlotId / 0x8] & (~(0x1 << (scheduleSlotId % 8)));
+	crc16 = CrcClass::crc16_ccitt_aug(&week_day_mask.mask[0x0], sizeof(week_day_mask.mask));
+	memcpy(&week_day_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].week_day_mask, sizeof(week_day_mask), (byte *)&week_day_mask);
+	if (setAction == 0x0)
+		return ;
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].week_day[scheduleSlotId], sizeof(week_day[0x0]), (byte *)week_day);
+	week_day_mask.mask[scheduleSlotId / 0x8] = week_day_mask.mask[scheduleSlotId / 0x8] | (0x1 << (scheduleSlotId % 8));
+	crc16 = CrcClass::crc16_ccitt_aug(&week_day_mask.mask[0x0], sizeof(week_day_mask.mask));
+	memcpy(&week_day_mask.crc16[0x0], &crc16, sizeof(crc16));
+	zunoEEPROMWrite((uint32_t)&user_id[userIdentifier].week_day_mask, sizeof(week_day_mask), (byte *)&week_day_mask);
 }
 
 static int _schedule_entry_lock_week_day_set(const ScheduleEntryLockV3SetSlotInfo_t *in) {

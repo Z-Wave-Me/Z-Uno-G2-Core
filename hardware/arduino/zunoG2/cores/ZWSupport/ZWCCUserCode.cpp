@@ -273,7 +273,7 @@ static int _extended_user_code_report(ZW_EXTENDED_USER_CODE_GET_V2_FRAME *paket,
 				continue ;
 			}
 			count = parametr.userCodeLen;
-			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t) + count) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
+			if (len + (sizeof(ZwExtendedUserCodeReportFrameVg_t) + count) >= ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED)
 				break ;
 			len = len + (sizeof(ZwExtendedUserCodeReportFrameVg_t)) + count;
 			vg->userIdentifier1 = userIdentifier >> 0x8;

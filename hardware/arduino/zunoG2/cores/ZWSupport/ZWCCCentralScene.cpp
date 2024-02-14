@@ -9,7 +9,7 @@
 #error "ENTRAL_SCENE range"
 #else
 #define CENTRAL_SCENE_KEY_ATR_LEN				1
-#define CENTRAL_SCENE_KEY_ATR_MAX_COUNT			((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(ZwCentralSceneSupportedReportFrame_t)) / CENTRAL_SCENE_KEY_ATR_LEN)
+#define CENTRAL_SCENE_KEY_ATR_MAX_COUNT			((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(ZwCentralSceneSupportedReportFrame_t)) / CENTRAL_SCENE_KEY_ATR_LEN)
 
 typedef struct								ZunoCentralSceneParameterList_s
 {
@@ -20,7 +20,7 @@ typedef struct								ZunoCentralSceneParameterList_s
 
 #endif
 
-// ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT
+// ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED
 
 static ZNLinkedList_t *_central_scene = NULL;
 

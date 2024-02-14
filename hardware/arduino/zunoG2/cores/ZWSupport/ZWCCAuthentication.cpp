@@ -196,7 +196,7 @@ static int _authentication_technologies_combination_get(ZW_AUTHENTICATION_TECHNO
 				continue ;
 			}
 			count = (lp_id->st.properties1 & AUTHENTICATION_TECHNOLOGIES_COMBINATION_SET_PROPERTIES1_NUMBER_OF_AUTHENTICATION_DATA_IDS_MASK) * 0x2 + sizeof(middle[0x0]);
-			if ((len + count) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
+			if ((len + count) >= ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED)
 				break ;
 			start->numberOfAuthenticationIdBlocks++;
 			_authentication_technologies_combination_get_set(middle, lp_id, authenticationId, count);
@@ -330,7 +330,7 @@ static int _authentication_date_report(ZW_AUTHENTICATION_DATA_GET_FRAME *packet,
 				authenticationDataId++;
 				continue ;
 			}
-			if ((len + count + sizeof(middle[0x0])) >= ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT)
+			if ((len + count + sizeof(middle[0x0])) >= ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED)
 				break ;
 			start->numberOfAuthenticationDataIdBlocks++;
 			_authentication_date_report_set(middle, lp_data, authenticationDataId, count);

@@ -264,7 +264,7 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 		lp->variantgroup[count].eventCode2 = 0x0;
 		count++;
 		groupIndex++;
-		if (count == ((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(lp[0x0])) / sizeof(lp->variantgroup[0x0]))) {
+		if (count == ((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(lp[0x0])) / sizeof(lp->variantgroup[0x0]))) {
 			lp->properties1 = (lp->properties1 & (~0x3F) ) | count;
 			frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
 			zunoSendZWPackage(&frame_report->packet);

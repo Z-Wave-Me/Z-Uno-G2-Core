@@ -186,8 +186,8 @@ static int _indicator_description_report(const ZW_INDICATOR_DESCRIPTION_GET_V4_F
 		if ((description = parameter_array->description) == 0x0)
 			description = "Manufacturer Defined";
 		len = strlen(description);
-		if (len > (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(report[0x0])))
-			len = (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(report[0x0]));
+		if (len > (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(report[0x0])))
+			len = (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(report[0x0]));
 		report->descriptionLength = len;
 		memcpy(&report->description[0x0], description, len);
 		len = sizeof(report[0x0]) + len;
@@ -621,7 +621,7 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 	const ZunoIndicatorParameter_t					*parameter_array;
 	VG_INDICATOR_SET_V4_VG							*variantgroup;
 	VG_INDICATOR_SET_V4_VG							*variantgroup_e;
-	VG_INDICATOR_SET_V4_VG							vg[((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(frame->v4)) / sizeof(variantgroup[0x0]))];
+	VG_INDICATOR_SET_V4_VG							vg[((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(frame->v4)) / sizeof(variantgroup[0x0]))];
 	int												result;
 	size_t											propertyId;
 
@@ -630,7 +630,7 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 	len = frame->v4.properties1 & INDICATOR_SET_PROPERTIES1_INDICATOR_OBJECT_COUNT_MASK_V4;
 	if (len == 0x0)
 		return (_indicator_set_v1(frame->v4.indicator0Value));
-	if (len > ((ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(frame->v4)) / sizeof(variantgroup[0x0])))
+	if (len > ((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(frame->v4)) / sizeof(variantgroup[0x0])))
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	memcpy(&vg[0x0], &frame->v4.variantgroup[0x0], len * sizeof(variantgroup[0x0]));
 	variantgroup = &vg[0x0];

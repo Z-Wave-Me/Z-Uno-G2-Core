@@ -147,8 +147,8 @@ static int _soundSwitchToneInfoReport(const ZW_SOUND_SWITCH_TONE_INFO_GET_V2_FRA
 	report->toneDuration1 = sec_duration >> 0x8;
 	report->toneDuration2 = sec_duration;
 	len = strlen(parametr->name);
-	if (len > (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(report[0x0])))
-		len = (ZUNO_COMMAND_PACKET_CMD_LEN_MAX_OUT - sizeof(report[0x0]));
+	if (len > (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(report[0x0])))
+		len = (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(report[0x0]));
 	report->nameLength = len;
 	memcpy(&report->name[0x0], parametr->name, len);
 	frame_report->packet.len = sizeof(report[0x0]) + len;

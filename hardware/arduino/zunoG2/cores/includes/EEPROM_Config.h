@@ -6,11 +6,6 @@
 #define EEPROM_SKETH_ADDR								0x0
 #define EEPROM_SKETH_SIZE								0xE00
 
-#ifdef WITH_CC_USER_CREDENTIAL
-#define USER_CREDENTIAL_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential)
-#define USER_CREDENTIAL_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential))
-#endif
-
 #define EEPROM_USER_CODE_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code[0x0])
 #define EEPROM_USER_CODE_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code))
 

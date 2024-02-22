@@ -78,8 +78,10 @@ static void _start_level_set(uint8_t channel, uint8_t current_level, uint8_t tar
 		if (lpDur_b == lpDur_e) {
 			lpDur_b = &_duration[0];
 			while (lpDur_b < lpDur_e) {
-				if (lpDur_b->channel == 0x0)
+				if (lpDur_b->channel == 0x0) {
+					g_sleep_data.latch++;
 					break ;
+				}
 				lpDur_b++;
 			}
 		}
@@ -289,15 +291,22 @@ static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_L
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
+__WEAK void zuno_CCWindowCoveringStop(uint8_t channel, uint8_t parameterId) {
+	(void)channel;
+	(void)parameterId;
+}
+
 static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME *paket) {
 	ZunoTimerBasic_t								*lp;
 	ZunoWindowCoveringDuration_t					*lpDur_b;
 	ZunoWindowCoveringDuration_t					*lpDur_e;
 	size_t											count;
 	uint8_t											parameterId;
+	bool											b_stop;
 
 	parameterId = paket->parameterId;
 	zunoEnterCritical();
+	b_stop = false;
 	channel++;
 	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
 		lpDur_b = &_duration[0x0];
@@ -307,6 +316,8 @@ static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEV
 			if (lpDur_b->channel == channel) {
 				if (lpDur_b->parameterId == parameterId) {
 					lpDur_b->channel = 0x0;
+					g_sleep_data.latch--;
+					b_stop = true;
 					break ;
 				}
 				else
@@ -327,6 +338,8 @@ static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEV
 			lp->channel = 0x0;
 	}
 	zunoExitCritical();
+	if (b_stop == true)
+		zuno_CCWindowCoveringStop(channel - 0x1, parameterId);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -414,6 +427,7 @@ void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t 
 					value += ticks;
 					if (value >= lpDur_b->targetValue) {
 						lpDur_b->channel = 0x0;
+						g_sleep_data.latch--;
 						count--;
 					}
 				}
@@ -421,6 +435,7 @@ void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t 
 					value -= ticks;
 					if (value <= lpDur_b->targetValue) {
 						lpDur_b->channel = 0x0;
+						g_sleep_data.latch--;
 						count--;
 					}
 				}

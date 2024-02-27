@@ -393,7 +393,6 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report) {
 	size_t									bMode;
 	size_t									channel;
@@ -407,8 +406,6 @@ void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t 
 
 	if ((bMode = lp->bMode) == 0x0)
 		return ;
-	if ((bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0)
-		return (zuno_CCSwitchMultilevelTimer(lp, frame_report));
 	channel = lp->channel;
 	lpDur_b = &_duration[0x0];
 	lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];

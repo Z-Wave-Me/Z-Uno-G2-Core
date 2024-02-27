@@ -14,6 +14,12 @@ zuno_cc_supervision_data_t __cc_supervision = {0xFF, 0x00, false, 0x00};
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 
+bool __zuno_CCSupervisionReportSendTest(uint8_t duration) {
+	if (duration != 0x0 && (__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0)
+		return (true);
+	return (false);
+}
+
 static uint8_t __zuno_CCSupervisionReportSend(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report){
 	ZwCSuperVisionReportFrame_t	* report = (ZwCSuperVisionReportFrame_t *)frame_report->packet.cmd;
 	report->properties1 = __cc_supervision._prev_id;
@@ -38,7 +44,7 @@ static uint8_t __zuno_CCSupervisionReportSend(uint8_t process_result, uint8_t du
 	report->cmd = SUPERVISION_REPORT;
 	report->status = process_result;
 	report->duration = duration;
-	if (duration != 0x0 && (__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0) {
+	if (__zuno_CCSupervisionReportSendTest(duration) == true) {
 		report->properties1 = report->properties1 | SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK;
 		if (timer != 0x0)
 			timer->bMode = timer->bMode | ZUNO_TIMER_SWITCH_SUPERVISION;

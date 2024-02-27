@@ -136,6 +136,7 @@ typedef struct									ZwSwitchMultilevelSupportedReportFrame_s
 }												ZwSwitchMultilevelSupportedReportFrame_t;
 
 
+void __zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_report);
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet);
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);

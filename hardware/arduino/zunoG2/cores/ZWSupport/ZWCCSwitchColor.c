@@ -307,7 +307,7 @@ int zuno_CCSwitchColorReport(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOComm
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *, ZUNOCommandPacketReport_t *frame_report);
+// void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report) {
 	size_t									bMode;
 	size_t									channel;
@@ -321,8 +321,8 @@ void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *fr
 
 	if ((bMode = lp->bMode) == 0x0)
 		return ;
-	if ((bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0)
-		return (zuno_CCSwitchMultilevelTimer(lp, frame_report));
+	// if ((bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0)
+	// 	return (zuno_CCSwitchMultilevelTimer(lp, frame_report));
 	channel = lp->channel;
 	lpDur_b = &_duration[0];
 	lpDur_e = &_duration[(sizeof(_duration) / sizeof(ZunoColorDuration_t))];

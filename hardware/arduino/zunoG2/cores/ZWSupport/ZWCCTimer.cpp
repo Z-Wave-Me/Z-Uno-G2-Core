@@ -69,7 +69,6 @@ size_t zuno_CCTimerTicksTable7(size_t duration) {// Get the step for dimming in 
 
 void zunoSendReportHandler(uint32_t ticks);
 void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
-void zuno_CCSwitchMultilevelTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
@@ -81,7 +80,7 @@ void zuno_CCTimeHandlerTimer(void);
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_WINDOW_COVERING)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_WINDOW_COVERING)
 static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
@@ -95,11 +94,6 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 				#ifdef WITH_CC_SWITCH_BINARY
 				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 					zuno_CCSwitchBinaryTimer(lp_b, frame_report);
-					break ;
-				#endif
-				#ifdef WITH_CC_SWITCH_MULTILEVEL
-				case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-					zuno_CCSwitchMultilevelTimer(lp_b, frame_report);
 					break ;
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
@@ -127,23 +121,31 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
-	ZUNOCommandPacketReport_t frame_report;
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	ZUNOCommandPacketReport_t						frame_report;
+	#endif
+
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_WINDOW_COVERING)
 	_exe(&frame_report);
 	#endif
-	#if defined(WITH_CC_SOUND_SWITCH)
-	if((ticks & 0x3) == 0) // Once in ~40ms 
-		zuno_CCSoundSwitchTimer();
-	#endif
-	if((ticks & 0x3) == 0) // Once in ~40ms 
+	if((ticks & 0x3) == 0) {// Once in ~40ms 
 		zuno_CCIndicatorTimer();
-	#if defined(WITH_CC_CENTRAL_SCENE)
-	if((ticks & 0x7) == 0) // Once in ~80ms 
+		#if defined(WITH_CC_SOUND_SWITCH)
+		zuno_CCSoundSwitchTimer();
+		#endif
+	}
+	#if defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE)
+	if((ticks & 0x7) == 0) { // Once in ~80ms 
+		#if defined(WITH_CC_SWITCH_MULTILEVEL) 
+		__zuno_CCSwitchMultilevelTimer(&frame_report);
+		#endif
+		#if defined(WITH_CC_CENTRAL_SCENE) 
 		zuno_CCCentralSceneTimer();
-	#endif
-	#if defined(WITH_CC_TIME)
-	if((ticks & 0x7) == 0) // Once in ~80ms 
+		#endif
+		#if defined(WITH_CC_TIME) 
 		zuno_CCTimeHandlerTimer();
+		#endif
+	}
 	#endif
 	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0){// Once in ~80ms - for 0x7
 		zunoSendReportHandler(ticks);

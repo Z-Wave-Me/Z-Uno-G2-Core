@@ -65,6 +65,62 @@ void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 	}
 }
 
+void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	size_t									type;
+	size_t									currentValue;
+	size_t									targetValue;
+	size_t									duration;
+	ZunoTimerBasic_t						*lp;
+
+	type = ZUNO_CFG_CHANNEL(channel).type;
+	switch (type) {
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelGetValues(channel, current_value, duration_table_8, target_value);
+			break ;
+		#endif
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCWindowCoveringGetValues(channel, current_value, duration_table_8, target_value);
+			break ;
+		#endif
+		default:
+			switch (type) {
+				#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+				#endif
+				#if defined(WITH_CC_SWITCH_BINARY)
+				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+				#endif
+				#if defined(WITH_CC_DOORLOCK)
+				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+				#endif
+					currentValue = __zuno_BasicUniversalGetter1P(channel);
+					currentValue = currentValue ? 0xFF : 0x00;
+					break;
+				#endif
+				default:
+					currentValue = __zuno_BasicUniversalGetter1P(channel);
+					break;
+			}
+			zunoEnterCritical();
+			if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0 && (lp->bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0) {
+				duration = zuno_CCTimerTable8(lp->ticksEnd - lp->ticks);
+				targetValue = lp->targetValue;
+			}
+			else {
+				targetValue = currentValue;
+				duration = 0x0;
+			}
+			zunoExitCritical();
+			current_value[0x0] = currentValue;
+			target_value[0x0] = targetValue;
+			duration_table_8[0x0] = duration;
+			break ;
+	}
+}
+
 #ifdef WITH_CC_BASIC
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier);
@@ -128,68 +184,19 @@ int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report);
 
 static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwBasicReportV2Frame_t					*report;
-	ZunoTimerBasic_t						*lp;
-	size_t									currentValue;
-	size_t									targetValue;
-	size_t									duration;
-	size_t									type;
 
 	report = (ZwBasicReportV2Frame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
 	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
-	type = ZUNO_CFG_CHANNEL(channel).type;
-	switch (type) {
+	switch (ZUNO_CFG_CHANNEL(channel).type) {
 		#if defined(WITH_CC_SOUND_SWITCH)
 		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
 			return (zuno_CCSoundSwitchBasicGet(channel, report));
 			break ;
 		#endif
-		#if defined(WITH_CC_SWITCH_MULTILEVEL)
-		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			__zuno_CCSwitchMultilevelGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
-			break ;
-		#endif
-		#if defined(WITH_CC_WINDOW_COVERING)
-		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			__zuno_CCWindowCoveringGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
-			break ;
-		#endif
-		default:
-			switch (type) {
-				#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
-				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
-				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				#endif
-				#if defined(WITH_CC_SWITCH_BINARY)
-				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-				#endif
-				#if defined(WITH_CC_DOORLOCK)
-				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
-				#endif
-					currentValue = __zuno_BasicUniversalGetter1P(channel);
-					currentValue = currentValue ? 0xFF : 0x00;
-					break;
-				#endif
-				default:
-					currentValue = __zuno_BasicUniversalGetter1P(channel);
-					break;
-			}
-			zunoEnterCritical();
-			if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0 && (lp->bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0) {
-				duration = zuno_CCTimerTable8(lp->ticksEnd - lp->ticks);
-				targetValue = lp->targetValue;
-			}
-			else {
-				targetValue = currentValue;
-				duration = 0x0;
-			}
-			zunoExitCritical();
-			report->currentValue = currentValue;
-			report->targetValue = targetValue;
-			report->duration = duration;
-			break ;
 	}
+	__zuno_BasicUniversalGetCurrentValueDurationTargetValue(channel, &report->currentValue, &report->duration, &report->targetValue);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

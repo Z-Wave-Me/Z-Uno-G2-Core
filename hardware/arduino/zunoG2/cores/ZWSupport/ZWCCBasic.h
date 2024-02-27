@@ -50,6 +50,7 @@ uint8_t zunoBasicSaveGet(uint8_t channel);
 void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value);
 uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch);
 void __zuno_BasicUniversalTimerStop(uint8_t channel);
+void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value);
 
 int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // BASIC_CC_H

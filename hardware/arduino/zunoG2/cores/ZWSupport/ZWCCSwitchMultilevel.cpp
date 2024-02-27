@@ -178,7 +178,7 @@ int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 	SwitchMultilevelReportFrame_t			*report;
 
 	report = (SwitchMultilevelReportFrame_t *)&packet->cmd[0x0];
-	__zuno_CCSwitchMultilevelGetValues(channel, &report->v4.currentValue, &report->v4.duration, &report->v4.targetValue);
+	__zuno_BasicUniversalGetCurrentValueDurationTargetValue(channel, &report->v4.currentValue, &report->v4.duration, &report->v4.targetValue);
 	report->v4.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	report->v4.cmd = SWITCH_MULTILEVEL_REPORT;
 	packet->len = sizeof(report->v4);

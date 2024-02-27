@@ -81,28 +81,6 @@ static bool _stop_timer(uint8_t channel, uint8_t parameterId) {
 	return (b_free);
 }
 
-void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
-	const ZNLinkedList_t								*linked_list;
-	ZWCCWindowCoveringTimerList_t						*parameter_list;
-	bool												b_free;
-
-	zunoEnterCritical();
-	b_free = false;
-	linked_list = _window_covering_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCWindowCoveringTimerList_t *)linked_list->data;
-		if (parameter_list->channel == channel) {
-			_stop_timer_remove(parameter_list);
-			b_free = true;
-		}
-		linked_list = linked_list->next;
-	}
-	zunoExitCritical();
-	if (b_free == true)
-		return ;
-	__zuno_CCSwitchMultilevelTimerStop(channel);
-}
-
 static bool _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	ZWCCWindowCoveringTimerList_t						*parameter_list;
 	uint64_t											ticks;
@@ -479,6 +457,10 @@ void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, u
 	if (_get_values(channel, ZUNO_CFG_CHANNEL(channel).sub_type, current_value, duration_table_8, target_value) == true)
 		return ;
 	__zuno_CCSwitchMultilevelGetValues(channel, current_value, duration_table_8, target_value);
+}
+
+void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
+	_stop_timer(channel, ZUNO_CFG_CHANNEL(channel).sub_type);
 }
 
 #include "ZWCCZWavePlusInfo.h"

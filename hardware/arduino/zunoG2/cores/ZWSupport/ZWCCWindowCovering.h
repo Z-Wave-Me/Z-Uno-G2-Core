@@ -273,6 +273,8 @@ typedef struct _ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME_
     uint8_t   parameterId;                  /**/
 } ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME;
 
+void __zuno_CCWindowCoveringTimer(ZUNOCommandPacketReport_t *frame_report);
+
 int zuno_CCWindowCoveringHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 

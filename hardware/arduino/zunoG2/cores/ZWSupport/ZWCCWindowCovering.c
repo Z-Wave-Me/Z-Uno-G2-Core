@@ -2,21 +2,111 @@
 #include "ZWCCWindowCovering.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSuperVision.h"
+#include "LinkedList.h"
 
-typedef struct					ZunoWindowCoveringDuration_s {
-	uint8_t						targetValue;
-	uint8_t						currentValue;
+#define WINDOW_COVERING_TIMER_SWITCH_INC					(0x1 << 0x0)//Indicates what should be up
+#define WINDOW_COVERING_TIMER_SWITCH_DEC					(0x1 << 0x1)//Indicates what should be down
+#define WINDOW_COVERING_TIMER_SWITCH_SUPERVISION			(0x1 << 0x2)
+
+bool __zuno_CCSupervisionReportSendTest(uint8_t duration);
+uint64_t rtcc_micros(void);
+
+typedef struct					ZWCCWindowCoveringTimerList_s
+{
+	uint64_t					ticksEnd;
+	uint32_t					step;
 	uint8_t						channel;
+	uint8_t						bMode;//Stores modes
+	uint8_t						targetValue;
+	uint8_t						currentValue;//Current Dimming Level
 	uint8_t						parameterId;
-	struct
-	{
-		uint32_t				diming: 1;
-		uint32_t				step: 31;
-	};
-	uint32_t					ticks;
-}								ZunoWindowCoveringDuration_t;
+}								ZWCCWindowCoveringTimerList_t;
 
-static ZunoWindowCoveringDuration_t _duration[0x10];
+static ZNLinkedList_t *_window_covering_timer = NULL;
+
+static ZWCCWindowCoveringTimerList_t *_get_list_old(uint8_t channel, uint8_t parameterId) {
+	const ZNLinkedList_t								*linked_list;
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+
+	linked_list = _window_covering_timer;
+	while (linked_list != NULL) {
+		parameter_list = (ZWCCWindowCoveringTimerList_t *)linked_list->data;
+		if (parameter_list->channel == channel && parameter_list->parameterId == parameterId)
+			return (parameter_list);
+		linked_list = linked_list->next;
+	}
+	return (NULL);
+}
+
+static ZWCCWindowCoveringTimerList_t *_get_list_new_change(uint8_t channel, uint8_t parameterId) {
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+
+	if ((parameter_list = _get_list_old(channel, parameterId)) != NULL)
+		return (parameter_list);
+	if ((parameter_list = (ZWCCWindowCoveringTimerList_t *)malloc(sizeof(parameter_list[0x0]))) == NULL)
+		return (NULL);
+	if (znllPushBack(&_window_covering_timer, parameter_list) == false) {
+		free(parameter_list);
+		return (NULL);
+	}
+	parameter_list->channel = channel;
+	g_sleep_data.latch++;
+	return (parameter_list);
+}
+
+static void _stop_timer_remove(ZWCCWindowCoveringTimerList_t *parameter_list) {
+	znllRemoveP(&_window_covering_timer, parameter_list);
+	free(parameter_list);
+	g_sleep_data.latch--;
+}
+
+static bool _stop_timer(uint8_t channel, uint8_t parameterId) {
+	const ZNLinkedList_t								*linked_list;
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+	bool												b_free;
+
+	zunoEnterCritical();
+	b_free = false;
+	linked_list = _window_covering_timer;
+	while (linked_list != NULL) {
+		parameter_list = (ZWCCWindowCoveringTimerList_t *)linked_list->data;
+		if (parameter_list->channel == channel && parameter_list->parameterId == parameterId) {
+			_stop_timer_remove(parameter_list);
+			b_free = true;
+			break ;
+		}
+		linked_list = linked_list->next;
+	}
+	zunoExitCritical();
+	return (b_free);
+}
+
+static void _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+	uint64_t											ticks;
+	size_t												duration;
+	uint8_t												currentValue;
+
+	currentValue = zuno_universalGetter2P(channel, parameterId);
+	if(currentValue > 0x63)
+		currentValue = 0x63;
+	current_value[0x0] = currentValue;
+	zunoEnterCritical();
+	if ((parameter_list = _get_list_old(channel, parameterId)) != NULL) {
+		target_value[0x0] = parameter_list->targetValue;
+		ticks = rtcc_micros() / 1000;
+		if (parameter_list->ticksEnd > ticks)
+			duration = parameter_list->ticksEnd - ticks;
+		else
+			duration = 0x0;
+		duration_table_8[0x0] = zuno_CCTimerTable8(duration);
+	}
+	else {
+		target_value[0x0] = currentValue;
+		duration_table_8[0x0] = 0x0;
+	}
+	zunoExitCritical();
+}
 
 static uint32_t _get_parameter_mask(uint8_t channel) {
 	uint32_t								mask;
@@ -55,92 +145,15 @@ static bool _set_test(uint32_t mask, const VG_WINDOW_COVERING_SET_VG *vg) {
 	return (true);
 }
 
-static void _start_level_set(uint8_t channel, uint8_t current_level, uint8_t targetValue, uint8_t parameterId, size_t step, uint8_t diming, uint8_t duration, ZUNOCommandPacketReport_t *frame_report) {
-	ZunoTimerBasic_t								*lp;
-	ZunoWindowCoveringDuration_t					*lpDur_b;
-	ZunoWindowCoveringDuration_t					*lpDur_e;
-	size_t											tempos;
-
-	if (step == 0x0) {
-		zuno_universalSetter2P(channel, parameterId, targetValue);
-		return ;
-	}
-	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
-		lpDur_b = &_duration[0x0];
-		lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-		tempos = channel + 0x1;
-		while (lpDur_b < lpDur_e) {
-			if (lpDur_b->channel == tempos && lpDur_b->parameterId == parameterId)
-				break ;
-			lpDur_b++;
-		}
-		if (lpDur_b == lpDur_e) {
-			lpDur_b = &_duration[0];
-			while (lpDur_b < lpDur_e) {
-				if (lpDur_b->channel == 0x0) {
-					g_sleep_data.latch++;
-					break ;
-				}
-				lpDur_b++;
-			}
-		}
-		if (lpDur_b != lpDur_e) {
-			lp->bMode = ZUNO_TIMER_SWITCH_NO_BASIC;
-			lp->channel = tempos;
-			lpDur_b->channel = tempos;
-			lpDur_b->diming = diming;
-			lpDur_b->step = step;
-			lpDur_b->ticks = millis();
-			lpDur_b->parameterId = parameterId;
-			lpDur_b->currentValue = current_level;
-			lpDur_b->targetValue = targetValue;
-			zunoExitCritical();
-			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
-			zunoEnterCritical();
-		}
-	}
-	zunoExitCritical();
-	(void)duration;
-}
-
 static void _set_duration_0(uint8_t channel, const VG_WINDOW_COVERING_SET_VG *vg, uint8_t count) {
-	size_t														tempos;
 	uint8_t														i;
-	uint8_t														parameterId;
-	ZunoWindowCoveringDuration_t								*lpDur_b;
-	ZunoWindowCoveringDuration_t								*lpDur_e;
 
 	zunoEnterCritical();
-	tempos = channel + 0x1;
 	i = 0x0;
 	while (i < count) {
-		parameterId = vg[i].parameterId;
-		if ((parameterId & 0x1) != 0x0) {
-			lpDur_b = &_duration[0x0];
-			lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-			while (lpDur_b < lpDur_e) {
-				if (lpDur_b->channel == tempos && lpDur_b->channel == parameterId) {
-					lpDur_b->channel = 0x0;
-					break ;
-				}
-				lpDur_b++;
-			}
-		}
+		_stop_timer(channel, vg[i].parameterId);
 		i++;
 	}
-	lpDur_b = &_duration[0x0];
-	lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-	i = 0x0;
-	while (lpDur_b < lpDur_e) {
-		if (lpDur_b->channel == tempos) {
-			i++;
-			break ;
-		}
-		lpDur_b++;
-	}
-	if (i != 0x0)
-		zuno_CCTimerBasicFindStop(channel);
 	zunoExitCritical();
 	i = 0x0;
 	while (i < count) {
@@ -158,10 +171,11 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 	const uint8_t												*tmp;
 	uint8_t														parameterId;
 	size_t														step;
-	uint8_t														diming;
+	uint8_t														b_mode;
 	uint8_t														currentValue;
 	uint8_t														targetValue;
 	uint8_t														duration_encode;
+	ZWCCWindowCoveringTimerList_t								*parameter_list;
 
 	mask = _get_parameter_mask(channel);
 	count = paket->properties1 & WINDOW_COVERING_SET_PROPERTIES1_PARAMETER_COUNT_MASK;
@@ -189,13 +203,28 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 		if (currentValue != targetValue ) {
 			if (targetValue > currentValue) {
 				step = duration / (targetValue - currentValue);
-				diming = 0x0;
+				b_mode = WINDOW_COVERING_TIMER_SWITCH_INC;
 			}
 			else {
 				step = duration / (currentValue - targetValue);
-				diming = 0x1;
+				b_mode = WINDOW_COVERING_TIMER_SWITCH_DEC;
 			}
-			_start_level_set(channel, currentValue, targetValue, parameterId, step, diming, duration_encode, frame_report);
+			if (step == 0x0) {
+				zuno_universalSetter2P(channel, parameterId, targetValue);
+				continue ;
+			}
+			zunoEnterCritical();
+			if ((parameter_list = _get_list_new_change(channel, parameterId)) != NULL) {
+				parameter_list->channel = channel;
+				parameter_list->parameterId = parameterId;
+				parameter_list->bMode = b_mode;
+				parameter_list->currentValue = currentValue;
+				parameter_list->targetValue = targetValue;
+				parameter_list->step = step;
+				parameter_list->ticksEnd = (rtcc_micros() / 1000) + duration;
+			}
+			zunoExitCritical();
+			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
 		}
 		i++;
 	}
@@ -203,48 +232,8 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 }
 
 static void _get_set(uint8_t channel, ZW_WINDOW_COVERING_REPORT_FRAME *report, uint8_t parameterId) {
-	ZunoWindowCoveringDuration_t								*lpDur_b;
-	ZunoWindowCoveringDuration_t								*lpDur_e;
-	size_t														tempos;
-	uint8_t														currentValue;
-	uint8_t														targetValue;
-	uint8_t														duration;
-
 	report->parameterId = parameterId;
-	zunoEnterCritical();
-	lpDur_b = &_duration[0x0];
-	lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-	tempos = channel + 0x1;
-	while (lpDur_b < lpDur_e) {
-		if (lpDur_b->channel == tempos && lpDur_b->channel == parameterId) {
-			lpDur_b->channel = 0x0;
-			break ;
-		}
-		lpDur_b++;
-	}
-	zunoExitCritical();
-	if (lpDur_b == lpDur_e) {
-		targetValue = 0x0;
-		if ((parameterId & 0x1) == 0x0)
-			duration = 0xFE;
-		else
-			duration = 0x0;
-	}
-	else {
-		targetValue = lpDur_b->targetValue;
-		currentValue = lpDur_b->currentValue;
-		if (targetValue > currentValue)
-			currentValue = targetValue - currentValue;
-		else
-			currentValue = currentValue - targetValue;
-		duration = zuno_CCTimerTable8(currentValue * lpDur_b->step);
-	}
-	currentValue = zuno_universalGetter2P(channel, parameterId);
-	if (duration == 0x0)
-		targetValue = currentValue;
-	report->currentValue = currentValue;
-	report->targetValue = targetValue;
-	report->duration = duration;
+	_get_values(channel, parameterId, &report->currentValue, &report->duration, &report->targetValue);
 }
 
 static int _get(uint8_t channel, const ZW_WINDOW_COVERING_GET_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
@@ -264,30 +253,54 @@ static int _get(uint8_t channel, const ZW_WINDOW_COVERING_GET_FRAME *paket, ZUNO
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+static void _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t duration, uint8_t targetValue, uint8_t b_mode, ZUNOCommandPacketReport_t *frame_report) {
+	ZWCCWindowCoveringTimerList_t								*parameter_list;
+	uint8_t														currentValue;
+	size_t														step;
+
+	step = (zuno_CCTimerTicksTable7(duration) / (0x63 + 1));
+	if (step == 0x0) {
+		zuno_universalSetter2P(channel, parameterId, targetValue);
+		return ;
+	}
+	currentValue = zuno_universalGetter2P(channel, parameterId);
+	zunoEnterCritical();
+	if ((parameter_list = _get_list_new_change(channel, parameterId)) != NULL) {
+		parameter_list->channel = channel;
+		parameter_list->parameterId = parameterId;
+		parameter_list->bMode = b_mode;
+		parameter_list->currentValue = currentValue;
+		parameter_list->targetValue = targetValue;
+		parameter_list->step = step;
+		if (b_mode == WINDOW_COVERING_TIMER_SWITCH_INC)
+			step = step * (targetValue - currentValue);
+		else
+			step = step * (currentValue - targetValue);
+		parameter_list->ticksEnd = (rtcc_micros() / 1000) + step;
+	}
+	zunoExitCritical();
+	zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
+}
+
 static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
 	uint32_t													mask;
 	uint8_t														parameterId;
-	size_t														step;
-	uint8_t														currentValue;
 	uint8_t														targetValue;
-	uint8_t														diming;
+	uint8_t														bMode;
 
-	
 	mask = _get_parameter_mask(channel);
 	parameterId = paket->parameterId;
 	if ((mask & (0x1 << parameterId)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	currentValue = zuno_universalGetter2P(channel, parameterId);
 	if ((paket->properties1 & WINDOW_COVERING_START_LEVEL_CHANGE_PROPERTIES1_UP_DOWN_BIT_MASK) == 0) {// Dimming to up
 		targetValue = 0x63;
-		diming = 0x0;
+		bMode = WINDOW_COVERING_TIMER_SWITCH_INC;
 	}
 	else {// Dimming to down
 		targetValue = 0x0;
-		diming = 0x1;
+		bMode = WINDOW_COVERING_TIMER_SWITCH_DEC;
 	}
-	step = (zuno_CCTimerTicksTable7(paket->duration) / (0x63 + 1));
-	_start_level_set(channel, currentValue, targetValue, parameterId, step, diming, paket->duration, frame_report);
+	_start_level_sdfdsfgsd(channel, parameterId, paket->duration, targetValue, bMode, frame_report);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -297,49 +310,11 @@ __WEAK void zuno_CCWindowCoveringStop(uint8_t channel, uint8_t parameterId) {
 }
 
 static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME *paket) {
-	ZunoTimerBasic_t								*lp;
-	ZunoWindowCoveringDuration_t					*lpDur_b;
-	ZunoWindowCoveringDuration_t					*lpDur_e;
-	size_t											count;
 	uint8_t											parameterId;
-	bool											b_stop;
 
 	parameterId = paket->parameterId;
-	zunoEnterCritical();
-	b_stop = false;
-	channel++;
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0) {
-		lpDur_b = &_duration[0x0];
-		lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-		count = 0x0;
-		while (lpDur_b < lpDur_e) {
-			if (lpDur_b->channel == channel) {
-				if (lpDur_b->parameterId == parameterId) {
-					lpDur_b->channel = 0x0;
-					g_sleep_data.latch--;
-					b_stop = true;
-					break ;
-				}
-				else
-					count++;
-			}
-			lpDur_b++;
-		}
-		if (count == 0x0) {
-			while (lpDur_b < lpDur_e) {
-				if (lpDur_b->channel == channel) {
-					count++;
-					break ;
-				}
-				lpDur_b++;
-			}
-		}
-		if (count == 0x0)
-			lp->channel = 0x0;
-	}
-	zunoExitCritical();
-	if (b_stop == true)
-		zuno_CCWindowCoveringStop(channel - 0x1, parameterId);
+	if (_stop_timer(channel, parameterId) == true)
+		zuno_CCWindowCoveringStop(channel, parameterId);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -393,64 +368,51 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void zuno_CCWindowCoveringTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report) {
-	size_t									bMode;
-	size_t									channel;
-	ssize_t									value;
-	size_t									count;
-	size_t									tempos;
-	size_t									step;
-	ZunoWindowCoveringDuration_t			*lpDur_b;
-	ZunoWindowCoveringDuration_t			*lpDur_e;
-	size_t									ticks;
+static void _zuno_CCWindowCoveringTimer(ZUNOCommandPacketReport_t *frame_report, ZWCCWindowCoveringTimerList_t *parameter_list) {
+	uint64_t								ticks;
+	uint8_t									value;
+	uint8_t									new_value;
 
-	if ((bMode = lp->bMode) == 0x0)
+	ticks = rtcc_micros() / 1000;
+	if (ticks >= parameter_list->ticksEnd) {
+		new_value = parameter_list->targetValue;
+	}
+	else {
+		value = ((parameter_list->ticksEnd - ticks) / parameter_list->step);
+		if ((parameter_list->bMode & WINDOW_COVERING_TIMER_SWITCH_INC) != 0x0)
+			new_value = parameter_list->targetValue - value;
+		else
+			new_value = parameter_list->targetValue + value;
+	}
+	if (new_value == parameter_list->currentValue)
 		return ;
-	channel = lp->channel;
-	lpDur_b = &_duration[0x0];
-	lpDur_e = &_duration[(sizeof(_duration) / sizeof(_duration[0x0]))];
-	count = 0x0;
-	while (lpDur_b < lpDur_e) {
-		if (lpDur_b->channel == channel) {
-			ticks = millis();
-			count++;
-			step = lpDur_b->step;
-			if ((tempos = lpDur_b->ticks + step) <= ticks) {
-				ticks = ticks - tempos;
-				lpDur_b->ticks = tempos + (ticks % step);
-				ticks = ticks / step + 0x1;
-				value = lpDur_b->currentValue;
-				if (lpDur_b->diming == 0x0) {
-					value += ticks;
-					if (value >= lpDur_b->targetValue) {
-						lpDur_b->channel = 0x0;
-						g_sleep_data.latch--;
-						count--;
-					}
-				}
-				else {
-					value -= ticks;
-					if (value <= lpDur_b->targetValue) {
-						lpDur_b->channel = 0x0;
-						g_sleep_data.latch--;
-						count--;
-					}
-				}
-				lpDur_b->currentValue = value;
-				zuno_universalSetter2P(channel - 1, lpDur_b->parameterId, value);
-				zunoSendReport(channel);
-			}
-		}
-		lpDur_b++;
+	parameter_list->currentValue = new_value;
+	zuno_universalSetter2P(parameter_list->channel, parameter_list->parameterId, new_value);
+	zunoSendReport(parameter_list->channel + 0x1);
+	if (parameter_list->currentValue != parameter_list->targetValue)
+		return ;
+	if ((parameter_list->bMode & WINDOW_COVERING_TIMER_SWITCH_SUPERVISION) != 0x0) {
+		__cc_supervision._unpacked = true;
+		fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(parameter_list->channel).zw_channel);
+		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 	}
-	if (count == 0x0) {
-		lp->channel = 0x0;
-		if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
-			__cc_supervision._unpacked = true;
-			fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(channel - 1).zw_channel);
-			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
-		}
+	_stop_timer_remove(parameter_list);
+}
+
+void __zuno_CCWindowCoveringTimer(ZUNOCommandPacketReport_t *frame_report) {
+	const ZNLinkedList_t								*linked_list;
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+
+	if (_window_covering_timer == NULL)
+		return ;
+	zunoEnterCritical();
+	linked_list = _window_covering_timer;
+	while (linked_list != NULL) {
+		parameter_list = (ZWCCWindowCoveringTimerList_t *)linked_list->data;
+		_zuno_CCWindowCoveringTimer(frame_report, parameter_list);
+		linked_list = linked_list->next;
 	}
+	zunoExitCritical();
 }
 
 void __zunoWindowCoveringSet(uint8_t channel, uint8_t value) {

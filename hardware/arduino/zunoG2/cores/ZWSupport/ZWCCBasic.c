@@ -13,18 +13,26 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 
 	type = ZUNO_CFG_CHANNEL(channel).type;
 	value = paket->value;
-	#if defined(WITH_CC_SOUND_SWITCH)
 	switch (type) {
 		#if defined(WITH_CC_SOUND_SWITCH)
 		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
 			return (zuno_CCSoundSwitchBasicSet(channel, value));
 			break ;
 		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelTimerStop(channel);
+			break ;
+		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelTimerStop(channel);
+			break ;
+		#endif
 		default:
+			zuno_CCTimerBasicFindStop(channel);
 			break ;
 	}
-	#endif
-	zuno_CCTimerBasicFindStop(channel);
 	switch (type) {
 		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
@@ -82,48 +90,57 @@ static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
 	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
 	type = ZUNO_CFG_CHANNEL(channel).type;
-	#if defined(WITH_CC_SOUND_SWITCH)
 	switch (type) {
 		#if defined(WITH_CC_SOUND_SWITCH)
 		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
 			return (zuno_CCSoundSwitchBasicGet(channel, report));
 			break ;
 		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
+			break ;
+		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
+			break ;
+		#endif
 		default:
+			switch (type) {
+				#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
+				#endif
+				#if defined(WITH_CC_SWITCH_BINARY)
+				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+				#endif
+				#if defined(WITH_CC_DOORLOCK)
+				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+				#endif
+					currentValue = ZWCC_BASIC_GETTER_1P(channel);
+					currentValue = currentValue ? 0xFF : 0x00;
+					break;
+				#endif
+				default:
+					currentValue = ZWCC_BASIC_GETTER_1P(channel);
+					break;
+			}
+			zunoEnterCritical();
+			if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0 && (lp->bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0) {
+				duration = zuno_CCTimerTable8(lp->ticksEnd - lp->ticks);
+				targetValue = lp->targetValue;
+			}
+			else {
+				targetValue = currentValue;
+				duration = 0x0;
+			}
+			zunoExitCritical();
+			report->currentValue = currentValue;
+			report->targetValue = targetValue;
+			report->duration = duration;
 			break ;
 	}
-	#endif
-	currentValue = ZWCC_BASIC_GETTER_1P(channel);
-	switch (type) {
-		#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
-		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
-		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-		#endif
-		#if defined(WITH_CC_SWITCH_BINARY)
-		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-		#endif
-		#if defined(WITH_CC_DOORLOCK)
-		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
-		#endif
-			currentValue = currentValue ? 0xFF : 0x00;
-			break;
-		#endif
-		default:
-			break;
-	}
-	zunoEnterCritical();
-	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0 && (lp->bMode & ZUNO_TIMER_SWITCH_NO_BASIC) == 0x0) {
-		duration = zuno_CCTimerTable8(lp->ticksEnd - lp->ticks);
-		targetValue = lp->targetValue;
-	}
-	else {
-		targetValue = currentValue;
-		duration = 0x0;
-	}
-	report->currentValue = currentValue;
-	report->targetValue = targetValue;
-	report->duration = duration;
-	zunoExitCritical();
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

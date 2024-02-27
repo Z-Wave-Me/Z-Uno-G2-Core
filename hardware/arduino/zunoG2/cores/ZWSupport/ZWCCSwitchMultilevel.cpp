@@ -78,11 +78,20 @@ static void _stop_timer(uint8_t channel) {
 	zunoExitCritical();
 }
 
-void _get_duration_value(uint8_t channel, uint8_t currentValue, uint8_t *duration_table_8, uint8_t *target_value) {
+void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
+	_stop_timer(channel);
+}
+
+void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
 	uint64_t											ticks;
 	size_t												duration;
+	uint8_t												currentValue;
 
+	currentValue = ZWCC_BASIC_GETTER_1P(channel);
+	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
+		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
+	current_value[0x0] = currentValue;
 	zunoEnterCritical();
 	if ((parameter_list = _get_list_old(channel)) != NULL) {
 		target_value[0x0] = parameter_list->targetValue;
@@ -219,16 +228,11 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 	SwitchMultilevelReportFrame_t			*report;
-	size_t									currentValue;
 
-	currentValue = ZWCC_BASIC_GETTER_1P(channel);
-	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
-		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	report = (SwitchMultilevelReportFrame_t *)&packet->cmd[0x0];
-	_get_duration_value(channel, currentValue, &report->v4.duration, &report->v4.targetValue);
+	__zuno_CCSwitchMultilevelGetValues(channel, &report->v4.currentValue, &report->v4.duration, &report->v4.targetValue);
 	report->v4.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	report->v4.cmd = SWITCH_MULTILEVEL_REPORT;
-	report->v4.currentValue = currentValue;
 	packet->len = sizeof(report->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 }

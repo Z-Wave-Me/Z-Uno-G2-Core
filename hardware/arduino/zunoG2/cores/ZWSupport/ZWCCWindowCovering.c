@@ -460,7 +460,9 @@ void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, u
 }
 
 void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
-	_stop_timer(channel, ZUNO_CFG_CHANNEL(channel).sub_type);
+	if (_stop_timer(channel, ZUNO_CFG_CHANNEL(channel).sub_type) == true)
+		return ;
+	__zuno_CCSwitchMultilevelTimerStop(channel);
 }
 
 #include "ZWCCZWavePlusInfo.h"

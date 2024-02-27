@@ -47,6 +47,23 @@ uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
 	return (value);
 }
 
+void __zuno_BasicUniversalTimerStop(uint8_t channel) {
+	switch (ZUNO_CFG_CHANNEL(channel).type) {
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			__zuno_CCSwitchMultilevelTimerStop(channel);
+			break ;
+		#endif
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCWindowCoveringTimerStop(channel);
+			break ;
+		#endif
+		default:
+			zuno_CCTimerBasicFindStop(channel);
+			break ;
+	}
+}
 
 #ifdef WITH_CC_BASIC
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
@@ -63,20 +80,8 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			return (zuno_CCSoundSwitchBasicSet(channel, value));
 			break ;
 		#endif
-		#if defined(WITH_CC_SWITCH_MULTILEVEL)
-		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			__zuno_CCSwitchMultilevelTimerStop(channel);
-			break ;
-		#endif
-		#if defined(WITH_CC_WINDOW_COVERING)
-		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			__zuno_CCWindowCoveringTimerStop(channel);
-			break ;
-		#endif
-		default:
-			zuno_CCTimerBasicFindStop(channel);
-			break ;
 	}
+	__zuno_BasicUniversalTimerStop(channel);
 	switch (type) {
 		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:

@@ -61,7 +61,7 @@ static void _stop_timer_remove(ZWCCSwitchMultilevelTimerList_t *parameter_list) 
 	g_sleep_data.latch--;
 }
 
-static void _stop_timer(uint8_t channel) {
+void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
 	const ZNLinkedList_t								*linked_list;
 	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
 
@@ -76,10 +76,6 @@ static void _stop_timer(uint8_t channel) {
 		linked_list = linked_list->next;
 	}
 	zunoExitCritical();
-}
-
-void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
-	_stop_timer(channel);
 }
 
 void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
@@ -215,7 +211,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 		switch (len) {
 			case sizeof(cmd->v4):
 				if ((duration = zuno_CCTimerTicksTable7(cmd->v4.dimmingDuration)) == 0x0) {
-					_stop_timer(channel);
+					__zuno_BasicUniversalTimerStop(channel);
 					break ;
 				}
 				zunoEnterCritical();
@@ -243,12 +239,12 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
-				_stop_timer(channel);
+				__zuno_BasicUniversalTimerStop(channel);
 				break ;
 		}
 	}
 	else
-		_stop_timer(channel);
+		__zuno_BasicUniversalTimerStop(channel);
 	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -267,7 +263,7 @@ static int _supported(ZUNOCommandPacketReport_t *frame_report) {
 }
 
 static int _stop_level(uint8_t channel) {// Stop Dimming
-	_stop_timer(channel);
+	__zuno_BasicUniversalTimerStop(channel);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 __attribute__((weak)) void zcustom_SWLStartStopHandler(uint8_t channel, bool start, bool up, uint8_t * cmd) {

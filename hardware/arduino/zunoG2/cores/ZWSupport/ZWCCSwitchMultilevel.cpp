@@ -88,7 +88,7 @@ void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value,
 	size_t												duration;
 	uint8_t												currentValue;
 
-	currentValue = ZWCC_BASIC_GETTER_1P(channel);
+	currentValue = __zuno_BasicUniversalGetter1P(channel);
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	current_value[0x0] = currentValue;
@@ -109,54 +109,6 @@ void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value,
 	zunoExitCritical();
 }
 
-void zunoSwitchColorSaveSet(uint8_t channel, void *value);
-uint8_t zunoSwitchColorSaveGet(uint8_t channel);
-
-void __zunoWindowCoveringSet(uint8_t channel, uint8_t value);
-uint8_t __zunoWindowCoveringGet(uint8_t channel);
-
-void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, uint8_t value) {
-    uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
-
-    switch (type) {
-        #ifdef WITH_CC_WINDOW_COVERING
-        case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-            __zunoWindowCoveringSet(zuno_ch, value);
-            break;
-        #endif
-        // #ifdef WITH_CC_SWITCH_COLOR
-        // case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-        //     zunoSwitchColorSaveSet(zuno_ch, &value);
-        //     break;
-        // #endif
-        default:
-            zuno_universalSetter1P(zuno_ch, value);
-            break ;
-    }
-}
-
-uint8_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch) {
-	uint8_t								value;
-
-	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
-	switch (type) {
-		#ifdef WITH_CC_WINDOW_COVERING
-		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			value = __zunoWindowCoveringGet(zuno_ch);
-			break;
-		#endif
-		// #ifdef WITH_CC_SWITCH_COLOR
-		// case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-		// 	value = zunoSwitchColorSaveGet(zuno_ch);
-		// 	break;
-		// #endif
-		default:
-			value = zuno_universalGetter1P(zuno_ch);
-			break ;
-	}
-	return (value);
-}
-
 static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
 	ZwSwitchMultilevelStartLevelChangeFrame_t			*pk;
 	uint32_t											step;
@@ -172,10 +124,10 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 		if (current_level != 0x0)
 			zunoBasicSaveSet(channel, &current_level);
-		ZWCC_BASIC_SETTER_1P(channel, current_level);
+		__zuno_BasicUniversalSetter1P(channel, current_level);
 		zunoSendReport(channel + 1);
 	} else {// Otherwise, get the current
-		if ((current_level = ZWCC_BASIC_GETTER_1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
+		if ((current_level = __zuno_BasicUniversalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	}
 	if (cmd->len == sizeof(ZwSwitchMultilevelStartLevelChangeV1Frame_t)) {
@@ -191,7 +143,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 			return ;
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
 			zunoSendReport(channel + 1);
-			return (ZWCC_BASIC_SETTER_1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
+			return (__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
 		}
 		b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_INC;
 		targetValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
@@ -200,7 +152,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 			return ;
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
 			zunoSendReport(channel + 1);
-			return (ZWCC_BASIC_SETTER_1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
+			return (__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
 		}
 		targetValue = ZUNO_TIMER_SWITCH_MIN_VALUE;
 		b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_DEC;
@@ -256,7 +208,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	}
 	if (value != 0x0)
 		zunoBasicSaveSet(channel, &value);
-	currentValue = ZWCC_BASIC_GETTER_1P(channel) ? 0xFF : 0x00;
+	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	if (currentValue != value) {
@@ -297,7 +249,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	}
 	else
 		_stop_timer(channel);
-	ZWCC_BASIC_SETTER_1P(channel, value);
+	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -383,7 +335,7 @@ static void _zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_repor
 	if (new_value == parameter_list->currentValue)
 		return ;
 	parameter_list->currentValue = new_value;
-	ZWCC_BASIC_SETTER_1P(parameter_list->channel, new_value);
+	__zuno_BasicUniversalSetter1P(parameter_list->channel, new_value);
 	zunoSendReport(parameter_list->channel + 0x1);
 	if (parameter_list->currentValue != parameter_list->targetValue)
 		return ;

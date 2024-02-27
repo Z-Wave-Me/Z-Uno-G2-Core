@@ -81,11 +81,34 @@ static bool _stop_timer(uint8_t channel, uint8_t parameterId) {
 	return (b_free);
 }
 
-static void _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
+	const ZNLinkedList_t								*linked_list;
+	ZWCCWindowCoveringTimerList_t						*parameter_list;
+	bool												b_free;
+
+	zunoEnterCritical();
+	b_free = false;
+	linked_list = _window_covering_timer;
+	while (linked_list != NULL) {
+		parameter_list = (ZWCCWindowCoveringTimerList_t *)linked_list->data;
+		if (parameter_list->channel == channel) {
+			_stop_timer_remove(parameter_list);
+			b_free = true;
+		}
+		linked_list = linked_list->next;
+	}
+	zunoExitCritical();
+	if (b_free == true)
+		return ;
+	__zuno_CCSwitchMultilevelTimerStop(channel);
+}
+
+static bool _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	ZWCCWindowCoveringTimerList_t						*parameter_list;
 	uint64_t											ticks;
 	size_t												duration;
 	uint8_t												currentValue;
+	bool												b_find;
 
 	currentValue = zuno_universalGetter2P(channel, parameterId);
 	if(currentValue > 0x63)
@@ -100,12 +123,16 @@ static void _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_v
 		else
 			duration = 0x0;
 		duration_table_8[0x0] = zuno_CCTimerTable8(duration);
+		b_find = true;
 	}
 	else {
 		target_value[0x0] = currentValue;
 		duration_table_8[0x0] = 0x0;
+		b_find = false;
+
 	}
 	zunoExitCritical();
+	return (b_find);
 }
 
 static uint32_t _get_parameter_mask(uint8_t channel) {
@@ -446,6 +473,12 @@ uint8_t __zunoWindowCoveringGet(uint8_t channel) {
 		return (0x0);
 	currentValue = zuno_universalGetter2P(channel, parameterId);
 	return (currentValue);
+}
+
+void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	if (_get_values(channel, ZUNO_CFG_CHANNEL(channel).sub_type, current_value, duration_table_8, target_value) == true)
+		return ;
+	__zuno_CCSwitchMultilevelGetValues(channel, current_value, duration_table_8, target_value);
 }
 
 #include "ZWCCZWavePlusInfo.h"

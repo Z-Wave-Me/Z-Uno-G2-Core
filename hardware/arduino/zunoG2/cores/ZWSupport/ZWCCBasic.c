@@ -3,6 +3,50 @@
 #include "ZWCCTimer.h"
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchMultilevel.h"
+#include "ZWCCWindowCovering.h"
+
+void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
+    uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+
+    switch (type) {
+        #ifdef WITH_CC_WINDOW_COVERING
+        case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+            __zunoWindowCoveringSet(zuno_ch, value);
+            break;
+        #endif
+        // #ifdef WITH_CC_SWITCH_COLOR
+        // case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+        //     zunoSwitchColorSaveSet(zuno_ch, &value);
+        //     break;
+        // #endif
+        default:
+            zuno_universalSetter1P(zuno_ch, value);
+            break ;
+    }
+}
+
+uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
+	uint8_t								value;
+
+	uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
+	switch (type) {
+		#ifdef WITH_CC_WINDOW_COVERING
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			value = __zunoWindowCoveringGet(zuno_ch);
+			break;
+		#endif
+		// #ifdef WITH_CC_SWITCH_COLOR
+		// case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+		// 	value = zunoSwitchColorSaveGet(zuno_ch);
+		// 	break;
+		// #endif
+		default:
+			value = zuno_universalGetter1P(zuno_ch);
+			break ;
+	}
+	return (value);
+}
+
 
 #ifdef WITH_CC_BASIC
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
@@ -24,9 +68,9 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 			__zuno_CCSwitchMultilevelTimerStop(channel);
 			break ;
 		#endif
-		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		#if defined(WITH_CC_WINDOW_COVERING)
 		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			__zuno_CCSwitchMultilevelTimerStop(channel);
+			__zuno_CCWindowCoveringTimerStop(channel);
 			break ;
 		#endif
 		default:
@@ -70,7 +114,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 		default:
 			break;
 	}
-	ZWCC_BASIC_SETTER_1P(channel, value);
+	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -101,9 +145,9 @@ static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 			__zuno_CCSwitchMultilevelGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
 			break ;
 		#endif
-		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		#if defined(WITH_CC_WINDOW_COVERING)
 		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			__zuno_CCSwitchMultilevelGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
+			__zuno_CCWindowCoveringGetValues(channel, &report->currentValue, &report->duration, &report->targetValue);
 			break ;
 		#endif
 		default:
@@ -118,12 +162,12 @@ static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 				#if defined(WITH_CC_DOORLOCK)
 				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 				#endif
-					currentValue = ZWCC_BASIC_GETTER_1P(channel);
+					currentValue = __zuno_BasicUniversalGetter1P(channel);
 					currentValue = currentValue ? 0xFF : 0x00;
 					break;
 				#endif
 				default:
-					currentValue = ZWCC_BASIC_GETTER_1P(channel);
+					currentValue = __zuno_BasicUniversalGetter1P(channel);
 					break;
 			}
 			zunoEnterCritical();

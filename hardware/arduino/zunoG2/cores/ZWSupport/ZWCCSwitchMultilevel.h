@@ -143,7 +143,4 @@ void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value,
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet);
 int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
-void zuno_SwitchMultilevelUniversalSetter1P(byte zuno_ch, uint8_t value);
-uint8_t zuno_SwitchMultilevelUniversalGetter1P(byte zuno_ch);
-
 #endif // SWITCHMULTILEVEL_CC_H

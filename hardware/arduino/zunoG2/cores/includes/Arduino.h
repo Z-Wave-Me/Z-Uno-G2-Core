@@ -33,6 +33,13 @@ enum{
   ZUNO_SECUREPARAM_UNDEFINED = 0xFF,
 };
 
+// Configurator 
+#define zunoChangeDefine(v) v, _##v
+#define zunoChangeInit(v, i) v = i; _##v = v + 1
+#define zunoChangeUpdate(v) _##v = v
+#define zunoChanged(v) (v != _##v)
+#define zunoChangedBy(v, d) (v < _##v - d || v > _##v + d)
+
 // system data
 extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)

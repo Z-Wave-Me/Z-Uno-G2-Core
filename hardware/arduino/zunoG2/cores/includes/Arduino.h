@@ -34,7 +34,7 @@ enum{
 };
 
 // Configurator 
-#define zunoChangeDefine(v) v, _##v
+#define zunoChangeDefine(type, v)  type v, _##v
 #define zunoChangeInit(v, i) v = i; _##v = v + 1
 #define zunoChangeUpdate(v) _##v = v
 #define zunoChanged(v) (v != _##v)

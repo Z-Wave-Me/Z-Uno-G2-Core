@@ -169,9 +169,9 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 
 #define ZUNO_INCLUDE(VAR_NAMES) 
 #define ZUNO_NO_CHANNEL 														{0, 0, 0, 0, 0}
-#define ZUNO_SWITCH_BINARY(GETTER, SETTER)   												{ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER, (void*)0, (void*)0}
-#define ZUNO_SIREN(GETTER, SETTER)   														{ZUNO_SIREN_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
-#define ZUNO_FLOWSTOP(GETTER, SETTER)   													{ZUNO_FLOWSTOP_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
+#define ZUNO_SWITCH_BINARY(GETTER, SETTER)   												{ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, SPECIFIC_TYPE_NOT_USED, 0, (void*)GETTER, (void*)SETTER, (void*)0, (void*)0}
+#define ZUNO_SIREN(GETTER, SETTER)   														{ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, SPECIFIC_TYPE_SIREN, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
+#define ZUNO_FLOWSTOP(GETTER, SETTER)   													{ZUNO_SWITCH_BINARY_CHANNEL_NUMBER, SPECIFIC_TYPE_VALVE_OPEN_CLOSE, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
 #define ZUNO_SWITCH_MULTILEVEL(GETTER, SETTER) 												{ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
 #define ZUNO_BLINDS(GETTER, SETTER)															{ZUNO_BLINDS_CHANNEL_NUMBER, 0, 0, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
 #define ZUNO_SENSOR_BINARY(TYPE, GETTER) 													{ZUNO_SENSOR_BINARY_CHANNEL_NUMBER, TYPE, 0, (void*)GETTER, (void*)0,  (void*)0, (void*)0}

@@ -113,3 +113,28 @@ void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *f
 		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
 	}
 }
+
+#include "ZWCCZWavePlusInfo.h"
+
+#define ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH                                0x0700   //On/Off Power Switch  Device Type
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_PLUGIN	                     0x0701	  //Relay device, implemented as a plugin device
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_WALL_OUTLET	                 0x0702	  //Relay device, implemented as a wall outlet
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_CEILING_OUTLET	             0x0703	  //Relay device, implemented as a ceiling outlet
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_WALL_LAMP	                 0x0704	  //Relay device, implemented as a wall mounted lamp
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_LAMP_POST_HIGH	             0x0705	  //Relay device, implemented as a ceiling outlet
+#define ICON_TYPE_SPECIFIC_ON_OFF_POWER_SWITCH_LAMP_POST_LOW	             0x0706	  //Relay device, implemented as a ceiling outlet
+
+void zuno_CCSwitchBinaryGetIcon(ZwZwavePlusInfoIcon_t *icon) {
+	uint16_t								installerIconType;
+	uint16_t								userIconType;
+
+	installerIconType = ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH;
+	userIconType = ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH;
+	icon->installerIconType = installerIconType;
+	icon->userIconType = userIconType;
+}
+
+void zuno_CCSwitchBinaryGetType(uint8_t channel, ZwZwavePlusInfoType_t *type) {
+	type->genericDeviceClass = GENERIC_TYPE_SWITCH_BINARY;
+	type->specificDeviceClass = ZUNO_CFG_CHANNEL(channel).sub_type;
+}

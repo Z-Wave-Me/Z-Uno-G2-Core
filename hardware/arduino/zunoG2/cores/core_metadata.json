@@ -179,14 +179,14 @@
     },
     "channels":[
         {   "type_name":"ZUNO_SWITCH_BINARY_CHANNEL_NUMBER", "type_val":1, 
-            "cc_flags":["WITH_CC_SWITCH_BINARY","WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SWITCH_BINARY"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
             ],
-            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
+            "generic_type":"SPECIFIC_TYPE_NOT_USED",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
-            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
+            "icon_id":"ICON_TYPE_UNASSIGNED",
+            "icon_app_id":"ICON_TYPE_UNASSIGNED",
             "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
             "preproc_flags":[],
             "cluster_rule":"${type}"
@@ -262,35 +262,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_FLOWSTOP_CHANNEL_NUMBER", "type_val":7,
-            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
-            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
-            "specific_type":"SPECIFIC_TYPE_VALVE_OPEN_CLOSE",
-            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
-            "preproc_flags":[],
-            "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
-            ],
-            "cluster_rule":"${type}"
-        },
-        {   
-            "type_name":"ZUNO_SIREN_CHANNEL_NUMBER", "type_val":8,
-            "cc_flags":["WITH_CC_SWITCHBINARY","WITH_CC_BASIC"],
-            "generic_type":"GENERIC_TYPE_SWITCH_BINARY",
-            "specific_type":"SPECIFIC_TYPE_SIREN",
-            "icon_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "icon_app_id":"ICON_TYPE_GENERIC_ON_OFF_POWER_SWITCH",
-            "flags":["CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE","CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
-            "preproc_flags":[],
-            "ccs":[
-                {"name":"COMMAND_CLASS_SWITCH_BINARY","version":"SWITCH_BINARY_VERSION"}
-            ],
-            "cluster_rule":"${type}"
-        },
-        {   
-            "type_name":"ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER", "type_val":9,
+            "type_name":"ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER", "type_val":7,
             "cc_flags":["WITH_CC_METER_TBL_MONITOR"],
             "ccs":[
                 {"name":"COMMAND_CLASS_METER_TBL_MONITOR","version":"METER_TBL_MONITOR_VERSION"}
@@ -304,7 +276,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":10,
+            "type_name":"ZUNO_BLINDS_CHANNEL_NUMBER", "type_val":8,
             "cc_flags":["WITH_CC_SWITCH_MULTILEVEL","WITH_CC_BASIC"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SWITCH_MULTILEVEL","version":"SWITCH_MULTILEVEL_VERSION"}
@@ -318,7 +290,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":11,
+            "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":9,
             "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT"],
             "generic_type":"GENERIC_TYPE_THERMOSTAT",
             "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL_V2",
@@ -333,7 +305,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":12,
+            "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":10,
             "cc_flags":["WITH_CC_SWITCH_COLOR", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
@@ -348,7 +320,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_SOUND_SWITCH_CHANNEL_NUMBER", "type_val":13,
+            "type_name":"ZUNO_SOUND_SWITCH_CHANNEL_NUMBER", "type_val":11,
             "cc_flags":["WITH_CC_SOUND_SWITCH","WITH_CC_BASIC"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SOUND_SWITCH","version":"SOUND_SWITCH_VERSION"}
@@ -362,7 +334,7 @@
             "cluster_rule":"${type}"
         },
         {   
-            "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":14,
+            "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":12,
             "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
             "generic_type":"SPECIFIC_TYPE_NOT_USED",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",

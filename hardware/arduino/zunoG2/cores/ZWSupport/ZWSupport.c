@@ -224,7 +224,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-		case ZUNO_BLINDS_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
@@ -1354,7 +1353,6 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			case ZUNO_BLINDS_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchMultilevelReport(ch, &frame.packet);
 				break;
 			#endif

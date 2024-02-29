@@ -13,4 +13,10 @@
 	#endif
 #endif
 
+#ifdef WITH_CC_SWITCH_MULTILEVEL
+	#ifndef WITH_CC_BASIC
+	#define WITH_CC_BASIC
+	#endif
+#endif
+
 #endif // ZUNO_DEPENDENCINES_CC_H

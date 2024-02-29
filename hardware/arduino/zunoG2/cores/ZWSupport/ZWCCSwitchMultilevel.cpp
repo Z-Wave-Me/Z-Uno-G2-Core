@@ -358,3 +358,20 @@ void __zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_report) {
 	}
 	zunoExitCritical();
 }
+
+#include "ZWCCZWavePlusInfo.h"
+
+void zuno_CCSwitchMultilevelGetIcon(ZwZwavePlusInfoIcon_t *icon) {
+	uint16_t								installerIconType;
+	uint16_t								userIconType;
+
+	installerIconType = ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH;
+	userIconType = ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH;
+	icon->installerIconType = installerIconType;
+	icon->userIconType = userIconType;
+}
+
+void zuno_CCSwitchMultilevelGetType(uint8_t channel, ZwZwavePlusInfoType_t *type) {
+	type->genericDeviceClass = GENERIC_TYPE_SWITCH_MULTILEVEL;
+	type->specificDeviceClass = ZUNO_CFG_CHANNEL(channel).sub_type;
+}

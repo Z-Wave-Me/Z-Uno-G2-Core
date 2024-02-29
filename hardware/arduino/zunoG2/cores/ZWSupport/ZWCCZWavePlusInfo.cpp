@@ -6,6 +6,7 @@ void zuno_CCSoundSwitchGetIcon(ZwZwavePlusInfoIcon_t *icon);
 void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) ;
 void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 void zuno_CCWindowCoveringGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
+void zuno_CCSwitchBinaryGetIcon(ZwZwavePlusInfoIcon_t *icon);
 
 void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t								type;
@@ -32,6 +33,16 @@ void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 			zuno_CCWindowCoveringGetIcon(channel, icon);
 			break ;
 		#endif
+		#if defined(WITH_CC_SWITCH_BINARY)
+		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+			zuno_CCSwitchBinaryGetIcon(icon);
+			break ;
+		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			zuno_CCSwitchMultilevelGetIcon(icon);
+			break ;
+		#endif
 		default:
 			type--;
 			icon->installerIconType = ZUNO_DEV_TYPES[type].icon;
@@ -41,6 +52,7 @@ void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 }
 
 void zuno_CCWindowCoveringGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
+void zuno_CCSwitchBinaryGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
 
 void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type) {
 	uint8_t								type;
@@ -50,6 +62,16 @@ void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type
 		#if defined(WITH_CC_WINDOW_COVERING)
 		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
 			zuno_CCWindowCoveringGetType(channel, info_type);
+			break ;
+		#endif
+		#if defined(WITH_CC_SWITCH_BINARY)
+		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+			zuno_CCSwitchBinaryGetType(channel, info_type);
+			break ;
+		#endif
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
+			zuno_CCSwitchMultilevelGetType(channel, info_type);
 			break ;
 		#endif
 		default:

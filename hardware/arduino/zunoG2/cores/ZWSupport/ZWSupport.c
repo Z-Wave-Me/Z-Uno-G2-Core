@@ -218,15 +218,12 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 	cmd_class = cmd_bytes[0];
 	switch(channel->type) {
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-		case ZUNO_FLOWSTOP_CHANNEL_NUMBER:
-		case ZUNO_SIREN_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_BINARY)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
 				return true;
 			break;
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-		case ZUNO_BLINDS_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_SWITCH_MULTILEVEL)
 				return true;
 			if(cmd_class == COMMAND_CLASS_BASIC)
@@ -1351,13 +1348,11 @@ void zunoSendReportHandler(uint32_t ticks) {
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-			case ZUNO_SIREN_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchBinaryReport(ch, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-			case ZUNO_BLINDS_CHANNEL_NUMBER:
 				rs = zuno_CCSwitchMultilevelReport(ch, &frame.packet);
 				break;
 			#endif

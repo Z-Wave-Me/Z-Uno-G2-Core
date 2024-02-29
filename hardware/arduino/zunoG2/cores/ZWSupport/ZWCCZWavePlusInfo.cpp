@@ -7,6 +7,7 @@ void zuno_CCSensorMultilevelGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon
 void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 void zuno_CCWindowCoveringGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 void zuno_CCSwitchBinaryGetIcon(ZwZwavePlusInfoIcon_t *icon);
+void zuno_CCSwitchMultilevelGetIcon(ZwZwavePlusInfoIcon_t *icon);
 
 void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t								type;
@@ -53,6 +54,7 @@ void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 
 void zuno_CCWindowCoveringGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
 void zuno_CCSwitchBinaryGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
+void zuno_CCSwitchMultilevelGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
 
 void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type) {
 	uint8_t								type;

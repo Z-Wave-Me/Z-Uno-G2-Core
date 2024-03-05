@@ -59,6 +59,7 @@ typedef struct								ZwCSuperVisionReportFrame_s
 
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report);
+void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, node_id_t dst, uint8_t src_zw_channel, uint8_t dst_zw_channel);
 int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report);
 node_id_t zunoGetSupervisionHost();
 

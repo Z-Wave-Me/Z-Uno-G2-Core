@@ -120,6 +120,12 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	return (ZUNO_UNKNOWN_CMD);
 }
 
+void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, node_id_t dst, uint8_t src_zw_channel, uint8_t dst_zw_channel) {
+	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], src_zw_channel, QUEUE_CHANNEL_SYNC, dst);
+	frame_report->packet.dst_zw_channel = dst_zw_channel;
+	__zuno_CCSupervisionReportSend(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
+}
+
 uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report){
 	if(!__cc_supervision._unpacked)
 		return process_result;

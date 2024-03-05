@@ -240,6 +240,9 @@ void ZWQProcess(){
             p->dst_node = tmp;
             p->dst_zw_channel = tmp_ch + 1;
             p->flags = tmp_flags;
+            processed_indexes[processed_indexes_cnt++] = qi;
+            if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
+                break;
         } else {
             _ZWQSend(p);
             processed_indexes[processed_indexes_cnt++] = qi;

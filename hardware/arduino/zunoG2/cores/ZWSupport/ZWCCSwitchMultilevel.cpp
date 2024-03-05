@@ -204,7 +204,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	}
 	if (value != 0x0)
 		zunoBasicSaveSet(channel, &value);
-	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
+	currentValue = __zuno_BasicUniversalGetter1P(channel);
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	if (currentValue != value) {

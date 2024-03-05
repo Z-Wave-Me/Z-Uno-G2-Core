@@ -68,7 +68,6 @@ size_t zuno_CCTimerTicksTable7(size_t duration) {// Get the step for dimming in 
 }
 
 void zunoSendReportHandler(uint32_t ticks);
-void zuno_CCSwitchBinaryTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
 void zuno_CCSoundSwitchTimer(void);
@@ -79,7 +78,7 @@ void zuno_CCTimeHandlerTimer(void);
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
+#if defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
@@ -90,11 +89,6 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	while (lp_b < lp_e) {
 		if ((channel = lp_b->channel) != 0x0) {
 			switch (ZUNO_CFG_CHANNEL(channel - 1).type) {
-				#ifdef WITH_CC_SWITCH_BINARY
-				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-					zuno_CCSwitchBinaryTimer(lp_b, frame_report);
-					break ;
-				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 					zuno_CCSwitchColorTimer(lp_b, frame_report);
@@ -119,7 +113,7 @@ void zuno_CCTimer(uint32_t ticks) {
 	ZUNOCommandPacketReport_t						frame_report;
 	#endif
 
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
+	#if defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 	_exe(&frame_report);
 	#endif
 	if((ticks & 0x3) == 0) {// Once in ~40ms 
@@ -128,8 +122,11 @@ void zuno_CCTimer(uint32_t ticks) {
 		zuno_CCSoundSwitchTimer();
 		#endif
 	}
-	#if defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SWITCH_BINARY)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
+		#if defined(WITH_CC_SWITCH_BINARY)
+		__zuno_CCSwitchBinaryTimer(&frame_report);
+		#endif
 		#if defined(WITH_CC_SWITCH_MULTILEVEL) 
 		__zuno_CCSwitchMultilevelTimer(&frame_report);
 		#endif

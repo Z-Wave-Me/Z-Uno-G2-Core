@@ -59,6 +59,11 @@ void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 			__zuno_CCWindowCoveringTimerStop(channel);
 			break ;
 		#endif
+		#if defined(WITH_CC_SWITCH_BINARY)
+		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+			__zuno_CCSwitchBinaryTimerStop(channel);
+			break ;
+		#endif
 		default:
 			zuno_CCTimerBasicFindStop(channel);
 			break ;
@@ -84,14 +89,16 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 			__zuno_CCWindowCoveringGetValues(channel, current_value, duration_table_8, target_value);
 			break ;
 		#endif
+		#if defined(WITH_CC_SWITCH_BINARY)
+		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
+			__zuno_CCSwitchBinaryGetValues(channel, current_value, duration_table_8, target_value);
+			break ;
+		#endif
 		default:
 			switch (type) {
-				#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				#if defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				#endif
-				#if defined(WITH_CC_SWITCH_BINARY)
-				case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 				#endif
 				#if defined(WITH_CC_DOORLOCK)
 				case ZUNO_DOORLOCK_CHANNEL_NUMBER:

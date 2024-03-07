@@ -7,7 +7,7 @@
 #include "ZWCCTimer.h"
 
 typedef struct zuno_cc_supervision_data_s{
-	uint32_t last_ms;
+	uint64_t last_ms;
 	node_id_t _node_id;
 	uint8_t _prev_id;
 	bool    _unpacked;

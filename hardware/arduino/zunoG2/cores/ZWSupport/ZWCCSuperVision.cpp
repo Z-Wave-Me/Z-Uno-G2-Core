@@ -6,6 +6,7 @@
 #include "ZWCCAssociation.h"
 #include "ZWCCConfiguration.h"
 
+uint64_t rtcc_micros(void);
 zuno_cc_supervision_data_t __cc_supervision = {
 	.last_ms = 0x00,
 	._node_id = 0x00,
@@ -126,7 +127,7 @@ node_id_t zunoGetSupervisionHost(){
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwCSuperVisionGetFrame_t								*frame;
 	uint8_t													id;
-	uint32_t												ms;
+	uint64_t												ms;
 
 	// Always answer to supervision as we were asked (the same security scheme)
 	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
@@ -134,8 +135,8 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	frame = (ZwCSuperVisionGetFrame_t *)cmd->cmd;
 	if((frame->cmdClass != COMMAND_CLASS_SUPERVISION) || (frame->cmd != SUPERVISION_GET))
 		return (process_result);
-	ms = millis();
-	if (abs(__cc_supervision.last_ms - ms) >= 1000000) {
+	ms = rtcc_micros() / 1000;
+	if ((__cc_supervision.last_ms + 1000000) >= ms) {
 		__cc_supervision._prev_id = 0xFF;
 	}
 	__cc_supervision.last_ms = ms;

@@ -7,8 +7,9 @@
 #include "ZWCCTimer.h"
 
 typedef struct zuno_cc_supervision_data_s{
-	uint8_t _prev_id;
+	uint32_t last_ms;
 	node_id_t _node_id;
+	uint8_t _prev_id;
 	bool    _unpacked;
 	uint8_t  properties1;
 } zuno_cc_supervision_data_t;
@@ -57,10 +58,25 @@ typedef struct								ZwCSuperVisionReportFrame_s
 	uint8_t									duration;/**/
 }											ZwCSuperVisionReportFrame_t;
 
+typedef struct						ZwCSuperVisionReportAsyncProcessed_s
+{
+	node_id_t						dst;
+	uint8_t							src_zw_channel;
+	uint8_t							dst_zw_channel;
+	uint8_t							id;
+}									ZwCSuperVisionReportAsyncProcessed_t;
+
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
-uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report);
-void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, node_id_t dst, uint8_t src_zw_channel, uint8_t dst_zw_channel);
-int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report);
+
 node_id_t zunoGetSupervisionHost();
+void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandPacket_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision);
+
+int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report);
+
+void zuno_CCSupervisionReportSyncProcessed(ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSupervisionReportSyncDefault(ZUNOCommandPacketReport_t *frame_report, uint8_t process_result);
+bool zuno_CCSupervisionReportSyncWorking(ZUNOCommandPacketReport_t *frame_report, uint8_t duration_table_8);
+
+void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, const ZwCSuperVisionReportAsyncProcessed_t *super_vision);
 
 #endif//ZWCC_SUPER_VISION_H

@@ -18,9 +18,7 @@ typedef struct						ZWCCSwitchBinaryTimerListCmp_s
 typedef struct						ZWCCSwitchBinaryTimerList_s
 {
 	uint64_t						ticksEnd;
-	node_id_t						dst;
-	uint8_t							src_zw_channel;
-	uint8_t							dst_zw_channel;
+	ZwCSuperVisionReportAsyncProcessed_t super_vision;
 	ZWCCSwitchBinaryTimerListCmp_t	cmp;
 	uint8_t							bMode;
 	uint8_t							targetValue;
@@ -119,39 +117,44 @@ int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet) {
 }
 
 static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOCommandPacketReport_t *frame_report, ZUNOCommandPacket_t *packet) {
-	size_t							value;
+	uint8_t							targetValue;
 	size_t							duration;
-	size_t							currentValue;
+	uint8_t							currentValue;
 	ZWCCSwitchBinaryTimerList_t		*parameter;
+	uint8_t							b_mode;
 
-	if ((value = cmd->v2.targetValue) > 0x63 && value < 0xFF)
+	if ((targetValue = cmd->v2.targetValue) > 0x63 && targetValue < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	value = value ? 0xFF : 0x00;// Map the value right way
+	__zuno_BasicUniversalTimerStop(channel);
+	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
 	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
-	if (currentValue != value) {
+	if (currentValue == targetValue) {
+		zuno_CCSupervisionReportSyncProcessed(frame_report);
+		return (ZUNO_COMMAND_PROCESSED);
+	}
+	if (currentValue != targetValue) {
 		switch (len) {
 			case sizeof(cmd->v2):
 				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0) {
 					__zuno_BasicUniversalTimerStop(channel);
 					break ;
 				}
+				if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true)
+					b_mode = SWITCH_BINARY_TIMER_SWITCH_SUPERVISION;
+				else
+					b_mode = 0x0;
 				zunoEnterCritical();
 				if ((parameter = _get_list_new_change(channel)) == NULL) {
 					zunoExitCritical();
 					break ;
 				}
-				if (__zuno_CCSupervisionReportSendTest(cmd->v2.duration) == true)
-					parameter->bMode = SWITCH_BINARY_TIMER_SWITCH_SUPERVISION;
-				else
-					parameter->bMode = 0x0;
-				parameter->dst = packet->src_node;
-				parameter->src_zw_channel = packet->dst_zw_channel;
-				parameter->dst_zw_channel = packet->src_zw_channel;
+				parameter->bMode = b_mode;
+				if (b_mode == SWITCH_BINARY_TIMER_SWITCH_SUPERVISION)
+					zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
 				parameter->cmp.channel = channel;
 				parameter->ticksEnd = (rtcc_micros() / 1000) + duration;
-				parameter->targetValue = value;
+				parameter->targetValue = targetValue;
 				zunoExitCritical();
-				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v2.duration, NULL, frame_report);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
@@ -160,7 +163,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 	}
 	else
 		__zuno_BasicUniversalTimerStop(channel);
-	__zuno_BasicUniversalSetter1P(channel, value);
+	__zuno_BasicUniversalSetter1P(channel, targetValue);
 	zunoSendReport(channel + 0x1);
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -191,7 +194,7 @@ static void _zuno_CCSwitchBinaryTimer(ZUNOCommandPacketReport_t *frame_report, Z
 		return ;
 	__zuno_BasicUniversalSetter1P(parameter_list->cmp.channel, parameter_list->targetValue);
 	if (parameter_list->bMode == SWITCH_BINARY_TIMER_SWITCH_SUPERVISION) {
-		zuno_CCSupervisionReportAsyncProcessed(frame_report, parameter_list->dst, parameter_list->src_zw_channel, parameter_list->dst_zw_channel);
+		zuno_CCSupervisionReportAsyncProcessed(frame_report, &parameter_list->super_vision);
 	}
 	zunoSendReport(parameter_list->cmp.channel + 0x1);
 	_stop_timer_remove(parameter_list);

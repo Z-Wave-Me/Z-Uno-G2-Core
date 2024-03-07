@@ -6,23 +6,27 @@
 #include "ZWCCAssociation.h"
 #include "ZWCCConfiguration.h"
 
-
-uint8_t _previously_receive_session_id = 0xFF;
-zuno_cc_supervision_data_t __cc_supervision = {0xFF, 0x00, false, 0x00};
+zuno_cc_supervision_data_t __cc_supervision = {
+	.last_ms = 0x00,
+	._node_id = 0x00,
+	._prev_id = 0xFF,
+	._unpacked = false,
+	.properties1 = 0x00
+};
 
 #ifdef LOGGING_DBG
 void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
 #endif
 
-bool __zuno_CCSupervisionReportSendTest(uint8_t duration) {
-	if (duration != 0x0 && (__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0)
-		return (true);
-	return (false);
+void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandPacket_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision) {
+	super_vision->id = __cc_supervision._prev_id;
+	super_vision->dst = packet->src_node;
+	super_vision->src_zw_channel = packet->dst_zw_channel;
+	super_vision->dst_zw_channel = packet->src_zw_channel;
 }
+static void _supervision_send(ZUNOCommandPacketReport_t *frame_report, uint8_t id, bool more_status, uint8_t process_result, uint8_t duration){
+	ZwCSuperVisionReportFrame_t						*report;
 
-static uint8_t __zuno_CCSupervisionReportSend(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report){
-	ZwCSuperVisionReportFrame_t	* report = (ZwCSuperVisionReportFrame_t *)frame_report->packet.cmd;
-	report->properties1 = __cc_supervision._prev_id;
 	switch (process_result) {
 		case ZUNO_UNKNOWN_CMD:
 		case ZUNO_COMMAND_PROCESSED:
@@ -40,22 +44,67 @@ static uint8_t __zuno_CCSupervisionReportSend(uint8_t process_result, uint8_t du
 			process_result = SUPERVISION_REPORT_NO_SUPPORT;
 			break;
 	}
+	report = (ZwCSuperVisionReportFrame_t *)frame_report->packet.cmd;
+	if (more_status == true)
+		id = id | SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK;
 	report->cmdClass = COMMAND_CLASS_SUPERVISION;
 	report->cmd = SUPERVISION_REPORT;
+	report->properties1 = id;
 	report->status = process_result;
 	report->duration = duration;
-	if (__zuno_CCSupervisionReportSendTest(duration) == true) {
-		report->properties1 = report->properties1 | SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK;
-		if (timer != 0x0)
-			timer->bMode = timer->bMode | ZUNO_TIMER_SWITCH_SUPERVISION;
-	}
 	frame_report->packet.len = sizeof(ZwCSuperVisionReportFrame_t);
-	__cc_supervision._unpacked = false;
 	zunoSendZWPackage(&frame_report->packet);
+	return ;
+}
+
+int zuno_CCSupervisionReportSyncDefault(ZUNOCommandPacketReport_t *frame_report, uint8_t process_result) {
+	if(__cc_supervision._unpacked == false)
+		return (process_result);
+	_supervision_send(frame_report, __cc_supervision._prev_id, false, process_result, 0x0);
+	__cc_supervision._unpacked = false;
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
+void zuno_CCSupervisionReportSyncProcessed(ZUNOCommandPacketReport_t *frame_report) {
+	if(__cc_supervision._unpacked == false)
+		return ;
+	_supervision_send(frame_report, __cc_supervision._prev_id, false, ZUNO_COMMAND_PROCESSED, 0x0);
+	__cc_supervision._unpacked = false;
+}
 
+bool zuno_CCSupervisionReportSyncWorking(ZUNOCommandPacketReport_t *frame_report, uint8_t duration_table_8) {
+	bool										more_status;
+	uint8_t										process_result;
+
+	if(__cc_supervision._unpacked == false)
+		return (false);
+	if (duration_table_8 == 0x0) {
+		process_result = ZUNO_COMMAND_PROCESSED;
+		more_status = false;
+	}
+	else {
+		process_result = ZUNO_COMMAND_BLOCKED_WORKING;
+		if ((__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0)
+			more_status = true;
+	}
+	_supervision_send(frame_report, __cc_supervision._prev_id, more_status, process_result, duration_table_8);
+	__cc_supervision._unpacked = false;
+	if (more_status == false)
+		return (false);
+	return (true);
+}
+
+void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, const ZwCSuperVisionReportAsyncProcessed_t *super_vision) {
+	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], super_vision->src_zw_channel, QUEUE_CHANNEL_SYNC, super_vision->dst);
+	frame_report->packet.dst_zw_channel = super_vision->dst_zw_channel;
+	_supervision_send(frame_report, super_vision->id, false, ZUNO_COMMAND_PROCESSED, 0x0);
+}
+
+bool __zuno_CCSupervisionReportSendTest(uint8_t duration) {
+	if (duration != 0x0 && (__cc_supervision.properties1 & SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK) != 0x0)
+		return (true);
+	return (false);
+}
 
 int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd);
 static void __unpackSV(ZUNOCommandPacket_t *cmd, ZwCSuperVisionGetFrame_t *frame){
@@ -77,6 +126,7 @@ node_id_t zunoGetSupervisionHost(){
 uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwCSuperVisionGetFrame_t								*frame;
 	uint8_t													id;
+	uint32_t												ms;
 
 	// Always answer to supervision as we were asked (the same security scheme)
 	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
@@ -84,7 +134,12 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	frame = (ZwCSuperVisionGetFrame_t *)cmd->cmd;
 	if((frame->cmdClass != COMMAND_CLASS_SUPERVISION) || (frame->cmd != SUPERVISION_GET))
 		return (process_result);
-    __cc_supervision._unpacked = false;
+	ms = millis();
+	if (abs(__cc_supervision.last_ms - ms) >= 1000000) {
+		__cc_supervision._prev_id = 0xFF;
+	}
+	__cc_supervision.last_ms = ms;
+	__cc_supervision._unpacked = false;
 	#ifdef SUPERVISION_HIGHEST_S2_ONLY
 	#pragma message "Higher Supervision level only"
 	if (cmd->zw_rx_secure_opts != zunoSecurityStatus()) {
@@ -97,7 +152,8 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 		return (ZUNO_COMMAND_PROCESSED);
 	__cc_supervision._prev_id = id;
 	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus())) {
-		return __zuno_CCSupervisionReportSend(ZUNO_COMMAND_BLOCKED_NO_SUPPORT, 0, NULL, frame_report);
+		__cc_supervision._unpacked = true;
+		return zuno_CCSupervisionReportSyncDefault(frame_report, ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 	}
 	cmd->cmd += 4;
 	switch (ZW_CMD_CLASS) {
@@ -120,22 +176,10 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cm
 	return (ZUNO_UNKNOWN_CMD);
 }
 
-void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, node_id_t dst, uint8_t src_zw_channel, uint8_t dst_zw_channel) {
-	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], src_zw_channel, QUEUE_CHANNEL_SYNC, dst);
-	frame_report->packet.dst_zw_channel = dst_zw_channel;
-	__zuno_CCSupervisionReportSend(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
-}
-
-uint8_t zuno_CCSupervisionReport(uint8_t process_result, uint8_t duration, ZunoTimerBasic_t *timer, ZUNOCommandPacketReport_t *frame_report){
-	if(!__cc_supervision._unpacked)
-		return process_result;
-	return __zuno_CCSupervisionReportSend(process_result, duration, timer,frame_report);
-}
-
 int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report) {
 	ZwApplicationRejectedRequestFrame_t						*report;
 
-	if (zuno_CCSupervisionReport(result, 0x0, 0x0, frame_report) != result)
+	if (zuno_CCSupervisionReportSyncDefault(frame_report, result) != result)
 		return (ZUNO_COMMAND_PROCESSED);
 	report = (ZwApplicationRejectedRequestFrame_t *)frame_report->packet.cmd;
 	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;

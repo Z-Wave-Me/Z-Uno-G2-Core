@@ -67,7 +67,7 @@ static void _start_level_set(size_t channel, size_t current_level, size_t target
 			lpDur_b->currentValue = current_level;
 			lpDur_b->targetValue = targetValue;
 			zunoExitCritical();
-			zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, lp, frame_report);
+			zuno_CCSupervisionReportSyncWorking(frame_report, duration);
 			zunoEnterCritical();
 		}
 	}
@@ -363,7 +363,7 @@ void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *fr
 		if ((lp->bMode & ZUNO_TIMER_SWITCH_SUPERVISION) != 0x0) {
 			__cc_supervision._unpacked = true;
 			fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(channel - 1).zw_channel);
-			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
+			zuno_CCSupervisionReportSyncProcessed(frame_report);
 		}
 	}
 }

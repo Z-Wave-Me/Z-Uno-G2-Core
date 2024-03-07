@@ -171,7 +171,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 		parameter->bMode = b_mode;
 	}
 	zunoExitCritical();
-	zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, duration, NULL, frame_report);
+	zuno_CCSupervisionReportSyncWorking(frame_report, duration);
 }
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
@@ -235,7 +235,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 				parameter->ticksEnd = (rtcc_micros() / 1000) + (duration);
 				parameter->targetValue = value;
 				zunoExitCritical();
-				zuno_CCSupervisionReport(ZUNO_COMMAND_BLOCKED_WORKING, cmd->v4.dimmingDuration, NULL, frame_report);
+				zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v4.dimmingDuration);
 				return (ZUNO_COMMAND_PROCESSED);
 				break ;
 			default:
@@ -338,7 +338,7 @@ static void _zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_repor
 	if ((parameter_list->bMode & SWITCH_MULTILEVEL_TIMER_SWITCH_SUPERVISION) != 0x0) {
 		__cc_supervision._unpacked = true;
 		fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(parameter_list->channel).zw_channel);
-		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
+		zuno_CCSupervisionReportSyncProcessed(frame_report);
 	}
 	_stop_timer_remove(parameter_list);
 }

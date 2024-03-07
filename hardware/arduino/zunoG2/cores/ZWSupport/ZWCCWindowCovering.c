@@ -229,7 +229,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 				parameter_list->ticksEnd = (rtcc_micros() / 1000) + duration;
 			}
 			zunoExitCritical();
-			zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
+			zuno_CCSupervisionReportSyncProcessed(frame_report);
 		}
 		i++;
 	}
@@ -284,7 +284,7 @@ static void _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t
 		parameter_list->ticksEnd = (rtcc_micros() / 1000) + step;
 	}
 	zunoExitCritical();
-	zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0, 0, frame_report);
+	zuno_CCSupervisionReportSyncProcessed(frame_report);
 }
 
 static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *paket, ZUNOCommandPacketReport_t *frame_report) {
@@ -399,7 +399,7 @@ static void _zuno_CCWindowCoveringTimer(ZUNOCommandPacketReport_t *frame_report,
 	if ((parameter_list->bMode & WINDOW_COVERING_TIMER_SWITCH_SUPERVISION) != 0x0) {
 		__cc_supervision._unpacked = true;
 		fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(parameter_list->channel).zw_channel);
-		zuno_CCSupervisionReport(ZUNO_COMMAND_PROCESSED, 0x0, 0x0, frame_report);
+		zuno_CCSupervisionReportSyncProcessed(frame_report);
 	}
 	_stop_timer_remove(parameter_list);
 }

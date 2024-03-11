@@ -4,7 +4,6 @@
 #define APPLICATION_STATUS_VERSION                                                             0x01
 
 #include "ZWSupport.h"
-#include "ZWCCTimer.h"
 
 typedef struct zuno_cc_supervision_data_s{
 	uint64_t last_ms;

@@ -3,6 +3,7 @@
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCSuperVision.h"
 #include "LinkedList.h"
+#include "ZWCCTimer.h"
 
 #define WINDOW_COVERING_TIMER_SWITCH_INC					(0x1 << 0x0)//Indicates what should be up
 #define WINDOW_COVERING_TIMER_SWITCH_DEC					(0x1 << 0x1)//Indicates what should be down

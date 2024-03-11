@@ -1,6 +1,41 @@
 #ifndef ZW_SUPPORT_TIMER_H
 #define ZW_SUPPORT_TIMER_H
 
+#include "ZWCCSuperVision.h"
+
+#if defined(WITH_CC_SWITCH_BINARY)
+#define ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP				(0x1 << 0x0)
+#define ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN			(0x1 << 0x1)
+#define ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION			(0x1 << 0x2)
+
+typedef enum					zunoTimerTreadDimingType_e
+{
+	zunoTimerTreadDimingTypeSwitchBinary,
+	zunoTimerTreadDimingTypeSwitchMultilevel,
+}								zunoTimerTreadDimingType_t;
+
+typedef struct					zunoTimerTreadDiming_s
+{
+	zunoTimerTreadDiming_s		*next;
+	uint32_t					step;
+	uint64_t					ticks_end;
+	ZwCSuperVisionReportAsyncProcessed_t super_vision;
+	zunoTimerTreadDimingType_t	type;
+	uint8_t						flag;
+	uint8_t						channel;
+	uint8_t						target_value;
+	uint8_t						current_value;
+	// uint32_t					data[];//for aling
+}								zunoTimerTreadDiming_t;
+
+void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report);
+void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value);
+void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel);
+void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list);
+zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void);
+
+#endif
+
 #define ZUNO_TIMER_SWITCH_MAX_VALUE				0x63//Maximum value when dimming
 #define ZUNO_TIMER_SWITCH_MIN_VALUE				0x0//The minimum value when dimming
 #define ZUNO_TIMER_SWITCH_DEFAULT_DURATION		0x0//The default dimming period is seconds.

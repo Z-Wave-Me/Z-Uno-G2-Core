@@ -98,13 +98,14 @@ static bool _zunoTimerTreadDimingLoop(zunoTimerTreadDiming_t *list) {
 		if (ticks < list->ticks_end)
 			return (false);
 		__zuno_BasicUniversalSetter1P(list->channel, list->target_value);
+		zunoSendReport(list->channel + 0x1);
 	}
 	return (true);
 }
 
 void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 	zunoTimerTreadDiming_t					*list;
-	zunoTimerTreadDiming_t					*list_array[10];
+	zunoTimerTreadDiming_t					*list_array[0x10];
 	zunoTimerTreadDiming_t					*prev;
 	size_t									i;
 	size_t									i_max;
@@ -138,8 +139,9 @@ void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 		i++;
 		if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION) != 0x0)
 			zuno_CCSupervisionReportAsyncProcessed(frame_report, &list->super_vision);
-		zunoSendReport(list->channel + 0x1);
+		zunoEnterCritical();
 		_free_list(list);
+		zunoExitCritical();
 	}
 }
 #endif

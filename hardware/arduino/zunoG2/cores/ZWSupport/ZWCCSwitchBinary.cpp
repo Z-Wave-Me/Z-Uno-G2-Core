@@ -38,36 +38,33 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 
 	if ((targetValue = cmd->v2.targetValue) > 0x63 && targetValue < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	__zuno_BasicUniversalTimerStop(channel);
 	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
 	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
 	if (currentValue == targetValue) {
-		zuno_CCSupervisionReportSyncProcessed(frame_report);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	if (currentValue != targetValue) {
-		switch (len) {
-			case sizeof(cmd->v2):
-				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0)
-					break ;
-				if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-					return (ZUNO_COMMAND_BLOCKED_FAILL);
-				if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true) {
-					parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
-					zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
-				}
-				else
-					parameter->flag = 0x0;
-				parameter->channel = channel;
-				parameter->ticks_end = (rtcc_micros() / 1000) + duration;
-				parameter->target_value = targetValue;
-				parameter->type = zunoTimerTreadDimingTypeSwitchBinary;
-				zunoTimerTreadDimingAdd(parameter);
-				return (ZUNO_COMMAND_PROCESSED);
+	__zuno_BasicUniversalTimerStop(channel);
+	switch (len) {
+		case sizeof(cmd->v2):
+			if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0)
 				break ;
-			default:
-				break ;
-		}
+			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
+				return (ZUNO_COMMAND_BLOCKED_FAILL);
+			if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true) {
+				parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
+				zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
+			}
+			else
+				parameter->flag = 0x0;
+			parameter->channel = channel;
+			parameter->ticks_end = (rtcc_micros() / 1000) + duration;
+			parameter->target_value = targetValue;
+			parameter->type = zunoTimerTreadDimingTypeSwitchBinary;
+			zunoTimerTreadDimingAdd(parameter);
+			return (ZUNO_COMMAND_PROCESSED);
+			break ;
+		default:
+			break ;
 	}
 	__zuno_BasicUniversalSetter1P(channel, targetValue);
 	zunoSendReport(channel + 0x1);

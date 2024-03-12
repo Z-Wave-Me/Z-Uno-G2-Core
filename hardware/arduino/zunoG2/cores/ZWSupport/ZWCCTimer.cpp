@@ -6,8 +6,9 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCResetLocally.h"
 #include "CommandQueue.h"
+#include "Debug.h"
 
-#if defined(WITH_CC_SWITCH_BINARY)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL)
 uint64_t rtcc_micros(void);
 
 static zunoTimerTreadDiming_t *_diming = NULL;
@@ -33,6 +34,10 @@ zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void) {
 
 	if ((list = (zunoTimerTreadDiming_t *)malloc(sizeof(list[0x0]))) == NULL)
 		return (NULL);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("TIMER TREAD DIMING CREATE: ");
+	LOGGING_UART.println((uint32_t)list);
+	#endif
 	return (list);
 }
 
@@ -46,6 +51,10 @@ void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list) {
 
 static void _free_list(zunoTimerTreadDiming_t *list) {
 	g_sleep_data.latch--;
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("TIMER TREAD DIMING DELETE: ");
+	LOGGING_UART.println((uint32_t)list);
+	#endif
 	free(list);
 }
 
@@ -87,20 +96,35 @@ void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 	zunoExitCritical();
 }
 
+static bool _zunoTimerTreadDimingLoop_set(zunoTimerTreadDiming_t *list, uint8_t new_value) {
+	__zuno_BasicUniversalSetter1P(list->channel, new_value);
+	zunoSendReport(list->channel + 0x1);
+	return (true);
+}
+
 static bool _zunoTimerTreadDimingLoop(zunoTimerTreadDiming_t *list) {
 	uint64_t								ticks;
+	uint8_t									new_value;
+	uint8_t									value;
 
 	ticks = rtcc_micros() / 1000;
+	if (ticks >= list->ticks_end)
+		return (_zunoTimerTreadDimingLoop_set(list, list->target_value));
 	if ((list->flag & (ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP | ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN)) != 0x0) {
-		return (false);
-	}
-	else {
-		if (ticks < list->ticks_end)
+		value = ((list->ticks_end - ticks) / list->step);
+		if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP) != 0x0)
+			new_value = list->target_value - value;
+		else
+			new_value = list->target_value + value;
+		if (new_value == list->current_value)
 			return (false);
-		__zuno_BasicUniversalSetter1P(list->channel, list->target_value);
-		zunoSendReport(list->channel + 0x1);
+		list->current_value = new_value;
+		_zunoTimerTreadDimingLoop_set(list, new_value);
+		if (list->current_value != list->target_value)
+			return (false);
+		return (true);
 	}
-	return (true);
+	return (false);
 }
 
 void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
@@ -247,11 +271,11 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
 	ZUNOCommandPacketReport_t						frame_report;
 	#endif
 
-	#if defined(WITH_CC_SWITCH_BINARY)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
 		zunoTimerTreadDimingLoop(&frame_report);
 	}
@@ -266,11 +290,8 @@ void zuno_CCTimer(uint32_t ticks) {
 		zuno_CCSoundSwitchTimer();
 		#endif
 	}
-	#if defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
-		#if defined(WITH_CC_SWITCH_MULTILEVEL) 
-		__zuno_CCSwitchMultilevelTimer(&frame_report);
-		#endif
 		#if defined(WITH_CC_CENTRAL_SCENE) 
 		zuno_CCCentralSceneTimer();
 		#endif

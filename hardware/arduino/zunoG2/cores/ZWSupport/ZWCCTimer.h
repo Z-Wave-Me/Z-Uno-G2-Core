@@ -3,7 +3,6 @@
 
 #include "ZWCCSuperVision.h"
 
-#if defined(WITH_CC_SWITCH_BINARY)
 #define ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP				(0x1 << 0x0)
 #define ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN			(0x1 << 0x1)
 #define ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION			(0x1 << 0x2)
@@ -33,8 +32,6 @@ void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel);
 void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list);
 zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void);
-
-#endif
 
 #define ZUNO_TIMER_SWITCH_MAX_VALUE				0x63//Maximum value when dimming
 #define ZUNO_TIMER_SWITCH_MIN_VALUE				0x0//The minimum value when dimming

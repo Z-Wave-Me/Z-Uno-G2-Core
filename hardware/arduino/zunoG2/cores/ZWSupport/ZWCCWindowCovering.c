@@ -17,8 +17,7 @@ static uint8_t _get_default_parameter_id(uint8_t channel) {
 
 static void _timer_stop(uint8_t channel, uint8_t parameterId) {
 	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeWindowsCovering, channel, &parameterId, 0x1);
-	if (parameterId == _get_default_parameter_id(channel))
-		__zuno_CCSwitchMultilevelTimerStop(channel);
+	__zuno_CCSwitchMultilevelTimerStop(channel);
 }
 
 static bool _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {

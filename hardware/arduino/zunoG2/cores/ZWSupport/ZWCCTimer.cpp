@@ -112,10 +112,16 @@ bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 }
 
 static bool _zunoTimerTreadDimingLoop_set(zunoTimerTreadDiming_t *list, uint8_t new_value) {
-	if (list->type == zunoTimerTreadDimingTypeWindowsCovering)
-		zuno_universalSetter2P(list->channel, list->parameterId, new_value);
-	else
-		__zuno_BasicUniversalSetter1P(list->channel, new_value);
+	switch (list->type) {
+		#ifdef WITH_CC_WINDOW_COVERING
+		case zunoTimerTreadDimingTypeWindowsCovering:
+			__zunoWindowCoveringSet(list->channel, list->parameterId, new_value);
+			break ;
+		#endif
+		default:
+			__zuno_BasicUniversalSetter1P(list->channel, new_value);
+			break ;
+	}
 	zunoSendReport(list->channel + 0x1);
 	return (true);
 }

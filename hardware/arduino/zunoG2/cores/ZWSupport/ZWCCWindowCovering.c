@@ -24,7 +24,7 @@ static void _timer_stop(uint8_t channel, uint8_t parameterId) {
 static bool _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	uint8_t												currentValue;
 
-	currentValue = zuno_universalGetter2P(channel, parameterId);
+	currentValue = __zunoWindowCoveringGet(channel, parameterId);
 	if(currentValue > 0x63)
 		currentValue = 0x63;
 	current_value[0x0] = currentValue;
@@ -74,7 +74,7 @@ static void _set_duration_0(uint8_t channel, const VG_WINDOW_COVERING_SET_VG *vg
 	i = 0x0;
 	while (i < count) {
 		_timer_stop(channel, vg[i].parameterId);
-		zuno_universalSetter2P(channel, vg[i].parameterId, vg[i].value);
+		__zunoWindowCoveringSet(channel, vg[i].parameterId, vg[i].value);
 		i++;
 	}
 }
@@ -117,7 +117,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 		parameterId = vg[i].parameterId;
 		targetValue = vg[i].value;
 		_timer_stop(channel, parameterId);
-		currentValue = zuno_universalGetter2P(channel, parameterId);
+		currentValue = __zunoWindowCoveringGet(channel, parameterId);
 		if (currentValue != targetValue ) {
 			if (targetValue > currentValue) {
 				step = duration / (targetValue - currentValue);
@@ -128,7 +128,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 				flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN;
 			}
 			if (step == 0x0) {
-				zuno_universalSetter2P(channel, parameterId, targetValue);
+				__zunoWindowCoveringSet(channel, parameterId, targetValue);
 				continue ;
 			}
 			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
@@ -178,10 +178,10 @@ static int _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t 
 	_timer_stop(channel, parameterId);
 	step = (zuno_CCTimerTicksTable7(duration) / (0x63 + 1));
 	if (step == 0x0) {
-		zuno_universalSetter2P(channel, parameterId, targetValue);
+		__zunoWindowCoveringSet(channel, parameterId, targetValue);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	currentValue = zuno_universalGetter2P(channel, parameterId);
+	currentValue = __zunoWindowCoveringGet(channel, parameterId);
 	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	parameter->type = zunoTimerTreadDimingTypeWindowsCovering;
@@ -277,27 +277,35 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-void __zunoWindowCoveringSet(uint8_t channel, uint8_t value) {
+void __zunoWindowCoveringSet(uint8_t channel, uint8_t parameterId, uint8_t value) {
+	zuno_universalSetter2P(channel, parameterId, value);
+}
+
+void __zunoWindowCoveringBasicSet(uint8_t channel, uint8_t value) {
 	uint32_t													mask;
 	uint32_t													parameterId_mask;
 	uint8_t														parameterId;
-	VG_WINDOW_COVERING_SET_VG									vg;
 
-	vg.value = value;
 	mask = _get_parameter_mask(channel);
 	parameterId = 0x0;
 	while (mask != 0x0) {
 		parameterId_mask = 0x1 << parameterId;
 		if ((mask & parameterId_mask) != 0x0) {
 			mask = mask ^ parameterId_mask;
-			vg.parameterId = parameterId;
-			_set_duration_0(channel, &vg, 0x1);
+			__zunoWindowCoveringSet(channel, parameterId, value);
 		}
 		parameterId++;
 	}
 }
 
-uint8_t __zunoWindowCoveringGet(uint8_t channel) {
+uint8_t __zunoWindowCoveringGet(uint8_t channel, uint8_t parameterId) {
+	uint8_t														currentValue;
+
+	currentValue = zuno_universalGetter2P(channel, parameterId);
+	return (currentValue);
+}
+
+uint8_t __zunoWindowCoveringBasicGet(uint8_t channel) {
 	uint32_t													mask;
 	uint8_t														parameterId;
 	uint8_t														currentValue;
@@ -306,7 +314,7 @@ uint8_t __zunoWindowCoveringGet(uint8_t channel) {
 	parameterId = _get_default_parameter_id(channel);
 	if ((mask & (0x1 << parameterId)) == 0x0)
 		return (0x0);
-	currentValue = zuno_universalGetter2P(channel, parameterId);
+	currentValue = __zunoWindowCoveringGet(channel, parameterId);
 	return (currentValue);
 }
 
@@ -316,12 +324,39 @@ void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, u
 	__zuno_CCSwitchMultilevelGetValues(channel, current_value, duration_table_8, target_value);
 }
 
-void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
-	_timer_stop(channel, _get_default_parameter_id(channel));
+void __zuno_CCWindowCoveringDimingStop(uint8_t channel) {
+	uint32_t													mask;
+	uint32_t													parameterId_mask;
+	uint8_t														parameterId;
+
+	mask = _get_parameter_mask(channel);
+	parameterId = 0x0;
+	while (mask != 0x0) {
+		parameterId_mask = 0x1 << parameterId;
+		if ((mask & parameterId_mask) != 0x0) {
+			mask = mask ^ parameterId_mask;
+			zuno_CCWindowCoveringStop(channel, parameterId);
+		}
+		parameterId++;
+	}
 }
 
-void __zuno_CCWindowCoveringDimingStop(uint8_t channel) {
-	zuno_CCWindowCoveringStop(channel, _get_default_parameter_id(channel));
+void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
+	uint32_t													mask;
+	uint32_t													parameterId_mask;
+	uint8_t														parameterId;
+
+	mask = _get_parameter_mask(channel);
+	parameterId = 0x0;
+	while (mask != 0x0) {
+		parameterId_mask = 0x1 << parameterId;
+		if ((mask & parameterId_mask) != 0x0) {
+			mask = mask ^ parameterId_mask;
+			_timer_stop(channel, parameterId);
+		}
+		parameterId++;
+	}
+	__zuno_CCSwitchMultilevelTimerStop(channel);
 }
 
 #include "ZWCCZWavePlusInfo.h"

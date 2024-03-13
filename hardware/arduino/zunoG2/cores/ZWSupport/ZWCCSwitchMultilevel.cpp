@@ -185,6 +185,7 @@ static int _supported(ZUNOCommandPacketReport_t *frame_report) {
 
 static int _stop_level(uint8_t channel) {// Stop Dimming
 	__zuno_BasicUniversalTimerStop(channel);
+	__zuno_BasicUniversalDimingStop(channel);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 __attribute__((weak)) void zcustom_SWLStartStopHandler(uint8_t channel, bool start, bool up, uint8_t * cmd) {

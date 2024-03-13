@@ -19,7 +19,6 @@ static void _timer_stop(uint8_t channel, uint8_t parameterId) {
 	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeWindowsCovering, channel, &parameterId, 0x1);
 	if (parameterId == _get_default_parameter_id(channel))
 		__zuno_CCSwitchMultilevelTimerStop(channel);
-	zuno_CCWindowCoveringStop(channel, parameterId);
 }
 
 static bool _get_values(uint8_t channel, uint8_t parameterId, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
@@ -224,6 +223,7 @@ static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_L
 
 static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME *paket) {
 	_timer_stop(channel, paket->parameterId);
+	zuno_CCWindowCoveringStop(channel, paket->parameterId);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -318,6 +318,10 @@ void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, u
 
 void __zuno_CCWindowCoveringTimerStop(uint8_t channel) {
 	_timer_stop(channel, _get_default_parameter_id(channel));
+}
+
+void __zuno_CCWindowCoveringDimingStop(uint8_t channel) {
+	zuno_CCWindowCoveringStop(channel, _get_default_parameter_id(channel));
 }
 
 #include "ZWCCZWavePlusInfo.h"

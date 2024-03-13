@@ -70,6 +70,18 @@ void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 	}
 }
 
+void __zuno_BasicUniversalDimingStop(uint8_t channel) {
+	switch (ZUNO_CFG_CHANNEL(channel).type) {
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCWindowCoveringDimingStop(channel);
+			break ;
+		#endif
+		default:
+			break ;
+	}
+}
+
 void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	size_t									type;
 	size_t									currentValue;

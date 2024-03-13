@@ -8,20 +8,24 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL)
+// #if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
 uint64_t rtcc_micros(void);
 
 static zunoTimerTreadDiming_t *_diming = NULL;
 
-static zunoTimerTreadDiming_t *_zunoTimerTreadFind(zunoTimerTreadDimingType_t type, uint8_t channel, zunoTimerTreadDiming_t **prev) {
+static zunoTimerTreadDiming_t *_zunoTimerTreadFind(zunoTimerTreadDimingType_t type, uint8_t channel, zunoTimerTreadDiming_t **prev, const void *data, uint8_t length) {
 	zunoTimerTreadDiming_t						*root;
 	zunoTimerTreadDiming_t						*list_prev;
 
 	root = _diming;
 	list_prev = NULL;
 	while (root != NULL) {
-		if (root->type == type && root->channel == channel)
-			break ;
+		if (root->type == type && root->channel == channel) {
+			if (length == 0x0 || data == NULL)
+				break ;
+			else if (memcmp(data, &root->data, length) == 0x0)
+				break ;
+		}
 		list_prev = root;
 		root = root->next;
 	}
@@ -58,12 +62,12 @@ static void _free_list(zunoTimerTreadDiming_t *list) {
 	free(list);
 }
 
-void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel) {
+void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel, const void *data, uint8_t length) {
 	zunoTimerTreadDiming_t						*list;
 	zunoTimerTreadDiming_t						*prev;
 
 	zunoEnterCritical();
-	if ((list = _zunoTimerTreadFind(type, channel, &prev)) != NULL) {
+	if ((list = _zunoTimerTreadFind(type, channel, &prev, data, length)) != NULL) {
 		if(prev != NULL)
 			prev->next = list->next;
 		else
@@ -73,14 +77,18 @@ void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel) 
 	zunoExitCritical();
 }
 
-void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel) {
+	zunoTimerTreadDimingStop(type, channel, NULL, 0x0);
+}
+
+bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value, const void *data, uint8_t length) {
 	zunoTimerTreadDiming_t						*list;
 	uint64_t									ticks;
 	size_t										duration;
 	zunoTimerTreadDiming_t						*prev;
 
 	zunoEnterCritical();
-	if ((list = _zunoTimerTreadFind(type, channel, &prev)) != NULL) {
+	if ((list = _zunoTimerTreadFind(type, channel, &prev, data, length)) != NULL) {
 		target_value[0x0] = list->target_value;
 		ticks = rtcc_micros() / 1000;
 		if (list->ticks_end > ticks)
@@ -94,10 +102,20 @@ void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 		duration_table_8[0x0] = 0x0;
 	}
 	zunoExitCritical();
+	if (list == NULL)
+		return (false);
+	return (true);
+}
+
+bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	return (zunoTimerTreadDimingGetValues(type, channel, current_value, duration_table_8, target_value, NULL, 0x0));
 }
 
 static bool _zunoTimerTreadDimingLoop_set(zunoTimerTreadDiming_t *list, uint8_t new_value) {
-	__zuno_BasicUniversalSetter1P(list->channel, new_value);
+	if (list->type == zunoTimerTreadDimingTypeWindowsCovering)
+		zuno_universalSetter2P(list->channel, list->parameterId, new_value);
+	else
+		__zuno_BasicUniversalSetter1P(list->channel, new_value);
 	zunoSendReport(list->channel + 0x1);
 	return (true);
 }
@@ -168,7 +186,7 @@ void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 		zunoExitCritical();
 	}
 }
-#endif
+// #endif
 
 size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
@@ -271,11 +289,11 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE)
 	ZUNOCommandPacketReport_t						frame_report;
 	#endif
 
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
 		zunoTimerTreadDimingLoop(&frame_report);
 	}
@@ -290,16 +308,13 @@ void zuno_CCTimer(uint32_t ticks) {
 		zuno_CCSoundSwitchTimer();
 		#endif
 	}
-	#if defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
 		#if defined(WITH_CC_CENTRAL_SCENE) 
 		zuno_CCCentralSceneTimer();
 		#endif
 		#if defined(WITH_CC_TIME)
 		zuno_CCTimeHandlerTimer();
-		#endif
-		#if defined(WITH_CC_WINDOW_COVERING)
-		__zuno_CCWindowCoveringTimer(&frame_report);
 		#endif
 	}
 	#endif

@@ -11,6 +11,7 @@ typedef enum					zunoTimerTreadDimingType_e
 {
 	zunoTimerTreadDimingTypeSwitchBinary,
 	zunoTimerTreadDimingTypeSwitchMultilevel,
+	zunoTimerTreadDimingTypeWindowsCovering,
 }								zunoTimerTreadDimingType_t;
 
 typedef struct					zunoTimerTreadDiming_s
@@ -24,12 +25,18 @@ typedef struct					zunoTimerTreadDiming_s
 	uint8_t						channel;
 	uint8_t						target_value;
 	uint8_t						current_value;
-	// uint32_t					data[];//for aling
+	union
+	{
+		uint8_t					data;
+		uint8_t					parameterId;
+	};
 }								zunoTimerTreadDiming_t;
 
 void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report);
-void zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value);
+bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value);
+bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value, const void *data, uint8_t length);
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel);
+void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel, const void *data, uint8_t length);
 void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list);
 zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void);
 

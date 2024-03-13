@@ -22,6 +22,12 @@ void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value,
 	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSwitchMultilevel, channel, currentValue, duration_table_8, target_value);
 }
 
+static void _start_level_set(uint8_t channel, uint8_t current_level) {
+	zunoSendReport(channel + 1);
+	__zuno_BasicUniversalTimerStop(channel);
+	__zuno_BasicUniversalSetter1P(channel, current_level);
+}
+
 static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
 	ZwSwitchMultilevelStartLevelChangeFrame_t			*pk;
 	uint32_t											step;
@@ -37,8 +43,7 @@ static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 		if (current_level != 0x0)
 			zunoBasicSaveSet(channel, &current_level);
-		__zuno_BasicUniversalSetter1P(channel, current_level);
-		zunoSendReport(channel + 1);
+		_start_level_set(channel, current_level);
 	} else {// Otherwise, get the current
 		if ((current_level = __zuno_BasicUniversalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
@@ -55,8 +60,7 @@ static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)// Check it may not need to dim
 			return (ZUNO_COMMAND_PROCESSED);
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
-			zunoSendReport(channel + 1);
-			__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE);
+			_start_level_set(channel, ZUNO_TIMER_SWITCH_MAX_VALUE);
 			return (ZUNO_COMMAND_PROCESSED);
 		}
 		flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP;
@@ -65,8 +69,7 @@ static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
 			return (ZUNO_COMMAND_PROCESSED);
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
-			zunoSendReport(channel + 1);
-			__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE);
+			_start_level_set(channel, ZUNO_TIMER_SWITCH_MIN_VALUE);
 			return (ZUNO_COMMAND_PROCESSED);
 		}
 		targetValue = ZUNO_TIMER_SWITCH_MIN_VALUE;

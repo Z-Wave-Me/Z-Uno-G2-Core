@@ -74,7 +74,6 @@ static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 	}
 	if (targetValue == current_level)
 		return (ZUNO_COMMAND_PROCESSED);
-	__zuno_CCSwitchMultilevelTimerStop(channel);
 	__zuno_BasicUniversalTimerStop(channel);
 	step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE + 0x1);
 	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
@@ -133,7 +132,6 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	if (currentValue == value) {
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	__zuno_CCSwitchMultilevelTimerStop(channel);
 	__zuno_BasicUniversalTimerStop(channel);
 	switch (len) {
 		case sizeof(cmd->v4):

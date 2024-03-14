@@ -82,7 +82,8 @@ int DS18B20Sensor::getTempC100(byte * addr)
 	size_t				current_resolution;
 
 	byte dallas_data[9];
-	int temp = BAD_TEMP;
+	int16_t temp = BAD_TEMP;
+	int32_t tempC100 = BAD_TEMP;
 	byte i;
 
 	if (!my_ow->reset())
@@ -149,11 +150,10 @@ int DS18B20Sensor::getTempC100(byte * addr)
     // temp /= 0.16 
     // will be
     // 16/100 => 4/25 => temp *= 25; tem/=4;
-    temp *= 25;
-    temp >>= 2;
+    tempC100 = (int32_t)temp * 25;
+    tempC100 >>= 2;
     
-
-    return temp;
+    return tempC100;
 }
 
 float DS18B20Sensor::getTemperature(byte * addr) {

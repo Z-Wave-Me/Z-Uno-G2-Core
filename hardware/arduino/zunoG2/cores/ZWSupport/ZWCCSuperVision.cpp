@@ -77,11 +77,11 @@ bool zuno_CCSupervisionReportSyncWorking(ZUNOCommandPacketReport_t *frame_report
 	bool										more_status;
 	uint8_t										process_result;
 
+	more_status = false;
 	if(__cc_supervision._unpacked == false)
 		return (false);
 	if (duration_table_8 == 0x0) {
 		process_result = ZUNO_COMMAND_PROCESSED;
-		more_status = false;
 	}
 	else {
 		process_result = ZUNO_COMMAND_BLOCKED_WORKING;

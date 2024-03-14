@@ -853,7 +853,31 @@ void _zunoSaveUserChannels(){
 	#endif
 	zunoEEPROMWrite(EEPROM_USER_CHANNELS_EEPROM_ADDR, EEPROM_USER_CHANNELS_EEPROM_SIZE, (byte*)&g_zuno_zw_cfg);
 }
+
+bool __zunoAssociationS2Access(void);
 void zunoCommitCfg(){
+	uint8_t										req_s2_keys;
+
+	req_s2_keys = 0x0;
+	#if defined(WITH_CC_DOORLOCK)
+	#ifdef LOGGING_DBG
+	if ((g_zuno_sys->zw_protocol_data->req_s2_keys & SKETCH_FLAG_S2_ACCESS_BIT) == 0x0) {
+		LOGGING_UART.print(DEBUG_MESSAGE_WARNING":");
+		LOGGING_UART.print("DOOR LOCK auto set 'SKETCH_FLAG_S2_ACCESS_BIT'\n");
+	}
+	#endif
+	req_s2_keys = req_s2_keys | SKETCH_FLAG_S2_ACCESS_BIT;
+	#endif
+	if (__zunoAssociationS2Access() == true) {
+	#ifdef LOGGING_DBG
+	if ((g_zuno_sys->zw_protocol_data->req_s2_keys & SKETCH_FLAG_S2_ACCESS_BIT) == 0x0) {
+		LOGGING_UART.print(DEBUG_MESSAGE_WARNING":");
+		LOGGING_UART.print("ASSOCIATION DOOR LOCK auto set 'SKETCH_FLAG_S2_ACCESS_BIT'\n");
+	}
+	#endif
+		req_s2_keys = req_s2_keys | SKETCH_FLAG_S2_ACCESS_BIT;
+	}
+	g_zuno_sys->zw_protocol_data->req_s2_keys = g_zuno_sys->zw_protocol_data->req_s2_keys | req_s2_keys;
 	_zunoSaveUserChannels();
 	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
 	#if defined(WITH_CC_BASIC)
@@ -1064,6 +1088,10 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	return __zuno_CommandHandler_Out(result);
 }
 
+__WEAK uint8_t __zunoGetS2AccessManual(void) {
+	return ((SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT));
+}
+
 // Channels fill routines
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
@@ -1076,7 +1104,7 @@ bool zunoStartDeviceConfiguration() {
 	g_zuno_sys->zw_protocol_data->CCLstSec_cnt = 0;
 	g_zuno_sys->zw_protocol_data->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zw_protocol_data->product_id = DEFAULT_PRODUCT_ID;
-	g_zuno_sys->zw_protocol_data->req_s2_keys = SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT;
+	g_zuno_sys->zw_protocol_data->req_s2_keys = __zunoGetS2AccessManual();
 	// User-side data
 	_resetUserChannels();
 	//memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));

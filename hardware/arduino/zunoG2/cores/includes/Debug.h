@@ -5,4 +5,6 @@
 	#define LOGGING_UART Serial0
 #endif
 
+#define DEBUG_MESSAGE_WARNING				"***WARN"
+
 #endif //DEBUG_H

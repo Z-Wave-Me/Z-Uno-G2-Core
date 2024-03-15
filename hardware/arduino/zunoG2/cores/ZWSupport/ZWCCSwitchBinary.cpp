@@ -5,104 +5,18 @@
 #include "ZWCCSuperVision.h"
 #include "LinkedList.h"
 
-#define SWITCH_BINARY_TIMER_SWITCH_SUPERVISION			(0x1 << 0x2)
-
-bool __zuno_CCSupervisionReportSendTest(uint8_t duration);
 uint64_t rtcc_micros(void);
 
-typedef struct						ZWCCSwitchBinaryTimerListCmp_s
-{
-	uint8_t							channel;
-}									ZWCCSwitchBinaryTimerListCmp_t;
-
-typedef struct						ZWCCSwitchBinaryTimerList_s
-{
-	uint64_t						ticksEnd;
-	ZwCSuperVisionReportAsyncProcessed_t super_vision;
-	ZWCCSwitchBinaryTimerListCmp_t	cmp;
-	uint8_t							bMode;
-	uint8_t							targetValue;
-	uint8_t							currentValue;
-}									ZWCCSwitchBinaryTimerList_t;
-
-static ZNLinkedList_t *_switch_binary_timer = NULL;
-
-static ZWCCSwitchBinaryTimerList_t *_get_list_old(uint8_t channel) {
-	const ZNLinkedList_t							*linked_list;
-	ZWCCSwitchBinaryTimerList_t						*parameter_list;
-
-	linked_list = _switch_binary_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchBinaryTimerList_t *)linked_list->data;
-		if (parameter_list->cmp.channel == channel)
-			return (parameter_list);
-		linked_list = linked_list->next;
-	}
-	return (NULL);
-}
-
-static ZWCCSwitchBinaryTimerList_t *_get_list_new_change(uint8_t channel) {
-	ZWCCSwitchBinaryTimerList_t						*parameter_list;
-
-	if ((parameter_list = _get_list_old(channel)) != NULL)
-		return (parameter_list);
-	if ((parameter_list = (ZWCCSwitchBinaryTimerList_t *)malloc(sizeof(parameter_list[0x0]))) == NULL)
-		return (NULL);
-	if (znllPushBack(&_switch_binary_timer, parameter_list) == false) {
-		free(parameter_list);
-		return (NULL);
-	}
-	parameter_list->cmp.channel = channel;
-	g_sleep_data.latch++;
-	return (parameter_list);
-}
-
-static void _stop_timer_remove(ZWCCSwitchBinaryTimerList_t *parameter_list) {
-	znllRemoveP(&_switch_binary_timer, parameter_list);
-	free(parameter_list);
-	g_sleep_data.latch--;
-}
-
 void __zuno_CCSwitchBinaryTimerStop(uint8_t channel) {
-	const ZNLinkedList_t							*linked_list;
-	ZWCCSwitchBinaryTimerList_t						*parameter_list;
-
-	zunoEnterCritical();
-	linked_list = _switch_binary_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchBinaryTimerList_t *)linked_list->data;
-		if (parameter_list->cmp.channel == channel) {
-			_stop_timer_remove(parameter_list);
-			break ;
-		}
-		linked_list = linked_list->next;
-	}
-	zunoExitCritical();
+	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeSwitchBinary, channel);
 }
 
 void __zuno_CCSwitchBinaryGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
-	ZWCCSwitchBinaryTimerList_t					*parameter_list;
-	uint64_t									ticks;
-	size_t										duration;
 	uint8_t										currentValue;
 
 	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
 	current_value[0x0] = currentValue;
-	zunoEnterCritical();
-	if ((parameter_list = _get_list_old(channel)) != NULL) {
-		target_value[0x0] = parameter_list->targetValue;
-		ticks = rtcc_micros() / 1000;
-		if (parameter_list->ticksEnd > ticks)
-			duration = parameter_list->ticksEnd - ticks;
-		else
-			duration = 0x0;
-		duration_table_8[0x0] = zuno_CCTimerTable8(duration);
-	}
-	else {
-		target_value[0x0] = currentValue;
-		duration_table_8[0x0] = 0x0;
-	}
-	zunoExitCritical();
+	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSwitchBinary, channel, currentValue, duration_table_8, target_value);
 }
 
 int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet) {
@@ -120,49 +34,38 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 	uint8_t							targetValue;
 	size_t							duration;
 	uint8_t							currentValue;
-	ZWCCSwitchBinaryTimerList_t		*parameter;
-	uint8_t							b_mode;
+	zunoTimerTreadDiming_t			*parameter;
 
 	if ((targetValue = cmd->v2.targetValue) > 0x63 && targetValue < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	__zuno_BasicUniversalTimerStop(channel);
 	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
 	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
 	if (currentValue == targetValue) {
-		zuno_CCSupervisionReportSyncProcessed(frame_report);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	if (currentValue != targetValue) {
-		switch (len) {
-			case sizeof(cmd->v2):
-				if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0) {
-					__zuno_BasicUniversalTimerStop(channel);
-					break ;
-				}
-				if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true)
-					b_mode = SWITCH_BINARY_TIMER_SWITCH_SUPERVISION;
-				else
-					b_mode = 0x0;
-				zunoEnterCritical();
-				if ((parameter = _get_list_new_change(channel)) == NULL) {
-					zunoExitCritical();
-					break ;
-				}
-				parameter->bMode = b_mode;
-				if (b_mode == SWITCH_BINARY_TIMER_SWITCH_SUPERVISION)
-					zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
-				parameter->cmp.channel = channel;
-				parameter->ticksEnd = (rtcc_micros() / 1000) + duration;
-				parameter->targetValue = targetValue;
-				zunoExitCritical();
-				return (ZUNO_COMMAND_PROCESSED);
+	__zuno_BasicUniversalTimerStop(channel);
+	switch (len) {
+		case sizeof(cmd->v2):
+			if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0)
 				break ;
-			default:
-				break ;
-		}
+			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
+				return (ZUNO_COMMAND_BLOCKED_FAILL);
+			if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true) {
+				parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
+				zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
+			}
+			else
+				parameter->flag = 0x0;
+			parameter->channel = channel;
+			parameter->ticks_end = (rtcc_micros() / 1000) + duration;
+			parameter->target_value = targetValue;
+			parameter->type = zunoTimerTreadDimingTypeSwitchBinary;
+			zunoTimerTreadDimingAdd(parameter);
+			return (ZUNO_COMMAND_PROCESSED);
+			break ;
+		default:
+			break ;
 	}
-	else
-		__zuno_BasicUniversalTimerStop(channel);
 	__zuno_BasicUniversalSetter1P(channel, targetValue);
 	zunoSendReport(channel + 0x1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -184,36 +87,6 @@ int zuno_CCSwitchBinaryHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComma
 			break ;
 	}
 	return (rs);
-}
-
-static void _zuno_CCSwitchBinaryTimer(ZUNOCommandPacketReport_t *frame_report, ZWCCSwitchBinaryTimerList_t *parameter_list) {
-	uint64_t								ticks;
-
-	ticks = rtcc_micros() / 1000;
-	if (ticks < parameter_list->ticksEnd)
-		return ;
-	__zuno_BasicUniversalSetter1P(parameter_list->cmp.channel, parameter_list->targetValue);
-	if (parameter_list->bMode == SWITCH_BINARY_TIMER_SWITCH_SUPERVISION) {
-		zuno_CCSupervisionReportAsyncProcessed(frame_report, &parameter_list->super_vision);
-	}
-	zunoSendReport(parameter_list->cmp.channel + 0x1);
-	_stop_timer_remove(parameter_list);
-}
-
-void __zuno_CCSwitchBinaryTimer(ZUNOCommandPacketReport_t *frame_report) {
-	const ZNLinkedList_t							*linked_list;
-	ZWCCSwitchBinaryTimerList_t						*parameter_list;
-
-	if (_switch_binary_timer == NULL)
-		return ;
-	zunoEnterCritical();
-	linked_list = _switch_binary_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchBinaryTimerList_t *)linked_list->data;
-		_zuno_CCSwitchBinaryTimer(frame_report, parameter_list);
-		linked_list = linked_list->next;
-	}
-	zunoExitCritical();
 }
 
 #include "ZWCCZWavePlusInfo.h"

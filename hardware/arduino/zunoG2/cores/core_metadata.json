@@ -60,7 +60,7 @@
         {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},
         {"type_name":"ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER", "type_val":2, "preproc_flags":[]},
         {"type_name":"ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER", "type_val":3, "preproc_flags":[]},
-        {"type_name":"ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER", "type_val":4, "preproc_flags":["S2_ENTRY_CONTROL"]}
+        {"type_name":"ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER", "type_val":4, "preproc_flags":[]}
     ],
     "no_lto_set":[],
     "compiler_flags":["-mthumb", 
@@ -258,7 +258,7 @@
                 {"name":"COMMAND_CLASS_DOOR_LOCK","version":"DOOR_LOCK_VERSION"}
             ],
             "flags":["CHANNEL_TYPE_FLAGS_BASIC_MAPPER"],
-            "preproc_flags":["S2_ENTRY_CONTROL"],
+            "preproc_flags":[],
             "cluster_rule":"${type}"
         },
         {   

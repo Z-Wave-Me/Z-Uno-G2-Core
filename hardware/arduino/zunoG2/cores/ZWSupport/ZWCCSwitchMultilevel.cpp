@@ -6,113 +6,36 @@
 #include "ZWCCSuperVision.h"
 #include "LinkedList.h"
 
-#define SWITCH_MULTILEVEL_TIMER_SWITCH_INC					(0x1 << 0x0)//Indicates what should be up
-#define SWITCH_MULTILEVEL_TIMER_SWITCH_DEC					(0x1 << 0x1)//Indicates what should be down
-#define SWITCH_MULTILEVEL_TIMER_SWITCH_SUPERVISION			(0x1 << 0x2)
-
-bool __zuno_CCSupervisionReportSendTest(uint8_t duration);
 uint64_t rtcc_micros(void);
 
-typedef struct					ZWCCSwitchMultilevelTimerList_s
-{
-	uint64_t					ticksEnd;
-	uint32_t					step;
-	uint8_t						channel;
-	uint8_t						bMode;//Stores modes
-	uint8_t						targetValue;
-	uint8_t						currentValue;//Current Dimming Level
-}								ZWCCSwitchMultilevelTimerList_t;
-
-static ZNLinkedList_t *_switch_multilevel_timer = NULL;
-
-static ZWCCSwitchMultilevelTimerList_t *_get_list_old(uint8_t channel) {
-	const ZNLinkedList_t								*linked_list;
-	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
-
-	linked_list = _switch_multilevel_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchMultilevelTimerList_t *)linked_list->data;
-		if (parameter_list->channel == channel)
-			return (parameter_list);
-		linked_list = linked_list->next;
-	}
-	return (NULL);
-}
-
-static ZWCCSwitchMultilevelTimerList_t *_get_list_new_change(uint8_t channel) {
-	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
-
-	if ((parameter_list = _get_list_old(channel)) != NULL)
-		return (parameter_list);
-	if ((parameter_list = (ZWCCSwitchMultilevelTimerList_t *)malloc(sizeof(parameter_list[0x0]))) == NULL)
-		return (NULL);
-	if (znllPushBack(&_switch_multilevel_timer, parameter_list) == false) {
-		free(parameter_list);
-		return (NULL);
-	}
-	parameter_list->channel = channel;
-	g_sleep_data.latch++;
-	return (parameter_list);
-}
-
-static void _stop_timer_remove(ZWCCSwitchMultilevelTimerList_t *parameter_list) {
-	znllRemoveP(&_switch_multilevel_timer, parameter_list);
-	free(parameter_list);
-	g_sleep_data.latch--;
-}
-
 void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
-	const ZNLinkedList_t								*linked_list;
-	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
-
-	zunoEnterCritical();
-	linked_list = _switch_multilevel_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchMultilevelTimerList_t *)linked_list->data;
-		if (parameter_list->channel == channel) {
-			_stop_timer_remove(parameter_list);
-			break ;
-		}
-		linked_list = linked_list->next;
-	}
-	zunoExitCritical();
+	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeSwitchMultilevel, channel);
 }
 
 void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
-	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
-	uint64_t											ticks;
-	size_t												duration;
 	uint8_t												currentValue;
 
 	currentValue = __zuno_BasicUniversalGetter1P(channel);
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	current_value[0x0] = currentValue;
-	zunoEnterCritical();
-	if ((parameter_list = _get_list_old(channel)) != NULL) {
-		target_value[0x0] = parameter_list->targetValue;
-		ticks = rtcc_micros() / 1000;
-		if (parameter_list->ticksEnd > ticks)
-			duration = parameter_list->ticksEnd - ticks;
-		else
-			duration = 0x0;
-		duration_table_8[0x0] = zuno_CCTimerTable8(duration);
-	}
-	else {
-		target_value[0x0] = currentValue;
-		duration_table_8[0x0] = 0x0;
-	}
-	zunoExitCritical();
+	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSwitchMultilevel, channel, currentValue, duration_table_8, target_value);
 }
 
-static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
+static void _start_level_set(uint8_t channel, uint8_t current_level) {
+	zunoSendReport(channel + 1);
+	__zuno_BasicUniversalTimerStop(channel);
+	__zuno_BasicUniversalSetter1P(channel, current_level);
+}
+
+static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
 	ZwSwitchMultilevelStartLevelChangeFrame_t			*pk;
 	uint32_t											step;
 	uint8_t												current_level;
 	uint8_t												targetValue;
-	uint8_t												b_mode;
+	uint8_t												flag;
 	uint8_t												duration;
-	ZWCCSwitchMultilevelTimerList_t						*parameter;
+	zunoTimerTreadDiming_t								*parameter;
 
 	pk = (ZwSwitchMultilevelStartLevelChangeFrame_t *)cmd->cmd;
 	if ((pk->v1.properties1 & (1 << 5)) == 0) {// If the level from which you want to start dimming has come, make it current
@@ -120,8 +43,7 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
 		if (current_level != 0x0)
 			zunoBasicSaveSet(channel, &current_level);
-		__zuno_BasicUniversalSetter1P(channel, current_level);
-		zunoSendReport(channel + 1);
+		_start_level_set(channel, current_level);
 	} else {// Otherwise, get the current
 		if ((current_level = __zuno_BasicUniversalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
 			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
@@ -136,42 +58,46 @@ static void _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandP
 	}
 	if ((pk->v1.properties1 & (1 << 6)) == 0) {// Dimming to up
 		if (ZUNO_TIMER_SWITCH_MAX_VALUE - current_level == 0)// Check it may not need to dim
-			return ;
+			return (ZUNO_COMMAND_PROCESSED);
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
-			zunoSendReport(channel + 1);
-			return (__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MAX_VALUE));
+			_start_level_set(channel, ZUNO_TIMER_SWITCH_MAX_VALUE);
+			return (ZUNO_COMMAND_PROCESSED);
 		}
-		b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_INC;
+		flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP;
 		targetValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
 	} else {// Dimming to down
 		if (current_level == ZUNO_TIMER_SWITCH_MIN_VALUE)// Check it may not need to dim
-			return ;
+			return (ZUNO_COMMAND_PROCESSED);
 		if (step == 0) {// If the step turned out to be zero - immediately set the desired level
-			zunoSendReport(channel + 1);
-			return (__zuno_BasicUniversalSetter1P(channel, ZUNO_TIMER_SWITCH_MIN_VALUE));
+			_start_level_set(channel, ZUNO_TIMER_SWITCH_MIN_VALUE);
+			return (ZUNO_COMMAND_PROCESSED);
 		}
 		targetValue = ZUNO_TIMER_SWITCH_MIN_VALUE;
-		b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_DEC;
+		flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN;
 	}
 	if (targetValue == current_level)
-		return ;
+		return (ZUNO_COMMAND_PROCESSED);
+	__zuno_BasicUniversalTimerStop(channel);
 	step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE + 0x1);
-	zunoEnterCritical();
-	if ((parameter = _get_list_new_change(channel)) != NULL) {
-		parameter->step = step;
-		if (b_mode == SWITCH_MULTILEVEL_TIMER_SWITCH_INC)
-			step = step * (targetValue - current_level);
-		else
-			step = step * (current_level - targetValue);
-		parameter->ticksEnd = (rtcc_micros() / 1000) + step;
-		parameter->currentValue = current_level;
-		parameter->targetValue = targetValue;
-		if (__zuno_CCSupervisionReportSendTest(duration) == true)
-			b_mode = b_mode | SWITCH_MULTILEVEL_TIMER_SWITCH_SUPERVISION;
-		parameter->bMode = b_mode;
+	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	parameter->channel = channel;
+	parameter->type = zunoTimerTreadDimingTypeSwitchMultilevel;
+	parameter->step = step;
+	if (flag == ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP)
+		step = step * (targetValue - current_level);
+	else
+		step = step * (current_level - targetValue);
+	parameter->ticks_end = (rtcc_micros() / 1000) + step;
+	parameter->current_value = current_level;
+	parameter->target_value = targetValue;
+	if (zuno_CCSupervisionReportSyncWorking(frame_report, duration) == true) {
+		flag = flag | ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
+		zuno_CCSupervisionAsyncProcessedSet(cmd, &parameter->super_vision);
 	}
-	zunoExitCritical();
-	zuno_CCSupervisionReportSyncWorking(frame_report, duration);
+	parameter->flag = flag;
+	zunoTimerTreadDimingAdd(parameter);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
@@ -185,14 +111,13 @@ int zuno_CCSwitchMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, ZUNOCommandPacketReport_t *frame_report) {
+static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, ZUNOCommandPacketReport_t *frame_report, ZUNOCommandPacket_t *packet) {
 	uint32_t						step;
 	size_t							duration;
 	uint8_t							value;
 	uint8_t							val_basic;
 	uint8_t							currentValue;
-	uint8_t							b_mode;
-	ZWCCSwitchMultilevelTimerList_t	*parameter;
+	zunoTimerTreadDiming_t			*parameter;
 
 	if ((value = cmd->v4.value) > ZUNO_TIMER_SWITCH_MAX_VALUE && value < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
@@ -207,44 +132,43 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	currentValue = __zuno_BasicUniversalGetter1P(channel);
 	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
 		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
-	if (currentValue != value) {
-		switch (len) {
-			case sizeof(cmd->v4):
-				if ((duration = zuno_CCTimerTicksTable7(cmd->v4.dimmingDuration)) == 0x0) {
-					__zuno_BasicUniversalTimerStop(channel);
-					break ;
-				}
-				zunoEnterCritical();
-				if ((parameter = _get_list_new_change(channel)) == NULL) {
-					zunoExitCritical();
-					break ;
-				}
-				if (value > currentValue) {
-					step = duration / (value - currentValue);
-					b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_INC;
-				}
-				else {
-					step = duration / (currentValue - value);
-					b_mode = SWITCH_MULTILEVEL_TIMER_SWITCH_DEC;
-				}
-				if (__zuno_CCSupervisionReportSendTest(cmd->v4.dimmingDuration) == true)
-					b_mode = b_mode | SWITCH_MULTILEVEL_TIMER_SWITCH_SUPERVISION;
-				parameter->bMode = b_mode;
-				parameter->step = step;
-				parameter->currentValue = currentValue;
-				parameter->ticksEnd = (rtcc_micros() / 1000) + (duration);
-				parameter->targetValue = value;
-				zunoExitCritical();
-				zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v4.dimmingDuration);
-				return (ZUNO_COMMAND_PROCESSED);
-				break ;
-			default:
-				__zuno_BasicUniversalTimerStop(channel);
-				break ;
-		}
+	if (currentValue == value) {
+		return (ZUNO_COMMAND_PROCESSED);
 	}
-	else
-		__zuno_BasicUniversalTimerStop(channel);
+	__zuno_BasicUniversalTimerStop(channel);
+	switch (len) {
+		case sizeof(cmd->v4):
+			if ((duration = zuno_CCTimerTicksTable7(cmd->v4.dimmingDuration)) == 0x0) {
+				break ;
+			}
+			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
+				return (ZUNO_COMMAND_BLOCKED_FAILL);
+			if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v4.dimmingDuration) == true) {
+				parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
+				zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);
+			}
+			else
+				parameter->flag = 0x0;
+			if (value > currentValue) {
+				step = duration / (value - currentValue);
+				parameter->flag = parameter->flag | ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP;
+			}
+			else {
+				step = duration / (currentValue - value);
+				parameter->flag = parameter->flag | ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN;
+			}
+			parameter->step = step;
+			parameter->current_value = currentValue;
+			parameter->ticks_end = (rtcc_micros() / 1000) + duration;
+			parameter->target_value = value;
+			parameter->type = zunoTimerTreadDimingTypeSwitchMultilevel;
+			parameter->channel = channel;
+			zunoTimerTreadDimingAdd(parameter);
+			return (ZUNO_COMMAND_PROCESSED);
+			break ;
+		default:
+			break ;
+	}
 	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
@@ -264,6 +188,7 @@ static int _supported(ZUNOCommandPacketReport_t *frame_report) {
 
 static int _stop_level(uint8_t channel) {// Stop Dimming
 	__zuno_BasicUniversalTimerStop(channel);
+	__zuno_BasicUniversalDimingStop(channel);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 __attribute__((weak)) void zcustom_SWLStartStopHandler(uint8_t channel, bool start, bool up, uint8_t * cmd) {
@@ -281,7 +206,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 			rs = zuno_CCSwitchMultilevelReport(channel, &frame_report->packet);
 			break;
 		case SWITCH_MULTILEVEL_SET:
-			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel, frame_report);
+			rs = _set((SwitchMultilevelSetFrame_t *)cmd->cmd, cmd->len, channel, frame_report, cmd);
 			break ;
 		case SWITCH_MULTILEVEL_START_LEVEL_CHANGE:
 			{
@@ -291,8 +216,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 											  (pk->v1.properties1 & (1 << 6)) == 0, 
 											  (uint8_t*) cmd);
 			}
-			_start_level(channel, cmd, frame_report);
-			rs = ZUNO_COMMAND_PROCESSED;
+			rs = _start_level(channel, cmd, frame_report);
 			break ;
 		case SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE:
 			zcustom_SWLStartStopHandler(channel, 
@@ -310,53 +234,6 @@ int zuno_CCSwitchMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOC
 			break ;
 	}
 	return rs;
-}
-
-static void _zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_report, ZWCCSwitchMultilevelTimerList_t *parameter_list) {
-	uint64_t								ticks;
-	uint8_t									value;
-	uint8_t									new_value;
-
-	ticks = rtcc_micros() / 1000;
-	if (ticks >= parameter_list->ticksEnd) {
-		new_value = parameter_list->targetValue;
-	}
-	else {
-		value = ((parameter_list->ticksEnd - ticks) / parameter_list->step);
-		if ((parameter_list->bMode & SWITCH_MULTILEVEL_TIMER_SWITCH_INC) != 0x0)
-			new_value = parameter_list->targetValue - value;
-		else
-			new_value = parameter_list->targetValue + value;
-	}
-	if (new_value == parameter_list->currentValue)
-		return ;
-	parameter_list->currentValue = new_value;
-	__zuno_BasicUniversalSetter1P(parameter_list->channel, new_value);
-	zunoSendReport(parameter_list->channel + 0x1);
-	if (parameter_list->currentValue != parameter_list->targetValue)
-		return ;
-	if ((parameter_list->bMode & SWITCH_MULTILEVEL_TIMER_SWITCH_SUPERVISION) != 0x0) {
-		__cc_supervision._unpacked = true;
-		fillOutgoingReportPacketAsync(frame_report, ZUNO_CFG_CHANNEL(parameter_list->channel).zw_channel);
-		zuno_CCSupervisionReportSyncProcessed(frame_report);
-	}
-	_stop_timer_remove(parameter_list);
-}
-
-void __zuno_CCSwitchMultilevelTimer(ZUNOCommandPacketReport_t *frame_report) {
-	const ZNLinkedList_t								*linked_list;
-	ZWCCSwitchMultilevelTimerList_t						*parameter_list;
-
-	if (_switch_multilevel_timer == NULL)
-		return ;
-	zunoEnterCritical();
-	linked_list = _switch_multilevel_timer;
-	while (linked_list != NULL) {
-		parameter_list = (ZWCCSwitchMultilevelTimerList_t *)linked_list->data;
-		_zuno_CCSwitchMultilevelTimer(frame_report, parameter_list);
-		linked_list = linked_list->next;
-	}
-	zunoExitCritical();
 }
 
 #include "ZWCCZWavePlusInfo.h"

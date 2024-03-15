@@ -152,8 +152,7 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 								unsigned char ___zunoProductType = 2;\
 								unsigned char ___zunoProductIDMaj = MAJ;\
 								unsigned char ___zunoProductIDMin = MIN
-#define ZUNO_SETUP_S2ACCESS(B) \
-								unsigned char ___zunoS2Access = B
+
 #define ZUNO_DISABLE(VAR_NAMES)\
 								char ___zunoDisableList[] = #VAR_NAMES
 #define ZUNO_ENABLE(VAR_NAMES)\
@@ -196,7 +195,6 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_SYSTIMER_HANDLER(H) 
 #define ZUNO_SETUP_PRODUCT_AUTO()  
 #define ZUNO_SETUP_PRODUCT_ID(MAJ,MIN)   
-#define ZUNO_SETUP_S2ACCESS(B)   
 #define ZUNO_DISABLE(VAR_NAMES)
 #define ZUNO_ENABLE(VAR_NAMES) 
 #define ZUNO_DECLARE(VAR_NAMES) 
@@ -224,6 +222,11 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ISR_1MSTIMER(H) 
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
+
+#define ZUNO_SETUP_S2ACCESS(B) \
+	uint8_t __zunoGetS2AccessManual(void) {\
+		return (B);\
+	}\
 
 #define ZUNO_SETUP_CONFIGPARAMETERS(...) 	\
 							    static const ZunoCFGParameter_t __g_zuno_lp_param[]= \

@@ -477,11 +477,19 @@ int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacket
 	return (rs);
 }
 
+static bool _s2_access = false;
+
+bool __zunoAssociationS2Access(void) {
+	return (_s2_access);
+}
+
 void zunoAddAssociation(byte type, uint8_t channel) {
 	uint8_t						num;
 
 	if (type == 0 || type > 0x4 || channel > 0x1F || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
 		return ;
+	if (type == ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER)
+		_s2_access = true;
 	ZUNO_CFG_ASSOCIATION_COUNT++;
 	ZUNO_CFG_ASSOCIATION(num).type = (type << ASSOCIATION_TYPE_SHIFT) | (channel << ASSOCIATION_CHANNEL_SHIFT);
 }

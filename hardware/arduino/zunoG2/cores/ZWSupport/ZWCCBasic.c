@@ -11,7 +11,7 @@ void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
     switch (type) {
         #ifdef WITH_CC_WINDOW_COVERING
         case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-            __zunoWindowCoveringSet(zuno_ch, value);
+            __zunoWindowCoveringBasicSet(zuno_ch, value);
             break;
         #endif
         // #ifdef WITH_CC_SWITCH_COLOR
@@ -32,7 +32,7 @@ uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
 	switch (type) {
 		#ifdef WITH_CC_WINDOW_COVERING
 		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-			value = __zunoWindowCoveringGet(zuno_ch);
+			value = __zunoWindowCoveringBasicGet(zuno_ch);
 			break;
 		#endif
 		// #ifdef WITH_CC_SWITCH_COLOR
@@ -66,6 +66,18 @@ void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 		#endif
 		default:
 			zuno_CCTimerBasicFindStop(channel);
+			break ;
+	}
+}
+
+void __zuno_BasicUniversalDimingStop(uint8_t channel) {
+	switch (ZUNO_CFG_CHANNEL(channel).type) {
+		#if defined(WITH_CC_WINDOW_COVERING)
+		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
+			__zuno_CCWindowCoveringDimingStop(channel);
+			break ;
+		#endif
+		default:
 			break ;
 	}
 }

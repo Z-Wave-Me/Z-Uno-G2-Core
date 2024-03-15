@@ -8,7 +8,7 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 
-// #if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
 uint64_t rtcc_micros(void);
 
 static zunoTimerTreadDiming_t *_diming = NULL;
@@ -192,7 +192,7 @@ void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 		zunoExitCritical();
 	}
 }
-// #endif
+#endif
 
 size_t zuno_CCTimerBasicFindStop(size_t channel) {
 	ZunoTimerBasic_t				*lp;
@@ -291,6 +291,7 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 		}
 		lp_b++;
 	}
+	(void)frame_report;
 }
 #endif
 

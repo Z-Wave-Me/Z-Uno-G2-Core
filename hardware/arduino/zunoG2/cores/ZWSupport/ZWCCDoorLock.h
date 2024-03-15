@@ -194,4 +194,6 @@ typedef union							ZwDoorLockConfigurationSetFrame_u {//For more convenient sup
 int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 
+void __zunoDoorLockSaveInit(void);
+
 #endif // ZWCC_DOOOR_LOCK_H

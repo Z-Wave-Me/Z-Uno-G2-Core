@@ -880,6 +880,9 @@ void zunoCommitCfg(){
 	g_zuno_sys->zw_protocol_data->req_s2_keys = g_zuno_sys->zw_protocol_data->req_s2_keys | req_s2_keys;
 	_zunoSaveUserChannels();
 	_fillZWaveData(ZUNO_SECUREPARAM_UNDEFINED);
+	#if defined(WITH_CC_DOORLOCK)
+	__zunoDoorLockSaveInit();
+	#endif
 	#if defined(WITH_CC_BASIC)
 	zunoBasicSaveInit();
 	#endif

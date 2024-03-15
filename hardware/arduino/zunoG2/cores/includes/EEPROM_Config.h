@@ -47,6 +47,7 @@
 #include "EEPROM_ConfigScheduleEntryLock.h"
 #include "EEPROM_ConfigUserCode.h"
 #include "EEPROM_ConfigUserCredential.h"
+#include "EEPROM_ConfigDoorLock.h"
 
 typedef struct									ZwEepromSkethCommonInfo_s
 {
@@ -88,6 +89,9 @@ typedef struct									ZwEepromSketh_s
 	#endif
 	#if defined(WITH_CC_CENTRAL_SCENE)
 	uint8_t										central_scene[EEPROM_CENTRAL_SCENE_SAVE_SIZE];
+	#endif
+	#ifdef WITH_CC_DOORLOCK
+	ZwEepromDoorLockSave_t						door_lock;
 	#endif
 	ZUNOZWConfiguation_t						zuno_zw_cfg;
 	ZwEepromSkethConfigParam_t					config_param;

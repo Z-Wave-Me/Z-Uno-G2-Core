@@ -11,10 +11,17 @@ void __zuno_CCSwitchBinaryTimerStop(uint8_t channel) {
 	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeSwitchBinary, channel);
 }
 
-void __zuno_CCSwitchBinaryGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+static uint8_t _get_value(uint8_t channel) {
 	uint8_t										currentValue;
 
 	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
+	return (currentValue);
+}
+
+void __zuno_CCSwitchBinaryGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	uint8_t										currentValue;
+
+	currentValue = _get_value(channel);
 	current_value[0x0] = currentValue;
 	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSwitchBinary, channel, currentValue, duration_table_8, target_value);
 }
@@ -39,7 +46,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 	if ((targetValue = cmd->v2.targetValue) > 0x63 && targetValue < 0xFF)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
-	currentValue = __zuno_BasicUniversalGetter1P(channel) ? 0xFF : 0x00;
+	currentValue =_get_value(channel);
 	if (currentValue == targetValue) {
 		return (ZUNO_COMMAND_PROCESSED);
 	}

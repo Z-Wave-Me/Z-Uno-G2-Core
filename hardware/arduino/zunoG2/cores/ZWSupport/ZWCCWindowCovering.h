@@ -275,7 +275,6 @@ typedef struct _ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME_
 
 void __zunoWindowCoveringSet(uint8_t channel, uint8_t parameterId, uint8_t value);
 void __zunoWindowCoveringBasicSet(uint8_t channel, uint8_t value);
-uint8_t __zunoWindowCoveringGet(uint8_t channel, uint8_t parameterId);
 uint8_t __zunoWindowCoveringBasicGet(uint8_t channel);
 void __zuno_CCWindowCoveringDimingStop(uint8_t channel);
 

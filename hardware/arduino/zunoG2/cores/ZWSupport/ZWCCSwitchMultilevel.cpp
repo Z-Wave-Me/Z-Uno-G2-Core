@@ -6,6 +6,7 @@
 #include "ZWCCSuperVision.h"
 #include "LinkedList.h"
 
+#if defined(WITH_CC_SWITCH_MULTILEVEL)
 uint64_t rtcc_micros(void);
 
 void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
@@ -257,3 +258,4 @@ void zuno_CCSwitchMultilevelGetType(uint8_t channel, ZwZwavePlusInfoType_t *type
 	type->genericDeviceClass = GENERIC_TYPE_SWITCH_MULTILEVEL;
 	type->specificDeviceClass = ZUNO_CFG_CHANNEL(channel).sub_type;
 }
+#endif//WITH_CC_SWITCH_MULTILEVEL

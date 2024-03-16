@@ -12,12 +12,20 @@ void __zuno_CCSwitchMultilevelTimerStop(uint8_t channel) {
 	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeSwitchMultilevel, channel);
 }
 
+static uint8_t _get_value(uint8_t channel) {
+	uint8_t									currentValue;
+
+	currentValue = __zuno_BasicUniversalGetter1P(channel);
+	if (currentValue > 0x63)
+		currentValue = 0x63;
+	return (currentValue);
+}
+
+
 void __zuno_CCSwitchMultilevelGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	uint8_t												currentValue;
 
-	currentValue = __zuno_BasicUniversalGetter1P(channel);
-	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
-		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
+	currentValue = _get_value(channel);
 	current_value[0x0] = currentValue;
 	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSwitchMultilevel, channel, currentValue, duration_table_8, target_value);
 }
@@ -45,8 +53,7 @@ static int _start_level(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPa
 			zunoBasicSaveSet(channel, &current_level);
 		_start_level_set(channel, current_level);
 	} else {// Otherwise, get the current
-		if ((current_level = __zuno_BasicUniversalGetter1P(channel)) > ZUNO_TIMER_SWITCH_MAX_VALUE)
-			current_level = ZUNO_TIMER_SWITCH_MAX_VALUE;
+		current_level = _get_value(channel);
 	}
 	if (cmd->len == sizeof(ZwSwitchMultilevelStartLevelChangeV1Frame_t)) {
 		step = ZUNO_TIMER_SWITCH_DEFAULT_DURATION * (1000);// Depending on the version, set the default step to increase or from the command we will
@@ -129,9 +136,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	}
 	if (value != 0x0)
 		zunoBasicSaveSet(channel, &value);
-	currentValue = __zuno_BasicUniversalGetter1P(channel);
-	if(currentValue > ZUNO_TIMER_SWITCH_MAX_VALUE)
-		currentValue = ZUNO_TIMER_SWITCH_MAX_VALUE;
+	currentValue = _get_value(channel);
 	if (currentValue == value) {
 		return (ZUNO_COMMAND_PROCESSED);
 	}

@@ -22,10 +22,6 @@
 #define EEPROM_SWITCH_COLOR_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->switch_color[0x0])
 #define EEPROM_SWITCH_COLOR_SAVE_SIZE					(1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 #endif
-#if defined(WITH_CC_SOUND_SWITCH)
-#define EEPROM_SWITCH_SOUND_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->switch_sound[0x0])
-#define EEPROM_SWITCH_SOUND_SAVE_SIZE					(3 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
-#endif
 #if defined(WITH_CC_CENTRAL_SCENE)
 #define EEPROM_CENTRAL_SCENE_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->central_scene[0x0])
 #define EEPROM_CENTRAL_SCENE_SAVE_SIZE					(1)
@@ -48,6 +44,7 @@
 #include "EEPROM_ConfigUserCode.h"
 #include "EEPROM_ConfigUserCredential.h"
 #include "EEPROM_ConfigDoorLock.h"
+#include "EEPROM_ConfigSoundSwitch.h"
 
 typedef struct									ZwEepromSkethCommonInfo_s
 {

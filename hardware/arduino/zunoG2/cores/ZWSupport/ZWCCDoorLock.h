@@ -195,5 +195,7 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 
 void __zunoDoorLockSaveInit(void);
+void __zuno_CCDoorLockTimerStop(uint8_t channel);
+void __zuno_CCDoorLockGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value);
 
 #endif // ZWCC_DOOOR_LOCK_H

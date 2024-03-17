@@ -2,7 +2,42 @@
 #include "ZWCCTimer.h"
 #include "ZWCCDoorLock.h"
 
+uint64_t rtcc_micros(void);
+
 #ifdef WITH_CC_DOORLOCK
+
+void __zuno_CCDoorLockTimerStop(uint8_t channel) {
+	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeDoorLock, channel);
+}
+
+static uint8_t _get_value(uint8_t channel) {
+	uint8_t										doorLockMode;
+
+	doorLockMode = zuno_universalGetter1P(channel);
+	return (doorLockMode);
+}
+
+// bool _get_values(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+// 	uint8_t										currentValue;
+// 	bool										out;
+
+// 	currentValue = _get_value(channel);
+// 	current_value[0x0] = currentValue;
+// 	out = zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeDoorLock, channel, currentValue, duration_table_8, target_value);
+// 	target_value[0x0] = currentValue;
+// 	return (out);
+// }
+
+void __zuno_CCDoorLockGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	uint8_t										currentValue;
+
+	currentValue = _get_value(channel);
+	currentValue = currentValue ? 0xFF : 0x00;
+	current_value[0x0] = currentValue;
+	duration_table_8[0x0] = 0x0;
+	target_value[0x0] = currentValue;
+}
+
 
 typedef union							ZwDoorLockProperties_u
 {
@@ -247,9 +282,9 @@ int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZwEepromDoorLockSaveInfo_t				save;
 
 	_get_save(channel, &save);
-	doorLockMode = zuno_universalGetter1P(channel);
+	doorLockMode = _get_value(channel);
 	zunoEnterCritical();
-	if (save.operationType == DOOR_LOCK_CONFIGURATION_SET_TIMED_OPERATION_V4 && (lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
+	if ((lp = zuno_CCTimerBasicFind(channel)) != 0x0 && lp->channel != 0x0) {
 		ticks = millis();
 		if (lp->ticksEnd > ticks)
 			ticks = lp->ticksEnd - ticks;

@@ -12,6 +12,7 @@ typedef enum					zunoTimerTreadDimingType_e
 	zunoTimerTreadDimingTypeSwitchBinary,
 	zunoTimerTreadDimingTypeSwitchMultilevel,
 	zunoTimerTreadDimingTypeWindowsCovering,
+	zunoTimerTreadDimingTypeDoorLock,
 }								zunoTimerTreadDimingType_t;
 
 typedef struct					zunoTimerTreadDiming_s

@@ -4,6 +4,7 @@
 #include "ZWCCBasic.h"
 #include "ZWCCSwitchMultilevel.h"
 #include "ZWCCWindowCovering.h"
+#include "ZWCCDoorLock.h"
 
 void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
     uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
@@ -64,6 +65,16 @@ void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 			__zuno_CCSwitchBinaryTimerStop(channel);
 			break ;
 		#endif
+		#if defined(WITH_CC_DOORLOCK)
+		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+			__zuno_CCDoorLockTimerStop(channel);
+			break ;
+		#endif
+		#if defined(WITH_CC_SOUND_SWITCH)
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			__zuno_CCSoundSwitchTimerStop(channel);
+			break ;
+		#endif
 		default:
 			zuno_CCTimerBasicFindStop(channel);
 			break ;
@@ -106,14 +117,21 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 			__zuno_CCSwitchBinaryGetValues(channel, current_value, duration_table_8, target_value);
 			break ;
 		#endif
+		#if defined(WITH_CC_DOORLOCK)
+		case ZUNO_DOORLOCK_CHANNEL_NUMBER:
+			__zuno_CCDoorLockGetValues(channel, current_value, duration_table_8, target_value);
+			break ;
+		#endif
+		#if defined(WITH_CC_SOUND_SWITCH)
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			__zuno_CCSoundSwitchGetValues(channel, current_value, duration_table_8, target_value);
+			break ;
+		#endif
 		default:
 			switch (type) {
-				#if defined(WITH_CC_DOORLOCK) || defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				#endif
-				#if defined(WITH_CC_DOORLOCK)
-				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 				#endif
 					currentValue = __zuno_BasicUniversalGetter1P(channel);
 					currentValue = currentValue ? 0xFF : 0x00;
@@ -199,8 +217,6 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report);
-
 static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwBasicReportV2Frame_t					*report;
 
@@ -208,13 +224,6 @@ static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
 	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
-	switch (ZUNO_CFG_CHANNEL(channel).type) {
-		#if defined(WITH_CC_SOUND_SWITCH)
-		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
-			return (zuno_CCSoundSwitchBasicGet(channel, report));
-			break ;
-		#endif
-	}
 	__zuno_BasicUniversalGetCurrentValueDurationTargetValue(channel, &report->currentValue, &report->duration, &report->targetValue);
 	return (ZUNO_COMMAND_ANSWERED);
 }

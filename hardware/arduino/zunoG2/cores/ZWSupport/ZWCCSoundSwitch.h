@@ -144,48 +144,25 @@ typedef struct						ZunoSoundSwitchParameter_s
 	uint16_t						sec_duration;
 }									ZunoSoundSwitchParameter_t;
 
-typedef struct						ZunoSoundSwitchParameterPlay_s
-{
-	uint64_t						time_stamp;
-	const ZunoSoundSwitchParameter_t	*parameter;
-	uint8_t							toneIdentifier;
-	uint8_t							playCommandToneVolume;
-}									ZunoSoundSwitchParameterPlay_t;
-
 typedef struct								ZunoSoundSwitchParameterArray_s
 {
 	const ZunoSoundSwitchParameter_t		*parametr;
-	ZunoSoundSwitchParameterPlay_t			*play;
 	uint8_t									count;
 }											ZunoSoundSwitchParameterArray_t;
 
-
-#define ZUNO_SETUP_SOUND_SWITCH_TONE_DURATION_SET(MS_PLAY, MS_PAUSE)	\
-{\
-	.freq = 0x0,\
-	.play_ms = MS_PLAY,\
-	.pause_ms = MS_PAUSE\
-}\
-
 #define ZUNO_SETUP_SOUND_SWITCH(TONES, ...) 	\
-	static const ZunoSoundSwitchParameter_t _switch_cc_parameter_##TONES[]= \
-	{ \
-		__VA_ARGS__, \
+	const ZunoSoundSwitchParameterArray_t * TONES(void) {\
+		static const ZunoSoundSwitchParameter_t switch_cc_parameter[]= \
+		{ \
+			__VA_ARGS__, \
+		};\
+		static const ZunoSoundSwitchParameterArray_t &switch_cc_parameter_array = \
+		{ \
+			.parametr = &switch_cc_parameter[0x0],									\
+			.count = ((sizeof(switch_cc_parameter) / sizeof(switch_cc_parameter[0x0])))\
+		};\
+		return (&switch_cc_parameter_array);\
 	};\
-	static ZunoSoundSwitchParameterPlay_t _switch_cc_parameter_play_##TONES = \
-	{ \
-		.time_stamp = 0x0,														\
-		.parameter = NULL,														\
-		.toneIdentifier = 0x0,													\
-		.playCommandToneVolume = 0x0,											\
-	};\
-	static const ZunoSoundSwitchParameterArray_t &_switch_cc_parameter_array_##TONES = \
-	{ \
-		.parametr = &_switch_cc_parameter_##TONES[0x0],									\
-		.play = &_switch_cc_parameter_play_##TONES,									\
-		.count = ((sizeof(_switch_cc_parameter_##TONES) / sizeof(_switch_cc_parameter_##TONES[0x0])))\
-	};\
-	const ZunoSoundSwitchParameterArray_t * TONES(void) {return (&_switch_cc_parameter_array_##TONES);};\
 
 
 #define ZUNO_SETUP_SOUND_SWITCH_TONE(NAME, SEC)	\
@@ -199,5 +176,9 @@ int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 void zuno_CCSoundSwitchStop(uint8_t channel);
 void zunoSoundSwitchSaveInit(void);
+
+void __zuno_CCSoundSwitchTimerStop(uint8_t channel);
+void __zuno_CCSoundSwitchGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value);
+void __zunoSoundSwitchStop(uint8_t channel, uint8_t toneIdentifier);
 
 #endif// ZWCC_SOUND_SWITCH_H

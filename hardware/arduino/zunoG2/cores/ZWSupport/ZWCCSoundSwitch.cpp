@@ -5,19 +5,18 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSuperVision.h"
 #include "zuno_channel_handlers.h"
+uint64_t rtcc_micros(void);
 
 #if defined(WITH_CC_SOUND_SWITCH)
-typedef struct								ZwSoundSwitchSave_s
-{
-	uint8_t									volume;
-	uint8_t									volume_save;
-	uint8_t									toneIdentifier;
-}											ZwSoundSwitchSave_t;
 
-uint64_t rtcc_micros(void);
-ZUNO_SETUP_SOUND_SWITCH(_switch_cc_parameter_array_255,
-	ZUNO_SETUP_SOUND_SWITCH_TONE("Unknown", 10)
-);
+void __zuno_CCSoundSwitchTimerStop(uint8_t channel) {
+	zunoTimerTreadDimingStop(zunoTimerTreadDimingTypeSoundSwitch, channel);
+}
+
+void __zuno_CCSoundSwitchGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
+	zunoTimerTreadDimingGetValues(zunoTimerTreadDimingTypeSoundSwitch, channel, 0x0, duration_table_8, target_value);
+	current_value[0x0] = target_value[0x0];
+}
 
 static const zuno_handler_soundswitch_t *_get_handler(size_t channel) {
 	const zuno_handler_soundswitch_t			*iter;
@@ -41,7 +40,7 @@ static void _zunoSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_
 	play(toneIdentifier, volume);
 }
 
-static void _zunoSoundSwitchStop(uint8_t channel, uint8_t toneIdentifier) {
+void __zunoSoundSwitchStop(uint8_t channel, uint8_t toneIdentifier) {
 	const zuno_handler_soundswitch_t				*handler;
 	void											(*stop)(uint8_t melody_id);
 
@@ -52,6 +51,15 @@ static void _zunoSoundSwitchStop(uint8_t channel, uint8_t toneIdentifier) {
 	stop(toneIdentifier);
 }
 
+
+static const ZunoSoundSwitchParameterArray_t * _switch_cc_parameter_array_255(void) {
+	static const ZunoSoundSwitchParameter_t									switch_cc_parameter[]= {{ .name = "Unknown", .sec_duration = 10}, };
+	static const ZunoSoundSwitchParameterArray_t							&switch_cc_parameter_array = {
+		.parametr = &switch_cc_parameter[0x0],
+		.count = ((sizeof(switch_cc_parameter) / sizeof(switch_cc_parameter[0x0])))
+	};
+	return (&switch_cc_parameter_array);
+};
 
 static const ZunoSoundSwitchParameterArray_t *_soundSwitchGetParameterArray(size_t channel) {
 	const zuno_handler_soundswitch_t				*handler;
@@ -200,36 +208,6 @@ static int _soundSwitchConfigurationSet(const ZW_SOUND_SWITCH_CONFIGURATION_SET_
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static void _lock(const ZunoSoundSwitchParameterArray_t *parameter_array, uint64_t ms) {
-	uint64_t								ms_old;
-	ZunoSoundSwitchParameterPlay_t			*play;
-
-	play = parameter_array->play;
-	ms_old = play->time_stamp;
-	if (ms == 0x0) {
-		play->toneIdentifier = 0x0;
-		play->playCommandToneVolume = 0x0;
-		if (ms_old != 0x0)
-			g_sleep_data.latch--;
-	}
-	else {
-		if (ms_old == 0x0)
-			g_sleep_data.latch++;
-	}
-	play->time_stamp = ms;
-}
-
-static void _soundSwitchTonePlaySetStop(const ZunoSoundSwitchParameterArray_t *parameter_array, size_t channel) {
-	size_t										toneIdentifier;
-
-	if ((toneIdentifier = parameter_array->play->toneIdentifier) == 0x0)
-		return ;
-	zunoEnterCritical();
-	_lock(parameter_array, 0x0);
-	zunoExitCritical();
-	_zunoSoundSwitchStop(channel, toneIdentifier);
-}
-
 static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, size_t playCommandToneVolume) {
 	uint16_t												sec_duration;
 	uint64_t												time_stamp;
@@ -237,7 +215,17 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	const ZunoSoundSwitchParameter_t						*parameter;
 	int														result;
 	ZwSoundSwitchSave_t										switch_save;
+	zunoTimerTreadDiming_t									*parameter_diming;
+	zunoTimerTreadDiming_t									list;
+	uint8_t													playCommandToneVolume_last;
 
+	if (zunoTimerTreadDimingGetInfo(zunoTimerTreadDimingTypeSoundSwitch, channel, &list) == true) {
+		__zuno_BasicUniversalTimerStop(channel);
+		__zunoSoundSwitchStop(channel, toneIdentifier);
+		playCommandToneVolume_last = list.current_value;
+	}
+	else
+		playCommandToneVolume_last = 0x0;
 	parameter_array = _soundSwitchGetParameterArray(channel);
 	result = ZUNO_COMMAND_PROCESSED;
 	if (toneIdentifier == 0x0)//stop any
@@ -252,13 +240,12 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 		if (playCommandToneVolume == 0x0)
 			playCommandToneVolume = switch_save.volume;
 		else if (playCommandToneVolume == 0xFF) {
-			if ((playCommandToneVolume = parameter_array->play->playCommandToneVolume) == 0x0)
+			if ((playCommandToneVolume = playCommandToneVolume_last) == 0x0)
 				playCommandToneVolume = switch_save.volume;
 			if (playCommandToneVolume == 0x0)
 				playCommandToneVolume = switch_save.volume_save;
 		}
 	}
-	_soundSwitchTonePlaySetStop(parameter_array, channel);
 	if (playCommandToneVolume == 0x0) {//stop
 		time_stamp = 0x0;
 	}
@@ -276,13 +263,16 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 	if (time_stamp == 0x0) {
 		return (result);
 	}
+	if ((parameter_diming = zunoTimerTreadDimingCreate()) == NULL)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	parameter_diming->flag = 0x0;
+	parameter_diming->channel = channel;
+	parameter_diming->ticks_end = time_stamp;
+	parameter_diming->current_value = playCommandToneVolume;
+	parameter_diming->target_value = toneIdentifier;
+	parameter_diming->type = zunoTimerTreadDimingTypeSoundSwitch;
+	zunoTimerTreadDimingAdd(parameter_diming);
 	_zunoSoundSwitchPlay(channel, toneIdentifier, playCommandToneVolume);
-	zunoEnterCritical();
-	_lock(parameter_array, time_stamp);
-	parameter_array->play->parameter = parameter;
-	parameter_array->play->toneIdentifier = toneIdentifier;
-	parameter_array->play->playCommandToneVolume = playCommandToneVolume;
-	zunoExitCritical();
 	return (result);
 }
 
@@ -357,38 +347,25 @@ void zuno_CCSoundSwitchStop(uint8_t channel) {
 
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME							*report;
-	const ZunoSoundSwitchParameterArray_t								*parameter_array;
+	zunoTimerTreadDiming_t												list;
+	uint8_t																toneIdentifier;
+	uint8_t																playCommandToneVolume;
 
 	report = (ZW_SOUND_SWITCH_TONE_PLAY_REPORT_V2_FRAME *)&packet->cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_SOUND_SWITCH;
 	report->cmd = SOUND_SWITCH_TONE_PLAY_REPORT_V2;
-	parameter_array = _soundSwitchGetParameterArray(channel);
-	report->toneIdentifier = parameter_array->play->toneIdentifier;
-	report->playCommandToneVolume = parameter_array->play->playCommandToneVolume;
+	if (zunoTimerTreadDimingGetInfo(zunoTimerTreadDimingTypeSoundSwitch, channel, &list) == true) {
+		toneIdentifier = list.target_value;
+		playCommandToneVolume = list.current_value;
+	}
+	else {
+		toneIdentifier = 0x0;
+		playCommandToneVolume = 0x0;
+	}
+	report->toneIdentifier = toneIdentifier;
+	report->playCommandToneVolume = playCommandToneVolume;
 	packet->len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
-}
-
-void zuno_CCSoundSwitchTimer(void) {
-	size_t													channel;
-	uint64_t												time_stamp_current;
-	const ZunoSoundSwitchParameterArray_t					*parameter_array;
-	ZunoSoundSwitchParameterPlay_t							*play;
-
-	channel = 0x0;
-	time_stamp_current = (rtcc_micros() / 1000);
-	while (channel < ZUNO_CFG_CHANNEL_COUNT)
-	{
-		if (ZUNO_CFG_CHANNEL(channel).type == ZUNO_SOUND_SWITCH_CHANNEL_NUMBER) {
-			parameter_array = _soundSwitchGetParameterArray(channel);
-			play = parameter_array->play;
-			if (play->toneIdentifier != 0x0 && time_stamp_current >= play->time_stamp) {
-				zunoSendReport(channel + 0x1);
-				_soundSwitchTonePlaySetStop(parameter_array, channel);
-			}
-		}
-		channel++;
-	}
 }
 
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier) {
@@ -396,31 +373,6 @@ int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier) {
 
 	zunoSoundSwitchSaveGet(channel, &switch_save);
 	return (_soundSwitchTonePlaySetAdd(channel, toneIdentifier, switch_save.volume));
-}
-
-int zuno_CCSoundSwitchBasicGet(size_t channel, ZwBasicReportV2Frame_t *report) {
-	const ZunoSoundSwitchParameterArray_t								*parameter_array;
-	ZunoSoundSwitchParameterPlay_t										*play;
-	size_t																toneIdentifier;
-	size_t																duration;
-	uint64_t															time_stamp_current;
-	uint64_t															time_stamp_save;
-
-	parameter_array = _soundSwitchGetParameterArray(channel);
-	play = parameter_array->play;
-	zunoEnterCritical();
-	toneIdentifier = play->toneIdentifier;
-	report->currentValue = toneIdentifier;
-	report->targetValue = toneIdentifier;
-	time_stamp_save = play->time_stamp;
-	zunoExitCritical();
-	time_stamp_current = (rtcc_micros() / 1000);
-	if (time_stamp_save > time_stamp_current)
-		duration = zuno_CCTimerTable8(time_stamp_save - time_stamp_current);
-	else
-		duration = 0x0;
-	report->duration = duration;
-	return (ZUNO_COMMAND_ANSWERED);
 }
 
 #include "ZWCCZWavePlusInfo.h"

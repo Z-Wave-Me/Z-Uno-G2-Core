@@ -1089,7 +1089,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 }
 
 __WEAK uint8_t __zunoGetS2AccessManual(void) {
-	return ((SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S0_BIT));
+	return ((SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S2_AUTHENTICATED_BIT | SECURITY_KEY_S0_BIT));
 }
 
 // Channels fill routines

@@ -3,6 +3,8 @@
 
 #ifdef WITH_CC_USER_CREDENTIAL
 
+#define USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT								0x20
+
 #define USER_CREDENTIAL_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential)
 #define USER_CREDENTIAL_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential))
 
@@ -38,8 +40,8 @@ typedef struct				UserCredentialSaveUserId_s
 	UserCredentialSaveUserIdInfoSet_t	set;
 }							UserCredentialSaveUserId_t;
 
-#if USER_CREDENTIAL_NUMBER >= 0x20
-#define USER_CREDENTIAL_NUMBER_MASK_LENGHT						0x20
+#if USER_CREDENTIAL_NUMBER >= USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
+#define USER_CREDENTIAL_NUMBER_MASK_LENGHT						USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
 #else
 #define USER_CREDENTIAL_NUMBER_MASK_LENGHT						USER_CREDENTIAL_NUMBER
 #endif
@@ -63,9 +65,49 @@ typedef struct				UserCredentialSaveCommonUser_s
 	UserCredentialSaveUserId_t		user_id[USER_CREDENTIAL_NUMBER];
 }							UserCredentialSaveCommonUser_t;
 
+#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+
+typedef struct				UserCredentialSaveCredential_s
+{
+	uint8_t					CredentialModifierType;
+	uint8_t					CredentialModifierNodeID[0x2];/*MSB - LSB*/
+	uint8_t					CredentialLength;
+	uint8_t					CredentialData[];
+}							UserCredentialSaveCredential_t;
+
+#if USER_CREDENTIAL_NUMBER_PIN_CODE >= USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
+#define USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT						USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
+#else
+#define USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT						USER_CREDENTIAL_NUMBER_PIN_CODE
+#endif
+
+
+typedef struct				UserCredentialSaveMaskPinCode_s
+{
+	uint8_t					crc16[0x2];//lsb - Msb
+	uint8_t					crc16_mask[0x2 * USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT];
+}							UserCredentialSaveMaskPinCode_t;
+
+
+typedef struct				UserCredentialSaveCommonPinCode_s
+{
+	#if USER_CREDENTIAL_NUMBER_PIN_CODE == USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT
+	UserCredentialSaveMaskPinCode_t		user_id_mask[0x1];
+	UserCredentialSaveMaskPinCode_t		user_id_mask_local[0x1];
+	#else
+	UserCredentialSaveMaskPinCode_t		user_id_mask[((((USER_CREDENTIAL_NUMBER_PIN_CODE + ((USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8)))];
+	UserCredentialSaveMaskPinCode_t		user_id_mask_local[((((USER_CREDENTIAL_NUMBER_PIN_CODE + ((USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8)))];
+	#endif
+	uint8_t								info[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT) * USER_CREDENTIAL_NUMBER_PIN_CODE];
+}							UserCredentialSaveCommonPinCode_t;
+#endif
+
 typedef struct				UserCredentialSaveCommon_s
 {
-UserCredentialSaveCommonUser_t	user;
+	UserCredentialSaveCommonUser_t			user;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	UserCredentialSaveCommonPinCode_t		_PIN_CODE[USER_CREDENTIAL_NUMBER];
+	#endif
 }							UserCredentialSaveCommon_t;
 
 #endif//WITH_CC_USER_CREDENTIAL

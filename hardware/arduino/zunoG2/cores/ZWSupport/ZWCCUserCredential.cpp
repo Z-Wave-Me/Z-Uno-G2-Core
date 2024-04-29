@@ -704,7 +704,7 @@ static bool _user_credential_user_set_valid_in(UserCredentialSaveUserIdInfoSet_t
 	if (UserUniqueIdentifier < 0x1)
 		return (false);
 	UserType = set->UserType;
-	if (UserType >= (sizeof(MASK_OF_SUPPORTED_CREDENTIAL_TYPES) * 0x8) || (MASK_OF_SUPPORTED_CREDENTIAL_TYPES & (0x1 << UserType)) == 0x0)
+	if (UserType >= (sizeof(MASK_OF_SUPPORTED_USER_TYPES) * 0x8) || (MASK_OF_SUPPORTED_USER_TYPES & (0x1 << UserType)) == 0x0)
 		return (false);
 	set->profile2 = set->profile2 & USER_CREDENTIAL_USER_SET_USER_ACTIVE_STATE_MASK;
 	CredentialRule = set->CredentialRule;

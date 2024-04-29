@@ -88,6 +88,13 @@ static const UserCredentialSaveArg_t _save_arg_##name =							\
 	USER_CREDENTIAL_STRUCT_SAVE_ARG(RFID_CODE)
 #endif
 
+#define USER_CREDENTIAL_SWTCH_SET_ARG(name)																											\
+		case USER_CREDENTIAL_TYPE_##name:																											\
+			arg = &_save_arg_##name;																												\
+			credential = (UserCredentialSaveCredential_t *)&name[0x0];																				\
+			addr = ((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential._##name[UserUniqueIdentifier - 0x1]);					\
+			break ;
+
 #define USER_CREDENTIAL_SUPPORT_CHECKSUM_CREDENTIAL				(0x7)
 #define USER_CREDENTIAL_SUPPORT_LEARN							(0x7)
 #define USER_CREDENTIAL_SUPPORT_SCHEDULE						(0x7)
@@ -194,6 +201,213 @@ static void _write_eeprom_id_credential(uint16_t CredentialSlot, uint32_t addr, 
 	return (_write_eeprom_id(addr, arg->mask_lenght, CredentialSlot, credential, sizeof(credential[0x0]) + arg->CredentialLengthMax, sizeof(credential[0x0])));
 }
 
+static void _delete_eeprom_id(uint32_t addr, uint8_t mask_lenght, uint16_t id, size_t leght) {
+	UserCredentialSaveMaskTemp_t								*mask_temp;
+	uint8_t														mask_size;
+	uint8_t														mask[sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT];
+	size_t														offset;
+	uint16_t													crc16;
+
+	mask_temp = (UserCredentialSaveMaskTemp_t *)&mask[0x0];
+	mask_size = sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * mask_lenght;
+	id--;
+	offset = id / (mask_lenght);
+	addr = addr + (offset * (mask_size * 0x2)) + (offset * ((mask_lenght) * leght));
+	zunoEEPROMRead(addr, mask_size, (byte *)&mask);
+	crc16 = CrcClass::crc16_ccitt_aug(&mask_temp->crc16_mask[0x0], 0x2 * mask_lenght);
+	if (memcmp(&crc16, &mask_temp->crc16[0x0], sizeof(crc16)) != 0x0)
+		return ;
+	crc16 = mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x0] | (mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x1] << 0x8);
+	if (crc16 == 0x0)
+		return ;
+	mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x0] = 0x0;
+	mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x1] = 0x0;
+	crc16 = CrcClass::crc16_ccitt_aug(&mask_temp->crc16_mask[0x0], 0x2 * mask_lenght);
+	memcpy(&mask_temp->crc16[0x0], &crc16,sizeof(mask_temp->crc16));
+	zunoEEPROMWrite(addr, mask_size, (byte *)&mask);
+}
+
+static void _delete_eeprom_credential_all_one_user_add(uint16_t id, uint16_t id_max, uint8_t mask_lenght, uint32_t addr, size_t leght) {
+	UserCredentialSaveMaskTemp_t				*mask_temp;
+	uint8_t										mask_size;
+	uint8_t										mask[sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT];
+	uint32_t									addr_mask;
+	size_t										offset;
+	uint16_t									crc16;
+
+	mask_temp = (UserCredentialSaveMaskTemp_t *)&mask[0x0];
+	mask_size = sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * mask_lenght;
+	while (id < id_max) {
+		offset = (id) / (mask_lenght);
+		addr_mask = (addr) + (offset * (mask_size * 0x2)) + (offset * ((mask_lenght) * leght));
+		zunoEEPROMRead(addr_mask, mask_size, (byte *)&mask);
+		crc16 = CrcClass::crc16_ccitt_aug(&mask_temp->crc16_mask[0x0], 0x2 * mask_lenght);
+		if (memcmp(&crc16, &mask_temp->crc16[0x0], sizeof(crc16)) == 0x0) {
+			memset(mask_temp, 0x0, mask_size);
+			zunoEEPROMWrite(addr_mask, mask_size, (byte *)&mask);
+		}
+		id = id + mask_lenght;
+	}
+}
+
+static void _delete_eeprom_credential_all_one_user(uint16_t UserUniqueIdentifier) {
+	uint8_t											CredentialType;
+	uint32_t										CredentialTypeMask;
+	uint32_t										addr;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
+	#endif
+	UserCredentialSaveCredential_t					*credential;
+	const UserCredentialSaveArg_t					*arg;
+
+	CredentialType = 0x0;
+	CredentialTypeMask = MASK_OF_SUPPORTED_CREDENTIAL_TYPES >> CredentialType;
+	while (true) {
+		CredentialType++;
+		CredentialTypeMask = CredentialTypeMask >> 0x1;
+		if (CredentialTypeMask == 0x0)
+			break ;
+		switch (CredentialType) {
+			#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+			USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
+			#endif
+			#if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
+			USER_CREDENTIAL_SWTCH_SET_ARG(PASSWORD)
+			#endif
+			#if defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
+			USER_CREDENTIAL_SWTCH_SET_ARG(RFID_CODE)
+			#endif
+			default:
+				arg = NULL;
+				break ;
+		}
+		if (arg == NULL)
+			continue ;
+		_delete_eeprom_credential_all_one_user_add(0x0, arg->CredentialSlotMax, arg->mask_lenght, addr, sizeof(credential[0x0]) + arg->CredentialLengthMax);
+	}
+}
+
+static void _delete_eeprom_credential_all_one_user_one_type(uint16_t UserUniqueIdentifier, uint8_t CredentialType) {
+	uint32_t										addr;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
+	#endif
+	UserCredentialSaveCredential_t					*credential;
+	const UserCredentialSaveArg_t					*arg;
+
+	switch (CredentialType) {
+		#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PASSWORD)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(RFID_CODE)
+		#endif
+		default:
+			arg = NULL;
+			break ;
+	}
+	if (arg == NULL)
+		return ;
+	_delete_eeprom_credential_all_one_user_add(0x0, arg->CredentialSlotMax, arg->mask_lenght, addr, sizeof(credential[0x0]) + arg->CredentialLengthMax);
+}
+
+static void _delete_eeprom_credential_all_full_user_one_type(uint8_t CredentialType) {
+	size_t											UserUniqueIdentifier;
+
+	UserUniqueIdentifier = 0x1;
+	while (UserUniqueIdentifier <= USER_CREDENTIAL_NUMBER) {
+		_delete_eeprom_credential_all_one_user_one_type(UserUniqueIdentifier, CredentialType);
+		UserUniqueIdentifier++;
+	}
+}
+
+static void _delete_eeprom_credential_all_full_user() {
+	size_t											UserUniqueIdentifier;
+
+	UserUniqueIdentifier = 0x1;
+	while (UserUniqueIdentifier <= USER_CREDENTIAL_NUMBER) {
+		_delete_eeprom_credential_all_one_user(UserUniqueIdentifier);
+		UserUniqueIdentifier++;
+	}
+}
+
+static bool _credential_test_uniq_add(uint16_t id, uint16_t id_max, uint8_t mask_lenght, uint32_t addr, size_t leght, uint16_t crc16_cmp) {
+	UserCredentialSaveMaskTemp_t				*mask_temp;
+	uint8_t										mask_size;
+	uint8_t										mask[sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT];
+	uint32_t									addr_mask;
+	size_t										offset;
+	uint16_t									crc16;
+	uint16_t									id_tmp;
+
+	mask_temp = (UserCredentialSaveMaskTemp_t *)&mask[0x0];
+	mask_size = sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * mask_lenght;
+	while (id < id_max) {
+		offset = (id) / (mask_lenght);
+		addr_mask = (addr) + (offset * (mask_size * 0x2)) + (offset * ((mask_lenght) * leght));
+		zunoEEPROMRead(addr_mask, mask_size, (byte *)&mask);
+		crc16 = CrcClass::crc16_ccitt_aug(&mask_temp->crc16_mask[0x0], 0x2 * mask_lenght);
+		if (memcmp(&crc16, &mask_temp->crc16[0x0], sizeof(crc16)) == 0x0) {
+			id_tmp = id + mask_lenght;
+			while (id < id_tmp && id < id_max) {
+				if ((mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x0] | (mask_temp->crc16_mask[(0x2 * (id % (mask_lenght))) + 0x1] << 0x8)) == crc16_cmp)
+					return (true);
+				id++;
+			}
+			continue ;
+		}
+		id = id + mask_lenght;
+	}
+	return (false);
+}
+
+static bool _credential_test_uniq(uint16_t crc16) {
+	uint8_t											CredentialType;
+	uint32_t										CredentialTypeMask;
+	size_t											UserUniqueIdentifier;
+	uint32_t										addr;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
+	#endif
+	UserCredentialSaveCredential_t					*credential;
+	const UserCredentialSaveArg_t					*arg;
+
+	UserUniqueIdentifier = 0x1;
+	while (UserUniqueIdentifier <= USER_CREDENTIAL_NUMBER) {
+		CredentialType = 0x0;
+		CredentialTypeMask = MASK_OF_SUPPORTED_CREDENTIAL_TYPES >> CredentialType;
+		while (true) {
+			CredentialType++;
+			CredentialTypeMask = CredentialTypeMask >> 0x1;
+			if (CredentialTypeMask == 0x0)
+				break;
+			switch (CredentialType) {
+				#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+				USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
+				#endif
+				#if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
+				USER_CREDENTIAL_SWTCH_SET_ARG(PASSWORD)
+				#endif
+				#if defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
+				USER_CREDENTIAL_SWTCH_SET_ARG(RFID_CODE)
+				#endif
+				default:
+					arg = NULL;
+					break ;
+			}
+			if (arg == NULL)
+				continue ;
+			if (_credential_test_uniq_add(0x0, arg->CredentialSlotMax, arg->mask_lenght, addr, sizeof(credential[0x0]) + arg->CredentialLengthMax, crc16) == true)
+				return (true);
+		}
+		UserUniqueIdentifier++;
+	}
+	return (false);
+}
+
 static void _del_all_user(void) {
 	size_t										userIdentifier;
 	uint32_t									addr_mask;
@@ -222,6 +436,7 @@ static void _del_user(uint16_t userIdentifier) {
 	}
 	if (userIdentifier > USER_CREDENTIAL_NUMBER)
 		return ;
+	_delete_eeprom_credential_all_one_user(userIdentifier);
 	userIdentifier--;
 	offset = userIdentifier / (USER_CREDENTIAL_NUMBER_MASK_LENGHT);
 	addr = (USER_CREDENTIAL_ADDR_USER) + (offset * (sizeof(UserCredentialSaveMask_t) * 0x2)) + (offset * ((USER_CREDENTIAL_NUMBER_MASK_LENGHT) * sizeof(UserCredentialSaveUserId_t)));
@@ -244,6 +459,7 @@ static uint16_t _get_next(uint16_t id, uint16_t id_max, uint8_t mask_lenght, uin
 	uint32_t									addr_mask;
 	size_t										offset;
 	uint16_t									crc16;
+	uint16_t									id_tmp;
 
 	mask_temp = (UserCredentialSaveMaskTemp_t *)&mask[0x0];
 	mask_size = sizeof(UserCredentialSaveMaskTemp_t) + 0x2 * mask_lenght;
@@ -253,7 +469,8 @@ static uint16_t _get_next(uint16_t id, uint16_t id_max, uint8_t mask_lenght, uin
 		zunoEEPROMRead(addr_mask, mask_size, (byte *)&mask);
 		crc16 = CrcClass::crc16_ccitt_aug(&mask_temp->crc16_mask[0x0], 0x2 * mask_lenght);
 		if (memcmp(&crc16, &mask_temp->crc16[0x0], sizeof(crc16)) == 0x0) {
-			while (id < mask_lenght && id < id_max) {
+			id_tmp = id + mask_lenght;
+			while (id < id_tmp && id < id_max) {
 				if (_get_eeprom_data_add(addr_mask, mask_size, mask_lenght, id, mask_temp, buffer, leght, offset_crc16) == true) {
 					return (id + 0x1);
 				}
@@ -583,12 +800,12 @@ typedef struct					UserCredentialCredentialSet_s
 	uint8_t						CredentialData[];
 }								UserCredentialCredentialSet_t;
 
+
 static int _user_credential_credential_set_add(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, uint16_t UserUniqueIdentifier, const UserCredentialSaveArg_t *arg) {
 	uint8_t											CredentialLength;
 	UserCredentialSaveUserId_t						save_user;
+	uint16_t										crc16;
 
-	if (CredentialSlot == 0x0)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (_read_eeprom_id_user(UserUniqueIdentifier, &save_user, sizeof(save_user)) == false)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (_read_eeprom_id_credential(CredentialSlot, addr, credential, arg) == true)
@@ -600,32 +817,63 @@ static int _user_credential_credential_set_add(ZUNOCommandPacket_t *cmd, const U
 	credential->CredentialLength = CredentialLength;
 	memcpy(&credential->CredentialData[0x0], &in->CredentialData[0x0], CredentialLength);
 	memset(&credential->CredentialData[CredentialLength], 0x0, arg->CredentialLengthMax - CredentialLength);
+	crc16 = CrcClass::crc16_ccitt_aug(&credential->CredentialData[0x0], arg->CredentialLengthMax);
+	if (_credential_test_uniq(crc16) == true)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	_write_eeprom_id_credential(CredentialSlot, addr, credential, arg);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-#define USER_CREDENTIAL_SWTCH_SET_ARG(name)																											\
-		case USER_CREDENTIAL_TYPE_##name:																											\
-			arg = &_save_arg_##name;																												\
-			credential = (UserCredentialSaveCredential_t *)&name[0x0];																				\
-			addr = ((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential._##name[UserUniqueIdentifier]);					\
-			break ;		
+static int _user_credential_credential_set_modify(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, const UserCredentialSaveArg_t *arg) {
+	uint16_t													crc16;
+	uint8_t														CredentialLength;
 
-static int _user_credential_credential_set(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in) {
-	uint16_t										UserUniqueIdentifier;
-	int												rs;
+	if (_read_eeprom_id_credential(CredentialSlot, addr, credential, arg) == false)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	crc16 = CrcClass::crc16_ccitt_aug(credential, sizeof(credential[0x0]) + arg->CredentialLengthMax);
+	credential->CredentialModifierType = USER_CREDENTIAL_MODIFY_TYPE_ZWAVE;
+	credential->CredentialModifierNodeID[0x0] = cmd->src_node >> 0x8;
+	credential->CredentialModifierNodeID[0x1] = cmd->src_node;
+	CredentialLength = in->CredentialLength;
+	credential->CredentialLength = CredentialLength;
+	memcpy(&credential->CredentialData[0x0], &in->CredentialData[0x0], CredentialLength);
+	memset(&credential->CredentialData[CredentialLength], 0x0, arg->CredentialLengthMax - CredentialLength);
+	if (CrcClass::crc16_ccitt_aug(credential, sizeof(credential[0x0]) + arg->CredentialLengthMax) == crc16)
+		return (ZUNO_COMMAND_PROCESSED);
+	crc16 = CrcClass::crc16_ccitt_aug(&credential->CredentialData[0x0], arg->CredentialLengthMax);
+	if (_credential_test_uniq(crc16) == true)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	_write_eeprom_id_credential(CredentialSlot, addr, credential, arg);
+	return (ZUNO_COMMAND_PROCESSED);
+}
+
+static int _user_credential_credential_set_del(uint16_t UserUniqueIdentifier, uint16_t CredentialSlot, uint8_t CredentialType) {
 	uint32_t										addr;
-	uint16_t										CredentialSlot;
 	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
 	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
 	#endif
 	UserCredentialSaveCredential_t					*credential;
 	const UserCredentialSaveArg_t					*arg;
 
-	UserUniqueIdentifier = (in->UserUniqueIdentifier[0x0] << 0x8) | in->UserUniqueIdentifier[0x1];
-	if (UserUniqueIdentifier > USER_CREDENTIAL_NUMBER || UserUniqueIdentifier == 0x0)
+	if (CredentialSlot == 0x0 && CredentialType != 0x0) {
+		if (UserUniqueIdentifier == 0x0) {
+			_delete_eeprom_credential_all_full_user_one_type(CredentialType);
+			return (ZUNO_COMMAND_PROCESSED);
+		}
+		_delete_eeprom_credential_all_one_user_one_type(UserUniqueIdentifier, CredentialType);
+		return (ZUNO_COMMAND_PROCESSED);
+	}
+	if (UserUniqueIdentifier == 0x0) {
+		_delete_eeprom_credential_all_full_user();
+		return (ZUNO_COMMAND_PROCESSED);
+	}
+	if (CredentialType == 0x0) {
+		_delete_eeprom_credential_all_one_user(UserUniqueIdentifier);
+		return (ZUNO_COMMAND_PROCESSED);
+	}
+	if (CredentialSlot == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
-	switch (in->CredentialType) {
+	switch (CredentialType) {
 		#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
 		USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
 		#endif
@@ -639,7 +887,49 @@ static int _user_credential_credential_set(ZUNOCommandPacket_t *cmd, const UserC
 			return (ZUNO_COMMAND_BLOCKED_FAILL);
 			break ;
 	}
+	_delete_eeprom_id(addr, arg->mask_lenght, CredentialSlot, sizeof(credential[0x0]) + arg->CredentialLengthMax);
+	return (ZUNO_COMMAND_PROCESSED);
+}
+
+static int _user_credential_credential_set(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in) {
+	uint16_t										UserUniqueIdentifier;
+	uint8_t											operation_type;
+	uint8_t											CredentialType;
+	uint16_t										CredentialSlot;
+	int												rs;
+	uint32_t										addr;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
+	#endif
+	UserCredentialSaveCredential_t					*credential;
+	const UserCredentialSaveArg_t					*arg;
+
+	UserUniqueIdentifier = (in->UserUniqueIdentifier[0x0] << 0x8) | in->UserUniqueIdentifier[0x1];
+	if (UserUniqueIdentifier > USER_CREDENTIAL_NUMBER)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	CredentialSlot = (in->CredentialSlot[0x0] << 0x8) | in->CredentialSlot[0x1];
+	operation_type = (in->profile1 & USER_CREDENTIAL_USER_SET_OPERATION_MASK) >> USER_CREDENTIAL_USER_SET_OPERATION_SHIFT;
+	CredentialType = in->CredentialType;
+	if (operation_type == USER_CREDENTIAL_USER_SET_OPERATION_DELETE)
+		return (_user_credential_credential_set_del(UserUniqueIdentifier, CredentialSlot, CredentialType));
+	switch (CredentialType) {
+		#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PASSWORD)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(RFID_CODE)
+		#endif
+		default:
+			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			break ;
+	}
+	if (UserUniqueIdentifier == 0x0)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
+	if (CredentialSlot == 0x0)
+		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (CredentialSlot > arg->CredentialSlotMax)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	if (in->CredentialLength > arg->CredentialLengthMax || in->CredentialLength < arg->CredentialLengthMin)
@@ -648,12 +938,9 @@ static int _user_credential_credential_set(ZUNOCommandPacket_t *cmd, const UserC
 		case USER_CREDENTIAL_USER_SET_OPERATION_ADD:
 			rs = _user_credential_credential_set_add(cmd, in, credential, addr, CredentialSlot, UserUniqueIdentifier, arg);
 			break ;
-		// case USER_CREDENTIAL_USER_SET_OPERATION_MODIFY:
-		// 	rs = _user_credential_user_set_modify(cmd, in, UserUniqueIdentifier);
-		// 	break ;
-		// case USER_CREDENTIAL_USER_SET_OPERATION_DELETE:
-		// 	rs = _user_credential_user_set_del(UserUniqueIdentifier);
-		// 	break ;
+		case USER_CREDENTIAL_USER_SET_OPERATION_MODIFY:
+			rs = _user_credential_credential_set_modify(cmd, in, credential, addr, CredentialSlot, arg);
+			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_FAILL;
 			break;
@@ -836,8 +1123,6 @@ int zuno_CCUserCredentialHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketRepo
 			rs = _user_credential_credential_report_get(frame_report, ((const UserCredentialCredentialGet_t *)&cmd->cmd[0x0]));
 			break ;
 		default:
-			Serial0.print("zuno_CCUserCredentialHandler: ");
-			Serial0.println(ZW_CMD);
 			rs = ZUNO_UNKNOWN_CMD;
 			break ;
 	}

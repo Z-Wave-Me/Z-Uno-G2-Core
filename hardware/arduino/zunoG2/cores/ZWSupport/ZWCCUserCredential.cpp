@@ -115,6 +115,8 @@ The PIN code Credential would only be provided over-the-air for the lock/unlock 
 */
 #define USER_CREDENTIAL_TYPE_REMOTE_ONLY_USER					(0x9)
 
+static constexpr uint32_t MASK_OF_SUPPORTED_USER_TYPES = ((0x1 << USER_CREDENTIAL_TYPE_GENERAL_USER) | (0x1 << USER_CREDENTIAL_TYPE_PROGRAMING_USER));
+
 static const uint32_t _user_supported_credential_rules_mask = ((0x1 << USER_CREDENTIAL_RULE_SINGLE));
 
 
@@ -527,10 +529,10 @@ static int _user_credential_capabilities_user_report(ZUNOCommandPacketReport_t *
 	#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
 	report->property1 = report->property1 | (0x1 << USER_CREDENTIAL_SUPPORT_SCHEDULE);
 	#endif
-	len = ((((sizeof(MASK_OF_SUPPORTED_CREDENTIAL_TYPES) * 0x8) - __builtin_clz(MASK_OF_SUPPORTED_CREDENTIAL_TYPES)) >> 0x3) + 0x1);
+	len = ((((sizeof(MASK_OF_SUPPORTED_USER_TYPES) * 0x8) - __builtin_clz(MASK_OF_SUPPORTED_USER_TYPES)) >> 0x3) + 0x1);
 	report->SupportedUserTypesBitMaskLength = len;
 	frame_report->packet.len = sizeof(report[0x0]) + len;
-	memcpy(&report->SupportedUserTypesBitMask[0x0], (uint8_t *)&MASK_OF_SUPPORTED_CREDENTIAL_TYPES, len);
+	memcpy(&report->SupportedUserTypesBitMask[0x0], (uint8_t *)&MASK_OF_SUPPORTED_USER_TYPES, len);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

@@ -56,7 +56,7 @@
 	#define SDA1                25
 	#define LED_BUILTIN         13
 	#define ZUNO_PIN_LAST_INDEX	27
-#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804  || ZUNO_PIN_V == 0x805
+#elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804  || ZUNO_PIN_V == 0x805 || ZUNO_PIN_V == 0x810 || ZUNO_PIN_V == 0x811 
 	#define SCL                 9
 	#define SDA                 10
 	#define SCL1                23
@@ -384,6 +384,74 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 3},//27 - PC03 - sapi_rx_pin
 	{0,8},//28 - PA08 - led1_pin
 	{0,10},//29 - PA10 - led2_pin
+};
+#elif ZUNO_PIN_V == 0x810
+// Shelly Plug
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{2, 0},//00 - PC00
+	{2, 1},//01 - PC01
+	{2, 2},//02 - PC02
+	{3, 0},//03 - PD00
+	{0, 6},//04 - PA06
+	{0, 5},//05 - PA05
+	{2, 8},//06 - PC08
+	{0, 9},//07 - PA09 - TX1
+	{0, 8},//08 - PA08 - RX1
+	{2, 9},//09 - PC09
+	{0,10},//10 - PA10
+	{2, 1},//11 - PC01
+	{2, 5},//12 - PC05
+	{0, 0},//13 - PA00
+	{1, 3},//14 - PB03
+	{1, 4},//15 - PB04
+	{1, 5},//16 - PB05
+	{1, 6},//17 - PB06
+	{2, 0},//18 - PC00
+	{2, 6},//19 - PC06
+	{2, 2},//20 - PC02
+	{2, 3},//21 - PC03
+	{2, 4},//22 - PC04
+	{1, 1},//23 - PB01 - button_pin
+	{0, 3},//24 - PA03 - TX0
+	{0, 4},//25 - PA04 - RX0
+	{0, 2},//26 - PA2 - sapi_tx_pin
+	{0, 1},//27 - PA1 - sapi_rx_pin
+	{1, 1},//28 - PB01 - led1_pin
+	{1, 0},//29 - PB00 - led2_pin
+};
+#elif ZUNO_PIN_V == 0x811
+// Shelly Embed. Relay
+constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
+	{2, 0},//00 - PC00
+	{2, 1},//01 - PC01
+	{2, 2},//02 - PC02
+	{3, 0},//03 - PD00
+	{0, 6},//04 - PA06
+	{0, 5},//05 - PA05
+	{2, 8},//06 - PC08
+	{0, 9},//07 - PA09 - TX1
+	{0, 8},//08 - PA08 - RX1
+	{2, 9},//09 - PC09
+	{0,10},//10 - PA10
+	{2, 1},//11 - PC01
+	{2, 5},//12 - PC05
+	{0, 0},//13 - PA00
+	{1, 3},//14 - PB03
+	{1, 4},//15 - PB04
+	{1, 5},//16 - PB05
+	{1, 6},//17 - PB06
+	{2, 0},//18 - PC00
+	{2, 6},//19 - PC06
+	{2, 2},//20 - PC02
+	{2, 3},//21 - PC03
+	{2, 4},//22 - PC04
+	{0, 4},//23 - PA04 - button_pin
+	{0, 3},//24 - PA03 - TX0
+	{0, 9},//25 - PA09 - RX0
+	{0, 2},//26 - PA2 - sapi_tx_pin
+	{0, 1},//27 - PA1 - sapi_rx_pin
+	{1, 1},//28 - PB01 - led1_pin
+	{1, 0},//29 - PB00 - led2_pin
 };
 #else
     #error ZUNO_PIN_V

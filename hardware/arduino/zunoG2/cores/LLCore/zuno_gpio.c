@@ -17,6 +17,10 @@
 #pragma message "ZUNO_PIN_V==0x804 (ZGM8202 BRD)"
 #elif ZUNO_PIN_V == 0x805
 #pragma message "ZUNO_PIN_V==0x805 (Z-Uno3 R1 )"
+#elif ZUNO_PIN_V == 0x810
+#pragma message "ZUNO_PIN_V==0x810 (Wave Plug )"
+#elif ZUNO_PIN_V == 0x811
+#pragma message "ZUNO_PIN_V==0x811 (Wave1 )"
 #else
     #error ZUNO_PIN_V
 #endif

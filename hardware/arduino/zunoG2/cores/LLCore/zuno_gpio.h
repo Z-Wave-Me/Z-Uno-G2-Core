@@ -386,7 +386,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0,10},//29 - PA10 - led2_pin
 };
 #elif ZUNO_PIN_V == 0x810
-// Shelly Plug
+// Wave Plug
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 0},//00 - PC00
 	{2, 1},//01 - PC01
@@ -420,7 +420,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{1, 0},//29 - PB00 - led2_pin
 };
 #elif ZUNO_PIN_V == 0x811
-// Shelly Embed. Relay
+// Wave1
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 0},//00 - PC00
 	{2, 1},//01 - PC01

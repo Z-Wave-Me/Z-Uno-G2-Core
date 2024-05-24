@@ -69,7 +69,7 @@
 	#error ZUNO_PIN_V
 #endif
 
-#if ZUNO_PIN_V == 0x804
+#if ZUNO_PIN_V == 0x804 || ZUNO_PIN_V == 0x810 || ZUNO_PIN_V == 0x811
 	#define SYS_LED_INVERT						true
 #else
 	#define SYS_LED_INVERT						false
@@ -399,14 +399,14 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 8},//08 - PA08 - RX1
 	{2, 9},//09 - PC09
 	{0,10},//10 - PA10
-	{2, 1},//11 - PC01
+	{3, 3},//11 - PD03
 	{2, 5},//12 - PC05
 	{0, 0},//13 - PA00
 	{1, 3},//14 - PB03
 	{1, 4},//15 - PB04
 	{1, 5},//16 - PB05
 	{1, 6},//17 - PB06
-	{2, 0},//18 - PC00
+	{3, 1},//18 - PD01
 	{2, 6},//19 - PC06
 	{2, 2},//20 - PC02
 	{2, 3},//21 - PC03
@@ -416,8 +416,8 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 4},//25 - PA04 - RX0
 	{0, 2},//26 - PA2 - sapi_tx_pin
 	{0, 1},//27 - PA1 - sapi_rx_pin
-	{1, 1},//28 - PB01 - led1_pin
-	{1, 0},//29 - PB00 - led2_pin
+	{1, 0},//28 - PB00 - led1_pin
+	{1, 1},//29 - PB01 - led2_pin
 };
 #elif ZUNO_PIN_V == 0x811
 // Wave1
@@ -435,7 +435,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0,10},//10 - PA10
 	{2, 1},//11 - PC01
 	{2, 5},//12 - PC05
-	{0, 0},//13 - PA00
+	{1, 1},//13 - PB01
 	{1, 3},//14 - PB03
 	{1, 4},//15 - PB04
 	{1, 5},//16 - PB05
@@ -450,8 +450,8 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{0, 9},//25 - PA09 - RX0
 	{0, 2},//26 - PA2 - sapi_tx_pin
 	{0, 1},//27 - PA1 - sapi_rx_pin
-	{1, 1},//28 - PB01 - led1_pin
-	{1, 0},//29 - PB00 - led2_pin
+	{1, 0},//28 - PB00 - led1_pin
+	{0, 0},//29 - PA00 - led2_pin
 };
 #else
     #error ZUNO_PIN_V

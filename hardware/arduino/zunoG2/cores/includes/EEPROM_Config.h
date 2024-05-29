@@ -59,9 +59,11 @@ typedef struct									ZwEepromSkethCommonInfo_s
 	#endif
 }												ZwEepromSkethCommonInfo_t;
 
+#define EEPROM_SKETH_SIZE_ACTUAL				(EEPROM_SKETH_SIZE - sizeof(ZwEepromSkethCommonInfo_t))
+
 typedef struct									ZwEepromSkethCommon_s
 {
-	uint8_t										user_code[EEPROM_SKETH_SIZE - sizeof(ZwEepromSkethCommonInfo_t)];
+	uint8_t										user_code[EEPROM_SKETH_SIZE_ACTUAL];
 	ZwEepromSkethCommonInfo_t					info;
 }												ZwEepromSkethCommon_t;
 

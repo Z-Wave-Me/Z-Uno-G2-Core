@@ -34,6 +34,7 @@ class BL0937 : protected ZMEHandlerMapper {
         float _activePower;
         float _voltageRMS;
         float _currentRMS;
+        float _previousPower;
         unsigned long _lastMeasurementTime = 0;
         unsigned long _lastStorageTime = 0;
 

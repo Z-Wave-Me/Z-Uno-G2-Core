@@ -62,11 +62,13 @@ unsigned long BL0937::_readPulseDuration(int pin) {
 }
 
 void BL0937::calcEnergy(){
+    _previousPower = _activePower;
     readActivePower();
     unsigned long currentTime = millis();
     unsigned long elapsedTime = currentTime - _lastMeasurementTime;
     _lastMeasurementTime = currentTime;
-    _accumulatedEnergy += (float)(_activePower * elapsedTime ) / 3600000.0;
+    _accumulatedEnergy += (_previousPower + _activePower) / 2 * (elapsedTime / 3600000.0); // Интервал в часах
+
 }
 
 void BL0937::handleSysTimer(uint32_t ticks){

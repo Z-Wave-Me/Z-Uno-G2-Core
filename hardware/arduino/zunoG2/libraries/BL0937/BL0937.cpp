@@ -6,8 +6,7 @@ BL0937::BL0937(byte cfPin, byte cf1Pin,byte selPin, float vRef):
                 _selPin(selPin),
                 _vRef(vRef),
                 ZMEHandlerMapper(SYS_HANLER_MAPPER_TIMER){
-        };
-
+}
 void BL0937::begin(){
     unsigned long currentTime = millis();
     pinMode(_cfPin, INPUT);
@@ -17,8 +16,7 @@ void BL0937::begin(){
     _lastMeasurementTime = currentTime;
     _lastStorageTime = currentTime;
     
-};
-
+}
 float BL0937::readActivePower() {
     unsigned long pulseDuration = _readPulseDuration(_cfPin);
     if (pulseDuration > 0) {
@@ -60,19 +58,17 @@ unsigned long BL0937::_readPulseDuration(int pin) {
     }
     return 0;
 }
-
 void BL0937::calcEnergy(){
     _previousPower = _activePower;
     readActivePower();
     unsigned long currentTime = millis();
     unsigned long elapsedTime = currentTime - _lastMeasurementTime;
     _lastMeasurementTime = currentTime;
-    _accumulatedEnergy += (_previousPower + _activePower) / 2 * (elapsedTime / 3600000.0); // Интервал в часах
-
+    _accumulatedEnergy += (_previousPower + _activePower) * 0.5f * (elapsedTime / 3600000.0f); // Translate from seconds to hours, because of KWh
 }
-
 void BL0937::handleSysTimer(uint32_t ticks){
     // (void) ticks;
+    // every 10 ticks => about 100ms
     if ((ticks % 10) == 0)
         calcEnergy();
 }

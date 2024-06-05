@@ -444,7 +444,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 6},//19 - PC06
 	{2, 2},//20 - PC02
 	{3, 3},//21 - PD03
-	{2, 4},//22 - PC04
+	{0, 4},//22 - PA04
 	{2, 3},//23 - PC03 - button_pin
 	{0, 3},//24 - PA03 - TX0
 	{0, 9},//25 - PA09 - RX0

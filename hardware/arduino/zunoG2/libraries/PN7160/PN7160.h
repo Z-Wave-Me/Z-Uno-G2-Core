@@ -282,12 +282,6 @@ typedef struct								PN7160ClassNdefNtf_s
 	uint8_t									parameters[];//tag-len-value
 }											PN7160ClassNdefNtf_t;
 
-typedef struct					PN7160ClassNdef_s
-{
-	PN7160ClassHeader_t			header;
-	uint8_t						value[];//tag-len-value
-}								PN7160ClassNdef_t;
-
 typedef union								PN7160ClassAnswer_u
 {
 	uint8_t									buffer[PN7160_CLASS_MAX_NCI_FRAME_SIZE];

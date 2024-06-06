@@ -1460,14 +1460,24 @@ bool PN7160Class::_resetInit(PN7160ClassAnswer_t *answer, bool clear) {
 		},
 		.type_reset = PN7160_CLASS_RESET_TYPE_CLEAR
 	};
-	static const PN7160ClassCoreInitCmdV1_t 		core_init =
+	// static const PN7160ClassCoreInitCmdV1_t 		core_init =
+	// {
+	// 	.header =
+	// 	{
+	// 		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
+	// 		.oid = (PN7160_CLASS_OID_CORE_INIT),
+	// 		.len = (sizeof(core_init) - sizeof(core_init.header)),
+	// 	}
+	// };
+	static const PN7160ClassCoreInitCmdV2_t 		core_init =
 	{
 		.header =
 		{
 			.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
 			.oid = (PN7160_CLASS_OID_CORE_INIT),
 			.len = (sizeof(core_init) - sizeof(core_init.header)),
-		}
+		},
+		.Feature_Enable = {0x0, 0x0}
 	};
 
 

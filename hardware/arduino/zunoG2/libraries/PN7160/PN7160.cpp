@@ -228,35 +228,6 @@ typedef struct								PN7160ClassCoreSetConfigTotalDurationCmd_s
 	__VA_ARGS__																		\
 }																					\
 
-static const PN7160ClassCoreResetCmd_t _core_reset_keep =
-{
-	.header =
-	{
-		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
-		.oid = (PN7160_CLASS_OID_CORE_RESET),
-		.len = (sizeof(_core_reset_keep) - sizeof(_core_reset_keep.header)),
-	},
-	.type_reset = PN7160_CLASS_RESET_TYPE_KEEP
-};
-static const PN7160ClassCoreResetCmd_t _core_reset_clear =
-{
-	.header =
-	{
-		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
-		.oid = (PN7160_CLASS_OID_CORE_RESET),
-		.len = (sizeof(_core_reset_clear) - sizeof(_core_reset_clear.header)),
-	},
-	.type_reset = PN7160_CLASS_RESET_TYPE_CLEAR
-};
-static const PN7160ClassCoreInitCmdV1_t _core_init =
-{
-	.header =
-	{
-		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
-		.oid = (PN7160_CLASS_OID_CORE_INIT),
-		.len = (sizeof(_core_init) - sizeof(_core_init.header)),
-	}
-};
 static const PN7160ClassRfDeactivateCmd_t			_deactivate_sleep =
 {
 	.header =
@@ -873,7 +844,7 @@ bool PN7160Class::setEEPROM(const PN7160ClassEeprom_t *eeprom) {
 bool PN7160Class::applySettings(void) {
 	PN7160ClassAnswer_t															answer;
 
-	if (this->_resetInit(&_core_reset_keep, &answer) != true)
+	if (this->_resetInit(&answer, false) != true)
 		return (false);
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
@@ -900,7 +871,6 @@ bool PN7160Class::getDuration(uint16_t *ms) {
 
 bool PN7160Class::connect(bool clear) {
 	PN7160ClassAnswer_t						answer;
-	const PN7160ClassCoreResetCmd_t			*core_reset;
 	size_t									i;
 
 	if (this->_wire->begin(0x0, this->_scl, this->_sda, &this->_buffer_wire[0x0], sizeof(this->_buffer_wire)) != ZunoErrorOk)
@@ -913,13 +883,9 @@ bool PN7160Class::connect(bool clear) {
 	delay(0xA);
 	digitalWrite(this->_ven, HIGH);
 	/* Loop until NXPNCI answers */
-	if (clear == true)
-		core_reset = &_core_reset_clear;
-	else
-		core_reset = &_core_reset_keep;
 	i = 0x0;
 	while (true) {
-		if (this->_resetInit(core_reset, &answer) == true)
+		if (this->_resetInit(&answer, clear) == true)
 			break;
 		if (i++ >= 0x1)
 			return (this->_lastStatus((PN7160_CLASS_STATUS_REPEAT_CHECK_DEV), false));
@@ -1472,8 +1438,43 @@ bool PN7160Class::_configureMode(uint8_t mode) {
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
-bool PN7160Class::_resetInit(const PN7160ClassCoreResetCmd_t *core_reset, PN7160ClassAnswer_t *answer) {
+bool PN7160Class::_resetInit(PN7160ClassAnswer_t *answer, bool clear) {
+	const PN7160ClassCoreResetCmd_t					*core_reset;
+	static const PN7160ClassCoreResetCmd_t			core_reset_keep =
+	{
+		.header =
+		{
+			.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
+			.oid = (PN7160_CLASS_OID_CORE_RESET),
+			.len = (sizeof(core_reset_keep) - sizeof(core_reset_keep.header)),
+		},
+		.type_reset = PN7160_CLASS_RESET_TYPE_KEEP
+	};
+	static const PN7160ClassCoreResetCmd_t			core_reset_clear =
+	{
+		.header =
+		{
+			.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
+			.oid = (PN7160_CLASS_OID_CORE_RESET),
+			.len = (sizeof(core_reset_clear) - sizeof(core_reset_clear.header)),
+		},
+		.type_reset = PN7160_CLASS_RESET_TYPE_CLEAR
+	};
+	static const PN7160ClassCoreInitCmdV1_t 		core_init =
+	{
+		.header =
+		{
+			.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),
+			.oid = (PN7160_CLASS_OID_CORE_INIT),
+			.len = (sizeof(core_init) - sizeof(core_init.header)),
+		}
+	};
 
+
+	if (clear == true)
+		core_reset = &core_reset_clear;
+	else
+		core_reset = &core_reset_keep;
 	this->_wireReceive(answer, 0x1);//Прежде чем ресетить нужно попробовать все что есть считать - потому и ждем не долго
 	if (this->_transceiveRspCheckSize(core_reset, answer, sizeof(answer->core_reset_rsp)) != true)
 		return (false);
@@ -1482,7 +1483,7 @@ bool PN7160Class::_resetInit(const PN7160ClassCoreResetCmd_t *core_reset, PN7160
 	if (answer->core_reset_ntf.type_reset != core_reset->type_reset)
 		return (this->_lastStatus((PN7160_CLASS_STATUS_RESET_CONFIG), false));
 	this->_Manufacturer_Specific_Information = answer->core_reset_ntf.Manufacturer_Specific_Information;
-	if (this->_transceiveRsp(&_core_init, answer) != true)
+	if (this->_transceiveRsp(&core_init, answer) != true)
 		return (false);
 	return (true);
 }

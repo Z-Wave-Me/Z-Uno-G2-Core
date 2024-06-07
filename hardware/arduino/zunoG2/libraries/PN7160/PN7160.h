@@ -352,6 +352,7 @@ class PN7160Class {
 		uint8_t											info(void);
 		bool											discovery(void (*userFunc)(void));
 		inline bool										configureMode(void) {return (this->_configureMode(PN7160_CLASS_MODE_RW));};
+		bool											setCore(void);
 		bool											setRf(void);
 		bool											setPowerTransmitter(uint8_t mode);
 		bool											setPowerMode(uint8_t mode);
@@ -384,7 +385,7 @@ class PN7160Class {
 		inline bool										_info(void);
 		inline PN7160ClassRfNfc_t						*_info_set(PN7160ClassRfNfc_t *rf_nfc, PN7160ClassAnswer_t *answer);
 		bool											_configureMode(uint8_t mode);
-		inline bool										_resetInit(const PN7160ClassCoreResetCmd_t *core_reset, PN7160ClassAnswer_t *answer);
+		inline bool										_resetInit(PN7160ClassAnswer_t *answer, bool clear);
 		inline bool										_transceiveRspCheckSize(const void *pBuffer, PN7160ClassAnswer_t *answer, size_t size);
 		inline bool										_transceiveRsp(const void *pBuffer, PN7160ClassAnswer_t *answer);
 		inline bool										_transceive(const void *pBuffer, PN7160ClassAnswer_t *answer);

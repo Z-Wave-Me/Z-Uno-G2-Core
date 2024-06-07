@@ -241,8 +241,8 @@ static const PN7160ClassRfDeactivateCmd_t			_deactivate_sleep =
 static const uint16_t SW1SW2 = 0x0090;
 
 /* Public Constructors */
-PN7160Class::PN7160Class(TwoWire *wire, uint8_t scl, uint8_t sda, uint8_t irq, uint8_t ven, uint8_t addr):
-			_wire(wire), _scl(scl), _sda(sda), _irq(irq), _ven(ven), _addr(addr), _mode(0x0)
+PN7160Class::PN7160Class(void (*event_irq)(void), TwoWire *wire, uint8_t scl, uint8_t sda, uint8_t irq, uint8_t ven, uint8_t addr):
+			_event_irq(event_irq), _wire(wire), _scl(scl), _sda(sda), _irq(irq), _ven(ven), _addr(addr), _mode(0x0), _irq_status(false)
 {
 	this->_rf_nfc.count = 0x0;
 	this->_rf_nfc.index = 0x0;
@@ -422,7 +422,7 @@ bool PN7160Class::ppse(uint8_t index) {
 }
 
 
-bool PN7160Class::discoveryRestart(void (*userFunc)(void)) {
+bool PN7160Class::discoveryRestart(void) {
 	static const PN7160ClassRfDeactivateCmd_t		deactivate_idle =
 	{
 		.header =
@@ -439,7 +439,7 @@ bool PN7160Class::discoveryRestart(void (*userFunc)(void)) {
 		;
 	if (this->_transceiveRsp(&deactivate_idle, &answer) == true)//Если еще карточка в зоне - то деактивируем
 		this->_wireReceive(&answer, PN7160_CLASS_TIMEOUT_1S);
-	return (this->discovery(userFunc));
+	return (this->discovery());
 }
 
 void PN7160Class::infoWaitRemoval(void (*userFunc)(uint8_t)) {
@@ -680,12 +680,18 @@ uint8_t PN7160Class::infoProtocol(uint8_t index) {
 }
 
 uint8_t PN7160Class::info(void) {
-	detachInterrupt(this->_irq);
 	this->_info();
 	return (this->_rf_nfc.count);
 }
 
-bool PN7160Class::discovery(void (*userFunc)(void)) {
+void PN7160Class::eventIrq(void) {
+	if (this->_irq_status == true)
+		return ;
+	detachInterrupt(this->_irq);
+	this->_irq_status = true;
+}
+
+bool PN7160Class::discovery() {
 	static const PN7160ClassRfDiscoveryCmd_t				rf_discovery =
 	{
 		.header =
@@ -719,10 +725,11 @@ bool PN7160Class::discovery(void (*userFunc)(void)) {
 
 	if (this->_transceiveRsp(&rf_discovery, &answer) != true)
 		return (false);
-	if (attachInterrupt(this->_irq, userFunc, RISING) != ZunoErrorOk)
+	this->_irq_status = false;
+	if (attachInterrupt(this->_irq, this->_event_irq, RISING) != ZunoErrorOk)
 		return (this->_lastStatus(STATUS_TMP_FOR_REPLACE, false));
 	if (digitalRead(this->_irq) == HIGH)
-		userFunc();
+		this->_event_irq();
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 

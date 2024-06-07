@@ -101,14 +101,18 @@ typedef struct					PN7160ClassNdefAfl_s
 
 #define PN7160_CLASS_NDEF_TAG_TTQ											0x9F, 0x66
 
+typedef struct					PN7160ClassNdef_s
+{
+	PN7160ClassHeader_t			header;
+	uint8_t						value[];//tag-len-value
+}								PN7160ClassNdef_t;
+
 #define PN7160_CLASS_NDEF_DEFAULT(...)												\
 {																					\
-	{																				\
-		.gid = PN7160_CLASS_NDEF,												\
-		.oid = PN7160_CLASS_NDEF_CMD,												\
-		.len = sizeof((uint8_t []){__VA_ARGS__})									\
-	},																				\
-	.value = {__VA_ARGS__}															\
+	PN7160_CLASS_NDEF,																\
+	PN7160_CLASS_NDEF_CMD,															\
+	sizeof((uint8_t []){__VA_ARGS__}),												\
+	__VA_ARGS__																	\
 }																					\
 
 //EMV Book 1 Version 4.3 - 11.3.2
@@ -208,24 +212,20 @@ typedef struct								PN7160ClassCoreSetConfigTotalDurationCmd_s
 
 #define PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT(...)								\
 {																					\
-	{																				\
-		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),						\
-		.oid = PN7160_CLASS_OID_CORE_GET_CONFIG,									\
-		.len = (sizeof(PN7160ClassCoreGetConfigCmd_t) - sizeof(PN7160ClassHeader_t) + sizeof((uint8_t []){__VA_ARGS__}))	\
-	},																				\
-	.NumberofParameters = sizeof((uint8_t []){__VA_ARGS__}),						\
-	.parametrs = {__VA_ARGS__}														\
+	(PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),									\
+	PN7160_CLASS_OID_CORE_GET_CONFIG,												\
+	(0x1 + sizeof((uint8_t []){__VA_ARGS__})),										\
+	sizeof((uint8_t []){__VA_ARGS__}),												\
+	__VA_ARGS__																		\
 }																					\
 
 #define PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT_EXT(...)							\
 {																					\
-	{																				\
-		.gid = (PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),						\
-		.oid = PN7160_CLASS_OID_CORE_GET_CONFIG,									\
-		.len = (sizeof(PN7160ClassCoreGetConfigCmd_t) - sizeof(PN7160ClassHeader_t) + sizeof((uint8_t []){__VA_ARGS__}))	\
-	},																				\
-	.NumberofParameters = (sizeof((uint8_t []){__VA_ARGS__}) / 0x2),				\
-	.parametrs = {__VA_ARGS__}														\
+	(PN7160_CLASS_GID_CMD | PN7160_CLASS_GID_CORE),									\
+	PN7160_CLASS_OID_CORE_GET_CONFIG,												\
+	(0x1 + sizeof((uint8_t []){__VA_ARGS__})),										\
+	(sizeof((uint8_t []){__VA_ARGS__}) / 0x2),										\
+	__VA_ARGS__																		\
 }																					\
 
 static const PN7160ClassCoreResetCmd_t _core_reset_keep =
@@ -353,16 +353,16 @@ uint8_t PN7160Class::ppsePaymentSystem(uint8_t index, void *buffer, uint8_t len)
 }
 
 bool PN7160Class::ppse(uint8_t index) {
-	static const PN7160ClassNdef_t					select_pse = PN7160_CLASS_NDEF_DEFAULT(PN7160_CLASS_NDEF_SELECT_PSE);
+	static const uint8_t							select_pse[] = PN7160_CLASS_NDEF_DEFAULT(PN7160_CLASS_NDEF_SELECT_PSE);
 	static const PN7160ClassNdefCmd_t				select_adf = PN7160_CLASS_NDEF_SELECT_PSE_ADF();
 	static const PN7160ClassNdefCmd_t				get_processing_options = PN7160_CLASS_NDEF_GET_PROCESSING_OPTIONS_DEFAULT();
-	static const PN7160ClassTlvTag_t				tag_application_label = {PN7160_CLASS_NDEF_TAG_APPLICATION_LABEL};
-	static const PN7160ClassTlvTag_t				tag_adf = {PN7160_CLASS_NDEF_TAG_APPLICATION_DEDICATED_FILE_NAME};
-	static const PN7160ClassTlvTag_t				tag_pdol = {PN7160_CLASS_NDEF_TAG_PDOL};
-	static const PN7160ClassTlvTag_t				tag_ttq = {PN7160_CLASS_NDEF_TAG_TTQ};
-	static const PN7160ClassTlvTag_t				tag_pan = {PN7160_CLASS_NDEF_TAG_PAN};
-	static const PN7160ClassTlvTag_t				tag_pan_v2 = {PN7160_CLASS_NDEF_TAG_PAN_V2};
-	static const PN7160ClassTlvTag_t				tag_afl = {PN7160_CLASS_NDEF_TAG_AFL};
+	static const uint8_t							tag_application_label[] = {PN7160_CLASS_NDEF_TAG_APPLICATION_LABEL};
+	static const uint8_t							tag_adf[] = {PN7160_CLASS_NDEF_TAG_APPLICATION_DEDICATED_FILE_NAME};
+	static const uint8_t							tag_pdol[] = {PN7160_CLASS_NDEF_TAG_PDOL};
+	static const uint8_t							tag_ttq[] = {PN7160_CLASS_NDEF_TAG_TTQ};
+	static const uint8_t							tag_pan[] = {PN7160_CLASS_NDEF_TAG_PAN};
+	static const uint8_t							tag_pan_v2[] = {PN7160_CLASS_NDEF_TAG_PAN_V2};
+	static const uint8_t							tag_afl[] = {PN7160_CLASS_NDEF_TAG_AFL};
 	PN7160ClassRfNfc_t								*rf_nfc;
 	PN7160ClassAnswer_t								answer;
 	PN7160ClassNdefReadRecords_t					read_records;
@@ -389,24 +389,24 @@ bool PN7160Class::ppse(uint8_t index) {
 	if (this->_readerTag(&select_pse, &answer) != true)
 		return (false);
 	ndef_cmd = select_adf;
-	if ((len = this->_tagGetData(this->_tagFind(&tag_adf, &answer), &ndef_cmd.value[0x0], PN7160_CLASS_NDEF_TAG_APPLICATION_DEDICATED_FILE_NAME_SIZE_MAX)) == 0x0)
+	if ((len = this->_tagGetData(this->_tagFind((const PN7160ClassTlvTag_t *)&tag_adf[0x0], &answer), &ndef_cmd.value[0x0], PN7160_CLASS_NDEF_TAG_APPLICATION_DEDICATED_FILE_NAME_SIZE_MAX)) == 0x0)
 		return (this->_lastStatus((PN7160_CLASS_STATUS_PPSE), false));
 	ndef_cmd.lc = len;
 	ndef_cmd.value[len] = 0x0;//Le
 	ndef_cmd.header.len = (sizeof(ndef_cmd) - sizeof(ndef_cmd.header)) + len + 0x1;//+0x1 - le
 	if (this->_readerTag(&ndef_cmd, &answer) != true)
 		return (false);
-	rf_nfc->cart.cart_tag4.ApplicationLabelSize = this->_tagGetData(this->_tagFind(&tag_application_label, &answer), &rf_nfc->cart.cart_tag4.ApplicationLabel[0x0], sizeof(rf_nfc->cart.cart_tag4.ApplicationLabel));
+	rf_nfc->cart.cart_tag4.ApplicationLabelSize = this->_tagGetData(this->_tagFind((const PN7160ClassTlvTag_t *)&tag_application_label[0x0], &answer), &rf_nfc->cart.cart_tag4.ApplicationLabel[0x0], sizeof(rf_nfc->cart.cart_tag4.ApplicationLabel));
 	ndef_cmd = get_processing_options;
 	ndef_cmd.value[0x0] = 0x83;
 	len = 0x2;
-	if ((b = (const uint8_t *)this->_tagFind(&tag_pdol, &answer)) != 0x0) {
-		e = b + b[sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PDOL})] + sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PDOL}) + 0x1;//+0x1 - len
-		b = b + sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PDOL}) + 0x1;//+0x1 - len
+	if ((b = (const uint8_t *)this->_tagFind((const PN7160ClassTlvTag_t *)&tag_pdol[0x0], &answer)) != 0x0) {
+		e = b + b[sizeof(tag_pdol)] + sizeof(tag_pdol) + 0x1;//+0x1 - len
+		b = b + sizeof(tag_pdol) + 0x1;//+0x1 - len
 		while (b < e) {
 			len_tag = this->_tagGetLen((const PN7160ClassTlvTag_t *)b);
 			len_data = b[len_tag];
-			if (len_tag == sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_TTQ}) && memcmp(b, &tag_ttq, sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_TTQ})) == 0x0) {
+			if (len_tag == sizeof(tag_ttq) && memcmp(b, &tag_ttq[0x0], sizeof(tag_ttq)) == 0x0) {
 				ndef_cmd.value[len] = 0xF0;//Terminal Transaction Qualifiers (TTQ)
 				memset(&ndef_cmd.value[len + 0x1], 0x0, len_data - 0x1);
 			}
@@ -424,9 +424,9 @@ bool PN7160Class::ppse(uint8_t index) {
 		return (false);
 	rf_nfc->cart.cart_tag4.panNumberSize = 0x0;
 	rf_nfc->cart.cart_tag4.panDateSize = 0x0;
-	if (this->_ppsePan(&tag_pan, sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PAN}), rf_nfc, &answer) == true || this->_ppsePan(&tag_pan_v2, sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PAN_V2}), rf_nfc, &answer) == true)
+	if (this->_ppsePan((const PN7160ClassTlvTag_t *)&tag_pan[0x0], sizeof(tag_pan), rf_nfc, &answer) == true || this->_ppsePan((const PN7160ClassTlvTag_t *)&tag_pan_v2[0x0], sizeof(tag_pan_v2), rf_nfc, &answer) == true)
 		;
-	else if ((b = (const uint8_t *)this->_tagFind(&tag_afl, &answer)) != 0x0) {
+	else if ((b = (const uint8_t *)this->_tagFind((const PN7160ClassTlvTag_t *)&tag_afl, &answer)) != 0x0) {
 		len_tag = this->_tagGetLen((const PN7160ClassTlvTag_t *)b);
 		b = b + len_tag + 0x1;//+1 - len
 		b_afl = (const PN7160ClassNdefAfl_t *)b;
@@ -438,7 +438,7 @@ bool PN7160Class::ppse(uint8_t index) {
 			while (srec <= b_afl->erec) {
 				read_records.p1 = srec++;
 				if (this->_readerTag(&read_records, (PN7160ClassAnswer_t *)&buffer[0x0]) == true) {
-					if (this->_ppsePan(&tag_pan, sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PAN}), rf_nfc, (PN7160ClassAnswer_t *)&buffer[0x0]) == true || this->_ppsePan(&tag_pan_v2, sizeof((uint8_t []){PN7160_CLASS_NDEF_TAG_PAN_V2}), rf_nfc, (PN7160ClassAnswer_t *)&buffer[0x0]) == true) {
+					if (this->_ppsePan((const PN7160ClassTlvTag_t *)&tag_pan[0x0], sizeof(tag_pan), rf_nfc, (PN7160ClassAnswer_t *)&buffer[0x0]) == true || this->_ppsePan((const PN7160ClassTlvTag_t *)&tag_pan_v2[0x0], sizeof(tag_pan_v2), rf_nfc, (PN7160ClassAnswer_t *)&buffer[0x0]) == true) {
 						b_afl = e_afl;
 						break ;
 					}
@@ -879,7 +879,7 @@ bool PN7160Class::applySettings(void) {
 }
 
 bool PN7160Class::getEEPROM(PN7160ClassEeprom_t *eeprom) {
-	static const PN7160ClassCoreGetConfigCmd_t									get_eeprom = PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT_EXT(PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_EXT, PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_EEPROM);
+	static const uint8_t														get_eeprom[] = PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT_EXT(PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_EXT, PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_EEPROM);
 	PN7160ClassAnswer_t															answer;
 
 	if (this->_transceiveRspCheckSize(&get_eeprom, &answer, (sizeof(answer.core_get_config_rsp) + sizeof(answer.core_get_config_rsp.parametrs->eeprom))) != true)
@@ -889,7 +889,7 @@ bool PN7160Class::getEEPROM(PN7160ClassEeprom_t *eeprom) {
 }
 
 bool PN7160Class::getDuration(uint16_t *ms) {
-	static const PN7160ClassCoreGetConfigCmd_t									get_duration = PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT(PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_DURATION);
+	static const uint8_t														get_duration[] = PN7160_CLASS_CORE_GET_CONFIG_CMD_DEFAULT(PN7160_CLASS_CORE_CONFIG_PARAMETER_TOTAL_DURATION);
 	PN7160ClassAnswer_t															answer;
 
 	if (this->_transceiveRspCheckSize(&get_duration, &answer, (sizeof(answer.core_get_config_rsp) + sizeof(answer.core_get_config_rsp.parametrs->duration))) != true)

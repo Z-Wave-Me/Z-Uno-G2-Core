@@ -8,7 +8,7 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 
-#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
+#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SOUND_SWITCH)
 uint64_t rtcc_micros(void);
 
 static zunoTimerTreadDiming_t *_diming = NULL;
@@ -318,7 +318,7 @@ void zuno_CCTimer(uint32_t ticks) {
 	ZUNOCommandPacketReport_t						frame_report;
 	#endif
 
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SOUND_SWITCH)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
 		zunoTimerTreadDimingLoop(&frame_report);
 	}

@@ -726,7 +726,9 @@ bool PN7160Class::discovery(void (*userFunc)(void)) {
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
-bool PN7160Class::setRf(void) {
+/* settings are not versatile, so configuration only applied if there are changes (application build timestamp) 
+	or in case of PN7150B0HN/C11004 Anti-tearing recovery procedure inducing RF setings were restored to their default value */
+bool PN7160Class::setCore(void) {
 	static const uint8_t											NxpNci_CORE_CONF_EXTN[] =
 	{
 		0x20, 0x02, 0x05, 0x01,/* CORE_SET_CONFIG_CMD */
@@ -737,6 +739,18 @@ bool PN7160Class::setRf(void) {
 		0x20, 0x02, 0x05, 0x01,/* CORE_SET_CONFIG_CMD */
 		0xA0, 0x03, 0x01, 0x08/* CLOCK_SEL_CFG */
 	};
+	PN7160ClassAnswer_t												answer;
+
+	if (this->_transceiveRsp(&NxpNci_CORE_CONF_EXTN[0x0], &answer) != true)
+		return (false);
+	if (this->_transceiveRsp(&NxpNci_CLK_CONF[0x0], &answer) != true)
+		return (false);
+	return (this->_lastStatus(STATUS_SUCCESS, true));
+}
+
+/* settings are not versatile, so configuration only applied if there are changes (application build timestamp) 
+	or in case of PN7150B0HN/C11004 Anti-tearing recovery procedure inducing RF setings were restored to their default value */
+bool PN7160Class::setRf(void) {
 	static const uint8_t											NxpNci_RF_CONF[]=
 	{
 		0x20, 0x02, 0x4C, 0x09,
@@ -752,15 +766,13 @@ bool PN7160Class::setRf(void) {
 	};
 	PN7160ClassAnswer_t												answer;
 
-	if (this->_transceiveRsp(&NxpNci_CORE_CONF_EXTN[0x0], &answer) != true)
-		return (false);
-	if (this->_transceiveRsp(&NxpNci_CLK_CONF[0x0], &answer) != true)
-		return (false);
 	if (this->_transceiveRsp(&NxpNci_RF_CONF[0x0], &answer) != true)
 		return (false);
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
+/* settings are not versatile, so configuration only applied if there are changes (application build timestamp) 
+	or in case of PN7150B0HN/C11004 Anti-tearing recovery procedure inducing RF setings were restored to their default value */
 bool PN7160Class::setPowerTransmitter(uint8_t mode) {
 	PN7160ClassAnswer_t												answer;
 	const uint8_t													*set_power_transmitter;
@@ -783,6 +795,9 @@ bool PN7160Class::setPowerTransmitter(uint8_t mode) {
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
+/* NCI standard dedicated settings
+ * Refer to NFC Forum NCI standard for more details
+ */
 bool PN7160Class::setPowerMode(uint8_t mode) {
 	PN7160ClassProprietarySetPowerModeCmd_t							set_power_mode;
 	PN7160ClassAnswer_t												answer;
@@ -804,6 +819,9 @@ bool PN7160Class::setPowerMode(uint8_t mode) {
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
+/* NCI standard dedicated settings
+ * Refer to NFC Forum NCI standard for more details
+ */
 bool PN7160Class::setDuration(uint16_t ms) {
 	PN7160ClassAnswer_t													answer;
 	PN7160ClassCoreSetConfigTotalDurationCmd_t							set_total_duration;

@@ -352,6 +352,7 @@ class PN7160Class {
 		uint8_t											info(void);
 		bool											discovery(void (*userFunc)(void));
 		inline bool										configureMode(void) {return (this->_configureMode(PN7160_CLASS_MODE_RW));};
+		bool											setCore(void);
 		bool											setRf(void);
 		bool											setPowerTransmitter(uint8_t mode);
 		bool											setPowerMode(uint8_t mode);

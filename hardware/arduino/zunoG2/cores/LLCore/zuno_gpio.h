@@ -17,12 +17,24 @@
 #define A2					5
 #define A3					6
 
-#define RX0					25
-#define TX0					24
-#define RX1					8
-#define TX1					7
-#define RX2					27
-#define TX2					26
+#ifndef RX0 
+	#define RX0 25
+#endif
+#ifndef TX0 
+	#define TX0 24
+#endif
+#ifndef RX1 
+	#define RX1 8
+#endif
+#ifndef TX1 
+	#define TX1 7
+#endif
+#ifndef RX2 
+	#define RX2 27
+#endif
+#ifndef TX2 
+	#define TX2 26
+#endif
 
 #define SCK					0
 #define MISO				1
@@ -32,41 +44,44 @@
 #define MISO2				4
 #define MOSI2				7
 #define SS2					8
-
-#define BUTTON_PIN			23
-
 #define BATTERY				0xFF
-
 #define HIGH				1
 #define LOW					0
-
-#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
-	#define SCL                 9
-	#define SDA                 10
+#if ZUNO_PIN_V == 0
+	#ifndef SCL1
+	#define SCL1 23
+	#endif
+	#ifndef SDA1 
+	#define SDA1 25
+	#endif
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 	#define SCL1                23
 	#define SDA1                25
-
-	#define LED_BUILTIN         13
-
-	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 0x701
 	#define SCL                 0
 	#define SDA                 1
 	#define SCL1                23
 	#define SDA1                25
-	#define LED_BUILTIN         13
-	#define ZUNO_PIN_LAST_INDEX	27
 #elif ZUNO_PIN_V == 0x802 || ZUNO_PIN_V == 0x803  || ZUNO_PIN_V == 0x800 || ZUNO_PIN_V == 0x801 || ZUNO_PIN_V == 0x804  || ZUNO_PIN_V == 0x805 || ZUNO_PIN_V == 0x810 || ZUNO_PIN_V == 0x811 
-	#define SCL                 9
-	#define SDA                 10
 	#define SCL1                23
 	#define SDA1                25
-
-	#define LED_BUILTIN         13
-
-	#define ZUNO_PIN_LAST_INDEX	27
 #else
 	#error ZUNO_PIN_V
+#endif
+#ifndef BUTTON_PIN 
+#define BUTTON_PIN          23
+#endif
+#ifndef ZUNO_PIN_LAST_INDEX 
+#define ZUNO_PIN_LAST_INDEX 29
+#endif
+#ifndef LED_BUILTIN 
+#define LED_BUILTIN      13
+#endif
+#ifndef SCL 
+#define SCL 9
+#endif
+#ifndef SDA 
+#define SDA 10
 #endif
 
 #if ZUNO_PIN_V == 0x804 || ZUNO_PIN_V == 0x810 || ZUNO_PIN_V == 0x811
@@ -115,7 +130,10 @@ typedef struct	PinDef_s
 // D = 3
 // E = 4
 // F = 5
-#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
+#if ZUNO_PIN_V == 0
+// User-defined pin mapping
+extern const PinDef_t ZUNO_PIN_DEFS[];
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     // LEFT SIDE
     {2, 8},//0 - PC8 - 0 
@@ -392,7 +410,7 @@ constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
 	{2, 1},//01 - PC01
 	{2, 2},//02 - PC02
 	{3, 0},//03 - PD00
-	{0, 6},//04 - PA06
+	{3, 3},//04 - PD03
 	{0, 5},//05 - PA05
 	{2, 4},//06 - PC04
 	{0, 9},//07 - PA09 - TX1

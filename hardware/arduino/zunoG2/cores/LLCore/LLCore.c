@@ -53,10 +53,12 @@ extern unsigned long __bss_end__;
 extern unsigned long __HeapBase;
 extern unsigned long __HeapLimit;
 
-#if (ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704)
-#define ZUNO_HW_ID_VERS (0x704)
-#else
-#define ZUNO_HW_ID_VERS (ZUNO_PIN_V)
+#ifndef ZUNO_HWID
+    #if (ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704)
+    #define ZUNO_HWID (0x704)
+    #else
+    #define ZUNO_HWID (ZUNO_PIN_V)
+    #endif
 #endif
 #ifndef ZUNO_SKETCH_BUILD_TS
 #define ZUNO_SKETCH_BUILD_TS 0
@@ -101,7 +103,7 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     ZUNO_OTA_PIN,
                                                                                     ZUNO_CUSTOM_OTA_OFFSET,
                                                                                     ZUNO_SKETCH_NAME,
-                                                                                    ZUNO_HW_ID_VERS};
+                                                                                    ZUNO_HWID};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 

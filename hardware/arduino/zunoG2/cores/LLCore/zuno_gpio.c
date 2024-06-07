@@ -1,7 +1,9 @@
 #include "Arduino.h"
 #include "zuno_gpio.h"
 
-#if ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
+#if ZUNO_PIN_V == 0 
+#pragma message "ZUNO_PIN_V==0. Custom pinmapping. You have to define PinDef_t ZUNO_PIN_DEFS[] yourself!"
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
 #pragma message "ZUNO_PIN_V==0x704"
 #elif ZUNO_PIN_V == 0x701
 #pragma message "ZUNO_PIN_V==0x701. u-fairy.com module"
@@ -55,15 +57,10 @@ void digitalToggle(uint8_t pin) {
    GPIO_PinOutToggle((GPIO_Port_TypeDef)real_port, real_pin);
 }
 uint8_t getPin(uint8_t port, uint8_t pin) {
-    const PinDef_t			*lp_b;
-    const PinDef_t			*lp_e;
-
-    lp_b = &ZUNO_PIN_DEFS[0];
-    lp_e = &ZUNO_PIN_DEFS[sizeof(ZUNO_PIN_DEFS) / sizeof(PinDef_t)];
-    while (lp_b < lp_e) {
-        if (lp_b->port == port && lp_b->pin == pin)
-            return (lp_b - &ZUNO_PIN_DEFS[0]);
-        lp_b++;
+    for(int i=0; i<=ZUNO_PIN_LAST_INDEX; i++){
+        if((ZUNO_PIN_DEFS[i].port == port) &&
+           (ZUNO_PIN_DEFS[i].pin == pin))
+           return i;
     }
     return (INVALID_PIN_INDEX);
 }

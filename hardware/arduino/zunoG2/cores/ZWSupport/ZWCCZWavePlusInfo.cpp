@@ -104,7 +104,7 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
-	switch (zunoGetSleepingMode() & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) {
+	switch (zunoGetSleepingMode()) {
 		case DEVICE_CONFIGURATION_FLAGS_SLEEP:
 			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_SLEEPING_REPORTING;
 			break ;

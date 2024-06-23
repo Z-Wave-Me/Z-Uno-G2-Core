@@ -58,14 +58,18 @@ void SysReconfigLeds(){
     if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
         zunoSysServiceLedOff(_SYSLED_ACTIVITY);
     } else {
-        if(zunoGetSleepingMode()){
+        #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+        if(zunoIsSleepingMode() == true){
             #ifdef LOGGING_DBG
             //LOGGING_UART.println("*** DEVICE IS SLEEPING");
             #endif
             zunoSysServiceLedOn(_SYSLED_ACTIVITY);
         } else {
+        #endif
             zunoSysServiceLedSetMode(_SYSLED_ACTIVITY, SYSLED_LEARN_MODE_BLINK);
+        #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
         }
+        #endif
     }
 }
 void SysSetLearnLedMode(uint8_t mode, uint32_t timeout){

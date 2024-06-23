@@ -285,6 +285,12 @@ uint8_t zunoGetSleepingMode(void) {
   return (g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
 }
 
+bool zunoIsSleepingMode(void) {
+    if (zunoGetSleepingMode() == 0x0)
+        return (false);
+    return (true);
+}
+
 void zunoAwakeUsrCode(){
     zunoLockSleep();
     #ifdef LOGGING_DBG

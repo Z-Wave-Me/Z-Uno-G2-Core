@@ -1364,7 +1364,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			//LOGGING_UART.println(ch);
 			#endif
 			#ifdef WITH_CC_BATTERY
-			if(zunoGetSleepingMode()){
+			if(zunoIsSleepingMode() == true){
 				__clearSyncMapChannel(&g_channels_data.report_map, ch);
 			}
 			#endif

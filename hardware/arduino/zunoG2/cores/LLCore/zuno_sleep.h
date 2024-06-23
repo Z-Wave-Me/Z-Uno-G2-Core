@@ -8,6 +8,7 @@ bool zunoIsSleepLocked();
 void zunoKickSleepTimeout(uint32_t ms);
 void zunoSetSleepingMode(byte mode);
 uint8_t zunoGetSleepingMode(void);
+bool zunoIsSleepingMode(void);
 
 #ifdef WITH_CC_WAKEUP
 void zunoSendWakeUpNotification();

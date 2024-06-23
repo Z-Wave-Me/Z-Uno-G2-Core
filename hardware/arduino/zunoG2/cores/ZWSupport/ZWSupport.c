@@ -806,10 +806,14 @@ void _fillZWaveData(uint8_t secure_param){
 	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
 		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
 		_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
+		#if defined(WITH_CC_BATTERY)
 		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+		#endif
 	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
 		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+		#if defined(WITH_CC_BATTERY)
 		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+		#endif
 	}
 	// Reflection of association count 
 	g_zuno_sys->zw_protocol_data->association_count = g_zuno_zw_cfg.num_associations;

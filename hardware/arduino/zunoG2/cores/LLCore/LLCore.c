@@ -127,7 +127,8 @@ void LLDestroy() {
 // this is managing using "preproc" util
 void zuno_static_autosetup();
 #endif
-void zunoReconfigStaticChannels() {
+void zunoReconfigStaticChannels(void) __attribute__ ((weak));
+void zunoReconfigStaticChannels(void) {
     #ifdef WITH_AUTOSETUP
     zuno_static_autosetup();
     #endif
@@ -217,9 +218,7 @@ static void LLInit(void *data) {
 	#ifdef LOGGING_DBG
 	LOGGING_UART.begin(DBG_CONSOLE_BAUDRATE);
 	#endif
-	#ifdef WITH_AUTOSETUP
-	zuno_static_autosetup();
-	#endif
+	zunoReconfigStaticChannels();
 	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	_zunoInitSleepingData();
 	_zunoInitDefaultWakeup();

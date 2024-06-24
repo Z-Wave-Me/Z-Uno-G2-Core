@@ -744,10 +744,12 @@ uint8_t dynamicCCVersion(uint8_t cc){
 	return 0;
 }
 
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY) || defined(WITH_CC_MULTICHANNEL)
 static void _zunoAddBaseCCS(byte ccs) {
 	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, ccs, MAX_CMDCLASES_NSNI);
 	_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt, ccs, MAX_CMDCLASES_SECURED);
 }
+#endif
 
 void _fillZWaveData(uint8_t secure_param){
 	ZwZwavePlusInfoIcon_t						icon;

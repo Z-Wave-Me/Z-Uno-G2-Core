@@ -137,6 +137,8 @@ static void _zunoMarkDeviceToSleep(uint8_t mode){
 }
 
 void zunoKickSleepTimeout(uint32_t ms){
+    if (zunoIsSleepingMode() == false)
+        return ;
     uint32_t new_timeout = millis() + ms;
     if(g_sleep_data.timeout < new_timeout)
         g_sleep_data.timeout = new_timeout;
@@ -151,6 +153,8 @@ bool zunoIsIclusionLatchClosed(){
 }
 
 void _zunoSleepOnWUPStop(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     zunoEnterCritical();
     g_sleep_data.wup_latch = false;
     zunoExitCritical();
@@ -161,6 +165,8 @@ void _zunoSleepOnWUPStop(){
 }
 
 void _zunoSleepOnWUPStart(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     zunoEnterCritical();
     g_sleep_data.wup_latch = true;
     g_sleep_data.wup_timeout = millis() + ZUNO_MAX_CONTROLLER_WUP_TIMEOUT;
@@ -171,6 +177,8 @@ void _zunoSleepOnWUPStart(){
 }
 
 void _zunoSleepingUpd(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     static uint32_t count =0;
     uint8_t v = __zunoSleepingUpd();
     (void)v;
@@ -189,6 +197,8 @@ void _zunoSleepingUpd(){
 }
 
 bool _zunoIsWUPLocked(){
+    if (zunoIsSleepingMode() == false)
+        return (false);
     bool res = false;
     zunoEnterCritical();
     res =  g_sleep_data.wup_latch;
@@ -197,6 +207,8 @@ bool _zunoIsWUPLocked(){
 }
 
 void _zunoSysSleep(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     GPIO_IntClear(g_sleep_data.em4_map);
     // Initialize wakeup timers
     uint32_t df = (millis() - g_sleep_data.user_sleep_ts) / 1000;
@@ -208,6 +220,8 @@ void _zunoSysSleep(){
 }
 
 void _zunoCheckWakeupBtn(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     #ifndef NO_BTN_WAKEUP
     uint8_t reason = zunoGetWakeReason();
     bool on_button = false;
@@ -224,6 +238,8 @@ void _zunoCheckWakeupBtn(){
 }
 
 void _zunoInitDefaultWakeup(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     // EM4 Wakeup using BTN/INT1
     #ifndef NO_INT1_WAKEUP
     zunoEM4EnablePinWakeup(INT1);
@@ -240,6 +256,8 @@ void _zunoInitDefaultWakeup(){
 }
 
 void _zunoInitSleepingData(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
     g_sleep_data.user_latch = true;
     g_sleep_data.inclusion_latch = false;
@@ -251,6 +269,8 @@ void _zunoInitSleepingData(){
 }
 
 void processEnergySaveEvents(ZUNOSysEvent_t * evnt){
+    if (zunoIsSleepingMode() == false)
+        return ;
     switch(evnt->event){
             case ZUNO_SYS_EVENT_LEARNSTARTED:
                 zunoKickSleepTimeout(ZUNO_SLEEP_INCLUSION_TIMEOUT);
@@ -291,20 +311,10 @@ bool zunoIsSleepingMode(void) {
     return (true);
 }
 
-void zunoAwakeUsrCode(){
-    zunoLockSleep();
-    #ifdef LOGGING_DBG
-    /*
-    uint8_t val = zunoThreadIsRunning(g_zuno_sys->hMainThread);
-    LOGGING_UART.print("Tread running:");
-    LOGGING_UART.println(val);*/
-    #endif
-    //if(!zunoThreadIsRunning(g_zuno_sys->hMainThread)){
-        zunoResumeThread(g_zuno_sys->hMainThread);
-    //}
-}
-
-void zunoSendDeviceToSleep(uint8_t mode) { 
+void zunoSendDeviceToSleep(uint8_t mode) {
+    #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+    if (zunoIsSleepingMode() == false)
+        return ;
   // we inform the system that device is ready for sleep
   _zunoMarkDeviceToSleep(mode);
   // suspend the main tread
@@ -313,21 +323,34 @@ void zunoSendDeviceToSleep(uint8_t mode) {
   if((g_zuno_sys->zwave_cfg->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) != 0){
     zunoSuspendThread(g_zuno_sys->hMainThread);
   }*/
+  #else
+  (void)mode;
+  #endif
 }
 
 void zunoLockSleep(void){
+    #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
     #ifdef LOGGING_DBG
     //LOGGING_UART.println("***BLOCK SLEEP!");
     #endif
+    if (zunoIsSleepingMode() == false)
+        return ;
     zunoEnterCritical();
     g_sleep_data.user_latch = true;
     zunoExitCritical();
+    #endif
 }
 
 bool zunoIsSleepLocked(){
+    #if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
     bool res = false;
+    if (zunoIsSleepingMode() == false)
+        return (false);
     zunoEnterCritical();
     res = g_sleep_data.user_latch;
     zunoExitCritical();
     return res;
+    #else
+    return (false);
+    #endif
 }

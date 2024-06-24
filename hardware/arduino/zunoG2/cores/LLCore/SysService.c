@@ -175,8 +175,10 @@ void SysServiceEvent(ZUNOSysEvent_t * ev){
 }
 void SysServiceSleep(){
     #ifndef NO_SYS_LEDS
-    zunoSysServiceLedOff(_SYSLED_LEARN);
-    zunoSysServiceLedOff(_SYSLED_ACTIVITY);
+    if(zunoIsSleepingMode() == true) {
+        zunoSysServiceLedOff(_SYSLED_LEARN);
+        zunoSysServiceLedOff(_SYSLED_ACTIVITY);
+    }
     #endif
 }
 void SysServiceWUP(){

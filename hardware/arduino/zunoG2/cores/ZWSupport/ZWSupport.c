@@ -802,19 +802,30 @@ void _fillZWaveData(uint8_t secure_param){
 		g_zuno_sys->zw_protocol_data->specific_type = info_type.specificDeviceClass;
 		g_zuno_sys->zw_protocol_data->device_icon = icon.installerIconType;
 	}
-	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
-	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
-		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
-		_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
-		#if defined(WITH_CC_BATTERY)
-		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
-		#endif
-	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
-		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
-		#if defined(WITH_CC_BATTERY)
-		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
-		#endif
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	switch (zunoGetSleepingMode()) {
+		case DEVICE_CONFIGURATION_FLAGS_SLEEP:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+			#if defined(WITH_CC_WAKEUP)
+			_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
+			#endif
+			#if defined(WITH_CC_BATTERY)
+			_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+			#endif
+			break ;
+		case DEVICE_CONFIGURATION_FLAGS_FLIRS:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+			#if defined(WITH_CC_BATTERY)
+			_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+			#endif
+			break ;
+		default:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
+			break ;
 	}
+	#else
+	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
+	#endif
 	// Reflection of association count 
 	g_zuno_sys->zw_protocol_data->association_count = g_zuno_zw_cfg.num_associations;
 }
@@ -1317,17 +1328,19 @@ void zunoSendReportHandler(uint32_t ticks) {
         return; // it doesn't => go away
 	
 	#ifdef WITH_CC_BATTERY
-	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
-	if(__zunoDispatchPendingBatteryReport()){
-		if (zunoSendBatteryReportHandler()) {
-			if((--max_report_count) == 0)
-				return;
+	if (zunoIsSleepingMode() == true) {
+		uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
+		if(__zunoDispatchPendingBatteryReport()){
+			if (zunoSendBatteryReportHandler()) {
+				if((--max_report_count) == 0)
+					return;
+			}
 		}
 	}
 	#endif
 	#ifdef WITH_CC_WAKEUP
 	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
-	if(!zunoIsSleepLocked()){
+	if(zunoIsSleepingMode() == true && !zunoIsSleepLocked()){
 		uint32_t sys_reports = __getSyncVar(&g_channels_data.sys_reports);
 		uint32_t usr_reports = __getSyncVar(&g_channels_data.report_map);
 		// #ifdef LOGGING_DBG

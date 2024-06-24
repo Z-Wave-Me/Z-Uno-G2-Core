@@ -127,6 +127,18 @@ static const uint8_t zuno_CCVesrions[] = {
 };
 
 static uint8_t extractVersionFromCCList(uint8_t cc, uint8_t * ccs, uint8_t ccs_len){
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	if (zunoIsSleepingMode() == false) {
+		#if defined(WITH_CC_WAKEUP)
+		if (cc == COMMAND_CLASS_WAKE_UP)
+			return (0);
+		#endif
+		#if defined(WITH_CC_BATTERY)
+		if (cc == COMMAND_CLASS_BATTERY)
+			return (0);
+		#endif
+	}
+	#endif
 	for(int i=0;i<ccs_len;i+=2){
 		if(ccs[i] == cc)
 			return ccs[i+1];

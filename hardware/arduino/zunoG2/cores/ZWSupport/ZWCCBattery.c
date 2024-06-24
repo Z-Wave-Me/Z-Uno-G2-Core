@@ -5,6 +5,8 @@
 static uint8_t _save_batteryLevel = 0xFF;
 
 void zuno_CCBattery_OnSetup(){
+    if (zunoIsSleepingMode() == false)
+        return ;
     zunoSendBatteryReport();
 }
 
@@ -22,7 +24,8 @@ bool zunoSendBatteryReportHandler() {
 	ZwBatteryReportFrame_t							*report;
 	ZUNOCommandPacketReport_t						frame;
 
-   
+	if (zunoIsSleepingMode() == false)
+		return (false);
 	batteryLevel = batteryReportValue();
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print("*** Battery report");
@@ -65,6 +68,8 @@ static int _battery_report(ZUNOCommandPacketReport_t *frame_report) {
 int zuno_CCBattery(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
+	if (zunoIsSleepingMode() == false)
+		return (ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 	switch(ZW_CMD) {
 		case BATTERY_GET:
 			rs = _battery_report(frame_report);

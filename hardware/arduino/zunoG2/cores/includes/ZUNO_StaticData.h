@@ -243,14 +243,14 @@ enum {
 	}\
 
 #define ZUNO_SETUP_CONFIGPARAMETERS(...) 	\
-							    static const ZunoCFGParameter_t __g_zuno_lp_param[]= \
+								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
+								static const ZunoCFGParameter_t lp_param[]= \
 								{ \
 									__VA_ARGS__, \
 								};\
-								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
-								if (param < 0x40 || param > (0x40-1 + (sizeof(__g_zuno_lp_param)/sizeof(ZunoCFGParameter_t)))) \
+								if (param < 0x40 || param > (0x40-1 + (sizeof(lp_param)/sizeof(ZunoCFGParameter_t)))) \
 									return (ZUNO_CFG_PARAMETER_UNKNOWN); \
-								return (&__g_zuno_lp_param[param - 0x40]); \
+								return (&lp_param[param - 0x40]); \
 							}\
 
 #define ZUNO_CONFIG_PARAMETER_INFO(NAME, INFO, MN, MX, DEF)	\

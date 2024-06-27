@@ -1,6 +1,15 @@
 name: compiling examples
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'hardware/arduino/zunoG2/cores/**'
+      - 'hardware/arduino/zunoG2/ctt/**'
+      - 'hardware/arduino/zunoG2/device/**'
+      - 'hardware/arduino/zunoG2/libraries/**'
+      - 'toolchain/linux64/**'
+      - 'script/compiling_examples.py'
+      - '.github/workflows/compiling_examples.yml'
 
 jobs:
   build-linux:

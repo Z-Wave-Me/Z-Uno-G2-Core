@@ -23,7 +23,7 @@ def CompliteAllChipLoopDirFunc(path_ino:str, chip_name:str, path_out:str, tool_p
 	zme_make = os.path.abspath(os.path.join(tool_path, "zme_make", "zme_make"))
 	path_gcc_include = os.path.abspath(os.path.join(tool_path, "gcc", "lib", "gcc", "arm-none-eabi", gcc_version, "include"))
 	path_gcc_bin = os.path.abspath(os.path.join(tool_path, "gcc", "bin"))
-	path_libclang = os.path.abspath(os.path.join(tool_path, "libClang"))
+	path_libclang = os.path.abspath(os.path.join(tool_path, "libclang"))
 	path_cores = os.path.abspath(os.path.join(path_core, "hardware", "arduino", "zunoG2", "cores"))
 	path_libraries = os.path.abspath(os.path.join(path_core, "hardware", "arduino", "zunoG2", "libraries"))
 	with os.scandir(path_ino) as it:

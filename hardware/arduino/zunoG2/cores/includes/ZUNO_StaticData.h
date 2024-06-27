@@ -250,7 +250,7 @@ enum {
 								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
 								if (param < 0x40 || param > (0x40-1 + (sizeof(__g_zuno_lp_param)/sizeof(ZunoCFGParameter_t)))) \
 									return (ZUNO_CFG_PARAMETER_UNKNOWN); \
-									return (&__g_zuno_lp_param[param - 0x40]); \
+								return (&__g_zuno_lp_param[param - 0x40]); \
 							}\
 
 #define ZUNO_CONFIG_PARAMETER_INFO(NAME, INFO, MN, MX, DEF)	\

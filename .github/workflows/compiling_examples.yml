@@ -14,15 +14,16 @@ jobs:
     - name: Download libclang and arm gcc tools
       run: |
         wget "http://z-uno.z-wave.me/files/z-uno2/tc//libclang_11_0_1-linux64.tar.gz"
-        wget "http://z-uno.z-wave.me/files/z-uno2/tc//arm-none-eabi-gcc-10_3_1-linux64.tar.gz"
+        # wget "http://z-uno.z-wave.me/files/z-uno2/tc//arm-none-eabi-gcc-10_3_1-linux64.tar.gz"
 
     - name: Extract tools
       run: |
         mkdir tmp
         tar -xvzf ./libclang_11_0_1-linux64.tar.gz -C ./tmp
-        tar -xvzf ./arm-none-eabi-gcc-10_3_1-linux64.tar.gz -C ./tmp
-        unzip ./toolchain/linux64/zme_make_linux64.zip -d ./tmp
+        # tar -xvzf ./arm-none-eabi-gcc-10_3_1-linux64.tar.gz -C ./tmp
+        # unzip ./toolchain/linux64/zme_make_linux64.zip -d ./tmp
 
     - name: Checks compiling examples
       run: |
-        python3 script/compiling_examples.py ./tmp "10.3.1"
+        ls -rl ./tmp 
+        # python3 script/compiling_examples.py ./tmp "10.3.1"

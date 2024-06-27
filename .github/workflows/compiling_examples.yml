@@ -25,5 +25,5 @@ jobs:
 
     - name: Checks compiling examples
       run: |
-        ls -rl ./tmp 
+        ls -Rl ./tmp 
         # python3 script/compiling_examples.py ./tmp "10.3.1"

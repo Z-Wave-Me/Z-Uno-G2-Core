@@ -369,6 +369,11 @@ static size_t _testCmdClassReplay(uint8_t *b, uint8_t *e, size_t cc) {
 	return (false);
 }
 
+__WEAK uint8_t __zunoAssociationCommandClassCustom(uint8_t *command) {
+	return (0x0);
+	(void)command;
+}
+
 static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in, ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport_t *frame_report) {
 	uint8_t											groupIndex;
 	uint8_t											listLength;
@@ -451,6 +456,9 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 				command[1] = DOOR_LOCK_OPERATION_SET;
 				command = command + 2;
 				break ;
+			case ZUNO_ASSOC_CUSTOM_NUMBER:
+				command = command + __zunoAssociationCommandClassCustom(command);
+				break ;
 		}
 	}
 	listLength = command - &lp->command[0];
@@ -486,7 +494,7 @@ bool __zunoAssociationS2Access(void) {
 void zunoAddAssociation(byte type, uint8_t channel) {
 	uint8_t						num;
 
-	if (type == 0 || type > 0x4 || channel > 0x1F || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
+	if (type == 0 || type > 0x5 || channel > 0x1F || (num = ZUNO_CFG_ASSOCIATION_COUNT) >= ZUNO_MAX_ASSOC_NUMBER)
 		return ;
 	if (type == ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER)
 		_s2_access = true;

@@ -222,6 +222,7 @@ enum {
 	ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER                =  2,
 	ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER                 =  3,
 	ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER                 =  4,
+	ZUNO_ASSOC_CUSTOM_NUMBER                           =  5,
 };
 
 #define ZUNO_SETUP_ASSOCIATIONS(...)																\

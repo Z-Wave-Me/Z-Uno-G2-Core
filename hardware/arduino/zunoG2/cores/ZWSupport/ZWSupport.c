@@ -1112,6 +1112,9 @@ __WEAK uint8_t __zunoGetS2AccessManual(void) {
 	return ((SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S2_AUTHENTICATED_BIT | SECURITY_KEY_S0_BIT));
 }
 
+__WEAK void __zunoAssociationSetupManual(void) {
+}
+
 // Channels fill routines
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
@@ -1128,6 +1131,8 @@ bool zunoStartDeviceConfiguration() {
 	// User-side data
 	_resetUserChannels();
 	//memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
+	if (ZUNO_CFG_ASSOCIATION_COUNT == 0x0)
+		__zunoAssociationSetupManual();
 	return  true;
 }
 byte getMaxChannelTypes() {

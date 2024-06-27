@@ -25,12 +25,6 @@ typedef struct _ZUNO_CHANNEL_PROPERTIES_DESCRIPTION
 } ZUNO_CHANNEL_PROPERTIES_DESCRIPTION;
 
 
-typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
-{
-	BYTE association_type;
-	BYTE association_param;
-} ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION;
-
 typedef struct _ZUNO_BASE_CC_DESCRIPTION
 {
 	BYTE cc;
@@ -116,11 +110,6 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 								  __VA_ARGS__, \
 								} 
 // ZUNO_BASE_CC_DESCRIPTION
-#define ZUNO_SETUP_ASSOCIATIONS(...)	\
-								 ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION ___zunoAssociationSetupArray[]= \
-								{ \
-									__VA_ARGS__, \
-								}
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE) 		\
 								GENERIC_POINTER ___zunoSleepingModeValue = ((void*)VALUE)
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H) 		\
@@ -185,7 +174,6 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #else
 #define ZUNO_SETUP_CHANNELS(...)
 #define ZUNO_CUSTOM_CC(...)
-#define ZUNO_SETUP_ASSOCIATIONS(...)
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE)  
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H)
 #define ZUNO_SETUP_BATTERY_HANDLER(H)
@@ -222,6 +210,31 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ISR_1MSTIMER(H) 
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
+
+typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
+{
+	BYTE association_type;
+	BYTE association_param;
+} ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION;
+
+enum {
+	ZUNO_ASSOC_BASIC_SET_NUMBER                        =  1,
+	ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER                =  2,
+	ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER                 =  3,
+	ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER                 =  4,
+};
+
+#define ZUNO_SETUP_ASSOCIATIONS(...)																\
+	void __zunoAssociationSetupManual(void) {														\
+		static const ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION			array[] = {__VA_ARGS__,};	\
+		size_t															i;							\
+																									\
+		i = 0x0;																					\
+		while (i< (sizeof(array) / sizeof(array[0x0]))) {											\
+			zunoAddAssociation(array[i].association_type, array[i].association_param);				\
+			i++;																					\
+		}																							\
+}\
 
 #define ZUNO_SETUP_S2ACCESS(B) \
 	uint8_t __zunoGetS2AccessManual(void) {\

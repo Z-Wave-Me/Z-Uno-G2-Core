@@ -18,11 +18,11 @@ jobs:
 
     - name: Extract tools
       run: |
-        tar -xvzf ./libclang_11_0_1-linux64.tar.gz
-        tar -xvzf ./arm-none-eabi-gcc-10_3_1-linux64.tar.gz
-        unzip toolchain/linux64/zme_make_linux64.zip -d ./
+        mkdir tmp
+        tar -xvzf ./libclang_11_0_1-linux64.tar.gz -C ./tmp
+        tar -xvzf ./arm-none-eabi-gcc-10_3_1-linux64.tar.gz -C ./tmp
+        unzip ./toolchain/linux64/zme_make_linux64.zip -d ./tmp
 
-
-    - name: Test
+    - name: Checks compiling examples
       run: |
-        ls -l
+        python3 script/compiling_examples.py ./tmp "10.3.1"

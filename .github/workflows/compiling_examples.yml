@@ -1,0 +1,15 @@
+name: compiling examples
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Test
+      run: |
+        ls -l

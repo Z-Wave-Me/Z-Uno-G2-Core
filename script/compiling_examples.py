@@ -64,6 +64,23 @@ def CompliteAllChipLoopDirFunc(path_ino:str, chip_name:str, path_out:str, tool_p
 					finallizeStepStatus(os.path.basename(entry.path), "SKIP")
 	pass
 
+def CompliteAllChipFunc(tool_path:str, gcc_version:str, question:bool) -> None:
+	temp_dir = tempfile.TemporaryDirectory()
+	ino_lists = [os.path.abspath(os.path.join(func_prog_dir_get(), "..", "hardware", "arduino", "zunoG2", "ctt"))]
+	ino_lists = ino_lists + [os.path.abspath(os.path.join(func_prog_dir_get(), "..", "hardware", "arduino", "zunoG2", "libraries", "Z-Uno-2G", "examples"))]
+	chip_list = ["ZGM130S037HGN1"]
+	for chip in chip_list:
+		try:
+			path_out_chip = os.path.join(temp_dir.name, chip)
+			if os.path.exists(path_out_chip) == False:
+				os.makedirs(path_out_chip, exist_ok=True)
+		except Exception as e:
+			sys.stderr.write("Error: mkdir. Code %s\n"%(e))
+			sys.exit(-1)
+		for ino in ino_lists:
+			CompliteAllChipLoopDirFunc(ino, chip, path_out_chip, tool_path, gcc_version, question)
+	temp_dir.cleanup()
+
 argv = sys.argv[0x1:]
 if len(argv) < 0x2 or len(argv) > 0x3:
 	sys.stderr.write("Wrong number of arguments\n")
@@ -74,17 +91,23 @@ question = False
 if len(argv) == 0x3:
 	question = True
 
-path_out = tempfile.TemporaryDirectory().name
-ino_lists = [os.path.abspath(os.path.join(func_prog_dir_get(), "..", "hardware", "arduino", "zunoG2", "ctt"))]
-# ino_lists = ino_lists + [os.path.abspath(os.path.join(func_prog_dir_get(), "..", "hardware", "arduino", "zunoG2", "libraries", "Z-Uno-2G", "examples"))]
-chip_list = ["ZGM130S037HGN1"]
-for chip in chip_list:
-	try:
-		path_out_chip = os.path.join(path_out, chip)
-		if os.path.exists(path_out_chip) == False:
-			os.makedirs(path_out_chip, exist_ok=True)
-	except Exception as e:
-		sys.stderr.write("Error: mkdir. Code %s\n"%(e))
-		sys.exit(-1)
-	for ino in ino_lists:
-		CompliteAllChipLoopDirFunc(ino, chip, path_out_chip, tool_path, gcc_version, question)
+finallizeStepStatus("COMPLITE WITH LTO", "START")
+CompliteAllChipFunc(tool_path, gcc_version, question)
+finallizeStepStatus("COMPLITE WITH LTO", "FINISH")
+
+filename = os.path.abspath(os.path.join(func_prog_dir_get(), "..", "hardware", "arduino", "zunoG2", "cores", "core_metadata.json"))
+try:
+	file = open(filename, "r")
+	text = file.read()
+	file.close()
+	text = text.replace('"-flto"', '"-Os"')
+	file = open(filename, "w")
+	file.write(text)
+	file.close()
+except Exception as e:
+	sys.stderr.write("Failed to change 'core_metadata.json' - %s\n"%(e))
+	sys.exit(-1)
+
+finallizeStepStatus("COMPLITE WITHOUT LTO", "START")
+CompliteAllChipFunc(tool_path, gcc_version, question)
+finallizeStepStatus("COMPLITE WITHOUT LTO", "FINISH")

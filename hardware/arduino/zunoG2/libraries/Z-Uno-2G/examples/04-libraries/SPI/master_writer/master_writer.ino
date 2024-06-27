@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#include "Spi.h"
+#include "SPI.h"
 
 void setup(){
 	SPI.begin(SCK, MISO, MOSI, SS);

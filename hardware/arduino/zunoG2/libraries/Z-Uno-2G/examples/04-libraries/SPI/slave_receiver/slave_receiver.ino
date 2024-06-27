@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#include "Spi.h"
+#include "SPI.h"
 
 #define MY_SERIAL Serial
 

@@ -369,9 +369,10 @@ static size_t _testCmdClassReplay(uint8_t *b, uint8_t *e, size_t cc) {
 	return (false);
 }
 
-__WEAK uint8_t __zunoAssociationCommandClassCustom(uint8_t *command) {
+__WEAK uint8_t __zunoAssociationCommandClassCustom(uint8_t *command, uint8_t groupIndex) {
 	return (0x0);
 	(void)command;
+	(void)groupIndex;
 }
 
 static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in, ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport_t *frame_report) {
@@ -457,7 +458,7 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 				command = command + 2;
 				break ;
 			case ZUNO_ASSOC_CUSTOM_NUMBER:
-				command = command + __zunoAssociationCommandClassCustom(command);
+				command = command + __zunoAssociationCommandClassCustom(command, groupIndex - 1);
 				break ;
 		}
 	}

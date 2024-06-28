@@ -541,7 +541,7 @@ static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 	zunoSendZWPackage(&frame->packet);
 }
 
-void zunoSendToGroupSoundSwitchCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume) {
+void zunoSendToGroupSoundSwitchPlayCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume) {
 	ZW_SOUND_SWITCH_TONE_PLAY_SET_V2_FRAME			*lp;
 	ZUNOCommandPacketReport_t						frame;
 
@@ -556,7 +556,7 @@ void zunoSendToGroupSoundSwitchCommand(uint8_t groupIndex, uint8_t toneIdentifie
 	_send_group(&frame, sizeof(lp[0x0]));
 }
 
-void zunoSendToGroupBinaryCommand(uint8_t groupIndex, uint8_t targetValue, size_t ms) {
+void zunoSendToGroupBinarySetCommand(uint8_t groupIndex, uint8_t targetValue, size_t ms) {
 	ZwSwitchBinarySetV2Frame_t						*lp;
 	ZUNOCommandPacketReport_t						frame;
 

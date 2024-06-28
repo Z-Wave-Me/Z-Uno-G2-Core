@@ -252,6 +252,8 @@ ZunoTimerBasic_t *zuno_CCTimerBasicFind(size_t channel) {
 uint8_t zuno_CCTimerTable8(size_t ticks) {
 	size_t				tempos;
 
+	if (ticks == 0x0)
+		return (0x0);
 	if ((tempos = ticks / (1000)) == 0x0 && ticks != 0x0)
 		return (0x1);
 	ticks = tempos;

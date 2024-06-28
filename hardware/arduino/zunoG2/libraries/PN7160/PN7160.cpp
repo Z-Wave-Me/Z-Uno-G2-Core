@@ -1,4 +1,4 @@
-﻿#include "PN7160.h"
+#include "PN7160.h"
 #include "Status.h"
 
 #ifdef LOGGING_DBG
@@ -783,12 +783,16 @@ bool PN7160Class::setRf(void) {
 bool PN7160Class::setPowerTransmitter(uint8_t mode) {
 	PN7160ClassAnswer_t												answer;
 	const uint8_t													*set_power_transmitter;
+	static const uint8_t                                           set_power_transmitter_2_7V[]={0x20, 0x02, 0x0F, 0x01, 0xA0, 0x0E, 0x0B, 0x11, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x11, 0x00, 0xD0, 0x0C};
 	static const uint8_t											set_power_transmitter_3_3V[]={0x20, 0x02, 0x0F, 0x01, 0xA0, 0x0E, 0x0B, 0x11, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x10, 0x00, 0xD0, 0x0C};
 	static const uint8_t											set_power_transmitter_4_75V[]={0x20, 0x02, 0x0F, 0x01, 0xA0, 0x0E, 0x0B, 0x11, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x40, 0x00, 0xD0, 0x0C};
 
 	switch (mode) {
 		case PN7160_CLASS_POWER_TRANSMITTER_3_3V:
 			set_power_transmitter = &set_power_transmitter_3_3V[0x0];
+			break ;
+		case PN7160_CLASS_POWER_TRANSMITTER_2_7_V:
+			set_power_transmitter = &set_power_transmitter_2_7V[0x0];
 			break ;
 		case PN7160_CLASS_POWER_TRANSMITTER_4_75_V:
 			set_power_transmitter = &set_power_transmitter_4_75V[0x0];

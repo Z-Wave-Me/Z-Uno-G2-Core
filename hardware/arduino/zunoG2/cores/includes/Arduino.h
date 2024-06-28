@@ -156,6 +156,8 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close, uint16_t seconds);
 inline void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {return (zunoSendToGroupDoorlockControlTiming(groupIndex, open_close, 0x0));};
+void zunoSendToGroupBinaryCommand(uint8_t groupIndex, uint8_t targetValue, size_t ms);
+void zunoSendToGroupSoundSwitchCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 
 /* Misc */
 void WDOG_Feed();

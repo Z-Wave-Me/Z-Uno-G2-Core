@@ -15,6 +15,9 @@
 #include "CommandQueue.h"
 #include "Debug.h"
 #include "ZWCCWindowCovering.h"
+#include "ZWCCSwitchBinary.h"
+#include "ZWCCTimer.h"
+#include "ZWCCSoundSwitch.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -536,6 +539,37 @@ static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 		}
 	}
 	zunoSendZWPackage(&frame->packet);
+}
+
+void zunoSendToGroupSoundSwitchCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume) {
+	ZW_SOUND_SWITCH_TONE_PLAY_SET_V2_FRAME			*lp;
+	ZUNOCommandPacketReport_t						frame;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	_init_group(&frame, groupIndex);
+	lp = (ZW_SOUND_SWITCH_TONE_PLAY_SET_V2_FRAME *)&frame.packet.cmd[0x0];
+	lp->cmdClass = COMMAND_CLASS_SOUND_SWITCH;
+	lp->cmd = SOUND_SWITCH_TONE_PLAY_SET;
+	lp->toneIdentifier = toneIdentifier;
+	lp->playCommandToneVolume = playCommandToneVolume;
+	_send_group(&frame, sizeof(lp[0x0]));
+}
+
+void zunoSendToGroupBinaryCommand(uint8_t groupIndex, uint8_t targetValue, size_t ms) {
+	ZwSwitchBinarySetV2Frame_t						*lp;
+	ZUNOCommandPacketReport_t						frame;
+
+	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
+		return ;
+	_init_group(&frame, groupIndex);
+	lp = (ZwSwitchBinarySetV2Frame_t *)&frame.packet.cmd[0x0];
+	lp->cmdClass = COMMAND_CLASS_SWITCH_BINARY;
+	lp->cmd = SWITCH_BINARY_SET;
+	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
+	lp->targetValue = targetValue;
+	lp->duration = zuno_CCTimerTable8(ms);
+	_send_group(&frame, sizeof(lp[0x0]));
 }
 
 void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {

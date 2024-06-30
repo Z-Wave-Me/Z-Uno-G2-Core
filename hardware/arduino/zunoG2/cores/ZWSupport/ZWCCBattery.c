@@ -2,8 +2,6 @@
 #include "ZWSupport.h"
 #include "Debug.h"
 
-static uint8_t _save_batteryLevel = 0xFF;
-
 void zuno_CCBattery_OnSetup(){
     if (zunoIsSleepingMode() == false)
         return ;
@@ -19,48 +17,103 @@ static uint8_t batteryReportValue(){
     #endif // WITH_CUSTOM_BATTERY_HANDLER
 }
 
-bool zunoSendBatteryReportHandler() {
-	size_t											batteryLevel;
+__WEAK uint8_t zunoBattery(ZunoBattery_t *out) {
+	uint8_t											batteryLevel;
+
+	batteryLevel = batteryReportValue();
+	if (batteryLevel == 0x0)
+		out->replaced_recharged_soon = true;
+	return (batteryLevel);
+}
+
+static uint8_t _ZunoBattery(bool async, ZunoBattery_t *out) {
+	static const ZunoBattery_t						init = 
+	{
+		.charging_status = ZunoBatteryChargingStatusDischarging,
+		.replaced_recharged_soon = false,
+		.replaced_recharged_now = false,
+		.temperature_low = false,
+	};
+	uint8_t											batteryLevel;
+
+	out[0x0] = init;
+	batteryLevel = zunoBattery(out);
+	if (out->replaced_recharged_now == true)
+		out->replaced_recharged_soon = true;
+	if (out->temperature_low == true)
+		out->charging_status = ZunoBatteryChargingStatusDischarging;
+	if (batteryLevel >= 100)
+		batteryLevel = 100;
+	if (out->replaced_recharged_soon == true) {
+		if (batteryLevel >= 100)
+			batteryLevel = 0x0;
+		if (async == true)
+			return (0xFF);
+	}
+	return (batteryLevel);
+}
+
+static void _battery_report_common(bool async, ZUNOCommandPacketReport_t *frame) {
 	ZwBatteryReportFrame_t							*report;
+	ZunoBattery_t									out;
+	uint8_t											batteryLevel;
+	uint8_t											properties1;
+
+	batteryLevel = _ZunoBattery(async, &out);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("*** Battery report: ");
+	LOGGING_UART.println(batteryLevel);
+	#endif
+	report = (ZwBatteryReportFrame_t *)&frame->packet.cmd[0x0];
+	report->cmdClass = COMMAND_CLASS_BATTERY;
+	report->cmd = BATTERY_REPORT;
+	report->batteryLevel = batteryLevel;
+	properties1 = BATTERY_REPORT_PROPERTIES1_RECHARGEABLE_BIT_MASK | ((out.charging_status << BATTERY_REPORT_PROPERTIES1_CHARGING_STATUS_SHIFT) & BATTERY_REPORT_PROPERTIES1_CHARGING_STATUS_MASK);
+	if (out.replaced_recharged_soon == true)
+		properties1 = properties1 | (0x1 << 0x0);
+	if (out.replaced_recharged_now == true)
+		properties1 = properties1 | (0x1 << 0x1);
+	if (out.temperature_low == true)
+		properties1 = properties1 | BATTERY_REPORT_PROPERTIES2_LOW_TEMPERATURE_STATUS_BIT_MASK;
+	report->properties1 = properties1;
+	report->properties2 = 0x0;
+	frame->packet.len = sizeof(report[0x0]);
+}
+
+bool zunoSendBatteryReportHandler() {
 	ZUNOCommandPacketReport_t						frame;
 
 	if (zunoIsSleepingMode() == false)
 		return (false);
-	batteryLevel = batteryReportValue();
-	#ifdef LOGGING_DBG
-	LOGGING_UART.print("*** Battery report");
-    LOGGING_UART.println(batteryLevel);
-	#endif
-	if (batteryLevel == _save_batteryLevel) {
-		#ifdef LOGGING_DBG
-		LOGGING_UART.println("Battery: Send canceled. The same level.");
-		#endif
-		return false;
-	}
-	_save_batteryLevel = batteryLevel;
 	fillOutgoingReportPacketAsync(&frame, 0x0);
-	report = (ZwBatteryReportFrame_t *)&frame.packet.cmd[0x0];
-	report->cmdClass = COMMAND_CLASS_BATTERY;
-	report->cmd = BATTERY_REPORT;
-	if (batteryLevel == 0x0)
-		batteryLevel = 0xFF;//The value 0xFF MUST indicate a low-battery warning.
-	report->batteryLevel = batteryLevel;
-	frame.packet.len = sizeof(report[0x0]);
+	_battery_report_common(true, &frame);
 	zunoSendZWPackage(&frame.packet);
 	return true;
 }
 
 static int _battery_report(ZUNOCommandPacketReport_t *frame_report) {
-	ZwBatteryReportFrame_t							*report;
-	size_t											batteryLevel;
-
 	_zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
-	report = (ZwBatteryReportFrame_t *)frame_report->packet.cmd;
+	_battery_report_common(false, frame_report);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+typedef struct _ZW_BATTERY_HEALTH_REPORT_1BYTE_V3_FRAME_
+{
+    uint8_t   cmdClass;                     /* The command class */
+    uint8_t   cmd;                          /* The command */
+    uint8_t   maximumCapacity;              /**/
+    uint8_t   properties1;                  /* masked byte */
+    uint8_t   batteryTemperature[];          
+} ZW_BATTERY_HEALTH_REPORT_1BYTE_V3_FRAME;
+
+static int _battery_healt_report(ZUNOCommandPacketReport_t *frame_report) {
+	ZW_BATTERY_HEALTH_REPORT_1BYTE_V3_FRAME			*report;
+
+	report = (ZW_BATTERY_HEALTH_REPORT_1BYTE_V3_FRAME *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BATTERY; set in - fillOutgoingPacket
-	// report->cmd = BATTERY_REPORT; set in - fillOutgoingPacket
-	batteryLevel = batteryReportValue();
-	_save_batteryLevel = batteryLevel;
-	report->batteryLevel = batteryLevel;
+	// report->cmd = BATTERY_HEALTH_REPORT; set in - fillOutgoingPacket
+	report->maximumCapacity = 0xFF;//This field MUST be in the range 0x00..0x64 or set to 0xFF. If the maximum capacity of the battery is unknown the value MUST set to 0xFF.
+	report->properties1 = 0x0;//The value 0 MUST indicate that the battery temperature is unknown. In this case, the Scale and Precision fields MUST be set to 0 and the Battery Temperature field MUST be omitted.
 	frame_report->packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -73,6 +126,9 @@ int zuno_CCBattery(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	switch(ZW_CMD) {
 		case BATTERY_GET:
 			rs = _battery_report(frame_report);
+			break ;
+		case BATTERY_HEALTH_GET:
+			rs = _battery_healt_report(frame_report);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

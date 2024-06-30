@@ -1338,13 +1338,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 	
 	#ifdef WITH_CC_BATTERY
 	if (zunoIsSleepingMode() == true) {
-		uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
-		if(__zunoDispatchPendingBatteryReport()){
-			if (zunoSendBatteryReportHandler()) {
-				if((--max_report_count) == 0)
-					return;
-			}
-		}
+		if(__zunoDispatchPendingBatteryReport())
+			zunoSendBatteryReportHandler();
 	}
 	#endif
 	#ifdef WITH_CC_WAKEUP

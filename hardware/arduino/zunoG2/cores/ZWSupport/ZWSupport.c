@@ -206,7 +206,9 @@ void ZWCCSetup(){
 	memset(&g_channels_data, 0, sizeof(g_channels_data));
 	_zunoLoadUserChannels();
 	#ifdef WITH_CC_BATTERY
+	#ifndef NO_SYS_AUTO_BATTERY_REPORT
 	zuno_CCBattery_OnSetup();
+	#endif
 	#endif
 	#ifdef WITH_CC_WAKEUP
 	zuno_CCWakeup_OnSetup();

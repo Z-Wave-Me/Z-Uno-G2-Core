@@ -31,13 +31,27 @@ static const byte NOTIFICATION_MAPPER[] = {
 	NOTIFICATION_TYPE_BURGLAR_ALARM,		NOTIFICATION_EVENT_TAMPER_OBJECTMOVED
 };
 
+typedef struct 						ZwNotificationInfo_s
+{
+	uint8_t							type;
+	uint8_t							event;
+}									ZwNotificationInfo_t;
+
 static uint8_t _get_sensor_index(uint8_t channel) {
 	return (ZUNO_CFG_CHANNEL(channel).sub_type);
 }
 
+static void _get_info(uint8_t channel, ZwNotificationInfo_t *info) {
+	size_t								index;
+
+	index = (_get_sensor_index(channel)) << 1;
+	info->type = NOTIFICATION_MAPPER[index];
+	info->event = NOTIFICATION_MAPPER[index + 0x1];
+}
+
 int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet){
 	uint32_t							eeprom_mask;
-	size_t								index;
+	ZwNotificationInfo_t				info;
 	size_t								notificationType;
 	size_t								mevent;
 	ZwNotificationReportFrame_t			*report;
@@ -52,10 +66,10 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 	report = (ZwNotificationReportFrame_t *)&packet->cmd[0x0];
 	packet->len = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
-	index = (_get_sensor_index(channel)) << 1;
+	_get_info(channel, &info);
 	if(cmd != NULL) {
 		cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
-		if(cmd->len >= 4 && (notificationType = cmd_get->notificationType) != NOTIFICATION_MAPPER[index] && (notificationType != 0xFF))
+		if(cmd->len >= 4 && (notificationType = cmd_get->notificationType) != info.type && (notificationType != 0xFF))
 			return (ZUNO_COMMAND_BLOCKED);// We don't support this request
 		if(cmd_get->v1AlarmType == 0xFF)// Fix the "wildcard" param
 			report->byte1.mevent = 0xFE;
@@ -65,7 +79,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 	report->byte1.cmd = NOTIFICATION_REPORT;
 	if(report->byte1.mevent != 0xFE) {
 		report->byte1.notificationStatus = (eeprom_mask & (1UL << channel)) ? NOTIFICATION_ON_VALUE : NOTIFICATION_OFF_VALUE;
-		report->byte1.notificationType = NOTIFICATION_MAPPER[index];
+		report->byte1.notificationType = info.type;
 		uint32_t val = zuno_universalGetter1P(channel);
 		uint8_t  param = val  & 0xFF;
 
@@ -76,7 +90,7 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 		LOGGING_UART.println(param, HEX);
 		#endif
 		// For window/door sensor we have special values => process this case
-		if (NOTIFICATION_MAPPER[index + 1] == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
+		if (info.event == NOTIFICATION_EVENT_WINDOW_DOOR_OPENED){
 			if(cmd_get != NULL) {
 				// It's not an unsolicited report
 				// check what they do want to known...
@@ -101,13 +115,13 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 					// Add parameter length to whole packet lenth
 					packet->len = packet->len + 0x1;
 				}
-				mevent = NOTIFICATION_MAPPER[index + 1];
+				mevent = info.event;
 			} else {
 				mevent = NOTIFICATION_OFF_VALUE;
 			}
 			if (cmd != NULL && cmd->len >= 5) {
 				cmd_get = (ZwNotificationGetFrame_t*)cmd->cmd;
-				if (cmd_get->mevent != NOTIFICATION_MAPPER[index + 1]){
+				if (cmd_get->mevent != info.event){
 					if(cmd_get->mevent != 0)
 						mevent = 0xFE;
 				}
@@ -121,8 +135,10 @@ int zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 static int _set(size_t channel, ZwNotificationSetFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	uint32_t					eeprom_mask;
 	size_t						notificationStatus;
+	ZwNotificationInfo_t		info;
 
-	if(cmd->notificationType != NOTIFICATION_MAPPER[(_get_sensor_index(channel)) << 1])
+	_get_info(channel, &info);
+	if(cmd->notificationType != info.type)
 		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL, frame_report));
 	notificationStatus = cmd->notificationStatus;
 	if((notificationStatus != NOTIFICATION_OFF_VALUE) && (notificationStatus != NOTIFICATION_ON_VALUE))
@@ -138,30 +154,32 @@ static int _set(size_t channel, ZwNotificationSetFrame_t *cmd, ZUNOCommandPacket
 
 static int _supported_get(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwNotificationSupportedReportFrame_t		*report;
+	ZwNotificationInfo_t						info;
 
+	_get_info(channel, &info);
 	report = (ZwNotificationSupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = NOTIFICATION_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	report->properties1 = ((NOTIFICATION_TYPE_MAX >> 3) + 1);
 	frame_report->packet.len = sizeof(ZwNotificationSupportedReportFrame_t) + report->properties1;
 	memset(&report->bitMask[0], 0x0, ((NOTIFICATION_TYPE_MAX >> 3) + 1));
-	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[(_get_sensor_index(channel)) << 1], report->properties1);
+	zunoSetupBitMask(&report->bitMask[0], info.type, report->properties1);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd,ZUNOCommandPacketReport_t *frame_report) {
 	ZwEventSupportedReportFrame_t						*report;
-	size_t												index;
 	size_t												notificationType;
 	size_t												sz;
+	ZwNotificationInfo_t								info;
 
+	_get_info(channel, &info);
 	report = (ZwEventSupportedReportFrame_t *)frame_report->packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = EVENT_SUPPORTED_REPORT; set in - fillOutgoingPacket
-	index = (_get_sensor_index(channel)) << 1;
 	notificationType = cmd->notificationType;
 	report->notificationType = notificationType;
-	if(notificationType != NOTIFICATION_MAPPER[index] || notificationType == 0xFF) {
+	if(notificationType != info.type || notificationType == 0xFF) {
 		report->properties1 = 0x0;
 		frame_report->packet.len = sizeof(ZwEventSupportedReportFrame_t);
 		return (ZUNO_COMMAND_ANSWERED);// We don't support this request
@@ -170,7 +188,7 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd,Z
 	report->properties1 = sz;
 	frame_report->packet.len = sizeof(ZwEventSupportedReportFrame_t) + sz;
 	memset(&report->bitMask[0], 0x0, sz);
-	zunoSetupBitMask(&report->bitMask[0], NOTIFICATION_MAPPER[index +1 ], sz);
+	zunoSetupBitMask(&report->bitMask[0], info.event, sz);
 	if(notificationType == NOTIFICATION_TYPE_ACCESS_CONTROL_ALARM){
 		// In this case we have to add another one event
 		// For window/door sensor we have special values => process this case
@@ -232,8 +250,10 @@ int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComma
 void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 	uint8_t							notificationType;
 	uint16_t						icon_type;
+	ZwNotificationInfo_t			info;
 
-	notificationType = NOTIFICATION_MAPPER[_get_sensor_index(channel) << 0x1];
+	_get_info(channel, &info);
+	notificationType = info.type;
 	icon_type = ICON_TYPE_GENERIC_SENSOR_NOTIFICATION;
 	if (notificationType <= (ICON_TYPE_SPECIFIC_SENSOR_NOTIFICATION_LAST - ICON_TYPE_GENERIC_SENSOR_NOTIFICATION))
 		icon_type = icon_type + notificationType;
@@ -244,6 +264,9 @@ void zuno_CCNotificationGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 #include "ZWCCAssociation.h"
 
 void zuno_CCNotificationGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi) {
+	ZwNotificationInfo_t			info;
+
+	_get_info(channel, &info);
 	agi->profile1 = COMMAND_CLASS_NOTIFICATION;
-	agi->profile2 = NOTIFICATION_MAPPER[_get_sensor_index(channel) << 0x1];
+	agi->profile2 = info.type;
 }

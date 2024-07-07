@@ -211,6 +211,8 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
 
+#define ZUNO_NOTIFICATION(TYPE, MASK, GETTER) 													{ZUNO_SENSOR_BINARY_CHANNEL_NUMBER, TYPE, MASK, (void*)GETTER, (void*)0,  (void*)0, (void*)0}
+
 typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
 {
 	BYTE association_type;

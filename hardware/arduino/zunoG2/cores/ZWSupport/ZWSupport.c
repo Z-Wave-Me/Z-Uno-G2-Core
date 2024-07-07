@@ -1430,7 +1430,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
 			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCNotificationReport(ch, NULL, &frame.packet);
+				rs = __zuno_CCNotificationReport(ch, NULL, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL

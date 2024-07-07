@@ -180,7 +180,7 @@ static int _soundSwitchConfigurationReport(size_t channel, ZUNOCommandPacketRepo
 static void _config_report_asyn(size_t channel) {
 	ZUNOCommandPacketReport_t											frame_report;
 
-	fillOutgoingReportPacketAsync(&frame_report, channel);
+	fillOutgoingReportPacketAsync(&frame_report, ZUNO_CFG_CHANNEL(channel).zw_channel);
 	_soundSwitchConfigurationReport(channel, &frame_report);
 	zunoSendZWPackage(&frame_report.packet);
 }

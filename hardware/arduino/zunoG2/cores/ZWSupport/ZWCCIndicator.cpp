@@ -738,3 +738,9 @@ void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_
 	frame.variantgroup[0x2].value = on_time;
 	_indicator_set((const ZwIndicatorSetFrame_t *)&frame, sizeof(frame));
 }
+
+bool zuno_CCIndicatorIsRun(void) {
+	if (_dimming == 0x0)
+		return (false);
+	return (true);
+}

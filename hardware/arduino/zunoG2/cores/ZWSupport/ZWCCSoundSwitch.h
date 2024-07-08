@@ -171,6 +171,8 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 	.sec_duration = SEC\
 }\
 
+bool zuno_CCSoundSwitchIsRun(uint8_t channel);
+
 int zuno_CCSoundSwitchHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);

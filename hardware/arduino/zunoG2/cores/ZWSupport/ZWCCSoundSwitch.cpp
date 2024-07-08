@@ -368,6 +368,19 @@ int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
+bool zuno_CCSoundSwitchIsRun(uint8_t channel) {
+	zunoTimerTreadDiming_t												list;
+
+	if (channel == 0x0)
+		return (false);
+	channel--;
+	if (channel > ZUNO_CFG_CHANNEL_COUNT)
+		return (false);
+	if (zunoTimerTreadDimingGetInfo(zunoTimerTreadDimingTypeSoundSwitch, channel, &list) == false)
+		return (false);
+	return (true);
+}
+
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier) {
 	ZwSoundSwitchSave_t								switch_save;
 

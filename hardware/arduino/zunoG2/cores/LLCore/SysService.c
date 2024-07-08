@@ -53,7 +53,9 @@ __WEAK void zunoSysServiceLedOn(uint8_t pin) {
 __WEAK void zunoSysServiceLedSetMode(uint8_t pin, uint8_t mode) {
 	Led.setMode(pin, mode);
 }
-
+__WEAK bool zunoSysServiceCanSleep(){
+    return BTN_OBJ.isIdled(_SYSBUTTON);
+}
 void SysReconfigLeds(){
     if(g_zuno_sys->p_config->flags & ZUNO_CFGFILE_FLAG_LED_OFF) {
         zunoSysServiceLedOff(_SYSLED_ACTIVITY);

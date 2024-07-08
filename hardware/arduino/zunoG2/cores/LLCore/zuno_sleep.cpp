@@ -19,10 +19,14 @@
 //   #endif
 // }
 
+__WEAK bool zunoSysServiceCanSleep();
 static uint8_t __zunoSleepingUpd(){
     #ifndef NO_BTN_CHECK_BEFORE_SLEEP
 	if(!digitalRead(BUTTON_PIN)){
         return 1; // Never spleep until button released
+    }
+    if(zunoSysServiceCanSleep()){
+        return 1;
     }
 	#endif
     if(g_sleep_data.latch) {

@@ -25,7 +25,7 @@ static uint8_t __zunoSleepingUpd(){
 	if(!digitalRead(BUTTON_PIN)){
         return 1; // Never spleep until button released
     }
-    if(zunoSysServiceCanSleep()){
+    if(!zunoSysServiceCanSleep()){
         return 1;
     }
 	#endif

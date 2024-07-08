@@ -252,6 +252,8 @@ ZunoTimerBasic_t *zuno_CCTimerBasicFind(size_t channel) {
 uint8_t zuno_CCTimerTable8(size_t ticks) {
 	size_t				tempos;
 
+	if (ticks == 0x0)
+		return (0x0);
 	if ((tempos = ticks / (1000)) == 0x0 && ticks != 0x0)
 		return (0x1);
 	ticks = tempos;
@@ -314,7 +316,7 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK) || defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE)
+	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SOUND_SWITCH) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 	ZUNOCommandPacketReport_t						frame_report;
 	#endif
 

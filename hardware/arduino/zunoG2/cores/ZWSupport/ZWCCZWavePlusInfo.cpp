@@ -104,7 +104,8 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
-	switch (zunoGetSleepingMode() & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP) {
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	switch (zunoGetSleepingMode()) {
 		case DEVICE_CONFIGURATION_FLAGS_SLEEP:
 			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_SLEEPING_REPORTING;
 			break ;
@@ -115,6 +116,9 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 			roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_ALWAYS_ON;
 			break ;
 	}
+	#else
+	roleType = ZWAVEPLUS_INFO_REPORT_ROLE_TYPE_SLAVE_ALWAYS_ON;
+	#endif
 	report->v2.roleType = roleType;
 	report->v2.nodeType = ZWAVEPLUS_INFO_REPORT_NODE_TYPE_ZWAVEPLUS_NODE;
 	__zuno_CCZWavePlusGetIcon(channel, &icon);

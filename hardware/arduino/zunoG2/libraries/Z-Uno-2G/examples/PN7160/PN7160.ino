@@ -1,102 +1,163 @@
 #include "PN7160.h"
 #include "Status.h"
 
-ZUNO_ENABLE(LOGGING_DBG);
+ZUNO_ENABLE(
+	LOGGING_UART=Serial0
+	LOGGING_DBG
+	DBG_CONSOLE_BAUDRATE=921600
+	);
 
 byte dimmerValue=0;
 ZUNO_SETUP_SLEEPING_MODE(ZUNO_SLEEPING_MODE_FREQUENTLY_AWAKE);
 ZUNO_SETUP_CHANNELS(ZUNO_SWITCH_MULTILEVEL(&dimmerValue,NULL));
 
-#define MY_SERIAL							Serial0
-
-uint8_t bCart = false;
-
 static const PN7160ClassEeprom_t _eeprom_set = {{__TIMESTAMP__}};
 
-
-PN7160Class nfc(&Wire, SCL, SDA, 0x7, 0x8);
+PN7160Class nfc(_event, &Wire, SCL, SDA, 17, 19);
 
 static void _event(void) {
-	bCart = true;
+	nfc.eventIrq();
 }
 
 uint32_t loop_count = 0; // the variable that illustrates that RAM is alive during FLiRS mode too
 
 void _wakeHandler(void){
-	MY_SERIAL.print("wake time:");
-	MY_SERIAL.println(millis());
-	MY_SERIAL.print("loop count =");
-	MY_SERIAL.println(loop_count);
-	MY_SERIAL.print("WAKEUP REASON:");
-	MY_SERIAL.println(zunoGetWakeReason(), HEX);
+	LOGGING_UART.print("wake time:");
+	LOGGING_UART.println(millis());
+	LOGGING_UART.print("loop count =");
+	LOGGING_UART.println(loop_count);
+	LOGGING_UART.print("WAKEUP REASON:");
+	LOGGING_UART.println(zunoGetWakeReason(), HEX);
 }
 
-static void _error(const char *str) {
-	MY_SERIAL.printf(str, GetLastStatus());
-	while (0xFF)
-		delay(0x40);
+void _error() {
+	while (0xFF) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Feill!!!\n");
+		#endif
+		delay(500);
+	}
 }
+
 
 void setup(void) {
 	uint16_t								ms;
 	PN7160ClassEeprom_t						eeprom;
-	uint8_t									bClear;
 
-	// while (true)
-	// 	delay(200);
-	MY_SERIAL.begin(115200);
-	MY_SERIAL.print("BOOT REASON:");
-	MY_SERIAL.println(zunoGetWakeReason(), HEX);
-	zunoAttachSysHandler(ZUNO_HANDLER_WUP, 0, (void*) &_wakeHandler);
-	pinMode(LED_BUILTIN, OUTPUT);
-	MY_SERIAL.print("\n\n");
-	bClear = false;
-	if (nfc.connect(bClear) != true)
-		_error("Error: cannot connect to NFC PN7160 device - 0x%lx\n");
-	MY_SERIAL.print("Connect to NFC PN7160                                     OK\n\n");
-	MY_SERIAL.printf("Hardware version number:         0x%02X\n", nfc.getHardwareVersion());
-	MY_SERIAL.printf("ROM Code version number:         0x%02X\n", nfc.getRomVersion());
-	MY_SERIAL.printf("Firmware major version:          0x%02X\n", nfc.getFwMajorVersion());
-	MY_SERIAL.printf("Firmware minor version:          0x%02X\n\n", nfc.getFwMinorVersion());
-	if (nfc.getDuration(&ms) != true)
-		_error("Error: cannot get total duration - 0x%lx\n");
-	MY_SERIAL.printf("Total duration ms:               %4d\n\n", ms);
-	if (nfc.getEEPROM(&eeprom) == true) {
-		MY_SERIAL.print("Read EEPROM                                               OK\n");
-		if (bClear == true || memcmp(&_eeprom_set, &eeprom, sizeof(_eeprom_set)) != 0x0) {
-			MY_SERIAL.print("Start configure to NFC PN7160                              OK\n");
-			if (nfc.setDuration(256) != true)
-				_error("Error: cannot configure total delay - 0x%lx\n");
-			MY_SERIAL.print("Configure NFC PN7160 total delay                           OK\n");
-			if (nfc.setPowerMode(PN7160_CLASS_POWER_MODE_STANDBY) != true)
-				_error("Error: cannot configure power mode - 0x%lx\n");
-			MY_SERIAL.print("Configure NFC PN7160 power mode                            OK\n");
-			if (nfc.setPowerTransmitter(PN7160_CLASS_POWER_TRANSMITTER_3_3V) != true)
-				_error("Error: cannot configure power transmitter - 0x%lx\n");
-			MY_SERIAL.print("Configure power transmitter                                OK\n");
-			if (nfc.setRf() != true)
-				_error("Error: cannot configure RF - 0x%lx\n");
-			MY_SERIAL.print("Configure RF                                               OK\n");
-			memcpy(&eeprom, &_eeprom_set, sizeof(eeprom));
-			if (nfc.setEEPROM(&eeprom) != true)
-				_error("Error: cannot write EEPROM - 0x%lx\n");
-			MY_SERIAL.print("Write EEPROM                                               OK\n");
-			if (nfc.applySettings() != true)
-				_error("Error: cannot new settings apply - 0x%lx\n");
-			MY_SERIAL.print("New settings apply                                         OK\n");
-			MY_SERIAL.print("Finish configure to NFC PN7160                             OK\n\n");
-		}
+	if (nfc.connect(true) != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot connect to NFC PN7160 device - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
 	}
-	else
-		_error("Error: cannot read EEPROM - 0x%lx\n");
-	if (nfc.configureMode() != true)
-		_error("Error: cannot configure mode - 0x%lx\n");
-	MY_SERIAL.print("Configure mode                                            OK\n");
-	if (nfc.discovery(_event) != true)
-		_error("Error: cannot start discovery - 0x%lx\n");
-	MY_SERIAL.print("Start discovery                                           OK\n");
-	// static const PN7150ClassCmdGetConfig_t NCIReadDuration = PN7150_CLASS_CORE_GET_CONFIG_CMD_DEFAULT(PN7150_CLASS_CORE_CONFIG_CMD_PARAMETER_TOTAL_DURATION, 7);
-	// Serial0.dumpPrint((uint8_t *)&NCIReadDuration, sizeof(NCIReadDuration.header) + NCIReadDuration.header.len, sizeof(NCIReadDuration.header) + NCIReadDuration.header.len);
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Connect to NFC PN7160                                     OK\n\n");
+	LOGGING_UART.printf("Hardware version number:         0x%02X\n", nfc.getHardwareVersion());
+	LOGGING_UART.printf("ROM Code version number:         0x%02X\n", nfc.getRomVersion());
+	LOGGING_UART.printf("Firmware major version:          0x%02X\n", nfc.getFwMajorVersion());
+	LOGGING_UART.printf("Firmware minor version:          0x%02X\n\n", nfc.getFwMinorVersion());
+	if (nfc.getDuration(&ms) != true)
+		LOGGING_UART.printf("Error: cannot get total duration - 0x%lx\n", GetLastStatus());
+	LOGGING_UART.printf("Total duration ms:               %4d\n\n", ms);
+	#endif
+	if (nfc.setDuration(255) != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot configure total delay - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Configure NFC PN7160 total delay                           OK\n");
+	#endif
+	if (nfc.setPowerMode(PN7160_CLASS_POWER_MODE_STANDBY) != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot configure power mode - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Configure NFC PN7160 power mode                            OK\n");
+	#endif
+	if (nfc.getEEPROM(&eeprom) == false) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot read EEPROM - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Read EEPROM                                               OK\n");
+	#endif
+	if (memcmp(&_eeprom_set, &eeprom, sizeof(_eeprom_set)) != 0x0) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Start configure to NFC PN7160                              OK\n");
+		#endif
+		if (nfc.setCore() != true) {
+			#ifdef LOGGING_DBG
+			LOGGING_UART.printf("Error: cannot configure CORE - 0x%lx\n", GetLastStatus());
+			#endif
+			_error();
+		}
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Configure CORE                                          OK\n");
+		#endif
+		if (nfc.setPowerTransmitter(PN7160_CLASS_POWER_TRANSMITTER_4_75_V) != true) {
+			#ifdef LOGGING_DBG
+			LOGGING_UART.printf("Error: cannot configure power transmitter - 0x%lx\n", GetLastStatus());
+			#endif
+			_error();
+		}
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Configure power transmitter                                OK\n");
+		#endif
+		if (nfc.setRf() != true) {
+			#ifdef LOGGING_DBG
+			LOGGING_UART.printf("Error: cannot configure RF - 0x%lx\n", GetLastStatus());
+			#endif
+			_error();
+		}
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Configure RF                                               OK\n");
+		#endif
+		memset(&eeprom, 0x0, sizeof(eeprom));
+		memcpy(&eeprom, &_eeprom_set, sizeof(_eeprom_set));
+		if (nfc.setEEPROM(&eeprom) != true) {
+			#ifdef LOGGING_DBG
+			LOGGING_UART.printf("Error: cannot write EEPROM - 0x%lx\n", GetLastStatus());
+			#endif
+			_error();;
+		}
+		#ifdef LOGGING_DBG
+		LOGGING_UART.print("Write EEPROM                                               OK\n");
+		LOGGING_UART.print("Finish configure to NFC PN7160                             OK\n\n");
+		#endif
+	}
+	if (nfc.applySettings() != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot new settings apply - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("settings apply                                         OK\n");
+	#endif
+	if (nfc.configureMode() != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot configure mode - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Configure mode                                            OK\n");
+	#endif
+	if (nfc.discovery() != true) {
+		#ifdef LOGGING_DBG
+		LOGGING_UART.printf("Error: cannot start discovery - 0x%lx\n", GetLastStatus());
+		#endif
+		_error();
+	}
+	#ifdef LOGGING_DBG
+	LOGGING_UART.print("Start discovery                                           OK\n");
+	#endif
 }
 
 static void _event_removal(uint8_t protocol) {
@@ -105,16 +166,16 @@ static void _event_removal(uint8_t protocol) {
 		case PN7160_CLASS_PROT_T2T:
 		case PN7160_CLASS_PROT_T3T:
 		case PN7160_CLASS_PROT_ISODEP:
-			MY_SERIAL.printf("Remote T%dT card removal.\n", protocol);
+			LOGGING_UART.printf("Remote T%dT card removal.\n", protocol);
 			break;
 		case PN7160_CLASS_PROT_T5T:
-			MY_SERIAL.print("Remote T5T card removal.\n");
+			LOGGING_UART.print("Remote T5T card removal.\n");
 			break;
 		case PN7160_CLASS_PROT_MIFARE:
-			MY_SERIAL.print("Remote MIFARE card removal.\n");
+			LOGGING_UART.print("Remote MIFARE card removal.\n");
 			break;
 		default:
-			MY_SERIAL.print("Undetermined target.\n");
+			LOGGING_UART.print("Undetermined target.\n");
 			break;
 	}
 }
@@ -126,9 +187,9 @@ static void _processing(void) {
 	uint8_t									index;
 	uint8_t									buffer[0x20];
 
-	MY_SERIAL.print("Processing START                                           OK\n\n");
+	LOGGING_UART.print("Processing START                                           OK\n\n");
 	if ((count = nfc.info()) != 0x0) {
-		MY_SERIAL.print("Processing                                                 OK\n\n");
+		LOGGING_UART.print("Processing                                                 OK\n\n");
 		index = 0x0;
 		while (index < count) {
 			nfc.ppse(index);
@@ -141,80 +202,83 @@ static void _processing(void) {
 				case PN7160_CLASS_PROT_T2T:
 				case PN7160_CLASS_PROT_T3T:
 				case PN7160_CLASS_PROT_ISODEP:
-					MY_SERIAL.printf("Remote T%dT card activated.\n", nfc.infoProtocol(index));
+					LOGGING_UART.printf("Remote T%dT card activated.\n", nfc.infoProtocol(index));
 					break;
 				case PN7160_CLASS_PROT_T5T:
-					MY_SERIAL.print("Remote T5T card activated.\n");
+					LOGGING_UART.print("Remote T5T card activated.\n");
 					break;
 				case PN7160_CLASS_PROT_MIFARE:
-					MY_SERIAL.print("Remote MIFARE card activated.\n");
+					LOGGING_UART.print("Remote MIFARE card activated.\n");
 					break;
 				default:
-					MY_SERIAL.print("Undetermined target.\n");
+					LOGGING_UART.print("Undetermined target.\n");
 					break;
 			}
 			if ((len = nfc.infoSens(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Sens: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Sens: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((len = nfc.infoNfcid(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Nfcid: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Nfcid: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((len = nfc.infoSel(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Sel: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Sel: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((BitRate = nfc.infoBitRate(index)) != 0x0)
-				MY_SERIAL.printf("Bitrate: %d kbps\n", BitRate);
+				LOGGING_UART.printf("Bitrate: %d kbps\n", BitRate);
 			if ((len = nfc.infoId(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Id: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Id: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((len = nfc.infoAfi(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Afi: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Afi: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((len = nfc.infoDsfid(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Dsfid: ");
-				MY_SERIAL.dumpPrint(&buffer[0x0], len, len);
+				LOGGING_UART.print("Dsfid: ");
+				LOGGING_UART.dumpPrint(&buffer[0x0], len, len);
 			}
 			if ((len = nfc.ppsePaymentSystem(index, &buffer[0x0], sizeof(buffer))) != 0x0) {
-				MY_SERIAL.print("Payment system: ");
-				MY_SERIAL.write(&buffer[0x0], len);
-				MY_SERIAL.print("\n");
+				LOGGING_UART.print("Payment system: ");
+				LOGGING_UART.write(&buffer[0x0], len);
+				LOGGING_UART.print("\n");
 			}
 			if ((len = nfc.ppseCardNumber(index, &buffer[0x0], sizeof(buffer))) == 0x8)
-				MY_SERIAL.printf("Card number: %02X%02X %02X%02X %02X%02X %02X%02X\n", buffer[0x0], buffer[0x1], buffer[0x2], buffer[0x3], buffer[0x4], buffer[0x5], buffer[0x6], buffer[0x7]);
+				LOGGING_UART.printf("Card number: %02X%02X %02X%02X %02X%02X %02X%02X\n", buffer[0x0], buffer[0x1], buffer[0x2], buffer[0x3], buffer[0x4], buffer[0x5], buffer[0x6], buffer[0x7]);
 			if ((len = nfc.ppseExpirationDate(index, &buffer[0x0], sizeof(buffer))) == 0x2)
-				MY_SERIAL.printf("Expiration Date: %02X/%02X\n", buffer[0x0], buffer[0x1]);
+				LOGGING_UART.printf("Expiration Date: %02X/%02X\n", buffer[0x0], buffer[0x1]);
 			index++;
 		}
-		MY_SERIAL.print("\n");
+		LOGGING_UART.print("\n");
 		delay(500);
 	}
 	else
-		MY_SERIAL.print("Processing                                                 FALID\n");
+		LOGGING_UART.print("Processing                                                 FALID\n");
 	nfc.infoWaitRemoval(_event_removal);
-	MY_SERIAL.print("Card removal                                               OK\n");
-	if (nfc.discoveryRestart(_event) == true)
-		MY_SERIAL.print("Restart discovery                                          OK\n");
+	LOGGING_UART.print("Card removal                                               OK\n");
+	if (nfc.discoveryRestart() == true)
+		LOGGING_UART.print("Restart discovery                                          OK\n");
 	else
-		MY_SERIAL.print("Restart discovery                                          FALID\n");
+		LOGGING_UART.print("Restart discovery                                          FALID\n");
 }
 
 void loop(void) {
-	if (bCart == true) {
+	bool					out;
+
+	zunoEnterCritical();
+	out = nfc.eventIrqIs();
+	zunoExitCritical();
+	if (out == true)
 		_processing();
-		bCart = false;
-	}
 	if(zunoIsSleepLocked()){
 		// Here we do all sleep uninterruptable logic
 		analogWrite(LED_BUILTIN, dimmerValue); // Apply dimmer value from controller to builtin LED
-		MY_SERIAL.print("go sleep time:");
-		MY_SERIAL.println(millis()); // Print moment when we are ready to go to sleep
-		MY_SERIAL.print("loop count =");
-		MY_SERIAL.println(loop_count);
+		LOGGING_UART.print("go sleep time:");
+		LOGGING_UART.println(millis()); // Print moment when we are ready to go to sleep
+		LOGGING_UART.print("loop count =");
+		LOGGING_UART.println(loop_count);
 		zunoSendDeviceToSleep(); // We don't need parameter for FLiRS here, Z-Uno will ingore parameter anyway
 	}
 	// Here you can do something that could be interrupted by sleep mode

@@ -63,11 +63,13 @@ void zunoReportHandler(ZUNOCommandPacket_t *cmd) {
 					return ;
 				sub_type = Notification;
 				break ;
+			#if defined(WITH_CC_BATTERY)
 			case COMMAND_CLASS_BATTERY:
 				if (zwcmd != BATTERY_REPORT)
 					return ;
 				sub_type = Battery;
 				break ;
+			#endif
 			default:
 				return ;
 	}

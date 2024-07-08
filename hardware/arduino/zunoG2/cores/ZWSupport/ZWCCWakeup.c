@@ -35,6 +35,8 @@ void zuno_sendWUP_NotificationReport() {
 	size_t						wake_nodeid;
 	ZUNOCommandPacketReport_t	frame;
 
+	if (zunoIsSleepingMode() == false)
+		return ;
 	if(zunoNID() == 0)
 		return;
 	if(zunoIsIclusionLatchClosed())
@@ -66,6 +68,8 @@ void zuno_sendWUP_NotificationReport() {
 void zunoSendWakeUpNotification(void);
 void _dbgSysReports();
 void zuno_CCWakeup_OnSetup(){
+	if (zunoIsSleepingMode() == false)
+		return ;
 	//pinMode(BUTTON_PIN, INPUT);
 	uint8_t reason = zunoGetWakeReason();
 	bool on_timer = (g_zuno_sys->persistent_timer_map & PERSISTENT_SYSTIMER) &&
@@ -168,6 +172,8 @@ static int _up_interval_set(const ZwZwaveWakeUpIntervalSetFrame_t *cmd) {
 int zuno_CCWakeupHandler(ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
+	if (zunoIsSleepingMode() == false)
+		return (ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 	switch(ZW_CMD) {
 		case WAKE_UP_INTERVAL_CAPABILITIES_GET:
 			rs = _up_interval_capabilities_report(frame_report);

@@ -1,5 +1,5 @@
 #include "Arduino.h"
-#include "Spi.h"
+#include "SPI.h"
 
 void handler(void) {
 	size_t			cmd;

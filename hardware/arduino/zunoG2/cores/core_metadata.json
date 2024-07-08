@@ -57,10 +57,6 @@
 		"ReportsHandler_Notification":       {"type":"ZUNO_HANDLER_REPORT","sub_type":"Notification"}
     },
     "associations":[
-        {"type_name":"ZUNO_ASSOC_BASIC_SET_NUMBER", "type_val":1, "preproc_flags":[]},
-        {"type_name":"ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER", "type_val":2, "preproc_flags":[]},
-        {"type_name":"ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER", "type_val":3, "preproc_flags":[]},
-        {"type_name":"ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER", "type_val":4, "preproc_flags":[]}
     ],
     "no_lto_set":[],
     "compiler_flags":["-mthumb", 

@@ -206,7 +206,9 @@ void ZWCCSetup(){
 	memset(&g_channels_data, 0, sizeof(g_channels_data));
 	_zunoLoadUserChannels();
 	#ifdef WITH_CC_BATTERY
+	#ifndef NO_SYS_AUTO_BATTERY_REPORT
 	zuno_CCBattery_OnSetup();
+	#endif
 	#endif
 	#ifdef WITH_CC_WAKEUP
 	zuno_CCWakeup_OnSetup();
@@ -744,10 +746,12 @@ uint8_t dynamicCCVersion(uint8_t cc){
 	return 0;
 }
 
+#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY) || defined(WITH_CC_MULTICHANNEL)
 static void _zunoAddBaseCCS(byte ccs) {
 	_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, ccs, MAX_CMDCLASES_NSNI);
 	_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt, ccs, MAX_CMDCLASES_SECURED);
 }
+#endif
 
 void _fillZWaveData(uint8_t secure_param){
 	ZwZwavePlusInfoIcon_t						icon;
@@ -802,15 +806,30 @@ void _fillZWaveData(uint8_t secure_param){
 		g_zuno_sys->zw_protocol_data->specific_type = info_type.specificDeviceClass;
 		g_zuno_sys->zw_protocol_data->device_icon = icon.installerIconType;
 	}
-	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
-	if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_SLEEP){
-		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
-		_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
-		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
-	}else if(g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_FLIRS){
-		g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
-		_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
+	switch (zunoGetSleepingMode()) {
+		case DEVICE_CONFIGURATION_FLAGS_SLEEP:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_NOT_LISTENING;
+			#if defined(WITH_CC_WAKEUP)
+			_zunoAddBaseCCS(COMMAND_CLASS_WAKE_UP);
+			#endif
+			#if defined(WITH_CC_BATTERY)
+			_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+			#endif
+			break ;
+		case DEVICE_CONFIGURATION_FLAGS_FLIRS:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_FREQ_LISTENING_MODE_1000ms;
+			#if defined(WITH_CC_BATTERY)
+			_zunoAddBaseCCS(COMMAND_CLASS_BATTERY);
+			#endif
+			break ;
+		default:
+			g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
+			break ;
 	}
+	#else
+	g_zuno_sys->zw_protocol_data->option_mask = APPLICATION_NODEINFO_LISTENING;
+	#endif
 	// Reflection of association count 
 	g_zuno_sys->zw_protocol_data->association_count = g_zuno_zw_cfg.num_associations;
 }
@@ -1095,6 +1114,9 @@ __WEAK uint8_t __zunoGetS2AccessManual(void) {
 	return ((SECURITY_KEY_S2_UNAUTHENTICATED_BIT | SECURITY_KEY_S2_AUTHENTICATED_BIT | SECURITY_KEY_S0_BIT));
 }
 
+__WEAK void __zunoAssociationSetupManual(void) {
+}
+
 // Channels fill routines
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
@@ -1111,6 +1133,8 @@ bool zunoStartDeviceConfiguration() {
 	// User-side data
 	_resetUserChannels();
 	//memset(&g_zuno_zw_cfg, 0, sizeof(g_zuno_zw_cfg));
+	if (ZUNO_CFG_ASSOCIATION_COUNT == 0x0)
+		__zunoAssociationSetupManual();
 	return  true;
 }
 byte getMaxChannelTypes() {
@@ -1313,17 +1337,14 @@ void zunoSendReportHandler(uint32_t ticks) {
         return; // it doesn't => go away
 	
 	#ifdef WITH_CC_BATTERY
-	uint8_t max_report_count = ZUNO_MAX_REPORTCOUNT_PER_MOMENT;
-	if(__zunoDispatchPendingBatteryReport()){
-		if (zunoSendBatteryReportHandler()) {
-			if((--max_report_count) == 0)
-				return;
-		}
+	if (zunoIsSleepingMode() == true) {
+		if(__zunoDispatchPendingBatteryReport())
+			zunoSendBatteryReportHandler();
 	}
 	#endif
 	#ifdef WITH_CC_WAKEUP
 	// Send WUP Notification report only if there are no channel reports & user is ready to sleep 
-	if(!zunoIsSleepLocked()){
+	if(zunoIsSleepingMode() == true && !zunoIsSleepLocked()){
 		uint32_t sys_reports = __getSyncVar(&g_channels_data.sys_reports);
 		uint32_t usr_reports = __getSyncVar(&g_channels_data.report_map);
 		// #ifdef LOGGING_DBG
@@ -1360,7 +1381,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			//LOGGING_UART.println(ch);
 			#endif
 			#ifdef WITH_CC_BATTERY
-			if(zunoGetSleepingMode()){
+			if(zunoIsSleepingMode() == true){
 				__clearSyncMapChannel(&g_channels_data.report_map, ch);
 			}
 			#endif
@@ -1409,7 +1430,7 @@ void zunoSendReportHandler(uint32_t ticks) {
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
 			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCNotificationReport(ch, NULL, &frame.packet);
+				rs = __zuno_CCNotificationReport(ch, NULL, &frame.packet);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL

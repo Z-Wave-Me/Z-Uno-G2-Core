@@ -25,12 +25,6 @@ typedef struct _ZUNO_CHANNEL_PROPERTIES_DESCRIPTION
 } ZUNO_CHANNEL_PROPERTIES_DESCRIPTION;
 
 
-typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
-{
-	BYTE association_type;
-	BYTE association_param;
-} ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION;
-
 typedef struct _ZUNO_BASE_CC_DESCRIPTION
 {
 	BYTE cc;
@@ -116,11 +110,6 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 								  __VA_ARGS__, \
 								} 
 // ZUNO_BASE_CC_DESCRIPTION
-#define ZUNO_SETUP_ASSOCIATIONS(...)	\
-								 ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION ___zunoAssociationSetupArray[]= \
-								{ \
-									__VA_ARGS__, \
-								}
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE) 		\
 								GENERIC_POINTER ___zunoSleepingModeValue = ((void*)VALUE)
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H) 		\
@@ -181,11 +170,10 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_DOORLOCK(GETTER, SETTER)   													{ZUNO_DOORLOCK_CHANNEL_NUMBER, 0x0, 0x1, (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
 #define ZUNO_METER_TBL_MONITOR(TYPE, RATE, PAY, GETTER)										{ZUNO_METER_TBL_MONITOR_CHANNEL_NUMBER, (TYPE & METER_TBL_REPORT_PROPERTIES1_METER_TYPE_MASK) | (RATE << METER_TBL_REPORT_PROPERTIES1_RATE_TYPE_SHIFT), (PAY & METER_TBL_REPORT_PROPERTIES2_PAY_METER_MASK), (void*)GETTER, (void*)0, (void*)0, (void*)0}
 #define ZUNO_SOUND_SWITCH(VOLUME_PERCENT, TONE_INDENTIFER, PLAY, STOP, TONES)				{ZUNO_SOUND_SWITCH_CHANNEL_NUMBER, VOLUME_PERCENT, TONE_INDENTIFER, (void*)PLAY, (void*)STOP, (void*)TONES, (void*)0}
-#define ZUNO_WINDOW_COVERING(DEFAULT_ID, PARAMETER_ID, GETTER, SETTER) 						{ZUNO_WINDOW_COVERING_CHANNEL_NUMBER, DEFAULT_ID, (PARAMETER_ID & 0xFFFF), (void*)GETTER, (void*)SETTER,  (void*)0, (void*)0}
+#define ZUNO_WINDOW_COVERING(DEFAULT_ID, PARAMETER_ID, GETTER, SETTER) 						{ZUNO_WINDOW_COVERING_CHANNEL_NUMBER, DEFAULT_ID, (PARAMETER_ID & 0xFFFF), (void*)GETTER, (void*)SETTER,  (void*)GETTER, (void*)SETTER}
 #else
 #define ZUNO_SETUP_CHANNELS(...)
 #define ZUNO_CUSTOM_CC(...)
-#define ZUNO_SETUP_ASSOCIATIONS(...)
 #define ZUNO_SETUP_SLEEPING_MODE(VALUE)  
 #define ZUNO_SETUP_BATTERY_LEVELS(L,H)
 #define ZUNO_SETUP_BATTERY_HANDLER(H)
@@ -223,20 +211,48 @@ typedef struct _ZUNO_BASE_CC_DESCRIPTION
 #define ZUNO_SETUP_ISR_GPTIMER(H)
 #endif
 
+#define ZUNO_NOTIFICATION(TYPE, MASK, GETTER) 													{ZUNO_SENSOR_BINARY_CHANNEL_NUMBER, TYPE, MASK, (void*)GETTER, (void*)0,  (void*)0, (void*)0}
+
+typedef struct _ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION
+{
+	BYTE association_type;
+	BYTE association_param;
+} ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION;
+
+enum {
+	ZUNO_ASSOC_BASIC_SET_NUMBER                        =  1,
+	ZUNO_ASSOC_BASIC_SET_AND_DIM_NUMBER                =  2,
+	ZUNO_ASSOC_SCENE_ACTIVATION_NUMBER                 =  3,
+	ZUNO_ASSOC_DOORLOCK_CONTROL_NUMBER                 =  4,
+	ZUNO_ASSOC_CUSTOM_NUMBER                           =  5,
+};
+
+#define ZUNO_SETUP_ASSOCIATIONS(...)																\
+	void __zunoAssociationSetupManual(void) {														\
+		static const ZUNO_ASSOCIATION_PROPERTIES_DESCRIPTION			array[] = {__VA_ARGS__,};	\
+		size_t															i;							\
+																									\
+		i = 0x0;																					\
+		while (i< (sizeof(array) / sizeof(array[0x0]))) {											\
+			zunoAddAssociation(array[i].association_type, array[i].association_param);				\
+			i++;																					\
+		}																							\
+}\
+
 #define ZUNO_SETUP_S2ACCESS(B) \
 	uint8_t __zunoGetS2AccessManual(void) {\
 		return (B);\
 	}\
 
 #define ZUNO_SETUP_CONFIGPARAMETERS(...) 	\
-							    static const ZunoCFGParameter_t __g_zuno_lp_param[]= \
+								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
+								static const ZunoCFGParameter_t lp_param[]= \
 								{ \
 									__VA_ARGS__, \
 								};\
-								const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {\
-								if (param < 0x40 || param > (0x40-1 + (sizeof(__g_zuno_lp_param)/sizeof(ZunoCFGParameter_t)))) \
+								if (param < 0x40 || param > (0x40-1 + (sizeof(lp_param)/sizeof(ZunoCFGParameter_t)))) \
 									return (ZUNO_CFG_PARAMETER_UNKNOWN); \
-									return (&__g_zuno_lp_param[param - 0x40]); \
+								return (&lp_param[param - 0x40]); \
 							}\
 
 #define ZUNO_CONFIG_PARAMETER_INFO(NAME, INFO, MN, MX, DEF)	\

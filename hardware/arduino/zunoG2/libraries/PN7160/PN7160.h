@@ -45,6 +45,7 @@
 
 #define PN7160_CLASS_POWER_TRANSMITTER_3_3V							0x0
 #define PN7160_CLASS_POWER_TRANSMITTER_4_75_V						0x1
+#define PN7160_CLASS_POWER_TRANSMITTER_2_7_V						0x2
 
 #define PN7160_CLASS_RESET_TYPE_KEEP								0x0
 #define PN7160_CLASS_RESET_TYPE_CLEAR								0x1
@@ -334,12 +335,12 @@ typedef struct					PN7160ClassTlvTag_s
 
 class PN7160Class {
 	public:
-		PN7160Class(TwoWire *wire, uint8_t scl, uint8_t sda, uint8_t irq, uint8_t ven, uint8_t addr = PN7160_CLASS_ADRESS_I2C);
+		PN7160Class(void (*event_irq)(void), TwoWire *wire, uint8_t scl, uint8_t sda, uint8_t irq, uint8_t ven, uint8_t addr = PN7160_CLASS_ADRESS_I2C);
 		uint8_t											ppseExpirationDate(uint8_t index, void *buffer, uint8_t len);
 		uint8_t											ppseCardNumber(uint8_t index, void *buffer, uint8_t len);
 		uint8_t											ppsePaymentSystem(uint8_t index, void *buffer, uint8_t len);
 		bool											ppse(uint8_t index);
-		bool											discoveryRestart(void (*userFunc)(void));
+		bool											discoveryRestart();
 		void											infoWaitRemoval(void (*userFunc)(uint8_t) = 0x0);
 		uint8_t											infoDsfid(uint8_t index, void *buffer, uint8_t len);
 		uint8_t											infoAfi(uint8_t index, void *buffer, uint8_t len);
@@ -350,7 +351,9 @@ class PN7160Class {
 		uint8_t											infoSens(uint8_t index, void *buffer, uint8_t len);
 		uint8_t											infoProtocol(uint8_t index);
 		uint8_t											info(void);
-		bool											discovery(void (*userFunc)(void));
+		void											eventIrq(void);
+		inline bool										eventIrqIs(void) { return (this->_irq_status);};
+		bool											discovery();
 		inline bool										configureMode(void) {return (this->_configureMode(PN7160_CLASS_MODE_RW));};
 		bool											setCore(void);
 		bool											setRf(void);
@@ -398,6 +401,7 @@ class PN7160Class {
 		inline bool										_WaitForReceive(ssize_t timeout);
 		inline bool										_lastStatus(uint32_t status, bool ret);
 
+		void									(*_event_irq)(void);
 		TwoWire									*_wire;
 		PN7160ClassRfNfcCommon_t				_rf_nfc;
 		uint8_t									_buffer_wire[(size_t)(PN7160_CLASS_MAX_NCI_FRAME_SIZE * 1.3)];
@@ -407,6 +411,7 @@ class PN7160Class {
 		uint8_t									_ven;
 		uint8_t									_addr;
 		uint8_t									_mode;
+		bool									_irq_status;
 		PN7160ClassCoreResetNtfManufacturer_t	_Manufacturer_Specific_Information;
 };
 

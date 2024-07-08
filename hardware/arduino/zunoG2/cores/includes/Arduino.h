@@ -91,27 +91,8 @@ bool zunoIsChannelRequested(uint8_t ch);
 bool zunoIsBatteryRequested();
 
 /* sleep */
-void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
-void zunoMarkDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
-void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
-void zunoLockSleep(void);
-bool zunoIsSleepLocked();
-void zunoKickSleepTimeout(uint32_t ms);
+#include "zuno_sleep.h"
 
-#ifdef WITH_CC_WAKEUP
-void zunoSendWakeUpNotification();
-#endif
-#ifdef WITH_CC_BATTERY
-void zunoSendBatteryReport();
-#endif
-inline void zunoSetSleepingMode(byte mode) {
-  g_zuno_sys->zw_protocol_data->flags &= ~(DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
-	mode &= DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP;
-	g_zuno_sys->zw_protocol_data->flags |= mode;
-}
-inline uint8_t zunoGetSleepingMode(void) {
-  return (g_zuno_sys->zw_protocol_data->flags & DEVICE_CONFIGURATION_FLAGS_MASK_SLEEP);
-};
 inline void zunoEnableSmartStart(bool en){
   /*
 	if(en)
@@ -175,6 +156,8 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene);
 void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close, uint16_t seconds);
 inline void zunoSendToGroupDoorlockControl(uint8_t groupIndex, uint8_t open_close) {return (zunoSendToGroupDoorlockControlTiming(groupIndex, open_close, 0x0));};
+void zunoSendToGroupBinarySetCommand(uint8_t groupIndex, uint8_t targetValue, size_t ms);
+void zunoSendToGroupSoundSwitchPlayCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 
 /* Misc */
 void WDOG_Feed();

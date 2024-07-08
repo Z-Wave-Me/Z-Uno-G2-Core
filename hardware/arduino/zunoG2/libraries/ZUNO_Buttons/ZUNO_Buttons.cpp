@@ -215,7 +215,7 @@ inline ZunoError_t ButtonsClass::_reInitList(ZunoBtnHeader_t *list, ZunoBtnType_
 	switch (type) {
 		case BtnTypeButton:
 			if ((mode = ((ZunoBtnButton_t *)list)->mode) == BtnButtonModeAuto)
-				mode = (zunoGetSleepingMode() == false) ? BtnButtonModeTimer : BtnButtonModeExtInt;
+				mode = (zunoIsSleepingMode() == false) ? BtnButtonModeTimer : BtnButtonModeExtInt;
 			if (mode != ((ZunoBtnButtonInit_t *)init)->mode)
 				return (ZunoErrorBtnChangeMode);
 			break ;
@@ -239,7 +239,7 @@ inline void ButtonsClass::_initList(ZunoBtnHeader_t *list, ZunoBtnType_t type, v
 			mode = ((ZunoBtnButtonInit_t *)init)->mode;
 			if (bOld == false) {
 				if (mode == BtnButtonModeAuto)
-					mode = (zunoGetSleepingMode() == false) ? BtnButtonModeTimer : BtnButtonModeExtInt;
+					mode = (zunoIsSleepingMode() == false) ? BtnButtonModeTimer : BtnButtonModeExtInt;
 				((ZunoBtnButton_t *)list)->mode = mode;
 			}
 			((ZunoBtnButton_t *)list)->bInvert = ((ZunoBtnButtonInit_t *)init)->bInvert;

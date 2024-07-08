@@ -90,8 +90,10 @@ void SysServiceInit(){
     #ifndef NO_SYS_LEDS
 	zunoSysServiceLedInit();
     #endif
-    if(_SYSBUTTON != 0xFF) // The button is enabled for this configuration
+    if(_SYSBUTTON != 0xFF){ // The button is enabled for this configuration
+        BTN_OBJ.setMaxMultiClickCount(4);
         BTN_OBJ.addButton(_SYSBUTTON);
+    }
     memset(&g_service_data, 0, sizeof(ServiceData_t));
     g_service_data.cntrl_mode = SYS_SVC_MODE_NORMAL;
     #ifndef NO_SYS_LEDS
@@ -106,7 +108,8 @@ void SysServiceTimer(){
     if(_SYSBUTTON != 0xFF){
         switch(g_service_data.cntrl_mode){
             case SYS_SVC_MODE_NORMAL:
-                if(BTN_OBJ.isTripleClick(_SYSBUTTON)){
+                if( BTN_OBJ.isTripleClick(_SYSBUTTON) || 
+                    BTN_OBJ.isNClick(_SYSBUTTON, 4)){
                     zunoStartLearn(SYS_LEARN_TIMEOUT, true);
                 }
                 #if ZUNO_OLD_BUTTONS

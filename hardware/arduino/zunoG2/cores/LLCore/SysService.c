@@ -113,6 +113,7 @@ void SysServiceTimer(){
                 if( BTN_OBJ.isTripleClick(_SYSBUTTON) || 
                     BTN_OBJ.isNClick(_SYSBUTTON, 4)){
                     zunoStartLearn(SYS_LEARN_TIMEOUT, true);
+                    BTN_OBJ.clearEvents(_SYSBUTTON);
                 }
                 #if ZUNO_OLD_BUTTONS
                 if(Btn.isLongClick(_SYSBUTTON)){

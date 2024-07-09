@@ -769,8 +769,7 @@ void _fillZWaveData(uint8_t secure_param){
 	LOGGING_UART.dumpPrint(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt);
 	#endif
 	if((g_zuno_sys->p_config->secure_mode) && 
-	   (secure_param != ZUNO_SECUREPARAM_OFF) && 
-	   (g_zuno_sys->zw_protocol_data->req_s2_keys != 0)){
+	   (secure_param != ZUNO_SECUREPARAM_OFF)){
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY, MAX_CMDCLASES_NSNI);
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, COMMAND_CLASS_SECURITY_2, MAX_CMDCLASES_NSNI);
 	   }

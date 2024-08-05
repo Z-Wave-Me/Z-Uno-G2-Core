@@ -224,6 +224,10 @@ ZunoError_t TwoWire::_begin(int address, uint8_t scl, uint8_t sda, void *buffer,
 	ZunoWireI2CInit_t					init;
 	ZunoError_t							ret;
 	const ZunoWireI2CTypeConfig_t		*i2c_config;
+	#if defined(I2C_ROUTEPEN_SDAPEN) && defined(I2C_ROUTEPEN_SCLPEN)
+	#else
+	uint8_t								fd;
+	#endif
 
 	if (scl > ZUNO_PIN_LAST_INDEX || sda > ZUNO_PIN_LAST_INDEX)
 		return (ZunoErrorInvalidPin);
@@ -248,11 +252,21 @@ ZunoError_t TwoWire::_begin(int address, uint8_t scl, uint8_t sda, void *buffer,
 	pinMode(scl, gpioModeWiredAndPullUpFilter);/* Output value must be set to 1 to not drive lines low. Set SCL first, to ensure it is high before changing SDA. */
 	pinMode(sda, gpioModeWiredAndPullUpFilter);
 	i2c = i2c_config->i2c;
+	#if defined(I2C_ROUTEPEN_SDAPEN) && defined(I2C_ROUTEPEN_SCLPEN)
 	if (i2c == I2C0)
 		i2c->ROUTELOC0 = (getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, sda) << _I2C_ROUTELOC0_SDALOC_SHIFT) | (((getLocation(&WIRE_LOCATION[0], WIRE_LOCATION_SIZE, scl) -1) % WIRE_LOCATION_SIZE) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
 	else
 		i2c->ROUTELOC0 = ((sda == SDA1 ? 20 : 19) << _I2C_ROUTELOC0_SDALOC_SHIFT) | ((scl == SCL1 ? 18 : 19) << _I2C_ROUTELOC0_SCLLOC_SHIFT);
 	i2c->ROUTEPEN = I2C_ROUTEPEN_SDAPEN | I2C_ROUTEPEN_SCLPEN;
+	#else
+	if (i2c == I2C0)
+		fd = 0x0;
+	else
+		fd = 0x1;
+	GPIO->I2CROUTE[fd].SDAROUTE = (getRealPort(sda) << _GPIO_I2C_SDAROUTE_PORT_SHIFT | (getRealPin(sda) << _GPIO_I2C_SDAROUTE_PIN_SHIFT));
+	GPIO->I2CROUTE[fd].SCLROUTE =(getRealPort(scl) << _GPIO_I2C_SCLROUTE_PORT_SHIFT | (getRealPin(scl) << _GPIO_I2C_SCLROUTE_PIN_SHIFT));
+	GPIO->I2CROUTE[fd].ROUTEEN = GPIO_I2C_ROUTEEN_SDAPEN | GPIO_I2C_ROUTEEN_SCLPEN;
+	#endif
 	i2c->IEN = _I2C_IEN_RESETVALUE;
 	I2C_IntClear(i2c, _I2C_IF_MASK);
 	i2c->CTRL = I2C_CTRL_AUTOACK | I2C_CTRL_AUTOSN;

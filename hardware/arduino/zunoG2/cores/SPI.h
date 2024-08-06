@@ -8,7 +8,7 @@
 
 #define SPI_BUFFER_LENGTH				(64)
 
-#define SPI				SPI1
+#define SPI							SPI1
 
 #define SPI_CLOCK_DIV2				0x2
 #define SPI_CLOCK_DIV4				0x4
@@ -31,20 +31,38 @@
 #define SPI_FLAGS_CONST				0x1
 #define SPI_FLAGS_16BIT				0x2
 
-typedef struct								ZunoSpiUsartTypeConfig_s
+typedef enum								ZunoSpiType_s
 {
-	USART_TypeDef							*usart;
+	#if EUSART_COUNT >= 1
+	ZunoSpiTypeEusart,
+	#endif
+	ZunoSpiTypeUsart,
+}											ZunoSpiType_t;
+
+typedef struct								ZunoSpiConfig_s
+{
+	union
+	{
+		#if EUSART_COUNT >= 1
+		EUSART_TypeDef						*eusart;
+		#endif
+		#if USART_COUNT >= 1
+		USART_TypeDef						*usart;
+		#endif
+	};
 	ZunoSync_t								*lpLock;
 	void									(*IRQHandler)(uint32_t);
-	LDMA_PeripheralSignal_t						dmaSignalWrite;
-	LDMA_PeripheralSignal_t						dmaSignalRead;
+	LDMA_PeripheralSignal_t					dmaSignalWrite;
+	LDMA_PeripheralSignal_t					dmaSignalRead;
 	CMU_Clock_TypeDef						bus_clock;
 	uint8_t									sck;
 	uint8_t									miso;
 	uint8_t									mosi;
 	uint8_t									subType;
 	IRQn_Type								irqType;
-}											ZunoSpiUsartTypeConfig_t;
+	uint8_t									fd;
+	ZunoSpiType_t							type;
+}											ZunoSpiConfig_t;
 
 typedef struct								ZunoSpiSlave_s
 {
@@ -71,9 +89,32 @@ class SPISettings {
 	friend class SPIClass;
 };
 
+typedef enum							ZunoSpiNumConfig_s
+{
+	#if EUSART_COUNT >= 2
+	ZunoSpiEusart1,
+	#endif
+	#if EUSART_COUNT >= 1
+	ZunoSpiEusart0,
+	#endif
+	#if EUSART_COUNT >= 3
+	ZunoSpiEusart2,
+	#endif
+	#if USART_COUNT >= 1
+	ZunoSpiUsart0,
+	#endif
+	#if USART_COUNT >= 2
+	ZunoSpiUsart1,
+	#endif
+	#if USART_COUNT >= 3
+	ZunoSpiUsart2,
+	#endif
+	ZunoSpiLast
+}										ZunoSpiNumConfig_t;
+
 class SPIClass {
 	public:
-		SPIClass(uint8_t numberConfig);
+		SPIClass(ZunoSpiNumConfig_t numberConfig);
 		// Base Setup
 		void			begin(void);
 		ZunoError_t		begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
@@ -126,11 +167,8 @@ class SPIClass {
 		ZunoError_t											_transfer(void *b, size_t count, size_t bFlags);
 		static ZunoError_t									_init(size_t param);
 		static ZunoError_t									_deInit(size_t param);
-		static const ZunoSpiUsartTypeConfig_t				_configTable0;
-		static const ZunoSpiUsartTypeConfig_t				_configTable1;
-		static const ZunoSpiUsartTypeConfig_t				_configTable2;
 		static const USART_InitSync_TypeDef					_initSpi;
-		const ZunoSpiUsartTypeConfig_t						*_config;
+		const ZunoSpiConfig_t								*_config;
 		size_t												_baudrate;
 		ZunoSpiSlave_t										*_slave;
 		uint8_t												_ss_pin;

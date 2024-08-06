@@ -336,6 +336,7 @@ bool SpiFlashClass::_sendCommandAdd(size_t command, void *response, size_t len) 
 
 	if (this->_spi->beginTransaction(this->_clock, MSBFIRST, SPI_MODE0) != ZunoErrorOk)
 		return (this->_last_status(STATUS_TMP_FOR_REPLACE, false));
+	memset(response, 0xFF, len);
 	if (len == 0x0) {
 		response = &command;
 		len = 0x1;

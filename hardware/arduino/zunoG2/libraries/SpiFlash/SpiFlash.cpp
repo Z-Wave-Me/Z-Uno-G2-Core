@@ -25,7 +25,7 @@ static const SpiFlashClassDevice_t					_device_all[] =
 };
 
 /* Public Constructors */
-SpiFlashClass::SpiFlashClass(void): _device(0x0), _spi(&SPI), _clock(4000000), _sck(SCK), _miso(MISO), _mosi(MOSI), _ss(9), _addr_byte(0x2) {
+SpiFlashClass::SpiFlashClass(void): _device(0x0), _spi(&SPI), _clock(4000000), _sck(SCK), _miso(MISO), _mosi(MOSI), _ss(SS), _addr_byte(0x2) {
 }
 
 SpiFlashClass::SpiFlashClass(SPIClass *spi, uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss): _device(0x0), _spi(spi), _clock(4000000), _sck(sck), _miso(miso), _mosi(mosi), _ss(ss), _addr_byte(0x2) {

@@ -6,7 +6,7 @@
 #include "em_cmu.h"
 #include "em_usart.h"
 
-#define SPI_BUFFER_LENGTH				(64)
+#define SPI_BUFFER_LENGTH			(64)
 
 #define SPI							SPI1
 
@@ -91,15 +91,15 @@ class SPISettings {
 
 typedef enum							ZunoSpiNumConfig_s
 {
-	#if EUSART_COUNT >= 2
-	ZunoSpiEusart1,
-	#endif
-	#if EUSART_COUNT >= 1
-	ZunoSpiEusart0,
-	#endif
-	#if EUSART_COUNT >= 3
-	ZunoSpiEusart2,
-	#endif
+	// #if EUSART_COUNT >= 2
+	// ZunoSpiEusart1,
+	// #endif
+	// #if EUSART_COUNT >= 1
+	// ZunoSpiEusart0,
+	// #endif
+	// #if EUSART_COUNT >= 3
+	// ZunoSpiEusart2,
+	// #endif
 	#if USART_COUNT >= 1
 	ZunoSpiUsart0,
 	#endif
@@ -157,10 +157,16 @@ class SPIClass {
 		 
 	private:
 		inline USART_ClockMode_TypeDef						_convertMode(uint8_t mode);
-		static void											_USART0_IRQHandler(uint32_t flags);
-		static void											_USART1_IRQHandler(uint32_t flags);
-		static void											_USART2_IRQHandler(uint32_t flags);
+		#if USART_COUNT >= 1
 		void												_USART_IRQHandler(uint32_t flags);
+		static void											_USART0_IRQHandler(uint32_t flags);
+		#endif
+		#if USART_COUNT >= 2
+		static void											_USART1_IRQHandler(uint32_t flags);
+		#endif
+		#if USART_COUNT >= 3
+		static void											_USART2_IRQHandler(uint32_t flags);
+		#endif
 		inline int											_readLock(uint8_t bOffset);
 		size_t												_transferDate(size_t data, size_t bFlags);
 		ZunoError_t											_transferStrlen(void *b, size_t bFlags);
@@ -172,7 +178,9 @@ class SPIClass {
 		size_t												_baudrate;
 		ZunoSpiSlave_t										*_slave;
 		uint8_t												_ss_pin;
+		#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 		uint8_t												_ss_loc;
+		#endif
 		uint8_t												_sck_pin;
 		uint8_t												_mosi_pin;
 		uint8_t												_miso_pin;

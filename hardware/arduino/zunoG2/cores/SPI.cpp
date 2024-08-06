@@ -191,8 +191,14 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 					pinMode((this->_ss_pin == UNKNOWN_PIN) ? SS : this->_ss_pin, INPUT_UP);
 					pinMode(this->_mosi_pin, INPUT_UP);
 					pinMode(this->_miso_pin, OUTPUT_UP);
+					#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 					usart->ROUTELOC0 = usart->ROUTELOC0 | (this->_ss_loc << _USART_ROUTELOC0_CSLOC_SHIFT);// Set USART pin locations
 					usart->ROUTEPEN = USART_ROUTEPEN_CLKPEN | USART_ROUTEPEN_CSPEN | USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN;// Enable USART pins
+					#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+					GPIO->USARTROUTE[config->fd].ROUTEEN = GPIO_USART_ROUTEEN_RXPEN | GPIO_USART_ROUTEEN_TXPEN | GPIO_USART_ROUTEEN_CLKPEN | GPIO_USART_ROUTEEN_CSPEN;
+					#else
+						#error "SPI USART"
+					#endif
 					NVIC_ClearPendingIRQ(config->irqType);
 					NVIC_EnableIRQ(config->irqType);
 				}
@@ -216,8 +222,14 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 			pinMode(this->_ss_pin, OUTPUT_UP);
 		this->_slave = 0x0;
 		usart->CMD = USART_CMD_MASTEREN;
+		#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 		usart->ROUTELOC0 = usart->ROUTELOC0 & (~_USART_ROUTELOC0_CSLOC_MASK);
 		usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
+		#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+		GPIO->USARTROUTE[config->fd].ROUTEEN = GPIO_USART_ROUTEEN_RXPEN | GPIO_USART_ROUTEEN_TXPEN | GPIO_USART_ROUTEEN_CLKPEN;
+		#else
+			#error "SPI USART"
+		#endif
 		usart->IEN = _USART_IEN_RESETVALUE;
 		NVIC_DisableIRQ(config->irqType);
 		USART_Enable(usart, usartEnable);
@@ -227,16 +239,19 @@ ZunoError_t SPIClass::setSlave(uint8_t mode, uint16_t len) {
 }
 
 ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss) {
-	const ZunoSpiConfig_t		*config;
+	const ZunoSpiConfig_t				*config;
 	ZunoError_t							ret;
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	USART_TypeDef						*usart;
 	const uint8_t						*location_ptr;
 	size_t								location_sz;
 	size_t 								rx_loc;
 	size_t 								tx_loc;
 	size_t 								clk_loc;
+	#endif
 
 	config = this->_config;
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	usart = config->usart;
 	// The right place to check pin location is here, 'cause we haven't allocate SyncMasterHadwareSerial
 	// So we can throw pin error without extra code
@@ -254,6 +269,7 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 	clk_loc = getLocation(location_ptr, location_sz, sck);
 	if (sck == miso || sck == mosi || sck == ss || rx_loc == INVALID_PIN_INDEX || tx_loc == INVALID_PIN_INDEX || clk_loc == INVALID_PIN_INDEX)
 		return (ZunoErrorInvalidPin);
+	#endif
 	if ((ret = zunoSyncOpen(config->lpLock, SyncMasterSpi, this->_init, (size_t)this, &this->_lpKey)) != ZunoErrorOk)
 		return (ret);
 	pinMode(sck, OUTPUT_UP);//_GPIO_P_MODEL_MODE0_PUSHPULL
@@ -267,11 +283,20 @@ ZunoError_t SPIClass::begin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
 		pinMode(ss, OUTPUT_UP);
 	else
 		ss = SS;
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	rx_loc = rx_loc ? rx_loc - 1 : MAX_VALID_PINLOCATION;// Now we have to shift rx location back, it always stands before tx location
 	clk_loc = (clk_loc > 1) ? clk_loc - 2 : (clk_loc ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 1);
 	usart->ROUTELOC0 = tx_loc << _USART_ROUTELOC0_TXLOC_SHIFT | rx_loc << _USART_ROUTELOC0_RXLOC_SHIFT | clk_loc << _USART_ROUTELOC0_CLKLOC_SHIFT;
 	ss = getLocation(location_ptr, location_sz, ss);
 	this->_ss_loc = (ss > 2) ? ss - 3 : (ss ? MAX_VALID_PINLOCATION : MAX_VALID_PINLOCATION - 2);
+	#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+	GPIO->USARTROUTE[config->fd].TXROUTE = (getRealPort(mosi) << _GPIO_USART_TXROUTE_PORT_SHIFT) | (getRealPin(mosi) << _GPIO_USART_TXROUTE_PIN_SHIFT);
+	GPIO->USARTROUTE[config->fd].RXROUTE = (getRealPort(miso) << _GPIO_USART_RXROUTE_PORT_SHIFT) | (getRealPin(miso) << _GPIO_USART_RXROUTE_PIN_SHIFT);
+	GPIO->USARTROUTE[config->fd].CLKROUTE = (getRealPort(sck) << _GPIO_USART_CLKROUTE_PORT_SHIFT) | (getRealPin(sck) << _GPIO_USART_CLKROUTE_PIN_SHIFT);
+	GPIO->USARTROUTE[config->fd].CSROUTE = (getRealPort(ss) << _GPIO_USART_CSROUTE_PORT_SHIFT) | (getRealPin(ss) << _GPIO_USART_CSROUTE_PIN_SHIFT);
+	#else
+		#error "SPI USART"
+	#endif
 	zunoSyncReleseWrite(config->lpLock, SyncMasterSpi, &this->_lpKey);
 	return (ZunoErrorOk);
 }
@@ -428,18 +453,23 @@ USART_ClockMode_TypeDef SPIClass::_convertMode(uint8_t mode) {
 	return (out);
 }
 
-
+#if USART_COUNT >= 1
 void SPIClass::_USART0_IRQHandler(uint32_t flags) {
 	SPI0._USART_IRQHandler(flags);
 }
+#endif
 
+#if USART_COUNT >= 2
 void SPIClass::_USART1_IRQHandler(uint32_t flags) {
 	SPI1._USART_IRQHandler(flags);
 }
+#endif
 
+#if USART_COUNT >= 3
 void SPIClass::_USART2_IRQHandler(uint32_t flags) {
 	SPI2._USART_IRQHandler(flags);
 }
+#endif
 
 inline int SPIClass::_readLock(uint8_t bOffset) {
 	const ZunoSpiConfig_t				*config;
@@ -572,7 +602,13 @@ ZunoError_t SPIClass::_init(size_t param) {
 	CMU_ClockEnable(config->bus_clock, true);
 	usart = config->usart;
 	USART_InitSync(usart, &spi->_initSpi);
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	usart->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
+	#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+	GPIO->USARTROUTE[config->fd].ROUTEEN = GPIO_USART_ROUTEEN_RXPEN | GPIO_USART_ROUTEEN_TXPEN | GPIO_USART_ROUTEEN_CLKPEN;
+	#else
+		#error "SPI USART"
+	#endif
 	return (ZunoErrorOk);
 }
 
@@ -592,6 +628,12 @@ ZunoError_t SPIClass::_deInit(size_t param) {
 
 
 /* Preinstantiate Objects */
+#if EUSART_COUNT >= 3
+SPIClass SPI0 = SPIClass(ZunoSpiUsart0);
+extern SPIClass SPI1 __attribute__ ((alias("SPI0")));
+#endif
+#if USART_COUNT >= 3
 SPIClass SPI0 = SPIClass(ZunoSpiUsart0);
 SPIClass SPI1 = SPIClass(ZunoSpiUsart1);
 SPIClass SPI2 = SPIClass(ZunoSpiUsart2);
+#endif

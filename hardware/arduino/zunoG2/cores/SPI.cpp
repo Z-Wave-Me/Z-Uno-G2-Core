@@ -36,6 +36,7 @@ const USART_InitSync_TypeDef SPIClass::_initSpi = SPI_INIT_DEFAULT;//USART_INITS
 SPIClass::SPIClass(ZunoSpiNumConfig_t numberConfig): _baudrate(0), _slave(0x0), _lpKey(false) {
 	const ZunoSpiConfig_t				*config;
 
+	config = NULL;
 	switch (numberConfig) {
 		#if USART_COUNT >= 1
 		case ZunoSpiUsart0:

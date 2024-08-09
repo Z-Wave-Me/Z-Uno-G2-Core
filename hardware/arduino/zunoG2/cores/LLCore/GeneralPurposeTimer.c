@@ -120,6 +120,8 @@ static void _set_top_timer(uint16_t interval) {
 }
 
 static void _timer_handler(void) {
+	size_t						interval;
+
 	#if defined(GPT_TIMER_16_BIT)
 	uint8_t							count;
 	#endif
@@ -136,7 +138,10 @@ static void _timer_handler(void) {
 	if ((_flags & ZUNO_GPT_CYCLIC) == 0) {
 		TIMER_Enable(GPT_TIMER, false);
 	} else {
-		_set_top_timer(_interval);
+		if ((interval = _interval) != 0x0) {
+			_interval = 0x0;
+			_set_top_timer(interval);
+		}
 	}
 	zunoSysHandlerCall(ZUNO_HANDLER_GPT, ZUNO_GPT_BASIC);
 }
@@ -197,6 +202,7 @@ static void _zunoGPTEnable(uint8_t bEnable) {
 	if (bEnable == true) {
 		if ((interval = _interval) == 0x0)
 			interval = GPT_DEFAULT_INTERVAL;
+		_interval = 0x0;
 		_set_top_timer(interval);
 		if ((GPT_TIMER->STATUS & TIMER_STATUS_RUNNING) == 0x0)
 			TIMER_Enable(GPT_TIMER, true);
@@ -215,8 +221,9 @@ void zunoGPTEnable(uint8_t bEnable) {
 static void _zunoGPTSet(uint16_t interval) {
 	if (_freq_timer_clock == 0x0)
 		return ;
-	if ((_flags & ZUNO_GPT_IMWRITE) == 0) {
+	if ((_flags & ZUNO_GPT_IMWRITE) != 0x0 && interval != 0x0) {
 		_set_top_timer(interval);
+		return ;
 	}
 	_interval = interval;
 }

@@ -1,6 +1,25 @@
 #include "Arduino.h"
 #include "zuno_dac.h"
-#include "HardwareSerial.h"
+#include "zuno_gpio_bus_alloc.h"
+
+#if defined(_SILICON_LABS_32B_SERIES_2)
+static ZunoGpioBus_t _get_bus_type(uint8_t channel) {
+	ZunoGpioBus_t									type;
+
+	switch (channel) {
+		case 0x0:
+			type = ZunoGpioBusVdac0Ch0;
+			break ;
+		case 0x1:
+			type = ZunoGpioBusVdac0Ch1;
+			break ;
+		default:
+			type = ZunoGpioBusUnknown;
+			break ;
+	}
+	return (type);
+}
+#endif
 
 /* Public Constructors */
 ZunoDacClass::ZunoDacClass(void): _vRef(ZunoDacClassRef1V25), _init(false){
@@ -33,11 +52,20 @@ bool ZunoDacClass::write(uint8_t pin, float v) {
 
 bool ZunoDacClass::disable(uint8_t pin) {
 	uint8_t												i;
+	#if defined(_SILICON_LABS_32B_SERIES_2)
+	ZunoGpioBus_t										type;
+	#endif
 
 	if (pin == UNKNOWN_PIN)
 		return (false);
 	while (i < (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
 		if (this->_save[i].pin == pin) {
+			#if defined(_SILICON_LABS_32B_SERIES_2)
+			if ((type = _get_bus_type(i)) == ZunoGpioBusUnknown)
+				return (false);
+			if (zme_gpio_bus_free(pin, type) == false)
+				return (false);
+			#endif
 			this->_save[i].pin = UNKNOWN_PIN;
 			VDAC_Enable(VDAC0, i, false);
 			return (true);
@@ -105,10 +133,15 @@ bool ZunoDacClass::_get_values(ZunoDacClassChannelProcess_t *process, uint8_t pi
 bool ZunoDacClass::_write(ZunoDacClassChannelProcess_t *process) {
 	uint8_t											i;
 	VDAC_InitChannel_TypeDef						initChannel;
+	ZunoGpioBus_t									type;
 
 	if (this->_test_free_channel(process) == false)
 		return (false);
 	if (this->_save[process->channel].pin == UNKNOWN_PIN) {
+		if ((type = _get_bus_type(process->channel)) == ZunoGpioBusUnknown)
+			return (false);
+		if (zme_gpio_bus_alloc(process->pin, type) == false)
+			return (false);
 		initChannel = VDAC_INITCHANNEL_DEFAULT;
 		initChannel.highCapLoadEnable = false;
 		initChannel.powerMode = vdacPowerModeLowPower;
@@ -180,9 +213,6 @@ void ZunoDacClass::_dac_init(ZunoDacClassRef_t ref) {
 	init.onDemandClk = false;
 	init.reference = (VDAC_Ref_TypeDef)ref;
 	// // Allocate the analog bus for VDAC0 inputs
-	GPIO->ABUSALLOC |= (GPIO_ABUSALLOC_AEVEN0_VDAC0CH0 | GPIO_ABUSALLOC_AODD0_VDAC0CH0) | (GPIO_ABUSALLOC_AEVEN1_VDAC0CH1 | GPIO_ABUSALLOC_AODD1_VDAC0CH1);
-	GPIO->BBUSALLOC |= (GPIO_BBUSALLOC_BEVEN0_VDAC0CH0 | GPIO_BBUSALLOC_BODD0_VDAC0CH0) | (GPIO_BBUSALLOC_BEVEN1_VDAC0CH1 | GPIO_BBUSALLOC_BODD1_VDAC0CH1);
-	GPIO->CDBUSALLOC |= (GPIO_CDBUSALLOC_CDEVEN0_VDAC0CH0 | GPIO_CDBUSALLOC_CDODD0_VDAC0CH0) | (GPIO_CDBUSALLOC_CDEVEN1_VDAC0CH1 | GPIO_CDBUSALLOC_CDODD1_VDAC0CH1);
 	VDAC_Init(VDAC0, &init);
 }
 #endif

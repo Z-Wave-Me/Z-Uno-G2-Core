@@ -1,7 +1,6 @@
 #include "Arduino.h"
 #include "zuno_analog_read.h"
-
-#define ANALOG_READ_RESOLUTION_UNKNOWN				0x0
+#include "zuno_gpio_bus_alloc.h"
 
 #ifndef BATTERY_LOW
 #define BATTERY_LOW 2500
@@ -243,10 +242,6 @@ void zmeADCInit(void) {
 		CMU_ClockEnable(cmuClock_IADC0, true);
 		// Configure IADC clock source for use while in EM2
 		CMU_ClockSelectSet(cmuClock_IADCCLK, cmuSelect_FSRCO);
-		// Allocate the analog bus for ADC0 inputs
-		GPIO->ABUSALLOC |= (GPIO_ABUSALLOC_AEVEN0_ADC0 | GPIO_ABUSALLOC_AODD0_ADC0);
-		GPIO->BBUSALLOC |= (GPIO_BBUSALLOC_BEVEN0_ADC0 | GPIO_BBUSALLOC_BODD0_ADC0);
-		GPIO->CDBUSALLOC |= (GPIO_CDBUSALLOC_CDEVEN0_ADC0 | GPIO_CDBUSALLOC_CDODD0_ADC0);
 		ADCInitialized = true;
 	}
 }
@@ -308,55 +303,39 @@ static ZunoSync_t _sync = ZUNO_SYNC_INIT_DEFAULT_OPEN(SyncMasterAnalogRead);
 static volatile uint8_t _key = true;
 
 static uint8_t _adc_resolution = 10;
-
-#if defined(ADC_COUNT) && (ADC_COUNT > 0)
-static ADC_Ref_TypeDef _adc_reference = adcRef5V;
-#endif
-
-#if defined(IADC_COUNT) && (IADC_COUNT > 0)
-static IADC_CfgReference_t _adc_reference = iadcCfgReferenceInt1V2;
-#endif
+static ZUNO_ANALOG_READ_REFERENCE_STRUCT _adc_reference = ZUNO_ANALOG_READ_DEFAULT_REFERENCE;
 
 #define ANALOG_READ_ENTER()					zunoSyncLockWrite(&_sync, SyncMasterAnalogRead, &_key)
 #define ANALOG_READ_EXIT()					zunoSyncReleseWrite(&_sync, SyncMasterAnalogRead, &_key)
 
-static int _analogRead(uint8_t pin, uint8_t adc_resolution) {
-	static uint8_t								pin_old = UNKNOWN_PIN;
-	static uint8_t								adc_resolution_old = ANALOG_READ_RESOLUTION_UNKNOWN;
-	static ZUNO_ANALOG_READ_REFERENCE_STRUCT	reference_old = ZUNO_ANALOG_READ_DEFAULT_REFERENCE;
+static int _analogRead_add(uint8_t pin, uint8_t adc_resolution) {
 	uint32_t									sampleValue;
-	bool										update;
-	int											out;
-	ZUNO_ANALOG_READ_REFERENCE_STRUCT			reference;
 
-	if (ANALOG_READ_ENTER() != ZunoErrorOk)
-		return (0x0);
 	zmeADCInit();
-	if (adc_resolution == ANALOG_READ_RESOLUTION_UNKNOWN)
-		adc_resolution = _adc_resolution;
-	update = false;
-	if (pin_old != pin) {
-		pinMode(pin, INPUT);
-		pin_old = pin;
-		update = true;
-	}
-	if (adc_resolution_old != adc_resolution) {
-		adc_resolution_old = adc_resolution;
-		update = true;
-	}
-	reference = _adc_reference;
-	if (reference_old != reference) {
-		reference_old = reference;
-		update = true;
-	}
-	if (update == true)
-		_analogReadPeripheryConfig(pin, adc_resolution, reference);
+	pinMode(pin, INPUT);
+	#if defined(_SILICON_LABS_32B_SERIES_2)
+	if (zme_gpio_bus_alloc(pin, ZunoGpioBusAdc0) == false)
+		return (0x0);
+	#endif
+	_analogReadPeripheryConfig(pin, adc_resolution, _adc_reference);
 	sampleValue = _analogReadPeriphery();
 	#if defined(IADC_COUNT) && (IADC_COUNT > 0)
 	if (pin == BATTERY)
 		sampleValue = sampleValue * 0x4;
 	#endif
-	out = __oversampleValue(sampleValue, __adc_resolution2RealBits(adc_resolution), adc_resolution);
+	#if defined(_SILICON_LABS_32B_SERIES_2)
+	if (zme_gpio_bus_free(pin, ZunoGpioBusAdc0) == false)
+		return (0x0);
+	#endif
+	return (__oversampleValue(sampleValue, __adc_resolution2RealBits(adc_resolution), adc_resolution));
+}
+
+static int _analogRead(uint8_t pin, uint8_t adc_resolution) {
+	int											out;
+
+	if (ANALOG_READ_ENTER() != ZunoErrorOk)
+		return (0x0);
+	out = _analogRead_add(pin, adc_resolution);
 	ANALOG_READ_EXIT();
 	return (out);
 }
@@ -378,5 +357,5 @@ void analogReadResolution(uint8_t bits) {
 }
 
 int analogRead(uint8_t pin) {
-	return (_analogRead(pin, ANALOG_READ_RESOLUTION_UNKNOWN));
+	return (_analogRead(pin, _adc_resolution));
 }

@@ -421,8 +421,7 @@ bool PN7160Class::ppse(uint8_t index) {
 	return (this->_lastStatus(STATUS_SUCCESS, true));
 }
 
-
-bool PN7160Class::discoveryRestart(void) {
+bool PN7160Class::discoveryStop(void) {
 	static const PN7160ClassRfDeactivateCmd_t		deactivate_idle =
 	{
 		.header =
@@ -439,6 +438,14 @@ bool PN7160Class::discoveryRestart(void) {
 		;
 	if (this->_transceiveRsp(&deactivate_idle, &answer) == true)//Если еще карточка в зоне - то деактивируем
 		this->_wireReceive(&answer, PN7160_CLASS_TIMEOUT_1S);
+	detachInterrupt(this->_irq);
+	this->_irq_status = false;
+	return (this->_lastStatus(STATUS_SUCCESS, true));
+}
+
+bool PN7160Class::discoveryRestart(void) {
+	if (this->discoveryStop() == false)
+		return (false);
 	return (this->discovery());
 }
 

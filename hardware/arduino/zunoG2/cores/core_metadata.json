@@ -1,5 +1,5 @@
 {
-    "core_version":{"major":3,"minor":12,"branch":"beta"},
+    "core_version":{"major":3,"minor":13,"branch":"beta"},
     "load_offset":198656,
     "default_defs":"MODERN_MULTICHANNEL MODERN_MULTICHANNEL_S2 MODERN_MULTICHANNEL_S2_ALWAYS",
     "max_channel_ccs":2,

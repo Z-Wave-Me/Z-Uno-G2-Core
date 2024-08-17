@@ -1,8 +1,17 @@
 /*
  * ZUNO_CoreDefs.h
  *
- *  Created on: 30 нояб. 2020 г.
- *      Author: alexanderpolyakov
+ *  Created on: 30.11.2020
+ *  Author: Alexander Polyakov <polyakov@z-wave.me>
+ *
+ *  Copyright (c) 2024 Z-Wave.Me
+ *  All rights reserved
+ *  info@z-wave.me
+ *
+ *  This source file is subject to the terms and conditions of the
+ *  Z-Wave.Me Software License Agreement which restricts the manner
+ *  in which it may be used.
+ *
  */
 
 #ifndef SRC_ZUNO_COREDEFS_H_

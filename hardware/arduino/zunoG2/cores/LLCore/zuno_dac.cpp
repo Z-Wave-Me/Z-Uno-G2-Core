@@ -143,8 +143,8 @@ bool ZunoDacClass::_write(ZunoDacClassChannelProcess_t *process) {
 		if (zme_gpio_bus_alloc(process->pin, type) == false)
 			return (false);
 		initChannel = VDAC_INITCHANNEL_DEFAULT;
-		initChannel.highCapLoadEnable = false;
-		initChannel.powerMode = vdacPowerModeLowPower;
+		//initChannel.highCapLoadEnable = false;
+		//initChannel.powerMode = vdacPowerModeLowPower;
 		initChannel.auxOutEnable = true;
 		initChannel.mainOutEnable = false;
 		initChannel.port = process->vdac_port;

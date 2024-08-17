@@ -341,6 +341,7 @@ class PN7160Class {
 		uint8_t											ppsePaymentSystem(uint8_t index, void *buffer, uint8_t len);
 		bool											ppse(uint8_t index);
 		bool											discoveryRestart();
+		bool											discoveryStop();
 		void											infoWaitRemoval(void (*userFunc)(uint8_t) = 0x0);
 		uint8_t											infoDsfid(uint8_t index, void *buffer, uint8_t len);
 		uint8_t											infoAfi(uint8_t index, void *buffer, uint8_t len);

@@ -52,6 +52,7 @@ const ZunoCFGParameter_t *zunoCFGParameter(size_t param) {
 #define CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD					(true)
 #endif
 
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM1
 const ZunoCFGParameter_t SYSCFGPARAM1 =
 {
 	.name = "Debug mode",
@@ -66,6 +67,8 @@ const ZunoCFGParameter_t SYSCFGPARAM1 =
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM2
 const ZunoCFGParameter_t SYSCFGPARAM2 =
 {
 	.name = "Activity LED",
@@ -80,6 +83,8 @@ const ZunoCFGParameter_t SYSCFGPARAM2 =
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM7
 const ZunoCFGParameter_t SYSCFGPARAM7 =
 {
 	.name = "Security",
@@ -94,6 +99,8 @@ const ZunoCFGParameter_t SYSCFGPARAM7 =
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_SECURITY
 };
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM8
 const ZunoCFGParameter_t SYSCFGPARAM8 =
 {
 	.name = "RF logging",
@@ -107,7 +114,9 @@ const ZunoCFGParameter_t SYSCFGPARAM8 =
 	.altering = false,
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
-}; 
+};
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM9
 #if defined(SKETCH_FLAGS) and (SKETCH_FLAGS == HEADER_FLAGS_REBOOT_CFG)
 #pragma message "parameter 9 DEBUG version"
 const ZunoCFGParameter_t SYSCFGPARAM9 =
@@ -140,6 +149,8 @@ const ZunoCFGParameter_t SYSCFGPARAM9 =
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
 };
 #endif
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM11
 const ZunoCFGParameter_t SYSCFGPARAM11 =
 {
 	.name = "Multilevel report interval",
@@ -154,6 +165,8 @@ const ZunoCFGParameter_t SYSCFGPARAM11 =
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_ALL
 };
+#endif
+#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM20
 const ZunoCFGParameter_t SYSCFGPARAM20 =
 {
 	.name = "OTA confirmation",
@@ -168,23 +181,52 @@ const ZunoCFGParameter_t SYSCFGPARAM20 =
 	.advanced = true,
 	.hiden_search = CONFIGPARAMETERS_HIDEN_SEARCH_SYS_CERT_BUILD
 };
+#endif
 
 static const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 	switch(param){
 		case ZUNO_SYSCFGPARAM_DBG:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM1
 			return &SYSCFGPARAM1;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_ACTIVITY_LED:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM2
 			return &SYSCFGPARAM2;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_SECURITY:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM7
 			return &SYSCFGPARAM7;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_LOGGING:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM8
 			return &SYSCFGPARAM8;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_FREQUENCY:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM9
 			return &SYSCFGPARAM9;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_REPORT_TIME:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM11
 			return &SYSCFGPARAM11;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 		case ZUNO_SYSCFGPARAM_OTA_CONFIRM_PIN:
+			#ifndef CONFIGPARAMETERS_DEL_SYSCFGPARAM20
 			return &SYSCFGPARAM20;
+			#else
+			return (ZUNO_CFG_PARAMETER_UNKNOWN);
+			#endif
 	}
 	// Return user-defined callback result for user-defined parameters
 	return  zunoCFGParameter(param);

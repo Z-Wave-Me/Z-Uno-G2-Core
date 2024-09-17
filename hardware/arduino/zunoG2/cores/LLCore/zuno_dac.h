@@ -3,6 +3,7 @@
 
 #include "em_vdac.h"
 
+#if defined(_SILICON_LABS_32B_SERIES_2)
 typedef enum							ZunoDacClassRef_e
 {
 	ZunoDacClassRef1V25 = vdacRef1V25,
@@ -17,6 +18,7 @@ typedef struct							ZunoDacClassChannelProcess_s
 	#if defined(_SILICON_LABS_32B_SERIES_2)
 	uint8_t								real_pin;
 	VDAC_ChPortSel_t					vdac_port;
+	bool								alt;
 	#endif
 }										ZunoDacClassChannelProcess_t;
 
@@ -35,6 +37,7 @@ class ZunoDacClass {
 		bool									disable(uint8_t pin);
 
 	private:
+		inline bool								_test_already_channel(ZunoDacClassChannelProcess_t *process);
 		inline bool								_test_free_channel(ZunoDacClassChannelProcess_t *process);
 		inline bool								_write(ZunoDacClassChannelProcess_t *process);
 		inline bool								_get_values(ZunoDacClassChannelProcess_t *process, uint8_t pin, float v);
@@ -48,5 +51,6 @@ class ZunoDacClass {
 };
 
 extern ZunoDacClass DAC;
+#endif
 
 #endif//ZUNO_DAC_H

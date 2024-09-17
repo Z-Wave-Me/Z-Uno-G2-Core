@@ -19,8 +19,22 @@ static ZunoGpioBus_t _get_bus_type(uint8_t channel) {
 	}
 	return (type);
 }
+
+static uint8_t _get_bus_alt_channel(ZunoDacClassChannelProcess_t *process) {
+	uint8_t										real_pin;
+
+	if (process->vdac_port != vdacChPortB)
+		return (UNKNOWN_CHANNEL);
+	if ((real_pin = process->real_pin) == 0x0)
+		return (0x0);
+	if (real_pin == 0x1)
+		return (0x1);
+	return (UNKNOWN_CHANNEL);
+}
+
 #endif
 
+#if defined(_SILICON_LABS_32B_SERIES_2)
 /* Public Constructors */
 ZunoDacClass::ZunoDacClass(void): _vRef(ZunoDacClassRef1V25), _init(false){
 	size_t						i;
@@ -76,32 +90,43 @@ bool ZunoDacClass::disable(uint8_t pin) {
 }
 
 /* Private Methods */
-bool ZunoDacClass::_test_free_channel(ZunoDacClassChannelProcess_t *process) {
-	uint8_t												i;
-	uint8_t												i_free;
+bool ZunoDacClass::_test_already_channel(ZunoDacClassChannelProcess_t *process) {
 	uint8_t												n;
 
-	i = 0x0;
-	i_free = 0x0;
 	n = 0x0;
 	while (n < (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
-		if (this->_save[n].pin == process[i].pin) {
-			process[i].channel = n;
+		if (this->_save[n].pin == process->pin) {
+			process->channel = n;
 			break ;
 		}
 		n++;
 	}
-	if (n >= (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
-		while (i_free < (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
-			if (this->_save[i_free].pin == UNKNOWN_PIN) {
-				process[i].channel = i_free;
-				break ;
-			}
-			i_free++;
-		}
-		if (i_free >= (sizeof(this->_save) / sizeof(this->_save[0x0])))
-			return (false);
+	if (n < (sizeof(this->_save) / sizeof(this->_save[0x0])))
+		return (true);
+	return (false);
+}
+
+bool ZunoDacClass::_test_free_channel(ZunoDacClassChannelProcess_t *process) {
+	uint8_t												i_free;
+	uint8_t												alt_channel;
+
+	alt_channel = _get_bus_alt_channel(process);
+	if (alt_channel != UNKNOWN_CHANNEL && alt_channel < (sizeof(this->_save) / sizeof(this->_save[0x0])) && this->_save[alt_channel].pin == UNKNOWN_PIN) {
+		process->channel = alt_channel;
+		process->alt = true;
+		return (true);
 	}
+	process->alt = false;
+	i_free = 0x0;
+	while (i_free < (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
+		if (this->_save[i_free].pin == UNKNOWN_PIN) {
+			process->channel = i_free;
+			break ;
+		}
+		i_free++;
+	}
+	if (i_free >= (sizeof(this->_save) / sizeof(this->_save[0x0])))
+		return (false);
 	return (true);
 }
 
@@ -135,32 +160,38 @@ bool ZunoDacClass::_write(ZunoDacClassChannelProcess_t *process) {
 	VDAC_InitChannel_TypeDef						initChannel;
 	ZunoGpioBus_t									type;
 
-	if (this->_test_free_channel(process) == false)
-		return (false);
-	if (this->_save[process->channel].pin == UNKNOWN_PIN) {
-		if ((type = _get_bus_type(process->channel)) == ZunoGpioBusUnknown)
-			return (false);
-		if (zme_gpio_bus_alloc(process->pin, type) == false)
-			return (false);
-		initChannel = VDAC_INITCHANNEL_DEFAULT;
-		//initChannel.highCapLoadEnable = false;
-		//initChannel.powerMode = vdacPowerModeLowPower;
-		initChannel.auxOutEnable = true;
-		initChannel.mainOutEnable = false;
-		initChannel.port = process->vdac_port;
-		initChannel.pin = process->real_pin;
-		VDAC_InitChannel(VDAC0, &initChannel, process->channel);
-		VDAC_Enable(VDAC0, process->channel, true);
-		this->_save[process->channel].value = process->value;
-		this->_save[process->channel].pin = process->pin;
-	}
-	else {
+	if (this->_test_already_channel(process) == true) {
 		if (this->_save[process->channel].value == process->value)
 			return (true);
 		this->_save[process->channel].value = process->value;
 		VDAC_ChannelOutputSet(VDAC0, process->channel, process->value);
 		return (true);
 	}
+	if (this->_test_free_channel(process) == false)
+		return (false);
+	if (process->alt == false) {
+		if ((type = _get_bus_type(process->channel)) == ZunoGpioBusUnknown)
+			return (false);
+		if (zme_gpio_bus_alloc(process->pin, type) == false)
+			return (false);
+	}
+	initChannel = VDAC_INITCHANNEL_DEFAULT;
+	//initChannel.highCapLoadEnable = false;
+	//initChannel.powerMode = vdacPowerModeLowPower;
+	if (process->alt == true) {
+		initChannel.auxOutEnable = false;
+		initChannel.mainOutEnable = true;
+	}
+	else {
+		initChannel.auxOutEnable = true;
+		initChannel.mainOutEnable = false;
+		initChannel.port = process->vdac_port;
+		initChannel.pin = process->real_pin;
+	}
+	VDAC_InitChannel(VDAC0, &initChannel, process->channel);
+	VDAC_Enable(VDAC0, process->channel, true);
+	this->_save[process->channel].value = process->value;
+	this->_save[process->channel].pin = process->pin;
 	i = 0x0;
 	while (i < (sizeof(this->_save) / sizeof(this->_save[0x0]))) {
 		if (this->_save[i].pin != UNKNOWN_PIN) {
@@ -218,3 +249,4 @@ void ZunoDacClass::_dac_init(ZunoDacClassRef_t ref) {
 #endif
 
 ZunoDacClass DAC = ZunoDacClass();
+#endif

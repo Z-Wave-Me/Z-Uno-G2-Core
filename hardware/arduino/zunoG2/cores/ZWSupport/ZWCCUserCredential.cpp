@@ -29,7 +29,7 @@ static_assert(USER_CREDENTIAL_NUMBER <= 0xFFFF && USER_CREDENTIAL_NUMBER >= 0x1,
 static_assert(USER_CREDENTIAL_NUMBER_PIN_CODE <= 0xFFFF && USER_CREDENTIAL_NUMBER_PIN_CODE >= 0x1, "USER_CREDENTIAL_NUMBER_PIN_CODE - max 0xFFFF and min 0x1!!!");
 static_assert(USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT >= 0x1, "USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT - min 0x1!!!");
 static_assert(USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT <= 0xFFFF, "USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT - max 0xFFFF!!!");
-static_assert(USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT < USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT, "Must USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT < USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT!!!");
+static_assert(USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT <= USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT, "Must USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT < USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT!!!");
 #endif
 #if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
 static_assert(USER_CREDENTIAL_NUMBER_PASSWORD <= 0xFFFF && USER_CREDENTIAL_NUMBER_PASSWORD >= 0x1, "USER_CREDENTIAL_NUMBER_PASSWORD - max 0xFFFF and min 0x1!!!");
@@ -1132,5 +1132,51 @@ int zuno_CCUserCredentialHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketRepo
 	(void)cmd;
 	(void)frame_report;
 }
+
+
+static bool _user_credential_find_key(const uint8_t *CredentialData, uint8_t CredentialLength, UserCredentialSaveCredential_t *credential, const UserCredentialSaveArg_t *arg) {
+	uint16_t													crc16;
+
+	crc16 = CrcClass::crc16_ccitt_aug(credential, sizeof(credential[0x0]) + arg->CredentialLengthMax);
+	credential->CredentialLength = CredentialLength;
+	memcpy(&credential->CredentialData[0x0], CredentialData, CredentialLength);
+	memset(&credential->CredentialData[CredentialLength], 0x0, arg->CredentialLengthMax - CredentialLength);
+	crc16 = CrcClass::crc16_ccitt_aug(&credential->CredentialData[0x0], arg->CredentialLengthMax);
+	if (_credential_test_uniq(crc16) == true)
+		return (true);
+	return (false);
+}
+
+
+bool user_credential_find_key(const uint8_t *CredentialData, uint8_t CredentialLength) {
+	uint8_t											UserUniqueIdentifier;
+	uint8_t											CredentialType;
+	uint32_t										addr;
+	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+	uint8_t											PIN_CODE[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT)];
+	#endif
+	UserCredentialSaveCredential_t					*credential;
+	const UserCredentialSaveArg_t					*arg;
+
+	UserUniqueIdentifier = 0x1;
+	CredentialType = USER_CREDENTIAL_TYPE_PIN_CODE;
+	switch (CredentialType) {
+		#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PIN_CODE)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_PASSWORD)
+		USER_CREDENTIAL_SWTCH_SET_ARG(PASSWORD)
+		#endif
+		#if defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
+		USER_CREDENTIAL_SWTCH_SET_ARG(RFID_CODE)
+		#endif
+		default:
+			return (false);
+			break ;
+	}
+	return (_user_credential_find_key(CredentialData, CredentialLength, credential, arg));
+	(void)addr;
+}
+
 
 #endif//WITH_CC_USER_CREDENTIAL

@@ -36,9 +36,15 @@ bool ZMEVirtButtons::isReleased(uint8_t channel) {
     return !isChannelPressed(channel, d);
 }
 bool ZMEVirtButtons::isIdled(uint8_t channel) {
+    ZMEButtonState_t               *s;
+    uint8_t                         st;
+
     zunoEnterCritical();
-    ZMEButtonState_t * s  = _extractChannelState(channel);
-    uint8_t st = s->state;
+    s  = _extractChannelState(channel);
+    if (s != NULL)
+        st = s->state;
+    else
+        st = ZMEBUTTON_STATE_IDLE;
     zunoExitCritical();
     return st == ZMEBUTTON_STATE_IDLE;
 }

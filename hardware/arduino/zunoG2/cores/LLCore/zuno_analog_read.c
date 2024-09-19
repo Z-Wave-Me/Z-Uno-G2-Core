@@ -18,6 +18,8 @@ uint8_t defaultBatteryHandler(void) {
     res >>= 12;
     if(res >= BATTERY_HIGH)
         return 100; 
+	if(res <= BATTERY_LOW)
+	    return 0;
     res -= BATTERY_LOW;
     res *= 100;
     return res / (BATTERY_HIGH - BATTERY_LOW);

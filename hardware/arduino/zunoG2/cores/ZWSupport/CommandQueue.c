@@ -201,48 +201,47 @@ void ZWQProcess(){
         }
         
         if(p->flags & ZUNO_PACKETFLAGS_GROUP){
-            #ifdef LOGGING_DBG
-		    LOGGING_UART.print(millis());
-		    LOGGING_UART.print("*** GROUP:");
-            LOGGING_UART.print(p->dst_node);
-            LOGGING_UART.print(" I:");
-            LOGGING_UART.print(p->dst_zw_channel);
-            LOGGING_UART.println(" PKG");
-		    #endif
-            // Send that packet to group
-            // Extract node from association storage
-            zunoExtractGroupNode(p->dst_node, p->dst_zw_channel, &node);
-            #ifdef LOGGING_DBG
-		    LOGGING_UART.print("*** NODE ID:");
-            LOGGING_UART.print(node.dest_nodeid);
-            LOGGING_UART.print(" channel:");
-            LOGGING_UART.println(node.dest_nodeid);
-		    #endif
-            if(node.dest_nodeid == 0){
-                // There is no more data for this group
-                processed_indexes[processed_indexes_cnt++] = qi;
+            while (true) {
                 if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
                     break;
-                continue;
-            } 
-            // Save group attributes
-            uint16_t tmp = p->dst_node;
-            uint8_t tmp_ch = p->dst_zw_channel;
-            uint8_t tmp_flags = p->flags;
-            // Copy Node id of specific device
-            p->dst_node = node.dest_nodeid;
-            p->dst_zw_channel = node.dest_channel;
-            p->zw_rx_secure_opts = node.security_level;
-            p->flags &= ~(ZUNO_PACKETFLAGS_GROUP);
-            // Send package to target device
-            _ZWQSend(p);
-            // Restore group attributes 
-            p->dst_node = tmp;
-            p->dst_zw_channel = tmp_ch + 1;
-            p->flags = tmp_flags;
-            processed_indexes[processed_indexes_cnt++] = qi;
-            if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
-                break;
+                #ifdef LOGGING_DBG
+                LOGGING_UART.print(millis());
+                LOGGING_UART.print("*** GROUP:");
+                LOGGING_UART.print(p->dst_node);
+                LOGGING_UART.print(" I:");
+                LOGGING_UART.print(p->dst_zw_channel);
+                LOGGING_UART.println(" PKG");
+                #endif
+                // Send that packet to group
+                // Extract node from association storage
+                zunoExtractGroupNode(p->dst_node, p->dst_zw_channel, &node);
+                #ifdef LOGGING_DBG
+                LOGGING_UART.print("*** NODE ID:");
+                LOGGING_UART.print(node.dest_nodeid);
+                LOGGING_UART.print(" channel:");
+                LOGGING_UART.println(node.dest_channel);
+                #endif
+                if(node.dest_nodeid == 0){
+                    // There is no more data for this group
+                    processed_indexes[processed_indexes_cnt++] = qi;
+                    break ;
+                } 
+                // Save group attributes
+                uint16_t tmp = p->dst_node;
+                uint8_t tmp_ch = p->dst_zw_channel;
+                uint8_t tmp_flags = p->flags;
+                // Copy Node id of specific device
+                p->dst_node = node.dest_nodeid;
+                p->dst_zw_channel = node.dest_channel;
+                p->zw_rx_secure_opts = node.security_level;
+                p->flags &= ~(ZUNO_PACKETFLAGS_GROUP);
+                // Send package to target device
+                _ZWQSend(p);
+                // Restore group attributes 
+                p->dst_node = tmp;
+                p->dst_zw_channel = tmp_ch + 1;
+                p->flags = tmp_flags;
+            }
         } else {
             _ZWQSend(p);
             processed_indexes[processed_indexes_cnt++] = qi;

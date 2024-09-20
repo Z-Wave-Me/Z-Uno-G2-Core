@@ -39,9 +39,12 @@ zuno2.build.pid=0xea60
 zuno2.build.usb_product="Z-UNO2"
 zuno2.build.extra_flags=
 
-zuno2.menu.Frequency.Ru = Russian
+
 zuno2.menu.Frequency.Eu = Europe
+zuno2.menu.Frequency.LR_EU = Europe Long Range 
 zuno2.menu.Frequency.Us = USA
+zuno2.menu.Frequency.LR_US1 = USA Long Range 
+zuno2.menu.Frequency.Ru = Russian
 zuno2.menu.Frequency.In = India
 zuno2.menu.Frequency.Il = Israel
 zuno2.menu.Frequency.ANz = Australia & New Zealand, Brazil
@@ -49,8 +52,6 @@ zuno2.menu.Frequency.Ch = China
 zuno2.menu.Frequency.Hk = Hong Kong
 zuno2.menu.Frequency.Jp = Japan
 zuno2.menu.Frequency.Kr = Korea
-zuno2.menu.Frequency.LR_US1 = USA Long Range 
-
 
 zuno2.menu.Frequency.Ru.build.rf_freq = RU
 zuno2.menu.Frequency.Eu.build.rf_freq = EU
@@ -63,6 +64,7 @@ zuno2.menu.Frequency.Hk.build.rf_freq = HK
 zuno2.menu.Frequency.Jp.build.rf_freq = JP
 zuno2.menu.Frequency.Kr.build.rf_freq = KR
 zuno2.menu.Frequency.LR_US1.build.rf_freq = US_LR 
+zuno2.menu.Frequency.LR_EU.build.rf_freq = EU_LR
 
 # -----------------------------------------------
 # removed due to certification issue

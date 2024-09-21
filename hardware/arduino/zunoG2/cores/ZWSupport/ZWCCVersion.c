@@ -34,8 +34,6 @@
 #include "ZWCCTime.h"
 #include "ZWCCUserCredential.h"
 
-byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd);
-
 static const uint8_t zuno_CCVesrions[] = {
   COMMAND_CLASS_APPLICATION_STATUS, APPLICATION_STATUS_VERSION,
   COMMAND_CLASS_ZWAVEPLUS_INFO, ZWAVEPLUS_INFO_VERSION,
@@ -73,7 +71,7 @@ static const uint8_t zuno_CCVesrions[] = {
   COMMAND_CLASS_METER, METER_VERSION,
   #endif
   #ifdef WITH_CC_METER_TBL_MONITOR
-  COMMAND_CLASS_METER_TBL_MONITOR, METER_TBL_VERSION,
+  COMMAND_CLASS_METER_TBL_MONITOR, METER_TBL_MONITOR_VERSION,
   #endif
   #ifdef WITH_CC_DOORLOCK
   COMMAND_CLASS_DOOR_LOCK, DOOR_LOCK_VERSION,
@@ -145,9 +143,9 @@ static uint8_t extractVersionFromCCList(uint8_t cc, uint8_t * ccs, uint8_t ccs_l
 	}
 	return 0;
 }
-static int _class_get(ZUNOCommandPacket_t *packet, ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _class_get(const ZUNOCommandCmd_t *packet, ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME		*report;
-	report = (ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME *)frame_report->packet.cmd;
+	report = (ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME *)frame_report->info.packet.cmd;
 	
 	report->requestedCommandClass = cmd->requestedCommandClass;
 	report->commandClassVersion = 0;
@@ -158,27 +156,27 @@ static int _class_get(ZUNOCommandPacket_t *packet, ZW_VERSION_COMMAND_CLASS_GET_
 	{
 		report->commandClassVersion = extractVersionFromCCList(report->requestedCommandClass, (uint8_t*)zuno_CCVesrions, sizeof(zuno_CCVesrions));
 	}
-	frame_report->packet.len = sizeof(ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME);
-	zunoSendZWPackage(&frame_report->packet);
+	frame_report->info.packet.len = sizeof(ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME);
+	zunoSendZWPackageAdd(frame_report);
 	return (ZUNO_COMMAND_PROCESSED);
 	(void)packet;
 }
 extern ZUNOCodeHeader_t g_zuno_codeheader;
-int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCVersionHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	switch(ZW_CMD){
 		case VERSION_COMMAND_CLASS_GET:
 			return _class_get(cmd, (ZW_VERSION_COMMAND_CLASS_GET_V3_FRAME *)cmd->cmd, frame_report);
     case VERSION_GET:{
-      frame_report->packet.cmd[2] = VERSION_LIBRARY_TYPE_SLAVE;
-      frame_report->packet.cmd[3] = ZWAVE_SDK_VERSION_MAJOR;
-      frame_report->packet.cmd[4] = ZWAVE_SDK_VERSION_MINOR;
-      frame_report->packet.cmd[5] = g_zuno_codeheader.version_major;
-      frame_report->packet.cmd[6] = g_zuno_codeheader.version_minor;
-      frame_report->packet.cmd[7] = g_zuno_sys->fw_static_header->hw_id & 0xFF;
-      frame_report->packet.cmd[8] = g_zuno_codeheader.ota_firmwares_count;
-      uint8_t * p_versions = frame_report->packet.cmd+9;
+      frame_report->info.packet.cmd[2] = VERSION_LIBRARY_TYPE_SLAVE;
+      frame_report->info.packet.cmd[3] = ZWAVE_SDK_VERSION_MAJOR;
+      frame_report->info.packet.cmd[4] = ZWAVE_SDK_VERSION_MINOR;
+      frame_report->info.packet.cmd[5] = g_zuno_codeheader.version_major;
+      frame_report->info.packet.cmd[6] = g_zuno_codeheader.version_minor;
+      frame_report->info.packet.cmd[7] = g_zuno_sys->fw_static_header->hw_id & 0xFF;
+      frame_report->info.packet.cmd[8] = g_zuno_codeheader.ota_firmwares_count;
+      uint8_t * p_versions = frame_report->info.packet.cmd+9;
       if((g_zuno_codeheader.flags & HEADER_FLAGS_NOSKETCH_OTA) == 0){
-        frame_report->packet.cmd[8] += 1;
+        frame_report->info.packet.cmd[8] += 1;
         p_versions[0] = g_zuno_codeheader.sketch_version >> 8;
         p_versions[1] = g_zuno_codeheader.sketch_version & 0xFF;
         p_versions += 2;
@@ -188,14 +186,14 @@ int zuno_CCVersionHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *f
         p_versions[0] = v >> 8;
         p_versions[1] = v & 0xFF;
       }
-      frame_report->packet.len = p_versions - frame_report->packet.cmd;
-      zunoSendZWPackage(&frame_report->packet);
+      frame_report->info.packet.len = p_versions - frame_report->info.packet.cmd;
+      zunoSendZWPackageAdd(frame_report);
       return ZUNO_COMMAND_PROCESSED;
     }
     case VERSION_CAPABILITIES_GET:
-      frame_report->packet.cmd[2] = VERSION_CAPABILITIES_REPORT_PROPERTIES1_VERSION_BIT_MASK | VERSION_CAPABILITIES_REPORT_PROPERTIES1_COMMAND_CLASS_BIT_MASK;
-      frame_report->packet.len = 3;
-      zunoSendZWPackage(&frame_report->packet);
+      frame_report->info.packet.cmd[2] = VERSION_CAPABILITIES_REPORT_PROPERTIES1_VERSION_BIT_MASK | VERSION_CAPABILITIES_REPORT_PROPERTIES1_COMMAND_CLASS_BIT_MASK;
+      frame_report->info.packet.len = 3;
+      zunoSendZWPackageAdd(frame_report);
       return ZUNO_COMMAND_PROCESSED;
 		default:
 			return ZUNO_UNKNOWN_CMD;

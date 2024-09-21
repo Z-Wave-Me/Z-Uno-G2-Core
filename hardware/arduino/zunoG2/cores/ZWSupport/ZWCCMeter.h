@@ -214,8 +214,8 @@ typedef struct								ZwMeterReportV6Frame_s
 	uint8_t									meterValue[];
 }											ZwMeterReportV6Frame_t;
 
-int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report);
-int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket);
+int zuno_CCMeterHandler(byte channel, const ZUNOCommandCmd_t * cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCMeterReport(byte channel, const ZUNOCommandCmd_t *paket, ZUNOCommandPacket_t *report_paket);
 
 uint8_t __meter_get_scale(const ZwMeterReportV6Frame_t *report);
 

@@ -60,11 +60,11 @@ static void _send(uint8_t cmd) {
 	ZUNOCommandPacketReport_t								frame;
 
 	fillOutgoingReportPacketAsync(&frame, 0x0);
-	report = (ZwCCTimeGet_t *)&frame.packet.cmd[0x0];
+	report = (ZwCCTimeGet_t *)&frame.info.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_TIME;
 	report->cmd = cmd;
-	frame.packet.len = sizeof(report[0x0]);
-	zunoSendZWPackage(&frame.packet);
+	frame.info.packet.len = sizeof(report[0x0]);
+	zunoSendZWPackageAdd(&frame);
 }
 
 static int _time_data_report(const ZwCCTimeDateReport_t *in) {
@@ -131,7 +131,7 @@ static int _time_time_report(const ZwCCTimeTimeReport_t *in) {
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCTimeHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CCTimeHandler(const ZUNOCommandCmd_t *cmd) {
 	int								rs;
 
 	switch (ZW_CMD) {

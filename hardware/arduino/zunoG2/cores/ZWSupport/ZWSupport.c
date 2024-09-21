@@ -305,7 +305,7 @@ bool compare_zw_channel(byte ch, byte targ) {
 		return true;
 	return false;
 }
-byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
+byte zuno_findTargetChannel(ZUNOCommandCmd_t * cmd) {
 	byte i;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print("N_CH=");
@@ -320,7 +320,10 @@ byte zuno_findTargetChannel(ZUNOCommandPacket_t * cmd) {
 	return UNKNOWN_CHANNEL;
 }
 
-bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst){
+bool fillOutgoingRawPacket(ZUNOCommandPacket_t *info, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst){
+	ZUNOCommandCmd_t					*p;
+
+	p = &info->packet;
 	bool res = true;
 	memset(p, 0, sizeof(ZUNOCommandPacket_t));
 	memset(d, 0, MAX_ZW_PACKAGE);
@@ -334,23 +337,23 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uin
 								 // In most cases it uses highest avaliable level
 	return res;
 }
-static void _fillOutgoingPacket(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static void _fillOutgoingPacket(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	
-	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], 0, QUEUE_CHANNEL_SYNC, cmd->src_node);
-	frame_report->packet.cmd[0] = cmd->cmd[0];  // the same command class
-	frame_report->packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
+	fillOutgoingRawPacket(&frame_report->info, &frame_report->data[0x0], 0, QUEUE_CHANNEL_SYNC, cmd->src_node);
+	frame_report->info.packet.cmd[0] = cmd->cmd[0];  // the same command class
+	frame_report->info.packet.cmd[1] = cmd->cmd[1]+1; // in most cases report = get+1
 	// Reply as we were asked
-	frame_report->packet.src_zw_channel    = cmd->dst_zw_channel;
-	frame_report->packet.dst_zw_channel    = cmd->src_zw_channel;
+	frame_report->info.packet.src_zw_channel    = cmd->dst_zw_channel;
+	frame_report->info.packet.dst_zw_channel    = cmd->src_zw_channel;
 
 }
 
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) {
-	fillOutgoingRawPacket(&frame->packet, frame->data, ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
+	fillOutgoingRawPacket(&frame->info, frame->data, ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
 }
 
 #ifdef LOGGING_UART
-void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd){
+void zuno_dbgdumpZWPacakge(const ZUNOCommandCmd_t * cmd){
 	
 	LOGGING_UART.print(" SRC_ID:");
 	LOGGING_UART.print(cmd->src_node);
@@ -391,7 +394,7 @@ uint8_t *zuno_AddCommonClass(uint8_t *b) {
 }
 
 // Non multiinstance classes like CCConfiguration/AGI/Association and etc we have to dispatch here...
-static uint8_t _multiinstance(ZUNOCommandPacket_t *cmd, int *out, ZUNOCommandPacketReport_t *frame_report) {
+static uint8_t _multiinstance(const ZUNOCommandCmd_t *cmd, int *out, ZUNOCommandPacketReport_t *frame_report) {
 	int result = ZUNO_UNKNOWN_CMD;
 
 	switch(ZW_CMD_CLASS) {
@@ -916,7 +919,7 @@ void zunoCommitCfg(){
 	#endif
     zunoSysCall(ZUNO_SYSFUNC_COMMIT_ZWAVEDATA, 0);
 }
-static bool _zunoS2PkgFilter(const ZUNOCommandPacket_t *cmd){
+static bool _zunoS2PkgFilter(const ZUNOCommandCmd_t *cmd){
 	uint8_t								s2level;
 	uint8_t								rx_s2level;
 
@@ -961,7 +964,7 @@ int __zuno_CommandHandler_Out(int rs){
 	g_rcv_context.source_node_id = 0;
 	return rs;
 }
-int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
+int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 	ZUNOCommandPacketReport_t							frame_report;
 	int													result;
 	// delay(10); // TST!
@@ -1104,7 +1107,7 @@ int zuno_CommandHandler(ZUNOCommandPacket_t *cmd) {
 	result = zuno_CCSupervisionReportSyncDefault(&frame_report, result);
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
-		zunoSendZWPackage(&frame_report.packet);
+		zunoSendZWPackageAdd(&frame_report);
 	}
 	return __zuno_CommandHandler_Out(result);
 }
@@ -1399,52 +1402,52 @@ void zunoSendReportHandler(uint32_t ticks) {
 		switch(ZUNO_CFG_CHANNEL(ch).type) {
 			#ifdef WITH_CC_SWITCH_BINARY
 			case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchBinaryReport(ch, &frame.packet);
+				rs = zuno_CCSwitchBinaryReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_MULTILEVEL
 			case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchMultilevelReport(ch, &frame.packet);
+				rs = zuno_CCSwitchMultilevelReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchColorReport(ch, NULL, &frame.packet);
+				rs = zuno_CCSwitchColorReport(ch, NULL, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_WINDOW_COVERING
 			case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
-				rs = zuno_CCWindowCoveringReport(ch, &frame.packet);
+				rs = zuno_CCWindowCoveringReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_SOUND_SWITCH
 			case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
-				rs = zuno_CCSoundSwitchReport(ch, &frame.packet);
+				rs = zuno_CCSoundSwitchReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_DOORLOCK
 			case ZUNO_DOORLOCK_CHANNEL_NUMBER:
-				rs = zuno_CCDoorLockReport(ch, &frame.packet);
+				rs = zuno_CCDoorLockReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_NOTIFICATION
 			case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
-				rs = __zuno_CCNotificationReport(ch, NULL, &frame.packet);
+				rs = __zuno_CCNotificationReport(ch, NULL, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_SENSOR_MULTILEVEL
 			case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
-				rs = zuno_CCSensorMultilevelReport(ch, &frame.packet);
+				rs = zuno_CCSensorMultilevelReport(ch, &frame.info);
 				break;
 			#endif
 			#ifdef WITH_CC_METER
 			case ZUNO_METER_CHANNEL_NUMBER:
-				rs = zuno_CCMeterReport(ch, NULL, &frame.packet);
+				rs = zuno_CCMeterReport(ch, NULL, &frame.info);
 				break;
 			#endif
 			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				rs = zuno_CCThermostatReport(ch, &frame.packet);
+				rs = zuno_CCThermostatReport(ch, &frame.info);
 				break;
 			#endif
 			default:
@@ -1457,8 +1460,8 @@ void zunoSendReportHandler(uint32_t ticks) {
 		if(rs == ZUNO_COMMAND_ANSWERED){
 			node_id_t					node;
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
-			memcpy(&frame.packet.aux_data[0], &node, sizeof(node));
-			zunoSendZWPackage(&frame.packet);
+			memcpy(&frame.info.packet.aux_data[0], &node, sizeof(node));
+			zunoSendZWPackageAdd(&frame);
 			return; // Only one report along one call
 		}
 		
@@ -1492,7 +1495,12 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
 	ZWQPushPackage(pkg);
-}	
+}
+
+void zunoSendZWPackageAdd(ZUNOCommandPacketReport_t *frame) {
+	zunoSendZWPackage(&frame->info);
+}
+
 uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
 	uint32_t res = 0;
 	while(sz){
@@ -1529,14 +1537,14 @@ static uint8_t DEPRECATED_RF_EVENTS[] = {
 
 void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id){
 	ZUNOCommandPacketReport_t			frame;
-	fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_TEST | QUEUE_CHANNEL_CONTROL, dst_node_id);
+	fillOutgoingRawPacket(&frame.info, frame.data, 0, ZUNO_PACKETFLAGS_TEST | QUEUE_CHANNEL_CONTROL, dst_node_id);
 	//frame.packet.flags |= ZUNO_PACKETFLAGS_TEST
-    frame.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
-    frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
-	frame.packet.len = 2 + len;
-	frame.packet.zw_rx_secure_opts = 0;
-	memcpy(&frame.packet.cmd[2], (uint8_t*)data, len);
-	zunoSendZWPackage(&frame.packet);
+    frame.info.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
+    frame.info.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
+	frame.info.packet.len = 2 + len;
+	frame.info.packet.zw_rx_secure_opts = 0;
+	memcpy(&frame.info.packet.cmd[2], (uint8_t*)data, len);
+	zunoSendZWPackageAdd(&frame);
 }
 void zunoRFLogger(ZUNOSysEvent_t * ev){
 	int i;
@@ -1550,10 +1558,10 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 		if(ev->event == DEPRECATED_RF_EVENTS[i])
 			return;
 	fillOutgoingReportPacketAsync(&frame, 0);
-    frame.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
-    frame.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
-	frame.packet.len = 2 + 13;
-    uint8_t * p_data  = &frame.packet.cmd[2];
+    frame.info.packet.cmd[0] = COMMAND_CLASS_MANUFACTURER_SPECIFIC;
+    frame.info.packet.cmd[1] = MANUFACTURER_SPECIFIC_LOGGER_REPORT;
+	frame.info.packet.len = 2 + 13;
+    uint8_t * p_data  = &frame.info.packet.cmd[2];
     uint32_t systime_data  = millis();
     p_data++;
 	_zme_memcpy(p_data, (uint8_t*)&systime_data, sizeof(systime_data));
@@ -1563,7 +1571,7 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 	_zme_memcpy(p_data, (uint8_t*)&ev->params[0], sizeof(ev->params[0]));
 	p_data += sizeof(ev->params[0]);
 	_zme_memcpy(p_data, (uint8_t*)&ev->params[1], sizeof(ev->params[1]));
-	zunoSendZWPackage(&frame.packet);
+	zunoSendZWPackageAdd(&frame);
 }
 uint8_t zunoZMEFrequency2Region(uint8_t freqi){
   return zmeMapDict((uint8_t*)FREQ_TBL_CONV, sizeof(FREQ_TBL_CONV), freqi, false);

@@ -65,7 +65,7 @@ typedef struct								ZwZwavePlusInfoType_s
 	uint8_t									specificDeviceClass;/**/
 }											ZwZwavePlusInfoType_t;
 
-int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCZWavePlusInfoHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon);
 void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type);
 

@@ -23,7 +23,7 @@ bool zunoCheckSystemQueueStatus(uint8_t channel);
 ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd);
 void ZWQProcess();
 bool ZWQIsEmpty();
-void ZWQIncomingStat(ZUNOCommandPacket_t * pkg);
+void ZWQIncomingStat(const ZUNOCommandCmd_t * pkg);
 
 
 #endif // ZWPACKAGE_QUEUE

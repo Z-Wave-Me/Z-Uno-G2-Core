@@ -139,7 +139,7 @@ static int _indicator_supported_report(const ZW_INDICATOR_SUPPORTED_GET_V4_FRAME
 	size_t													len;
 	uint32_t												support_prop_mask;
 
-	report = (ZwIndicatorSupportedReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwIndicatorSupportedReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
 	// report->cmd = INDICATOR_SUPPORTED_REPORT_V4; set in - fillOutgoingPacket
 	if ((parameter_array = _indicatorGetParameterArray(frame->indicatorId)) == 0x0) {
@@ -162,7 +162,7 @@ static int _indicator_supported_report(const ZW_INDICATOR_SUPPORTED_GET_V4_FRAME
 			indicatorId = parameter_array->indicatorId;
 		report->nextIndicatorId = indicatorId;
 	}
-	frame_report->packet.len = len;
+	frame_report->info.packet.len = len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -173,7 +173,7 @@ static int _indicator_description_report(const ZW_INDICATOR_DESCRIPTION_GET_V4_F
 	size_t													len;
 	const char												*description;
 
-	report = (ZwIndicatorDescriptionReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwIndicatorDescriptionReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
 	// report->cmd = INDICATOR_DESCRIPTION_REPORT_V4; set in - fillOutgoingPacket
 	indicatorId = frame->indicatorId;
@@ -192,7 +192,7 @@ static int _indicator_description_report(const ZW_INDICATOR_DESCRIPTION_GET_V4_F
 		memcpy(&report->description[0x0], description, len);
 		len = sizeof(report[0x0]) + len;
 	}
-	frame_report->packet.len = len;
+	frame_report->info.packet.len = len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -202,7 +202,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUN
 	size_t											value;
 	size_t											indicatorId;
 
-	report = (ZwIndicatorReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwIndicatorReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
 	// report->cmd = INDICATOR_REPORT_V4; set in - fillOutgoingPacket
 	if (len == sizeof(frame->v1)) {
@@ -226,7 +226,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUN
 				break ;
 		}
 		report->v1.value = value;
-		frame_report->packet.len = sizeof(report->v1);
+		frame_report->info.packet.len = sizeof(report->v1);
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	report->v4.indicator0Value = 0x0;
@@ -274,7 +274,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUN
 
 	}
 	report->v4.properties1 = len;
-	frame_report->packet.len = (sizeof(report->v4) + (len * sizeof(report->v4.variantgroup[0x0])));
+	frame_report->info.packet.len = (sizeof(report->v4) + (len * sizeof(report->v4.variantgroup[0x0])));
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -691,7 +691,7 @@ void __g_zuno_indicator_init() {
 		zunoIndicatorPinMode(_indicator_parameter.pin, OUTPUT_DOWN, _indicator_parameter.indicatorId);
 }
 
-int zuno_CCIndicatorHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCIndicatorHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 
 	switch(ZW_CMD) {

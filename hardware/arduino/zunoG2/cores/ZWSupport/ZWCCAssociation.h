@@ -33,9 +33,9 @@
 #define ASSOCIATION_GROUP_COMMAND_LIST_GET                                               0x05
 #define ASSOCIATION_GROUP_COMMAND_LIST_REPORT                                            0x06
 
-int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
-int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
-int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCAssociationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCMultiAssociationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCAssociationGprInfoHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 
 /* Device Reset Locally command class commands */

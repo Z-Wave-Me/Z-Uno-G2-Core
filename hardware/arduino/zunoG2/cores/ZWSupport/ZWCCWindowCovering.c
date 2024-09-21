@@ -51,13 +51,13 @@ static int _supported_report(uint8_t channel, ZUNOCommandPacketReport_t *frame_r
 	ZW_WINDOW_COVERING_SUPPORTED_REPORT_1BYTE_FRAME					*report;
 	uint32_t														mask;
 
-	report = (ZW_WINDOW_COVERING_SUPPORTED_REPORT_1BYTE_FRAME *)frame_report->packet.cmd;
+	report = (ZW_WINDOW_COVERING_SUPPORTED_REPORT_1BYTE_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_WINDOW_COVERING; set in - fillOutgoingPacket
 	// report->cmd = WINDOW_COVERING_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	mask = _get_parameter_mask(channel);
 	memcpy(&report->parameterMask[0x0], &mask, sizeof(mask));
 	report->properties1 = sizeof(mask);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(mask);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(mask);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -168,10 +168,10 @@ static int _get(uint8_t channel, const ZW_WINDOW_COVERING_GET_FRAME *paket, ZUNO
 	parameterId = paket->parameterId;
 	if ((mask & (0x1 << parameterId)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED);
-	report = (ZW_WINDOW_COVERING_REPORT_FRAME *)frame_report->packet.cmd;
+	report = (ZW_WINDOW_COVERING_REPORT_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_WINDOW_COVERING; set in - fillOutgoingPacket
 	// report->cmd = WINDOW_COVERING_REPORT; set in - fillOutgoingPacket
-	frame_report->packet.len = sizeof(report[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]);
 	_get_set(channel, report, parameterId);
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -234,7 +234,7 @@ static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEV
 }
 
 
-int zuno_CCWindowCoveringHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 
 	switch(ZW_CMD) {
@@ -267,8 +267,8 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	uint8_t														parameterId;
 
 	mask = _get_parameter_mask(channel);
-	report = (ZW_WINDOW_COVERING_REPORT_FRAME *)&packet->cmd[0x0];
-	packet->len = sizeof(report[0x0]);
+	report = (ZW_WINDOW_COVERING_REPORT_FRAME *)&packet->packet.cmd[0x0];
+	packet->packet.len = sizeof(report[0x0]);
 	report->cmdClass = COMMAND_CLASS_WINDOW_COVERING;
 	report->cmd = WINDOW_COVERING_REPORT;
 	parameterId = 0x0;

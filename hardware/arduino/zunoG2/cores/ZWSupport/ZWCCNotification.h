@@ -279,9 +279,9 @@ inline void zuno_CCNotificationInitData() {
 	zunoEEPROMWrite(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);
 };
 
-int  __zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t * cmd, ZUNOCommandPacket_t *packet);
+int  __zuno_CCNotificationReport(byte channel, const ZUNOCommandCmd_t * cmd, ZUNOCommandPacket_t *packet);
 bool zuno_CCNotificationReport(uint8_t channel, uint8_t event, uint8_t state);
 
-int  zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int  zuno_CCNotificationHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif // NOTIFICATION_CC_H

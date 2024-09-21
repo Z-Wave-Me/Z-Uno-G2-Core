@@ -90,7 +90,7 @@ typedef struct												ZwSensorMultilevelSupportedSensorReportFrame_s
 	uint8_t													bitMask[];/* MSB  LSB */
 }															ZwSensorMultilevelSupportedSensorReportFrame_t;
 
-int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSensorMultilevelHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 int zuno_CCSensorMultilevelReport(byte channel, ZUNOCommandPacket_t *packet);
 
 #endif // __SENSOR_MULTILEVEL_H__

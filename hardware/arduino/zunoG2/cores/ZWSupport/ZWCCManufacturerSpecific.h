@@ -20,7 +20,7 @@ typedef enum {
   DEVICE_ID_FORMAT_BINARY,
   NUMBER_OF_DEVICE_ID_FORMATS
 }device_id_format_t;
-int zuno_CCManufacturerSpecificHandler(ZUNOCommandPacket_t *cmd, 
+int zuno_CCManufacturerSpecificHandler(const ZUNOCommandCmd_t *cmd, 
                             ZUNOCommandPacketReport_t *frame_report);
 
 #endif // MANUFACTURER_SPECIFIC_CC_H

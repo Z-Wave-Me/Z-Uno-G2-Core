@@ -119,6 +119,7 @@ inline void zunoSetProductID(uint16_t product_id){
 /* Z-Wave protocol support */
 void zunoReconfigStaticChannels();
 void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
+void zunoSendZWPackageAdd(ZUNOCommandPacketReport_t *frame);
 void zunoCommitCfg();
 #include "zuno_channel_handlers.h"
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {

@@ -150,6 +150,6 @@ typedef struct												ZwMeterTblHistoricalDataReport_s
 	uint8_t													historicalValue[4];/* MSB to LSB */
 }															ZwMeterTblHistoricalDataReport_t;
 
-int zuno_CCMeterTblMonitorHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCMeterTblMonitorHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif // ZWCC_METER_TBL_H

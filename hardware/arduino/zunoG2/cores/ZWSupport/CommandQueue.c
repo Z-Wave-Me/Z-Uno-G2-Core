@@ -4,16 +4,16 @@
 static ZNLinkedList_t * g_zwpkg_queue = NULL;
 static uint32_t last_controller_package_time = 0;
 #ifdef LOGGING_UART
-void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
+void zuno_dbgdumpZWPacakge(const ZUNOCommandCmd_t * cmd);
 #endif
 
-void ZWQIncomingStat(ZUNOCommandPacket_t * pkg){
+void ZWQIncomingStat(const ZUNOCommandCmd_t * pkg){
     if(pkg->src_node == 1){
         last_controller_package_time = millis();
     }
 }
 bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
-    if(((pkg->flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
+    if(((pkg->packet.flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
         (zunoNID() == 0)) { // We are out of network - don't send anything
 		#ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
@@ -34,8 +34,8 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
     memcpy(stored_pck, pkg, sizeof(ZUNOCommandPacket_t));
     // We have to allocated command buffer dynamically too
     // add ZAF offset
-    stored_pck->cmd = (uint8_t*)malloc(sizeof(uint8_t)*pkg->len + MAX_ZWTRANSPORT_ENCAP);
-    if(stored_pck->cmd == NULL){
+    stored_pck->packet.cmd = (uint8_t*)malloc(sizeof(uint8_t)*pkg->packet.len + MAX_ZWTRANSPORT_ENCAP);
+    if(stored_pck->packet.cmd == NULL){
         free(stored_pck);
         #ifdef LOGGING_DBG
 		LOGGING_UART.print(millis());
@@ -43,16 +43,16 @@ bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
 		#endif
         return false;
     }
-    memset(stored_pck->cmd, 0, MAX_ZWTRANSPORT_ENCAP);
-    stored_pck->cmd += MAX_ZWTRANSPORT_ENCAP;
+    memset(stored_pck->packet.cmd, 0, MAX_ZWTRANSPORT_ENCAP);
+    stored_pck->packet.cmd += MAX_ZWTRANSPORT_ENCAP;
     // copy command data from the ZAF offset
-    memcpy(stored_pck->cmd , pkg->cmd, pkg->len);
+    memcpy(stored_pck->packet.cmd , pkg->packet.cmd, pkg->packet.len);
     znllPushBack(&g_zwpkg_queue, (void*)stored_pck);
     #ifdef LOGGING_DBG
 	LOGGING_UART.print("\n >>> (");
 	LOGGING_UART.print(millis());
 	LOGGING_UART.print(") ENQUEUED PACKAGE: ");
-	zuno_dbgdumpZWPacakge(pkg);
+	zuno_dbgdumpZWPacakge(&pkg->packet);
 	#endif
     return true;
 }
@@ -63,13 +63,13 @@ ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, 
     zunoEnterCritical();
     for(e=g_zwpkg_queue;e; e=e->next){
         p = (ZUNOCommandPacket_t *) e->data;
-        if((flags != 0xFF) && ((p->flags & flags)  !=  flags))
+        if((flags != 0xFF) && ((p->packet.flags & flags)  !=  flags))
             continue;
-        if((dst_id != 0xFF) && (p->dst_node != dst_id))
+        if((dst_id != 0xFF) && (p->packet.dst_node != dst_id))
             continue;
-        if((cc != 0xFF) && (p->cmd[0]!= cc))
+        if((cc != 0xFF) && (p->packet.cmd[0]!= cc))
             continue;
-        if((cmd != 0xFF) && (p->cmd[1]!= cmd))
+        if((cmd != 0xFF) && (p->packet.cmd[1]!= cmd))
             continue;
         zunoExitCritical();
         return p;
@@ -101,7 +101,10 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     #endif
     return b_busy;
 }
-void _ZWQSend(ZUNOCommandPacket_t * p){
+void _ZWQSend(ZUNOCommandPacket_t *info){
+	ZUNOCommandCmd_t							*p;
+
+	p = &info->packet;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print("\n >>> (");
 	LOGGING_UART.print(millis());
@@ -120,11 +123,14 @@ void _ZWQSend(ZUNOCommandPacket_t * p){
         return; // do not send association with multichannel encap to plain group
     zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }
-void _ZWQRemovePkg(ZUNOCommandPacket_t * p){
+void _ZWQRemovePkg(ZUNOCommandPacket_t *info){
+	ZUNOCommandCmd_t							*p;
+
+	p = &info->packet;
     // revert back cmd addr
     p->cmd -= MAX_ZWTRANSPORT_ENCAP;
     free(p->cmd);
-    free(p);
+    free(info);
 }
 bool ZWQIsEmpty(){
     return (znllCount(g_zwpkg_queue) == 0);
@@ -144,7 +150,8 @@ void ZWQProcess(){
     int qi;
     int processed_indexes[MAX_PROCESSED_QUEUE_PKGS];
     int processed_indexes_cnt = 0;
-    ZUNOCommandPacket_t * p;
+    ZUNOCommandCmd_t * p;
+    ZUNOCommandPacket_t *info;
     // Process the packages
 	int queue_sz = znllCount(g_zwpkg_queue);
     #ifdef LOGGING_DBG
@@ -155,7 +162,8 @@ void ZWQProcess(){
     #endif
     queue_bit_mask = 0x0;
     for(e=g_zwpkg_queue, qi=0; e!= NULL && qi < queue_sz; e=e->next, qi++){
-        p = (ZUNOCommandPacket_t *) e->data;
+        info = (ZUNOCommandPacket_t *) e->data;
+        p = &info->packet;
         #ifdef SYQUEUE_CNT_BARRIER
         uint32_t system_queue_count = g_zuno_sys->rstat_pkgs_queued - g_zuno_sys->rstat_pkgs_processed; //s.pkgs_queued - s.pkgs_processed;
         if(system_queue_count >= MAX_SYS_QUEUE_PKGS){
@@ -236,14 +244,14 @@ void ZWQProcess(){
                 p->zw_rx_secure_opts = node.security_level;
                 p->flags &= ~(ZUNO_PACKETFLAGS_GROUP);
                 // Send package to target device
-                _ZWQSend(p);
+                _ZWQSend(info);
                 // Restore group attributes 
                 p->dst_node = tmp;
                 p->dst_zw_channel = tmp_ch + 1;
                 p->flags = tmp_flags;
             }
         } else {
-            _ZWQSend(p);
+            _ZWQSend(info);
             processed_indexes[processed_indexes_cnt++] = qi;
             if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
                 break;
@@ -263,8 +271,8 @@ void ZWQProcess(){
 	    LOGGING_UART.print("*** CLEANUP:");
         LOGGING_UART.println(qi);
 	    #endif
-        p = (ZUNOCommandPacket_t *)znllRemove(&g_zwpkg_queue, qi);
-        _ZWQRemovePkg(p);
+        info = (ZUNOCommandPacket_t *)znllRemove(&g_zwpkg_queue, qi);
+        _ZWQRemovePkg(info);
         processed_indexes_cnt--;
     }
     count_n++;

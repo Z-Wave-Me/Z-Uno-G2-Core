@@ -108,9 +108,14 @@ enum{
 
 typedef void zuno_configuration_changed(uint8_t, uint32_t);
 
+typedef struct				ZUNOCommandPacket_t
+{
+	ZUNOCommandCmd_t		packet;
+}							ZUNOCommandPacket_t;
+
 typedef struct				ZUNOCommandPacketReport_s
 {
-	ZUNOCommandPacket_t		packet;
+	ZUNOCommandPacket_t		info;
 	uint8_t					data[MAX_ZW_PACKAGE];
 }							ZUNOCommandPacketReport_t;
 

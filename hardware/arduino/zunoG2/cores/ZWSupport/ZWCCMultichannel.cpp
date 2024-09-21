@@ -40,7 +40,7 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandP
 	// Get the info about selected endpoint
 	if((channel = zuno_findChannelByZWChannelIndexChannel(endpoint)) == UNKNOWN_CHANNEL)// According to z-wave specification we must to ignore unsupported end points numbers - see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
 		return (ZUNO_COMMAND_BLOCKED);
-	report = (ZwMultiChannelCapabilityReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMultiChannelCapabilityReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->cmd = MULTI_CHANNEL_CAPABILITY_REPORT; set in - fillOutgoingPacket
 	report->properties1 = endpoint; // The index of selected endpoint
@@ -74,7 +74,7 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandP
 		if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
 			commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
 	}
-	frame_report->packet.len = sizeof(ZwMultiChannelCapabilityReportFrame_t) + (commandClass - &report->commandClass[0]);
+	frame_report->info.packet.len = sizeof(ZwMultiChannelCapabilityReportFrame_t) + (commandClass - &report->commandClass[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -82,13 +82,13 @@ static int _point_get(ZUNOCommandPacketReport_t *frame_report) {
 	ZwMultiChannelEndPointReportFrame_t			*report;
 
 	// Request of endpoint's count
-	report = (ZwMultiChannelEndPointReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMultiChannelEndPointReportFrame_t *)frame_report->info.packet.cmd;
 	// report->v4.cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->v4.cmd = MULTI_CHANNEL_END_POINT_REPORT; set in - fillOutgoingPacket
 	report->v4.properties1 = 0; // No dynamic/identical endpoints
 	report->v4.properties2 = g_mch_aux_data.num_channels;// Number of endpoints ZUno has
 	report->v4.properties3 = 0;// No aggregated end points
-	frame_report->packet.len = sizeof(report->v4);
+	frame_report->info.packet.len = sizeof(report->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -103,7 +103,7 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport
 
 	genericDeviceClass = cmd->genericDeviceClass;
 	specificDeviceClass = cmd->specificDeviceClass;
-	report = (ZwMultiChannelEndPointFindReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMultiChannelEndPointFindReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->cmd = MULTI_CHANNEL_END_POINT_FIND_REPORT; set in - fillOutgoingPacket
 	report->reportsToFollow = 0;
@@ -134,11 +134,11 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport
 	}
 	if (end_point == &report->variantgroup[0])
 		end_point++[0] = 0x0;
-	frame_report->packet.len = sizeof(ZwMultiChannelEndPointFindReportFrame_t) + (end_point - &report->variantgroup[0]);
+	frame_report->info.packet.len = sizeof(ZwMultiChannelEndPointFindReportFrame_t) + (end_point - &report->variantgroup[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCMultichannel(ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int									rs;
 
 	zuno_initMchData();

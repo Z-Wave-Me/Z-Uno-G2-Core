@@ -301,6 +301,6 @@ typedef struct												ZwAuthenticationData_s
 	.authenticationData = {0x0} \
 }\
 
-int zuno_CCAuthenticationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCAuthenticationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_AUTHENTICATION_H

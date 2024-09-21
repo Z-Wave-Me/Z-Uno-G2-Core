@@ -16,10 +16,10 @@ zuno_cc_supervision_data_t __cc_supervision = {
 };
 
 #ifdef LOGGING_DBG
-void zuno_dbgdumpZWPacakge(ZUNOCommandPacket_t * cmd);
+void zuno_dbgdumpZWPacakge(const ZUNOCommandCmd_t * cmd);
 #endif
 
-void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandPacket_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision) {
+void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandCmd_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision) {
 	super_vision->id = __cc_supervision._prev_id;
 	super_vision->dst = packet->src_node;
 	super_vision->src_zw_channel = packet->dst_zw_channel;
@@ -45,7 +45,7 @@ static void _supervision_send(ZUNOCommandPacketReport_t *frame_report, uint8_t i
 			process_result = SUPERVISION_REPORT_NO_SUPPORT;
 			break;
 	}
-	report = (ZwCSuperVisionReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwCSuperVisionReportFrame_t *)frame_report->info.packet.cmd;
 	if (more_status == true)
 		id = id | SUPERVISION_REPORT_PROPERTIES1_MORE_STATUS_UPDATES_BIT_MASK;
 	report->cmdClass = COMMAND_CLASS_SUPERVISION;
@@ -53,8 +53,8 @@ static void _supervision_send(ZUNOCommandPacketReport_t *frame_report, uint8_t i
 	report->properties1 = id;
 	report->status = process_result;
 	report->duration = duration;
-	frame_report->packet.len = sizeof(ZwCSuperVisionReportFrame_t);
-	zunoSendZWPackage(&frame_report->packet);
+	frame_report->info.packet.len = sizeof(ZwCSuperVisionReportFrame_t);
+	zunoSendZWPackageAdd(frame_report);
 	return ;
 }
 
@@ -96,8 +96,8 @@ bool zuno_CCSupervisionReportSyncWorking(ZUNOCommandPacketReport_t *frame_report
 }
 
 void zuno_CCSupervisionReportAsyncProcessed(ZUNOCommandPacketReport_t *frame_report, const ZwCSuperVisionReportAsyncProcessed_t *super_vision) {
-	fillOutgoingRawPacket(&frame_report->packet, &frame_report->data[0x0], super_vision->src_zw_channel, QUEUE_CHANNEL_SYNC, super_vision->dst);
-	frame_report->packet.dst_zw_channel = super_vision->dst_zw_channel;
+	fillOutgoingRawPacket(&frame_report->info, &frame_report->data[0x0], super_vision->src_zw_channel, QUEUE_CHANNEL_SYNC, super_vision->dst);
+	frame_report->info.packet.dst_zw_channel = super_vision->dst_zw_channel;
 	_supervision_send(frame_report, super_vision->id, false, ZUNO_COMMAND_PROCESSED, 0x0);
 }
 
@@ -107,8 +107,8 @@ bool __zuno_CCSupervisionReportSendTest(uint8_t duration) {
 	return (false);
 }
 
-int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd);
-static void __unpackSV(ZUNOCommandPacket_t *cmd, ZwCSuperVisionGetFrame_t *frame){
+int zuno_CCAssociationHandler(ZUNOCommandCmd_t *cmd);
+static void __unpackSV(ZUNOCommandCmd_t *cmd, ZwCSuperVisionGetFrame_t *frame){
 	cmd->len -= 4;
 	__cc_supervision._unpacked = true;
 	__cc_supervision._node_id = cmd->src_node;
@@ -124,13 +124,13 @@ node_id_t zunoGetSupervisionHost(){
 		return 0;
 	return __cc_supervision._node_id;
 }
-uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwCSuperVisionGetFrame_t								*frame;
 	uint8_t													id;
 	uint64_t												ms;
 
 	// Always answer to supervision as we were asked (the same security scheme)
-	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
+	frame_report->info.packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 
 	frame = (ZwCSuperVisionGetFrame_t *)cmd->cmd;
 	if((frame->cmdClass != COMMAND_CLASS_SUPERVISION) || (frame->cmd != SUPERVISION_GET))
@@ -182,11 +182,11 @@ int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report) {
 
 	if (zuno_CCSupervisionReportSyncDefault(frame_report, result) != result)
 		return (ZUNO_COMMAND_PROCESSED);
-	report = (ZwApplicationRejectedRequestFrame_t *)frame_report->packet.cmd;
+	report = (ZwApplicationRejectedRequestFrame_t *)frame_report->info.packet.cmd;
 	report->cmdClass = COMMAND_CLASS_APPLICATION_STATUS;
 	report->cmd = APPLICATION_REJECTED_REQUEST;
 	report->status = 0x0;
-	frame_report->packet.len = sizeof(ZwApplicationRejectedRequestFrame_t);
-	zunoSendZWPackage(&frame_report->packet);
+	frame_report->info.packet.len = sizeof(ZwApplicationRejectedRequestFrame_t);
+	zunoSendZWPackageAdd(frame_report);
 	return (ZUNO_COMMAND_PROCESSED);
 }

@@ -106,7 +106,7 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     ZUNO_HWID};
 
 // from ZWSupport.c
-int zuno_CommandHandler(ZUNOCommandPacket_t * cmd); 
+int zuno_CommandHandler(ZUNOCommandCmd_t * cmd); 
 void zuno_CCTimer(uint32_t);
 
 /*
@@ -322,7 +322,7 @@ void * zunoJumpTable(int vec, void * data) {
             _zunoRegisterCommandThread();
             // Awake code if user had sent device to sleep, but z-wave message has arrived
             _zunoAwakeUsrCode();
-            return (void*)zuno_CommandHandler((ZUNOCommandPacket_t *) data);
+            return (void*)zuno_CommandHandler((ZUNOCommandCmd_t *) data);
         
         case ZUNO_JUMPTBL_SYSEVENT:{
                 ZUNOSysEvent_t * evnt = (ZUNOSysEvent_t *)data;

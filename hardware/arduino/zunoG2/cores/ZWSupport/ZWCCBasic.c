@@ -220,15 +220,15 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwBasicReportV2Frame_t					*report;
 
-	report = (ZwBasicReportV2Frame_t *)frame_report->packet.cmd;
+	report = (ZwBasicReportV2Frame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
-	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
+	frame_report->info.packet.len = sizeof(ZwBasicReportV2Frame_t);
 	__zuno_BasicUniversalGetCurrentValueDurationTargetValue(channel, &report->currentValue, &report->duration, &report->targetValue);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCBasicHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int										rs;
 
 	switch(ZW_CMD){

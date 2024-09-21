@@ -18,11 +18,11 @@ void zunoResetLocally(){
     LOGGING_UART.println("*** ZUNO RST LOCALLY USR CALL");
     #endif
     ZUNOCommandPacketReport_t			frame;
-    fillOutgoingRawPacket(&frame.packet, frame.data, 0, ZUNO_PACKETFLAGS_GROUP | RST_LOCALLY_QUEUE_CHANNEL, ZUNO_LIFELINE_GRP);
-	frame.packet.cmd[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
-    frame.packet.cmd[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
-    frame.packet.len = 2;
-	zunoSendZWPackage(&frame.packet);
+    fillOutgoingRawPacket(&frame.info, frame.data, 0, ZUNO_PACKETFLAGS_GROUP | RST_LOCALLY_QUEUE_CHANNEL, ZUNO_LIFELINE_GRP);
+	frame.info.packet.cmd[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
+    frame.info.packet.cmd[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
+    frame.info.packet.len = 2;
+	zunoSendZWPackage(&frame.info);
     g_rst_locally_data.started = true;
     g_rst_locally_data.timeout = millis() + RST_LOCALLY_TIMEOUT;
     #ifndef NO_SYS_SVC

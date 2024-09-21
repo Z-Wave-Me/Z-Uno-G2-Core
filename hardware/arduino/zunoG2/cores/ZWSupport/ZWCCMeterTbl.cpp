@@ -56,25 +56,25 @@ time_t zunoMeterTblHistoryCurrentGetValue(byte channel, size_t dataset, ZunoMete
 static int _supported_get(ZUNOCommandPacketReport_t *frame_report) {
 	ZwMeterTblSupportedFrame_t				*report;
 
-	report = (ZwMeterTblSupportedFrame_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblSupportedFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_STATUS_SUPPORTED_REPORT; //set in - fillOutgoingPacket
 	report->supportedOperatingStatus1 = 0;
 	report->supportedOperatingStatus2 = 0;
 	report->supportedOperatingStatus3 = 0;
 	report->statusEventLogDepth = 0;
-	frame_report->packet.len = sizeof(ZwMeterTblSupportedFrame_t);
+	frame_report->info.packet.len = sizeof(ZwMeterTblSupportedFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _point_adm_no_get(ZUNOCommandPacketReport_t *frame_report) {
 	ZwMeterTblPointAdmNoReportFrame_t				*report;
 
-	report = (ZwMeterTblPointAdmNoReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblPointAdmNoReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_TABLE_POINT_ADM_NO_REPORT; //set in - fillOutgoingPacket
 	report->properties1 = 0;//v2++ If the Meter Table Point Adm, Number has not been set using the Meter Table Configuration Command Class, this field MUST be set to 0x00 and the Meter Point Adm. Numbers Character field MUST be omitted. 
-	frame_report->packet.len = sizeof(ZwMeterTblPointAdmNoReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwMeterTblPointAdmNoReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -82,12 +82,12 @@ static int _id_get(size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwMeterTblTableIdReportFrame_t					*report;
 	size_t											len;
 
-	report = (ZwMeterTblTableIdReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblTableIdReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_TABLE_ID_REPORT; //set in - fillOutgoingPacket
 	len = zunoMeterTblId(channel, &report->meterIdCharacter[0]);
 	report->properties1 = len;
-	frame_report->packet.len = sizeof(ZwMeterTblTableIdReportFrame_t) + len;
+	frame_report->info.packet.len = sizeof(ZwMeterTblTableIdReportFrame_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -96,7 +96,7 @@ static int _capability_get(size_t channel, ZUNOCommandPacketReport_t *frame_repo
 	const ZunoMeterTblCapability_t				*capability;
 
 	capability = zunoMeterTblCapability(channel);
-	report = (ZwMeterTblReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_REPORT; //set in - fillOutgoingPacket
 	report->properties1 = ZUNO_CFG_CHANNEL(channel).sub_type;
@@ -104,7 +104,7 @@ static int _capability_get(size_t channel, ZUNOCommandPacketReport_t *frame_repo
 	memcpy(&report->datasetSupported, &capability->datasetSupported, sizeof(report->datasetSupported));
 	memcpy(&report->datasetHistorySupported, &capability->datasetHistorySupported, sizeof(report->datasetHistorySupported));
 	_zme_memcpy((byte *)&report->dataHistorySupported, (byte *)&capability->dataHistorySupported, sizeof(report->dataHistorySupported));
-	frame_report->packet.len = sizeof(ZwMeterTblReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwMeterTblReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -115,7 +115,7 @@ static uint8_t _bitCount (uint32_t n) {
 	return ((uint8_t)n);
 }
 
-static int _current_data_get(size_t channel, ZwMeterTblCurrentDataGetFrame_t *packed, ZUNOCommandPacketReport_t *frame_report) {
+static int _current_data_get(size_t channel, const ZwMeterTblCurrentDataGetFrame_t *packed, ZUNOCommandPacketReport_t *frame_report) {
 	ZwMeterTblCurrentDataReportFrame_t		*report;
 	size_t									dataset;
 	size_t									reportsToFollow;
@@ -124,11 +124,11 @@ static int _current_data_get(size_t channel, ZwMeterTblCurrentDataGetFrame_t *pa
 	size_t									tempos;
 	time_t									current_time;
 
-	report = (ZwMeterTblCurrentDataReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblCurrentDataReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_CURRENT_DATA_REPORT; //set in - fillOutgoingPacket
 	report->properties1 = ZUNO_CFG_CHANNEL(channel).sub_type >> METER_TBL_REPORT_PROPERTIES1_RATE_TYPE_SHIFT;
-	frame_report->packet.len = sizeof(ZwMeterTblCurrentDataReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwMeterTblCurrentDataReportFrame_t);
 	memcpy(&dataset, &packed->datasetRequested[0], sizeof(packed->datasetRequested));
 	reportsToFollow = _bitCount(dataset);
 	shift = 0;
@@ -144,12 +144,12 @@ static int _current_data_get(size_t channel, ZwMeterTblCurrentDataGetFrame_t *pa
 		zuno_CCTimerParametrsSet(&report->time, current_time);
 		report->properties2 = (out.precision << 0x5) | out.scale;
 		_zme_memcpy((byte *)&report->currentValue[0], (byte *)&out.value, sizeof(report->currentValue));
-		zunoSendZWPackage(&frame_report->packet);
+		zunoSendZWPackageAdd(frame_report);
 	}
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _historical_data_get(size_t channel, ZwMeterTblHistoricalDataGet_t *packed, ZUNOCommandPacketReport_t *frame_report) {
+static int _historical_data_get(size_t channel, const ZwMeterTblHistoricalDataGet_t *packed, ZUNOCommandPacketReport_t *frame_report) {
 	ZwMeterTblHistoricalDataReport_t		*report;
 	time_t									start_time;
 	time_t									stop_time;
@@ -167,11 +167,11 @@ static int _historical_data_get(size_t channel, ZwMeterTblHistoricalDataGet_t *p
 	if (stop_time < start_time)
 		return (ZUNO_COMMAND_PROCESSED);
 	memcpy(&dataset, &packed->historicalDatasetRequested[0], sizeof(packed->historicalDatasetRequested));
-	report = (ZwMeterTblHistoricalDataReport_t *)frame_report->packet.cmd;
+	report = (ZwMeterTblHistoricalDataReport_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_METER_TBL_MONITOR; //set in - fillOutgoingPacket
 	// report->cmd = METER_TBL_HISTORICAL_DATA_REPORT; //set in - fillOutgoingPacket
 	report->properties1 = ZUNO_CFG_CHANNEL(channel).sub_type >> METER_TBL_REPORT_PROPERTIES1_RATE_TYPE_SHIFT;
-	frame_report->packet.len = sizeof(ZwMeterTblHistoricalDataReport_t);
+	frame_report->info.packet.len = sizeof(ZwMeterTblHistoricalDataReport_t);
 	maximumReports = packed->maximumReports;
 	while (maximumReports-- != 0) {
 		zuno_CCTimerParametrsSet(&report->time, stop_time);
@@ -191,14 +191,14 @@ static int _historical_data_get(size_t channel, ZwMeterTblHistoricalDataGet_t *p
 			zunoMeterTblHistoryGetValue(channel, stop_time, tempos, &out);
 			report->properties2 = (out.precision << 0x5) | out.scale;
 			_zme_memcpy((byte *)&report->historicalValue[0], (byte *)&out.value, sizeof(report->historicalValue));
-			zunoSendZWPackage(&frame_report->packet);
+			zunoSendZWPackageAdd(frame_report);
 			stop_time = next_time;
 		}
 	}
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCMeterTblMonitorHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCMeterTblMonitorHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {

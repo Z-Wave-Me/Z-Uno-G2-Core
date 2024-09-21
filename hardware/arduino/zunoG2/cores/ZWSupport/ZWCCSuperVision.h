@@ -65,10 +65,10 @@ typedef struct						ZwCSuperVisionReportAsyncProcessed_s
 	uint8_t							id;
 }									ZwCSuperVisionReportAsyncProcessed_t;
 
-uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 node_id_t zunoGetSupervisionHost();
-void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandPacket_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision);
+void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandCmd_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision);
 
 int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report);
 

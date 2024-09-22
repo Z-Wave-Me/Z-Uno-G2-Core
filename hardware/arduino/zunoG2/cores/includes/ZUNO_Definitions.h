@@ -76,6 +76,7 @@ typedef enum
 #define MAX_CHANNEL_PARAMS                              4
 #define ZUNO_MAX_MULTI_CHANNEL_NUMBER 					32
 #define ZUNO_MAX_ASSOC_NUMBER 							32
+#define ZUNO_MAX_ASSOC_LIFE_LINE						5
 #define ZUNO_NAX_CCS_FOR_CHANNEL                        2
 #define ZUNO_MAX_CCTYPES                                8
 #define ZUNO_MAX_CUSTOM_CCS								8

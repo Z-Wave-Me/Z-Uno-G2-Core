@@ -230,6 +230,9 @@ void ZWQProcess(){
                 LOGGING_UART.println(node.dest_channel);
                 #endif
                 if(node.dest_nodeid == 0){
+                    p->dst_zw_channel++;
+                    if (p->dst_zw_channel < ZUNO_MAX_ASSOC_LIFE_LINE)
+                        continue ;
                     // There is no more data for this group
                     processed_indexes[processed_indexes_cnt++] = qi;
                     break ;

@@ -325,7 +325,7 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t *info, uint8_t * d, uint8_t ch, u
 
 	p = &info->packet;
 	bool res = true;
-	memset(p, 0, sizeof(ZUNOCommandPacket_t));
+	memset(p, 0, sizeof(p[0x0]));
 	memset(d, 0, MAX_ZW_PACKAGE);
 	p->cmd = d + MAX_ZWTRANSPORT_ENCAP; // Greetings from ZAF creators
 	p->flags 	= flags;

@@ -27,7 +27,7 @@ bool zunoAttachSysHandler(byte type, byte sub_type, void *handler) {
     uint32_t	   code_offset = (uint32_t)((byte*)handler);
     if(findHandlerByType(type, sub_type, handler) != NULL)
         return true;
-    HandlerFunc_t  * h = (HandlerFunc_t  *)malloc(sizeof(ZUNOCommandPacket_t));
+    HandlerFunc_t  * h = (HandlerFunc_t  *)malloc(sizeof(HandlerFunc_t));
     if(h == NULL)
         return false;
     h->main_type   =  type;

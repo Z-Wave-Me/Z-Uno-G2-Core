@@ -1367,6 +1367,11 @@ void zunoSendReportSet(byte channel, const ZUNOCommandHandlerOption_t *options) 
 			rs = zuno_CCWindowCoveringReport(channel, &frame_report.info);
 			break ;
 		#endif
+		#ifdef WITH_CC_SOUND_SWITCH
+		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
+			rs = zuno_CCSoundSwitchReport(channel, &frame_report.info);
+			break;
+		#endif
 		default:
 			rs = ZUNO_COMMAND_ANSWERED;
 			break ;

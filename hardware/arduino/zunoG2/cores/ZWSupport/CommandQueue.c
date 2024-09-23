@@ -101,6 +101,19 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
     #endif
     return b_busy;
 }
+
+static bool _ZWQSend_test(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p, bool multi) {
+	if (info->report.valid == false)
+		return (true);
+	if (info->report.src_node != p->dst_node)
+		return (true);
+	if (info->report.cmd_class != p->cmd[0x0])
+		return (true);
+	if (info->report.multi != multi)
+		return (true);
+	return (false);
+}
+
 void _ZWQSend(ZUNOCommandPacket_t *info){
 	ZUNOCommandCmd_t							*p;
 
@@ -114,14 +127,18 @@ void _ZWQSend(ZUNOCommandPacket_t *info){
     bool b_plain_assoc = (p->dst_zw_channel == PLAIN_ASSOC_MAP); // It's a plain associtaion 
     p->dst_zw_channel &= ~(PLAIN_ASSOC_MAP); // Remove plain assoc value
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
-		uint8_t mapped_channel = p->src_zw_channel;
-        p->src_zw_channel = 0;
-		zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
-		p->src_zw_channel = mapped_channel;
+		if (_ZWQSend_test(info, p, false) == true) {
+			uint8_t mapped_channel = p->src_zw_channel;
+			p->src_zw_channel = 0;
+			zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
+			p->src_zw_channel = mapped_channel;
+		}
 	}
-    if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
-        return; // do not send association with multichannel encap to plain group
-    zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
+	if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
+		return; // do not send association with multichannel encap to plain group
+	if (_ZWQSend_test(info, p, true) == false)
+		return ;
+	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t *info){
 	ZUNOCommandCmd_t							*p;

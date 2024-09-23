@@ -85,7 +85,7 @@ static void _set_duration_0(uint8_t channel, const VG_WINDOW_COVERING_SET_VG *vg
 	}
 }
 
-static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket) {
+static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket, const ZUNOCommandHandlerOption_t *options) {
 	const VG_WINDOW_COVERING_SET_VG								*vg;
 	uint32_t													mask;
 	uint8_t														count;
@@ -116,7 +116,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 	duration = zuno_CCTimerTicksTable7(duration_encode);
 	if (duration == 0x0) {
 		_set_duration_0(channel, vg, count);
-		zunoSendReport(channel + 1);
+		zunoSendReportSet(channel, options);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
 	while (i < count) {
@@ -234,7 +234,7 @@ static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEV
 }
 
 
-int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
 	int				rs;
 
 	switch(ZW_CMD) {
@@ -242,7 +242,7 @@ int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, Z
 			rs = _supported_report(channel, frame_report);
 			break ;
 		case WINDOW_COVERING_SET:
-			rs = _set(channel, (const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *)cmd->cmd);
+			rs = _set(channel, (const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *)cmd->cmd, options);
 			break ;
 		case WINDOW_COVERING_GET:
 			_zunoMarkChannelRequested(channel);
@@ -280,7 +280,7 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 		mask = mask >> 0x1;
 		parameterId++;
 	}
-	return (ZUNO_COMMAND_PROCESSED);
+	return (zuno_CCSwitchMultilevelReport(channel, packet));
 }
 
 void __zunoWindowCoveringSet(uint8_t channel, uint8_t parameterId, uint8_t value) {

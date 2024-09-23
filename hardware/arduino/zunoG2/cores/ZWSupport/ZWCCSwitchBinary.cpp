@@ -37,7 +37,7 @@ int zuno_CCSwitchBinaryReport(byte channel, ZUNOCommandPacket_t *packet) {
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandCmd_t *packet) {
+static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandCmd_t *packet, const ZUNOCommandHandlerOption_t *options) {
 	uint8_t							targetValue;
 	size_t							duration;
 	uint8_t							currentValue;
@@ -74,11 +74,11 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 			break ;
 	}
 	__zuno_BasicUniversalSetter1P(channel, targetValue);
-	zunoSendReport(channel + 0x1);
+	zunoSendReportSet(channel, options);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCSwitchBinaryHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report){
+int zuno_CCSwitchBinaryHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
 	int							rs;
 
 	switch(ZW_CMD) {
@@ -87,7 +87,7 @@ int zuno_CCSwitchBinaryHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCo
 			_zunoMarkChannelRequested(channel);
 			break;
 		case SWITCH_BINARY_SET:
-			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel, frame_report, cmd);
+			rs = _set((ZwSwitchBinarySetFrame_t *)cmd->cmd, cmd->len, channel, frame_report, cmd, options);
 			break;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

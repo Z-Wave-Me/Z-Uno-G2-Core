@@ -281,7 +281,7 @@ void __zuno_CCWindowCoveringDimingStop(uint8_t channel);
 void __zuno_CCWindowCoveringTimerStop(uint8_t channel);
 void __zuno_CCWindowCoveringGetValues(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value);
 
-int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options);
 int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 
 #endif // ZWCC_WINDOW_COVERING_H

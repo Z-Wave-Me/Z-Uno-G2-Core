@@ -147,7 +147,7 @@ static int _set(uint8_t channel, const ZW_WINDOW_COVERING_SET_1BYTE_FRAME *paket
 			parameter->target_value = targetValue;
 			parameter->step = step;
 			parameter->ticks_end = (rtcc_micros() / 1000) + duration;
-			zunoTimerTreadDimingAdd(parameter);
+			zunoTimerTreadDimingAdd(parameter, options);
 		}
 		i++;
 	}
@@ -176,7 +176,7 @@ static int _get(uint8_t channel, const ZW_WINDOW_COVERING_GET_FRAME *paket, ZUNO
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t duration, uint8_t targetValue, uint8_t flag) {
+static int _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t duration, uint8_t targetValue, uint8_t flag, const ZUNOCommandHandlerOption_t *options) {
 	uint8_t														currentValue;
 	size_t														step;
 	zunoTimerTreadDiming_t										*parameter;
@@ -202,11 +202,11 @@ static int _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t 
 	else
 		step = step * (currentValue - targetValue);
 	parameter->ticks_end = (rtcc_micros() / 1000) + step;
-	zunoTimerTreadDimingAdd(parameter);
+	zunoTimerTreadDimingAdd(parameter, options);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *paket) {
+static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *paket, const ZUNOCommandHandlerOption_t *options) {
 	uint32_t													mask;
 	uint8_t														parameterId;
 	uint8_t														targetValue;
@@ -224,7 +224,7 @@ static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_L
 		targetValue = 0x0;
 		flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN;
 	}
-	return (_start_level_sdfdsfgsd(channel, parameterId, paket->duration, targetValue, flag));
+	return (_start_level_sdfdsfgsd(channel, parameterId, paket->duration, targetValue, flag, options));
 }
 
 static int _stop_level_change(uint8_t channel, const ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME *paket) {
@@ -249,7 +249,7 @@ int zuno_CCWindowCoveringHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, Z
 			rs = _get(channel, (const ZW_WINDOW_COVERING_GET_FRAME *)cmd->cmd, frame_report);
 			break ;
 		case WINDOW_COVERING_START_LEVEL_CHANGE:
-			rs = _start_level_change(channel, (const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *)cmd->cmd);
+			rs = _start_level_change(channel, (const ZW_WINDOW_COVERING_START_LEVEL_CHANGE_FRAME *)cmd->cmd, options);
 			break ;
 		case WINDOW_COVERING_STOP_LEVEL_CHANGE:
 			rs = _stop_level_change(channel, (const ZW_WINDOW_COVERING_STOP_LEVEL_CHANGE_FRAME *)cmd->cmd);

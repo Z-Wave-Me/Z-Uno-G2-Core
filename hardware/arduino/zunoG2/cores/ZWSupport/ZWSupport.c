@@ -1047,11 +1047,11 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 			LOGGING_UART.print("CHANNEL WAS  FOUND:"); 
 			LOGGING_UART.println(zuno_ch);
 			#endif
-			options = ZUNO_COMMAND_HANDLER_DEFAULT(cmd->src_node, multi, supervision, ZW_CMD_CLASS);
+			options = ZUNO_COMMAND_HANDLER_OPTIONS(cmd->src_node, multi, supervision, ZW_CMD_CLASS);
 			switch(ZW_CMD_CLASS) {
 				#ifdef WITH_CC_BASIC
 				case COMMAND_CLASS_BASIC:
-					result = zuno_CCBasicHandler(zuno_ch, cmd, &frame_report);
+					result = zuno_CCBasicHandler(zuno_ch, cmd, &frame_report, &options);
 					break;
 				#endif
 				#ifdef WITH_CC_SWITCH_BINARY
@@ -1101,7 +1101,7 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 				#endif
 				#ifdef WITH_CC_SOUND_SWITCH
 				case COMMAND_CLASS_SOUND_SWITCH:
-					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd, &frame_report);
+					result = zuno_CCSoundSwitchHandler(zuno_ch, cmd, &frame_report, &options);
 					break;
 				#endif
 				#ifdef WITH_CC_THERMOSTAT_MODE

@@ -118,13 +118,21 @@ typedef struct				ZUNOCommandHandlerOption_s
 	uint8_t					cmd_class;
 }							ZUNOCommandHandlerOption_t;
 
-#define ZUNO_COMMAND_HANDLER_DEFAULT(_src_node, _multi, _supervision, _cmd_class)				\
+#define ZUNO_COMMAND_HANDLER_OPTIONS(_src_node, _multi, _supervision, _cmd_class)				\
 {																								\
 	.src_node = _src_node,																		\
 	.multi = _multi,																			\
 	.supervision = _supervision,																\
 	.cmd_class = _cmd_class,																	\
 }																								\
+
+#define ZUNO_COMMAND_HANDLER_OPTIONS_DEFAULT()											\
+{																						\
+	.src_node = 0x0,																	\
+	.multi = false,																		\
+	.supervision = false,																\
+	.cmd_class = COMMAND_CLASS_UNKNOWN,													\
+}																						\
 
 typedef struct				ZUNOCommandReport_t
 {

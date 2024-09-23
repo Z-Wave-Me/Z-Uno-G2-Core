@@ -37,7 +37,7 @@ static void _start_level_set(uint8_t channel, uint8_t current_level) {
 	__zuno_BasicUniversalSetter1P(channel, current_level);
 }
 
-static int _start_level(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {// Prepare the structure for dimming
+static int _start_level(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {// Prepare the structure for dimming
 	const ZwSwitchMultilevelStartLevelChangeFrame_t		*pk;
 	uint32_t											step;
 	uint8_t												current_level;
@@ -104,7 +104,7 @@ static int _start_level(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOComman
 		zuno_CCSupervisionAsyncProcessedSet(cmd, &parameter->super_vision);
 	}
 	parameter->flag = flag;
-	zunoTimerTreadDimingAdd(parameter);
+	zunoTimerTreadDimingAdd(parameter, options);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
@@ -169,7 +169,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 			parameter->target_value = value;
 			parameter->type = zunoTimerTreadDimingTypeSwitchMultilevel;
 			parameter->channel = channel;
-			zunoTimerTreadDimingAdd(parameter);
+			zunoTimerTreadDimingAdd(parameter, options);
 			return (ZUNO_COMMAND_PROCESSED);
 			break ;
 		default:
@@ -222,7 +222,7 @@ int zuno_CCSwitchMultilevelHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZU
 											  (pk->v1.properties1 & (1 << 6)) == 0, 
 											  (uint8_t*) cmd);
 			}
-			rs = _start_level(channel, cmd, frame_report);
+			rs = _start_level(channel, cmd, frame_report, options);
 			break ;
 		case SWITCH_MULTILEVEL_STOP_LEVEL_CHANGE:
 			zcustom_SWLStartStopHandler(channel, 

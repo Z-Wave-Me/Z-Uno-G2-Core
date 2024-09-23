@@ -45,8 +45,9 @@ zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void) {
 	return (list);
 }
 
-void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list) {
+void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list, const ZUNOCommandHandlerOption_t *options) {
 	zunoEnterCritical();
+	list->options = options[0x0];
 	list->next = _diming;
 	_diming = list;
 	g_sleep_data.latch++;
@@ -141,7 +142,6 @@ static bool _zunoTimerTreadDimingLoop_set(zunoTimerTreadDiming_t *list, uint8_t 
 			__zuno_BasicUniversalSetter1P(list->channel, new_value);
 			break ;
 	}
-	zunoSendReport(list->channel + 0x1);
 	return (true);
 }
 
@@ -170,8 +170,15 @@ static bool _zunoTimerTreadDimingLoop(zunoTimerTreadDiming_t *list) {
 	return (false);
 }
 
+void zunoTimerTreadDimingLoopReportSet(ZUNOCommandPacketReport_t *frame_report, const zunoTimerTreadDiming_t *list) {
+	if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION) != 0x0)
+		zuno_CCSupervisionReportAsyncProcessed(frame_report, &list->super_vision);
+	zunoSendReportSet(list->channel, &list->options);
+}
+
 void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 	zunoTimerTreadDiming_t					*list;
+	zunoTimerTreadDiming_t					list_tmp;
 	zunoTimerTreadDiming_t					*list_array[0x10];
 	zunoTimerTreadDiming_t					*prev;
 	size_t									i;
@@ -204,11 +211,11 @@ void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
 	while (i < i_max) {
 		list = list_array[i];
 		i++;
-		if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION) != 0x0)
-			zuno_CCSupervisionReportAsyncProcessed(frame_report, &list->super_vision);
 		zunoEnterCritical();
+		list_tmp = list[0x0];
 		_free_list(list);
 		zunoExitCritical();
+		zunoTimerTreadDimingLoopReportSet(frame_report, &list_tmp);
 	}
 }
 #endif

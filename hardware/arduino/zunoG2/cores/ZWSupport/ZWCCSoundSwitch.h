@@ -173,7 +173,7 @@ typedef struct								ZunoSoundSwitchParameterArray_s
 
 bool zuno_CCSoundSwitchIsRun(uint8_t channel);
 
-int zuno_CCSoundSwitchHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSoundSwitchHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options);
 int zuno_CCSoundSwitchReport(uint8_t channel, ZUNOCommandPacket_t *packet);
 void zuno_CCSoundSwitchPlay(uint8_t channel, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 void zuno_CCSoundSwitchStop(uint8_t channel);

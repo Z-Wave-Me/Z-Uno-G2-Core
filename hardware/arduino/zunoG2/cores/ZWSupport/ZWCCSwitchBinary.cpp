@@ -67,7 +67,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 			parameter->ticks_end = (rtcc_micros() / 1000) + duration;
 			parameter->target_value = targetValue;
 			parameter->type = zunoTimerTreadDimingTypeSwitchBinary;
-			zunoTimerTreadDimingAdd(parameter);
+			zunoTimerTreadDimingAdd(parameter, options);
 			return (ZUNO_COMMAND_PROCESSED);
 			break ;
 		default:

@@ -215,6 +215,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCo
 	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
+	(void)options;
 }
 
 static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {

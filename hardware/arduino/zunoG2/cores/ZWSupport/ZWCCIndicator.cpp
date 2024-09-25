@@ -233,7 +233,7 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUN
 	indicatorId = frame->v4.indicatorId;
 	if ((timer_array = _indicatorGetParameterArrayTimer(indicatorId)) == 0x0) {
 		len = 0x1;
-		report->v4.variantgroup[0x0].indicatorId = INDICATOR_ID_NA;
+		report->v4.variantgroup[0x0].indicatorId = indicatorId;
 		report->v4.variantgroup[0x0].propertyId = 0x0;
 		report->v4.variantgroup[0x0].value = 0x0;
 	}

@@ -2,10 +2,11 @@
 #include "ZWSupport.h"
 #include "Debug.h"
 
+static uint8_t _batteryLevel = 0x0;
+
+static bool _zunoSendBatteryReportHandler(bool report_test);
 void zuno_CCBattery_OnSetup(){
-    if (zunoIsSleepingMode() == false)
-        return ;
-    zunoSendBatteryReport();
+    _zunoSendBatteryReportHandler(true);
 }
 
 
@@ -53,13 +54,32 @@ static uint8_t _ZunoBattery(bool async, ZunoBattery_t *out) {
 	return (batteryLevel);
 }
 
-static void _battery_report_common(bool async, ZUNOCommandPacketReport_t *frame) {
+static bool _battery_report_common_test_send(bool report_test, uint8_t batteryLevel) {
+	uint8_t											old;
+	uint8_t											hysteresis;
+
+	if (report_test == false || batteryLevel == 0x0)
+		return (true);
+	old = _batteryLevel;
+	if (old > batteryLevel)
+		hysteresis = old - batteryLevel;
+	else
+		hysteresis = batteryLevel - old;
+	if (hysteresis >= 0x3)
+		return (true);
+	return (false);
+}
+
+static bool _battery_report_common(bool async, bool report_test, ZUNOCommandPacketReport_t *frame) {
 	ZwBatteryReportFrame_t							*report;
 	ZunoBattery_t									out;
 	uint8_t											batteryLevel;
 	uint8_t											properties1;
 
 	batteryLevel = _ZunoBattery(async, &out);
+	if (_battery_report_common_test_send(report_test, batteryLevel) == false)
+		return (false);
+	_batteryLevel = batteryLevel;
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print("*** Battery report: ");
 	LOGGING_UART.println(batteryLevel);
@@ -78,22 +98,28 @@ static void _battery_report_common(bool async, ZUNOCommandPacketReport_t *frame)
 	report->properties1 = properties1;
 	report->properties2 = 0x0;
 	frame->info.packet.len = sizeof(report[0x0]);
+	return (true);
 }
 
-bool zunoSendBatteryReportHandler() {
+static bool _zunoSendBatteryReportHandler(bool report_test) {
 	ZUNOCommandPacketReport_t						frame;
 
 	if (zunoIsSleepingMode() == false)
 		return (false);
 	fillOutgoingReportPacketAsync(&frame, 0x0);
-	_battery_report_common(true, &frame);
+	if (_battery_report_common(true, report_test, &frame) == false)
+		return (false);
 	zunoSendZWPackageAdd(&frame);
-	return true;
+	return (true);
+}
+
+bool zunoSendBatteryReportHandler() {
+	return _zunoSendBatteryReportHandler(false);
 }
 
 static int _battery_report(ZUNOCommandPacketReport_t *frame_report) {
 	_zunoMarkSystemClassRequested(SYSREQUEST_MAP_BATTERY_BIT);
-	_battery_report_common(false, frame_report);
+	_battery_report_common(false, false, frame_report);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

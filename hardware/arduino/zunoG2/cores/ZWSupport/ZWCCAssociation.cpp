@@ -408,7 +408,13 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 			command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
 			command[2] = COMMAND_CLASS_INDICATOR;
 			command[3] = INDICATOR_REPORT_V4;
-			command = command + 4;
+			i = 0x4;
+			#if defined(WITH_CC_BATTERY)
+			command[i + 0x0] = COMMAND_CLASS_BATTERY;
+			command[i + 0x1] = BATTERY_REPORT;
+			i = i + 0x2;
+			#endif
+			command = command + i;
 			command_save = command;
 			i_all = 1;
 			max_all = ZUNO_CFG_CHANNEL_COUNT;

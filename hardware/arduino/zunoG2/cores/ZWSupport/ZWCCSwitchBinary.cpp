@@ -74,7 +74,8 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 			break ;
 	}
 	__zuno_BasicUniversalSetter1P(channel, targetValue);
-	zunoSendReportSet(channel, options);
+	zuno_CCSupervisionReportSyncDefault(frame_report, ZUNO_COMMAND_PROCESSED);
+	zunoSendReportSet(channel, frame_report, options, NULL);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 

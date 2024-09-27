@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "ZWCCIndicator.h"
+#include "ZWCCSuperVision.h"
 
 #define INDICATOR_LED_PIN					29
 
@@ -196,41 +197,15 @@ static int _indicator_description_report(const ZW_INDICATOR_DESCRIPTION_GET_V4_F
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUNOCommandPacketReport_t *frame_report) {
+static void _send_indicator_report_ext(ZUNOCommandPacket_t *packet, uint8_t indicatorId) {
 	ZwIndicatorReportFrame_t						*report;
 	ZunoIndicatorTimer_t							*timer_array;
-	size_t											value;
-	size_t											indicatorId;
+	size_t											len;
 
-	report = (ZwIndicatorReportFrame_t *)frame_report->info.packet.cmd;
-	// report->cmdClass = COMMAND_CLASS_INDICATOR; set in - fillOutgoingPacket
-	// report->cmd = INDICATOR_REPORT_V4; set in - fillOutgoingPacket
-	if (len == sizeof(frame->v1)) {
-		timer_array = _indicatorGetParameterArrayTimer(INDICATOR_ID_NODE_IDENTIFY);
-		switch (timer_array->type_prop) {
-			case INDICATOR_PROP_TYPE_TIMEOUT:
-				if (timer_array->ms != 0x0)
-					value = 0xFF;
-				else
-					value = 0x0;
-				break ;
-			case INDICATOR_PROP_TYPE_TOGGLING:
-				if (timer_array->ms != 0x0 && timer_array->prop.toggling.state == INDICATOR_TOGGLING_STATE_ON)
-					value = 0xFF;
-				else
-					value = 0x0;
-				break ;
-			case INDICATOR_PROP_TYPE_BINARY:
-			default:
-				value = timer_array->prop.binary.value;
-				break ;
-		}
-		report->v1.value = value;
-		frame_report->info.packet.len = sizeof(report->v1);
-		return (ZUNO_COMMAND_ANSWERED);
-	}
+	report = (ZwIndicatorReportFrame_t *)packet->packet.cmd;
+	report->v4.cmdClass = COMMAND_CLASS_INDICATOR;
+	report->v4.cmd = INDICATOR_REPORT_V4;
 	report->v4.indicator0Value = 0x0;
-	indicatorId = frame->v4.indicatorId;
 	if ((timer_array = _indicatorGetParameterArrayTimer(indicatorId)) == 0x0) {
 		len = 0x1;
 		report->v4.variantgroup[0x0].indicatorId = indicatorId;
@@ -274,7 +249,55 @@ static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUN
 
 	}
 	report->v4.properties1 = len;
-	frame_report->info.packet.len = (sizeof(report->v4) + (len * sizeof(report->v4.variantgroup[0x0])));
+	packet->packet.len = (sizeof(report->v4) + (len * sizeof(report->v4.variantgroup[0x0])));
+}
+
+static void _send_indicator_report(ZUNOCommandPacket_t *packet) {
+	ZwIndicatorReportFrame_t						*report;
+	ZunoIndicatorTimer_t							*timer_array;
+	size_t											value;
+
+	report = (ZwIndicatorReportFrame_t *)packet->packet.cmd;
+	report->v4.cmdClass = COMMAND_CLASS_INDICATOR;
+	report->v4.cmd = INDICATOR_REPORT_V4;
+	timer_array = _indicatorGetParameterArrayTimer(INDICATOR_ID_NODE_IDENTIFY);
+	switch (timer_array->type_prop) {
+		case INDICATOR_PROP_TYPE_TIMEOUT:
+			if (timer_array->ms != 0x0)
+				value = 0xFF;
+			else
+				value = 0x0;
+			break ;
+		case INDICATOR_PROP_TYPE_TOGGLING:
+			if (timer_array->ms != 0x0 && timer_array->prop.toggling.state == INDICATOR_TOGGLING_STATE_ON)
+				value = 0xFF;
+			else
+				value = 0x0;
+			break ;
+		case INDICATOR_PROP_TYPE_BINARY:
+		default:
+			value = timer_array->prop.binary.value;
+			break ;
+	}
+	report->v1.value = value;
+	packet->packet.len = sizeof(report->v1);
+}
+
+static int _indicator_report(const ZwIndicatorGetFrame_t *frame, size_t len, ZUNOCommandPacketReport_t *frame_report) {
+	if (len == sizeof(frame->v1)) {
+		_send_indicator_report(&frame_report->info);
+		return (ZUNO_COMMAND_ANSWERED);
+	}
+	_send_indicator_report_ext(&frame_report->info, frame->v4.indicatorId);
+	return (ZUNO_COMMAND_ANSWERED);
+}
+
+int zuno_CCIndicatorReport(ZUNOCommandPacket_t *packet, const ZwIndicatorReport_t *info) {
+	if (info == NULL) {
+		_send_indicator_report(packet);
+		return (ZUNO_COMMAND_ANSWERED);
+	}
+	_send_indicator_report_ext(packet, info->indicatorId);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -322,10 +345,11 @@ static void _set_ms(ZunoIndicatorTimer_t *timer_array, uint64_t ms) {
 	timer_array->ms = ms;
 }
 
-static void _timer_update_toggling(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimer_t *timer_array, uint64_t ms_current) {
+static void _timer_update_toggling(ZUNOCommandPacketReport_t *frame_report, const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimer_t *timer_array, uint64_t ms_current) {
 	size_t									value;
 	size_t									state;
 	size_t									on_off_cycles;
+	ZwIndicatorReport_t						info;
 
 	if ((on_off_cycles = timer_array->prop.toggling.loop) == 0x0) {
 		memset(&timer_array->prop.toggling, 0x0, sizeof(timer_array->prop.toggling));
@@ -335,6 +359,8 @@ static void _timer_update_toggling(const ZunoIndicatorParameter_t *parameter_arr
 		#if defined(WB_MSW_CERT_BUILD_INDICATOR)
 		zunoIndicatorLoopClose(parameter_array->pin, parameter_array->indicatorId);
 		#endif
+		info.indicatorId = parameter_array->indicatorId;
+		zunoSendReportSet(0x0, frame_report, &timer_array->options, &info);
 		return ;
 	}
 	switch (timer_array->prop.toggling.state) {
@@ -358,7 +384,7 @@ static void _timer_update_toggling(const ZunoIndicatorParameter_t *parameter_arr
 	zunoIndicatorDigitalWrite(parameter_array->pin, value, parameter_array->indicatorId);
 }
 
-static void _timer_update(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimer_t *timer_array, uint64_t ms_current) {
+static void _timer_update(ZUNOCommandPacketReport_t *frame_report, const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimer_t *timer_array, uint64_t ms_current) {
 	uint64_t											ms;
 
 	zunoEnterCritical();
@@ -366,7 +392,7 @@ static void _timer_update(const ZunoIndicatorParameter_t *parameter_array, ZunoI
 		return (zunoExitCritical());
 	switch (timer_array->type_prop) {
 		case INDICATOR_PROP_TYPE_TOGGLING:
-			_timer_update_toggling(parameter_array, timer_array, ms_current);
+			_timer_update_toggling(frame_report, parameter_array, timer_array, ms_current);
 			break ;
 		default:
 			zunoExitCritical();
@@ -374,7 +400,7 @@ static void _timer_update(const ZunoIndicatorParameter_t *parameter_array, ZunoI
 	}
 }
 
-void zuno_CCIndicatorTimer(void) {
+void zuno_CCIndicatorTimer(ZUNOCommandPacketReport_t *frame_report) {
 	const ZunoIndicatorParameter_t						*parameter_array_b;
 	const ZunoIndicatorParameter_t						*parameter_array_e;
 	ZunoIndicatorTimer_t								*timer_array;
@@ -385,14 +411,14 @@ void zuno_CCIndicatorTimer(void) {
 		return ;
 	ms_current = rtcc_micros() / 1000;
 	if ((ms = _indicator_parameter_timer.ms) != 0x0 && ms <= ms_current)
-		_timer_update(&_indicator_parameter, &_indicator_parameter_timer, ms_current);
+		_timer_update(frame_report, &_indicator_parameter, &_indicator_parameter_timer, ms_current);
 	if ((parameter_array_b = zunoIndicatorGetParameterArrayUser()) == 0x0)
 		return ;
 	parameter_array_e = zunoIndicatorGetParameterArrayUserEnd();
 	timer_array = zunoIndicatorGetParameterArrayUserTimer();
 	while (parameter_array_b < parameter_array_e) {
 		if ((ms = timer_array->ms ) != 0x0 && ms <= ms_current)
-			_timer_update(parameter_array_b, timer_array, ms_current);
+			_timer_update(frame_report, parameter_array_b, timer_array, ms_current);
 		parameter_array_b++;
 		timer_array++;
 	}
@@ -410,7 +436,7 @@ static void _indicator_set_timeout(const ZunoIndicatorParameter_t *parameter_arr
 	(void)prop;
 }
 
-static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimerProp_t *prop) {
+static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimerProp_t *prop, const ZUNOCommandHandlerOption_t *options) {
 	size_t									on_off_period;
 	size_t									on_off_cycles;
 	size_t									on_time;
@@ -434,6 +460,7 @@ static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_ar
 		zunoIndicatorBinary(parameter_array->pin, LOW, parameter_array->indicatorId);
 		#endif
 	}
+	timer_array->options = options[0x0];
 	on_time = prop->toggling.on_time;
 	timer_array->prop.toggling.on_off_period = on_off_period;
 	timer_array->prop.toggling.on_off_cycles = on_off_cycles;
@@ -464,10 +491,11 @@ static void _indicator_set_toggling(const ZunoIndicatorParameter_t *parameter_ar
 	#endif
 }
 
-static size_t _indicator_set_binary(const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimerProp_t *prop) {
+static int _indicator_set_binary(ZUNOCommandPacketReport_t *frame_report, const ZunoIndicatorParameter_t *parameter_array, ZunoIndicatorTimerProp_t *prop, const ZUNOCommandHandlerOption_t *options) {
 	ZunoIndicatorTimer_t							*timer_array;
 	size_t											value;
 	size_t											sleep_lock;
+	ZwIndicatorReport_t								info;
 
 	value = prop->binary.value;
 	if (value < 0x64 || value == 0xFF) {
@@ -490,16 +518,20 @@ static size_t _indicator_set_binary(const ZunoIndicatorParameter_t *parameter_ar
 		#if defined(WB_MSW_CERT_BUILD_INDICATOR)
 		zunoIndicatorBinary(parameter_array->pin, value, parameter_array->indicatorId);
 		#endif
-		return (true);
+		info.indicatorId = parameter_array->indicatorId;
+		if (options->supervision == true)
+			zuno_CCSupervisionReportSyncDefault(frame_report, ZUNO_COMMAND_PROCESSED);
+		zunoSendReportSet(0x0, frame_report, options, &info);
+		return (ZUNO_COMMAND_PROCESSED);
 	}
-	return (false);
+	return (ZUNO_COMMAND_BLOCKED_FAILL);
 }
 
-static int _indicator_set_v1(size_t value) {
+static int _indicator_set_v1(ZUNOCommandPacketReport_t *frame_report, size_t value, const ZUNOCommandHandlerOption_t *options) {
 	ZunoIndicatorTimerProp_t						prop;
 
 	prop.binary.value = value;
-	return (_indicator_set_binary(_indicatorGetParameterArray(INDICATOR_ID_NODE_IDENTIFY), &prop));
+	return (_indicator_set_binary(frame_report, _indicatorGetParameterArray(INDICATOR_ID_NODE_IDENTIFY), &prop, options));
 }
 
 static void _indicator_set_clear(size_t indicatorId, VG_INDICATOR_SET_V4_VG *variantgroup, VG_INDICATOR_SET_V4_VG *variantgroup_e) {
@@ -535,7 +567,7 @@ static uint32_t _indicator_set_find_mask(size_t indicatorId, VG_INDICATOR_SET_V4
 }
 
 
-static int _indicator_set_v4(size_t indicatorId, uint32_t prop_mask, VG_INDICATOR_SET_V4_VG *variantgroup, VG_INDICATOR_SET_V4_VG *variantgroup_e, const ZunoIndicatorParameter_t *parameter_array, int result) {
+static int _indicator_set_v4(ZUNOCommandPacketReport_t *frame_report, size_t indicatorId, uint32_t prop_mask, VG_INDICATOR_SET_V4_VG *variantgroup, VG_INDICATOR_SET_V4_VG *variantgroup_e, const ZunoIndicatorParameter_t *parameter_array, int result, const ZUNOCommandHandlerOption_t *options) {
 	ZunoIndicatorTimerProp_t						prop;
 	size_t											propertyId;
 	size_t											value;
@@ -582,8 +614,8 @@ static int _indicator_set_v4(size_t indicatorId, uint32_t prop_mask, VG_INDICATO
 	}
 	switch (prop_mask) {
 		case (INDICATOR_PROP_BINARY_MASK):
-			if (_indicator_set_binary(parameter_array, &prop) == false)
-				result = ZUNO_COMMAND_BLOCKED_FAILL;
+			if ((result = _indicator_set_binary(frame_report, parameter_array, &prop, options)) != ZUNO_COMMAND_PROCESSED)
+				;
 			else
 				_indicator_set_clear(indicatorId, variantgroup_save, variantgroup_e);
 			break ;
@@ -592,7 +624,7 @@ static int _indicator_set_v4(size_t indicatorId, uint32_t prop_mask, VG_INDICATO
 				result = ZUNO_COMMAND_BLOCKED_FAILL;
 				break ;
 			}
-			_indicator_set_toggling(parameter_array, &prop);
+			_indicator_set_toggling(parameter_array, &prop, options);
 			_indicator_set_clear(indicatorId, variantgroup_save, variantgroup_e);
 			break ;
 		case (INDICATOR_PROP_TIMEOUT_MASK):
@@ -616,7 +648,7 @@ static int _indicator_set_find_na(VG_INDICATOR_SET_V4_VG *variantgroup_b, VG_IND
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
+static int _indicator_set(ZUNOCommandPacketReport_t *frame_report, const ZwIndicatorSetFrame_t *frame, size_t len, const ZUNOCommandHandlerOption_t *options) {
 	size_t											indicatorId;
 	const ZunoIndicatorParameter_t					*parameter_array;
 	VG_INDICATOR_SET_V4_VG							*variantgroup;
@@ -626,10 +658,10 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 	size_t											propertyId;
 
 	if (len == sizeof(frame->v1))
-		return (_indicator_set_v1(frame->v1.value));
+		return (_indicator_set_v1(frame_report, frame->v1.value, options));
 	len = frame->v4.properties1 & INDICATOR_SET_PROPERTIES1_INDICATOR_OBJECT_COUNT_MASK_V4;
 	if (len == 0x0)
-		return (_indicator_set_v1(frame->v4.indicator0Value));
+		return (_indicator_set_v1(frame_report, frame->v4.indicator0Value, options));
 	if (len > ((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(frame->v4)) / sizeof(variantgroup[0x0])))
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	memcpy(&vg[0x0], &frame->v4.variantgroup[0x0], len * sizeof(variantgroup[0x0]));
@@ -643,17 +675,17 @@ static int _indicator_set(const ZwIndicatorSetFrame_t *frame, size_t len) {
 				if ((parameter_array->support_prop_mask & (0x1 << propertyId)) != 0x0) {
 					switch (propertyId) {
 						case INDICATOR_PROP_BINARY:
-							result = _indicator_set_v4(indicatorId, (INDICATOR_PROP_BINARY_MASK), variantgroup, variantgroup_e, parameter_array, result);
+							result = _indicator_set_v4(frame_report, indicatorId, (INDICATOR_PROP_BINARY_MASK), variantgroup, variantgroup_e, parameter_array, result, options);
 							break ;
 						case INDICATOR_PROP_TIMEOUT_HOURS:
 						case INDICATOR_PROP_TIMEOUT_MINUTES:
 						case INDICATOR_PROP_TIMEOUT_SECONDS:
-							result = _indicator_set_v4(indicatorId, (INDICATOR_PROP_TIMEOUT_MASK), variantgroup, variantgroup_e, parameter_array, result);
+							result = _indicator_set_v4(frame_report, indicatorId, (INDICATOR_PROP_TIMEOUT_MASK), variantgroup, variantgroup_e, parameter_array, result, options);
 							break ;
 						case INDICATOR_PROP_TOGGLING_ON_OFF_PERIOD:
 						case INDICATOR_PROP_TOGGLING_ON_OFF_CYCLES:
 						case INDICATOR_PROP_TOGGLING_ON_TIME:
-							result = _indicator_set_v4(indicatorId, (INDICATOR_PROP_TOGGLING_MASK), variantgroup, variantgroup_e, parameter_array, result);
+							result = _indicator_set_v4(frame_report, indicatorId, (INDICATOR_PROP_TOGGLING_MASK), variantgroup, variantgroup_e, parameter_array, result, options);
 							break ;
 						default:
 							result = ZUNO_COMMAND_BLOCKED_FAILL;
@@ -691,12 +723,12 @@ void __g_zuno_indicator_init() {
 		zunoIndicatorPinMode(_indicator_parameter.pin, OUTPUT_DOWN, _indicator_parameter.indicatorId);
 }
 
-int zuno_CCIndicatorHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCIndicatorHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
 	int				rs;
 
 	switch(ZW_CMD) {
 		case INDICATOR_SET_V4:
-			rs = _indicator_set((const ZwIndicatorSetFrame_t *)&cmd->cmd[0x0], cmd->len);
+			rs = _indicator_set(frame_report, (const ZwIndicatorSetFrame_t *)&cmd->cmd[0x0], cmd->len, options);
 			break ;
 		case INDICATOR_GET_V4:
 			rs = _indicator_report((const ZwIndicatorGetFrame_t *)&cmd->cmd[0x0], cmd->len, frame_report);
@@ -725,6 +757,8 @@ typedef struct								ZwIndicatorSetV4FrameToggling_s
 
 void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_t on_off_cycles, uint8_t on_time) {
 	ZwIndicatorSetV4FrameToggling_t			frame;
+	ZUNOCommandPacketReport_t				frame_report;
+	ZUNOCommandHandlerOption_t				options;
 
 	frame.properties1 = (sizeof(frame.variantgroup) / sizeof(frame.variantgroup[0x0]));
 	frame.variantgroup[0x0].indicatorId = indicatorId;
@@ -736,7 +770,8 @@ void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_
 	frame.variantgroup[0x2].indicatorId = indicatorId;
 	frame.variantgroup[0x2].propertyId = INDICATOR_PROP_TOGGLING_ON_TIME;
 	frame.variantgroup[0x2].value = on_time;
-	_indicator_set((const ZwIndicatorSetFrame_t *)&frame, sizeof(frame));
+	options = ZUNO_COMMAND_HANDLER_OPTIONS_DEFAULT();
+	_indicator_set(&frame_report, (const ZwIndicatorSetFrame_t *)&frame, sizeof(frame), &options);
 }
 
 bool zuno_CCIndicatorIsRun(void) {

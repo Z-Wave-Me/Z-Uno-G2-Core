@@ -171,9 +171,24 @@ static bool _zunoTimerTreadDimingLoop(zunoTimerTreadDiming_t *list) {
 }
 
 void zunoTimerTreadDimingLoopReportSet(ZUNOCommandPacketReport_t *frame_report, const zunoTimerTreadDiming_t *list) {
+	#ifdef WITH_CC_WINDOW_COVERING
+	ZwWindowCoveringReport_t											info_window_covering;
+	#endif
+
 	if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION) != 0x0)
 		zuno_CCSupervisionReportAsyncProcessed(frame_report, &list->super_vision);
-	zunoSendReportSet(list->channel, &list->options);
+
+	switch (list->type) {
+		#ifdef WITH_CC_WINDOW_COVERING
+		case zunoTimerTreadDimingTypeWindowsCovering:
+			info_window_covering.parameterId = list->parameterId;
+			zunoSendReportSet(list->channel, frame_report, &list->options, &info_window_covering);
+			break ;
+		#endif
+		default:
+			zunoSendReportSet(list->channel, frame_report, &list->options, NULL);
+			break ;
+	}
 }
 
 void zunoTimerTreadDimingLoop(ZUNOCommandPacketReport_t *frame_report) {
@@ -281,11 +296,11 @@ size_t zuno_CCTimerTicksTable7(size_t duration) {// Get the step for dimming in 
 	return (duration * (1000));
 }
 
-void zunoSendReportHandler(uint32_t ticks);
+void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
-void zuno_CCIndicatorTimer(void);
-void zuno_CCCentralSceneTimer(void);
+void zuno_CCIndicatorTimer(ZUNOCommandPacketReport_t *frame_report);
+void zuno_CCCentralSceneTimer(ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCTimeHandlerTimer(void);
 
 // Main timer for CC purposes
@@ -323,9 +338,7 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 #endif
 
 void zuno_CCTimer(uint32_t ticks) {
-	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SOUND_SWITCH) || defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
 	ZUNOCommandPacketReport_t						frame_report;
-	#endif
 
 	#if defined(WITH_CC_SWITCH_BINARY) || defined(WITH_CC_SWITCH_MULTILEVEL) || defined(WITH_CC_WINDOW_COVERING) || defined(WITH_CC_SOUND_SWITCH)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
@@ -337,12 +350,12 @@ void zuno_CCTimer(uint32_t ticks) {
 	_exe(&frame_report);
 	#endif
 	if((ticks & 0x3) == 0) {// Once in ~40ms 
-		zuno_CCIndicatorTimer();
+		zuno_CCIndicatorTimer(&frame_report);
 	}
 	#if defined(WITH_CC_TIME) || defined(WITH_CC_CENTRAL_SCENE)
 	if((ticks & 0x7) == 0) { // Once in ~80ms 
 		#if defined(WITH_CC_CENTRAL_SCENE) 
-		zuno_CCCentralSceneTimer();
+		zuno_CCCentralSceneTimer(&frame_report);
 		#endif
 		#if defined(WITH_CC_TIME)
 		zuno_CCTimeHandlerTimer();
@@ -350,7 +363,7 @@ void zuno_CCTimer(uint32_t ticks) {
 	}
 	#endif
 	if((ticks & ZUNO_REPORTTIME_DIVIDER) == 0){// Once in ~80ms - for 0x7
-		zunoSendReportHandler(ticks);
+		zunoSendReportHandler(ticks, &frame_report);
 	}
 	ZWQProcess();
 	RSTLocallyTick();

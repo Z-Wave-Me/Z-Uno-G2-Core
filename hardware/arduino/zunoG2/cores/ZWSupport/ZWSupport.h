@@ -126,7 +126,7 @@ typedef struct				ZUNOCommandHandlerOption_s
 	.cmd_class = _cmd_class,																	\
 }																								\
 
-#define ZUNO_COMMAND_HANDLER_OPTIONS_DEFAULT()											\
+#define ZUNO_COMMAND_HANDLER_OPTIONS_DEFAULT()									\
 {																						\
 	.src_node = 0x0,																	\
 	.multi = false,																		\
@@ -136,10 +136,9 @@ typedef struct				ZUNOCommandHandlerOption_s
 
 typedef struct				ZUNOCommandReport_t
 {
-	node_id_t				src_node;
-	bool					multi;
+	ZUNOCommandHandlerOption_t option;
+	bool					outside;
 	bool					valid;
-	uint8_t					cmd_class;
 }							ZUNOCommandReport_s;
 
 typedef struct				ZUNOCommandPacket_t
@@ -160,7 +159,7 @@ byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 //byte getMaxChannelTypes();
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
-void zunoSendReportSet(byte channel, const ZUNOCommandHandlerOption_t *options);
+void zunoSendReportSet(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options, const void *add);
 void ZWCCSetup();
 void zunoRFLogger(ZUNOSysEvent_t * ev);
 

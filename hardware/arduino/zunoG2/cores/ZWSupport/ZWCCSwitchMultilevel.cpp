@@ -176,7 +176,8 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 			break ;
 	}
 	__zuno_BasicUniversalSetter1P(channel, value);
-	zunoSendReportSet(channel, options);
+	zuno_CCSupervisionReportSyncDefault(frame_report, ZUNO_COMMAND_PROCESSED);
+	zunoSendReportSet(channel, frame_report, options, NULL);
 	return (ZUNO_COMMAND_PROCESSED);
 }
 

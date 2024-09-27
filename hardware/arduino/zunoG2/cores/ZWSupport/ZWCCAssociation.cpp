@@ -18,6 +18,7 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCTimer.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -405,7 +406,9 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 		if ((dst_zw_channel = packet->dst_zw_channel) == 0) {
 			command[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
 			command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
-			command = command + 2;
+			command[2] = COMMAND_CLASS_INDICATOR;
+			command[3] = INDICATOR_REPORT_V4;
+			command = command + 4;
 			command_save = command;
 			i_all = 1;
 			max_all = ZUNO_CFG_CHANNEL_COUNT;

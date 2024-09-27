@@ -522,6 +522,7 @@ typedef union							ZunoIndicatorTimerProp_u
 typedef struct						ZunoIndicatorTimer_s
 {
 	uint64_t						ms;
+	ZUNOCommandHandlerOption_t		options;
 	ZunoIndicatorTimerProp_t		prop;
 	uint8_t							type_prop;
 	uint8_t							sleep_lock;
@@ -551,7 +552,13 @@ typedef struct						ZunoIndicatorTimer_s
 	.indicatorId = INDICATORID\
 }\
 
-int zuno_CCIndicatorHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+typedef struct								ZwIndicatorReport_s
+{
+	uint8_t									indicatorId;
+}											ZwIndicatorReport_t;
+
+int zuno_CCIndicatorReport(ZUNOCommandPacket_t *packet, const ZwIndicatorReport_t *info);
+int zuno_CCIndicatorHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report,  const ZUNOCommandHandlerOption_t *options);
 void zuno_CCIndicatorToggling(uint8_t indicatorId, uint8_t on_off_period, uint8_t on_off_cycles, uint8_t on_time);
 bool zuno_CCIndicatorIsRun(void);
 

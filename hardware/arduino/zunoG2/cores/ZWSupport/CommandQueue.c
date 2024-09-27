@@ -105,13 +105,34 @@ bool zunoCheckSystemQueueStatus(uint8_t channel){
 static bool _ZWQSend_test(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p, bool multi) {
 	if (info->report.valid == false)
 		return (true);
-	if (info->report.src_node != p->dst_node)
+	if (info->report.option.supervision == false)
 		return (true);
-	if (info->report.cmd_class != p->cmd[0x0])
+	if (info->report.option.src_node != p->dst_node)
 		return (true);
-	if (info->report.multi != multi)
+	if (info->report.option.cmd_class != p->cmd[0x0])
+		return (true);
+	if (info->report.option.multi != multi)
 		return (true);
 	return (false);
+}
+
+static bool _ZWQSend_test_only_outside(ZUNOCommandPacket_t *info) {
+	if (ZUNO_CFG_CHANNEL_COUNT == 0x1)
+		return (true);
+	if (info->report.valid == false)
+		return (false);
+	if (info->report.outside == true)
+		return (true);
+	return (false);
+}
+
+static void _ZWQSend_outside(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p) {
+	if (_ZWQSend_test(info, p, false) == false)
+		return ;
+	uint8_t mapped_channel = p->src_zw_channel;
+	p->src_zw_channel = 0;
+	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
+	p->src_zw_channel = mapped_channel;
 }
 
 void _ZWQSend(ZUNOCommandPacket_t *info){
@@ -126,13 +147,13 @@ void _ZWQSend(ZUNOCommandPacket_t *info){
 	#endif
     bool b_plain_assoc = (p->dst_zw_channel == PLAIN_ASSOC_MAP); // It's a plain associtaion 
     p->dst_zw_channel &= ~(PLAIN_ASSOC_MAP); // Remove plain assoc value
+	if (_ZWQSend_test_only_outside(info) == true) {
+		_ZWQSend_outside(info, p);
+		return ;
+	}
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
-		if (_ZWQSend_test(info, p, false) == true) {
-			uint8_t mapped_channel = p->src_zw_channel;
-			p->src_zw_channel = 0;
-			zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
-			p->src_zw_channel = mapped_channel;
-		}
+		if (_ZWQSend_test(info, p, false) == true)
+			_ZWQSend_outside(info, p);
 	}
 	if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
 		return; // do not send association with multichannel encap to plain group

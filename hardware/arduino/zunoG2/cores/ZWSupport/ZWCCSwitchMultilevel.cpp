@@ -86,7 +86,7 @@ static int _start_level(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOComman
 	if (targetValue == current_level)
 		return (ZUNO_COMMAND_PROCESSED);
 	__zuno_BasicUniversalTimerStop(channel);
-	step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE + 0x1);
+	step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE);
 	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	parameter->channel = channel;

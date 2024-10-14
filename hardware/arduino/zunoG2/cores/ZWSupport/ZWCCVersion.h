@@ -49,5 +49,5 @@ typedef struct _ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME_
     uint8_t   commandClassVersion;          /**/
 } ZW_VERSION_COMMAND_CLASS_REPORT_V3_FRAME;
 
-int zuno_CCVersionHandler(ZUNOCommandPacket_t * cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCVersionHandler(const ZUNOCommandCmd_t * cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // VERSION_CC_H

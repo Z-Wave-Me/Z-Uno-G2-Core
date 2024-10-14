@@ -52,7 +52,7 @@ typedef struct										ZwSecurityCommandsSupportedFrame_s
 	uint8_t											commandClassSupport[];
 }													ZwSecurityCommandsSupportedFrame_t;
 
-int zuno_CCSecurity2(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
-int zuno_CCSecurity(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSecurity2(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCSecurity(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif//ZWCC_SECURITY_H

@@ -23,6 +23,7 @@ typedef struct					zunoTimerTreadDiming_s
 	uint64_t					ticks_end;
 	ZwCSuperVisionReportAsyncProcessed_t super_vision;
 	zunoTimerTreadDimingType_t	type;
+	ZUNOCommandHandlerOption_t	options;
 	uint8_t						flag;
 	uint8_t						channel;
 	uint8_t						target_value;
@@ -40,7 +41,7 @@ bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t channel, uint8_t current_value, uint8_t *duration_table_8, uint8_t *target_value, const void *data, uint8_t length);
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel);
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel, const void *data, uint8_t length);
-void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list);
+void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list, const ZUNOCommandHandlerOption_t *options);
 zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void);
 
 #define ZUNO_TIMER_SWITCH_MAX_VALUE				0x63//Maximum value when dimming

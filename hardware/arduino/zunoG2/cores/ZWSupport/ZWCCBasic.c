@@ -160,8 +160,8 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 
 #ifdef WITH_CC_BASIC
 size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
-int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier);
-static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
+int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier, const ZUNOCommandHandlerOption_t *options);
+static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCommandHandlerOption_t *options) {
 	size_t							value;
 	size_t							type;
 
@@ -170,7 +170,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	switch (type) {
 		#if defined(WITH_CC_SOUND_SWITCH)
 		case ZUNO_SOUND_SWITCH_CHANNEL_NUMBER:
-			return (zuno_CCSoundSwitchBasicSet(channel, value));
+			return (zuno_CCSoundSwitchBasicSet(channel, value, options));
 			break ;
 		#endif
 	}
@@ -215,20 +215,21 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket) {
 	__zuno_BasicUniversalSetter1P(channel, value);
 	zunoSendReport(channel + 1);
 	return (ZUNO_COMMAND_PROCESSED);
+	(void)options;
 }
 
 static int _basic_get(byte channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwBasicReportV2Frame_t					*report;
 
-	report = (ZwBasicReportV2Frame_t *)frame_report->packet.cmd;
+	report = (ZwBasicReportV2Frame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_BASIC; set in - fillOutgoingPacket
 	// report->cmd = BASIC_REPORT; set in - fillOutgoingPacket
-	frame_report->packet.len = sizeof(ZwBasicReportV2Frame_t);
+	frame_report->info.packet.len = sizeof(ZwBasicReportV2Frame_t);
 	__zuno_BasicUniversalGetCurrentValueDurationTargetValue(channel, &report->currentValue, &report->duration, &report->targetValue);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCBasicHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
 	int										rs;
 
 	switch(ZW_CMD){
@@ -236,7 +237,7 @@ int zuno_CCBasicHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacke
 			rs = _basic_get(channel, frame_report);
 			break ;
 		case BASIC_SET:
-			rs = _basic_set(channel, (const ZwBasicSetFrame_t *)cmd->cmd);
+			rs = _basic_set(channel, (const ZwBasicSetFrame_t *)cmd->cmd, options);
 			break ;
 		default:
 			rs = ZUNO_COMMAND_BLOCKED_NO_SUPPORT;

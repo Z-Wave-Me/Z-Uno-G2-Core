@@ -330,6 +330,6 @@ typedef union								ZW_USERS_NUMBER_REPORT_FRAME_u {//For more convenient suppo
 										} \
 									} \
 
-int zuno_CCUserCodeHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCUserCodeHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_TIMER_PARAMETERS_H

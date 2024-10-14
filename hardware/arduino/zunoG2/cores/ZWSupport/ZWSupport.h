@@ -52,6 +52,7 @@ enum{
 };
 enum
 {
+	COMMAND_CLASS_UNKNOWN = 0x0,
 	COMMAND_CLASS_BASIC = 0x20,
 	COMMAND_CLASS_APPLICATION_STATUS = 0x22,
 	COMMAND_CLASS_SWITCH_BINARY = 0x25,
@@ -108,9 +109,47 @@ enum{
 
 typedef void zuno_configuration_changed(uint8_t, uint32_t);
 
+
+typedef struct				ZUNOCommandHandlerOption_s
+{
+	node_id_t				src_node;
+	bool					multi;
+	bool					supervision;
+	uint8_t					cmd_class;
+}							ZUNOCommandHandlerOption_t;
+
+#define ZUNO_COMMAND_HANDLER_OPTIONS(_src_node, _multi, _supervision, _cmd_class)				\
+{																								\
+	.src_node = _src_node,																		\
+	.multi = _multi,																			\
+	.supervision = _supervision,																\
+	.cmd_class = _cmd_class,																	\
+}																								\
+
+#define ZUNO_COMMAND_HANDLER_OPTIONS_DEFAULT()									\
+{																						\
+	.src_node = 0x0,																	\
+	.multi = false,																		\
+	.supervision = false,																\
+	.cmd_class = COMMAND_CLASS_UNKNOWN,													\
+}																						\
+
+typedef struct				ZUNOCommandReport_t
+{
+	ZUNOCommandHandlerOption_t option;
+	bool					outside;
+	bool					valid;
+}							ZUNOCommandReport_s;
+
+typedef struct				ZUNOCommandPacket_t
+{
+	ZUNOCommandCmd_t		packet;
+	ZUNOCommandReport_s		report;
+}							ZUNOCommandPacket_t;
+
 typedef struct				ZUNOCommandPacketReport_s
 {
-	ZUNOCommandPacket_t		packet;
+	ZUNOCommandPacket_t		info;
 	uint8_t					data[MAX_ZW_PACKAGE];
 }							ZUNOCommandPacketReport_t;
 
@@ -120,6 +159,7 @@ byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
 //byte getMaxChannelTypes();
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
+void zunoSendReportSet(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options, const void *add);
 void ZWCCSetup();
 void zunoRFLogger(ZUNOSysEvent_t * ev);
 

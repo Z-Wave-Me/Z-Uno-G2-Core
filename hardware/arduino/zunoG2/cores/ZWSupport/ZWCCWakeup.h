@@ -117,7 +117,7 @@ void zuno_sendWUP_Notification();
 void zuno_CCWakeup_OnSetup();
 void zuno_CCWakeup_OnDefault();
 bool zuno_CCWakeup_BeforeSleep();
-int zuno_CCWakeupHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCWakeupHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCWakeup_OnAnyRx();
 void zuno_sendWUP_NotificationReport();
 

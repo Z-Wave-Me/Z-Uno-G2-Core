@@ -166,5 +166,5 @@ typedef struct								ZwMultiChannelEndPointFindReportFrame_s
 // 	ZwMultiChannelEndPointFindReportByte4Frame_t	byte4;
 // }													ZwMultiChannelEndPointFindReportFrame_t;
 
-int zuno_CCMultichannel(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCMultichannel(ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 #endif // MULTICHANNEL_CC_H

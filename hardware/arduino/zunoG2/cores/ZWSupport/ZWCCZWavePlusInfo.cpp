@@ -84,7 +84,7 @@ void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type
 	}
 }
 
-static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _report(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	ZwZwavePlusInfoReportFrame_t		*report;
 	ZwZwavePlusInfoIcon_t				icon;
 	size_t								roleType;
@@ -100,7 +100,7 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	channel = zuno_findChannelByZWChannelIndexChannel(cmd->dst_zw_channel);
 	if (channel == UNKNOWN_CHANNEL)
 		channel = 0x0;
-	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->info.packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
 	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
@@ -126,13 +126,13 @@ static int _report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_re
 	report->v2.installerIconType2 = icon.installerIconType & 0xFF;
 	report->v2.userIconType1 = icon.userIconType >> 8;
 	report->v2.userIconType2 = icon.userIconType & 0xFF;
-	frame_report->packet.len = sizeof(report->v2);
+	frame_report->info.packet.len = sizeof(report->v2);
 	// Use security policy as we were asked. It fixes some controllers S2 problems...
-	frame_report->packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
+	frame_report->info.packet.zw_rx_secure_opts = cmd->zw_rx_secure_opts;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCZWavePlusInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCZWavePlusInfoHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
  
 	switch (ZW_CMD) {

@@ -14,8 +14,8 @@ int zuno_CCSensorMultilevelReport(byte channel, ZUNOCommandPacket_t *packet) {
 
 	channel_size = ZUNO_CFG_CHANNEL(channel).params[0];
 	uint8_t sz = channel_size & SENSOR_MULTILEVEL_PROPERTIES_SIZE_MASK;
-	report = (ZwSensorMultilevelReportFrame_t *)&packet->cmd[0x0];
-	packet->len = sz + sizeof(report[0x0]);
+	report = (ZwSensorMultilevelReportFrame_t *)&packet->packet.cmd[0x0];
+	packet->packet.len = sz + sizeof(report[0x0]);
 	report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL;
 	report->cmd = SENSOR_MULTILEVEL_REPORT;
 	report->sensorType = _get_sensor_type(channel);
@@ -31,7 +31,7 @@ static int _supported_scale(ZwSensorMultilevelSupportedGetScaleFrame_t *cmd, siz
 	size_t														properties1;
 	size_t														i;
 
-	report = (ZwSensorMultilevelSupportedScaleReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwSensorMultilevelSupportedScaleReportFrame_t *)frame_report->info.packet.cmd;
 	report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SCALE_REPORT;
 	sensorType = cmd->sensorType;
 	// report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL; set in - fillOutgoingPacket
@@ -54,15 +54,15 @@ static int _supported_scale(ZwSensorMultilevelSupportedGetScaleFrame_t *cmd, siz
 	}
 
 	report->properties1 = properties1;
-	frame_report->packet.len = sizeof(ZwSensorMultilevelSupportedScaleReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwSensorMultilevelSupportedScaleReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _supported_sensor(ZUNOCommandPacket_t *pack, size_t channel, ZUNOCommandPacketReport_t *frame_report) {
+static int _supported_sensor(const ZUNOCommandCmd_t *pack, size_t channel, ZUNOCommandPacketReport_t *frame_report) {
 	ZwSensorMultilevelSupportedSensorReportFrame_t		*report;
 	size_t												i;
 
-	report = (ZwSensorMultilevelSupportedSensorReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwSensorMultilevelSupportedSensorReportFrame_t *)frame_report->info.packet.cmd;
 	memset(&report->bitMask[0], 0, SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK);// clear reply bit mask
 	// report->cmdClass = COMMAND_CLASS_SENSOR_MULTILEVEL; set in - fillOutgoingPacket
 	// report->cmd = SENSOR_MULTILEVEL_SUPPORTED_SENSOR_REPORT; set in - fillOutgoingPacket
@@ -76,11 +76,11 @@ static int _supported_sensor(ZUNOCommandPacket_t *pack, size_t channel, ZUNOComm
 	}
 	else// If we use multichannel => just one bit in one mask bit index starts from 0
 		zunoSetupBitMask(&report->bitMask[0], _get_sensor_type(channel) - 1, SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK);
-	frame_report->packet.len = sizeof(ZwSensorMultilevelSupportedSensorReportFrame_t) + SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK;
+	frame_report->info.packet.len = sizeof(ZwSensorMultilevelSupportedSensorReportFrame_t) + SENSOR_MULTILEVEL_SUPPORTED_MAX_BYTE_MASK;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _sensor_multilevel_get(size_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _sensor_multilevel_get(size_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	const ZwSensorMultilevelGetV11Frame_t			*paket;
 	size_t											i;
 	size_t											sensorType;
@@ -92,20 +92,20 @@ static int _sensor_multilevel_get(size_t channel, ZUNOCommandPacket_t *cmd, ZUNO
 	else
 		sensorType = (size_t)-1;
 	if (ZUNO_CFG_CHANNEL(channel).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER)
-		return (zuno_CCSensorMultilevelReport(channel, &frame_report->packet));
+		return (zuno_CCSensorMultilevelReport(channel, &frame_report->info));
 	i = 0x0;
 	while (i < ZUNO_CFG_CHANNEL_COUNT) {
 		if (ZUNO_CFG_CHANNEL(i).type == ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER) {
 			channel = i;
 			if (_get_sensor_type(i) == sensorType)
-				return (zuno_CCSensorMultilevelReport(i, &frame_report->packet));
+				return (zuno_CCSensorMultilevelReport(i, &frame_report->info));
 		}
 		i++;
 	}
-	return (zuno_CCSensorMultilevelReport(channel, &frame_report->packet));
+	return (zuno_CCSensorMultilevelReport(channel, &frame_report->info));
 }
 
-int zuno_CCSensorMultilevelHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCSensorMultilevelHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int							rs;
 
 	switch (ZW_CMD) {

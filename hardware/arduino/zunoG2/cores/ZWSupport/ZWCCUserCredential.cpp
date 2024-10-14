@@ -518,7 +518,7 @@ static int _user_credential_capabilities_user_report(ZUNOCommandPacketReport_t *
 	UserCredentialCapabilitiesUserReport_t			*report;
 	uint8_t											len;
 
-	report = (UserCredentialCapabilitiesUserReport_t *)frame_report->packet.cmd;
+	report = (UserCredentialCapabilitiesUserReport_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_USER_CREDENTIAL; set in - fillOutgoingPacket
 	// report->cmd = USER_CREDENTIAL_CAPABILITIES_USER_REPORT; set in - fillOutgoingPacket
 	report->userIdentifier[0x0] = USER_CREDENTIAL_NUMBER >> 0x8;
@@ -531,7 +531,7 @@ static int _user_credential_capabilities_user_report(ZUNOCommandPacketReport_t *
 	#endif
 	len = ((((sizeof(MASK_OF_SUPPORTED_USER_TYPES) * 0x8) - __builtin_clz(MASK_OF_SUPPORTED_USER_TYPES)) >> 0x3) + 0x1);
 	report->SupportedUserTypesBitMaskLength = len;
-	frame_report->packet.len = sizeof(report[0x0]) + len;
+	frame_report->info.packet.len = sizeof(report[0x0]) + len;
 	memcpy(&report->SupportedUserTypesBitMask[0x0], (uint8_t *)&MASK_OF_SUPPORTED_USER_TYPES, len);
 	return (ZUNO_COMMAND_ANSWERED);
 }
@@ -555,7 +555,7 @@ static int _user_credential_capabilities_credential_report(ZUNOCommandPacketRepo
 	UserCredentialCapabilitiesCredentialReport_t				*report;
 	size_t														i;
 
-	report = (UserCredentialCapabilitiesCredentialReport_t *)frame_report->packet.cmd;
+	report = (UserCredentialCapabilitiesCredentialReport_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_USER_CREDENTIAL; set in - fillOutgoingPacket
 	// report->cmd = USER_CREDENTIAL_CAPABILITIES_CREDENTIAL_REPORT; set in - fillOutgoingPacket
 	report->profile1 = (0x1 << USER_CREDENTIAL_SUPPORT_CHECKSUM_CREDENTIAL);
@@ -600,7 +600,7 @@ static int _user_credential_capabilities_credential_report(ZUNOCommandPacketRepo
 	report->CLNumberOfSteps[i] = 0x0;
 	i++;
 	#endif
-	frame_report->packet.len = sizeof(report[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -626,7 +626,7 @@ static int _user_credential_user_report_get_not(ZUNOCommandPacketReport_t *frame
 	_get_next_user_struct(userIdentifier, &report->NextUserIdentifier[0x0]);
 	report->UserModifierType = USER_CREDENTIAL_MODIFY_TYPE_DNE;
 	report->set.UserNameLength = 0x0;
-	frame_report->packet.len = (sizeof(report[0x0]) - sizeof(report->set.UserName));
+	frame_report->info.packet.len = (sizeof(report[0x0]) - sizeof(report->set.UserName));
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -641,7 +641,7 @@ static int _user_credential_user_report_get(ZUNOCommandPacketReport_t *frame_rep
 	char										buffer[10];
 
 	userIdentifier = (in->UserUniqueIdentifier[0x0] << 0x8) | in->UserUniqueIdentifier[0x1];
-	report = (UserCredentialUserReportGet_t *)frame_report->packet.cmd;
+	report = (UserCredentialUserReportGet_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = USER_CREDENTIAL_USER_GET; set in - fillOutgoingPacket
 	// report->cmd = USER_CREDENTIAL_USER_REPORT; set in - fillOutgoingPacket
 	report->UserUniqueIdentifier[0x0] = userIdentifier >> 0x8;
@@ -668,7 +668,7 @@ static int _user_credential_user_report_get(ZUNOCommandPacketReport_t *frame_rep
 		}
 		report->set.UserNameLength = offset;
 	}
-	frame_report->packet.len = sizeof(report[0x0]) - (sizeof(report->set.UserName) - report->set.UserNameLength);
+	frame_report->info.packet.len = sizeof(report[0x0]) - (sizeof(report->set.UserName) - report->set.UserNameLength);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -726,7 +726,7 @@ static bool _user_credential_user_set_valid_in(UserCredentialSaveUserIdInfoSet_t
 	return (true);
 }
 
-static int _user_credential_user_set_add(ZUNOCommandPacket_t *cmd, const UserCredentialUserSet_t *in, uint16_t UserUniqueIdentifier) {
+static int _user_credential_user_set_add(const ZUNOCommandCmd_t *cmd, const UserCredentialUserSet_t *in, uint16_t UserUniqueIdentifier) {
 	UserCredentialSaveUserId_t									save_user_id;
 
 	if (_read_eeprom_id_user(UserUniqueIdentifier, &save_user_id, sizeof(save_user_id)) == true)
@@ -741,7 +741,7 @@ static int _user_credential_user_set_add(ZUNOCommandPacket_t *cmd, const UserCre
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _user_credential_user_set_modify(ZUNOCommandPacket_t *cmd, const UserCredentialUserSet_t *in, uint16_t UserUniqueIdentifier) {
+static int _user_credential_user_set_modify(const ZUNOCommandCmd_t *cmd, const UserCredentialUserSet_t *in, uint16_t UserUniqueIdentifier) {
 	UserCredentialSaveUserId_t									save_user_id;
 	uint16_t													crc16;
 
@@ -766,7 +766,7 @@ static int _user_credential_user_set_del(uint16_t UserUniqueIdentifier) {
 }
 
 
-static int _user_credential_user_set(ZUNOCommandPacket_t *cmd, const UserCredentialUserSet_t *in) {
+static int _user_credential_user_set(const ZUNOCommandCmd_t *cmd, const UserCredentialUserSet_t *in) {
 	uint16_t										UserUniqueIdentifier;
 	int												rs;
 
@@ -803,7 +803,7 @@ typedef struct					UserCredentialCredentialSet_s
 }								UserCredentialCredentialSet_t;
 
 
-static int _user_credential_credential_set_add(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, uint16_t UserUniqueIdentifier, const UserCredentialSaveArg_t *arg) {
+static int _user_credential_credential_set_add(const ZUNOCommandCmd_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, uint16_t UserUniqueIdentifier, const UserCredentialSaveArg_t *arg) {
 	uint8_t											CredentialLength;
 	UserCredentialSaveUserId_t						save_user;
 	uint16_t										crc16;
@@ -826,7 +826,7 @@ static int _user_credential_credential_set_add(ZUNOCommandPacket_t *cmd, const U
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _user_credential_credential_set_modify(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, const UserCredentialSaveArg_t *arg) {
+static int _user_credential_credential_set_modify(const ZUNOCommandCmd_t *cmd, const UserCredentialCredentialSet_t *in, UserCredentialSaveCredential_t *credential, uint32_t addr, uint16_t CredentialSlot, const UserCredentialSaveArg_t *arg) {
 	uint16_t													crc16;
 	uint8_t														CredentialLength;
 
@@ -893,7 +893,7 @@ static int _user_credential_credential_set_del(uint16_t UserUniqueIdentifier, ui
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-static int _user_credential_credential_set(ZUNOCommandPacket_t *cmd, const UserCredentialCredentialSet_t *in) {
+static int _user_credential_credential_set(const ZUNOCommandCmd_t *cmd, const UserCredentialCredentialSet_t *in) {
 	uint16_t										UserUniqueIdentifier;
 	uint8_t											operation_type;
 	uint8_t											CredentialType;
@@ -1030,13 +1030,13 @@ static int _user_credential_credential_report_get_not(ZUNOCommandPacketReport_t 
 	UserCredentialCredentialReportGetEnd_t			*report_end;
 
 	report->CredentialLength = 0x0;
-	report_end = (UserCredentialCredentialReportGetEnd_t *)(frame_report->packet.cmd + sizeof(report[0x0]));
+	report_end = (UserCredentialCredentialReportGetEnd_t *)(frame_report->info.packet.cmd + sizeof(report[0x0]));
 	NextUserIdentifier = _user_credential_credential_report_get_next_any(0x0, UserUniqueIdentifier, &report_end->NextCredentialType);
 	if (NextUserIdentifier == 0x0)
 		report_end->NextCredentialType = 0x0;
 	report_end->NextCredentialSlot[0x0] = NextUserIdentifier >> 0x8;
 	report_end->NextCredentialSlot[0x1] = NextUserIdentifier;
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_end[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_end[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -1053,7 +1053,7 @@ static int _user_credential_credential_report_get(ZUNOCommandPacketReport_t *fra
 	UserCredentialSaveCredential_t					*credential;
 	const UserCredentialSaveArg_t					*arg;
 
-	report = (UserCredentialCredentialReportGet_t *)frame_report->packet.cmd;
+	report = (UserCredentialCredentialReportGet_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_USER_CREDENTIAL; set in - fillOutgoingPacket
 	// report->cmd = USER_CREDENTIAL_CREDENTIAL_REPORT; set in - fillOutgoingPacket
 	report->pre = in->pre;
@@ -1086,7 +1086,7 @@ static int _user_credential_credential_report_get(ZUNOCommandPacketReport_t *fra
 		return (_user_credential_credential_report_get_not(frame_report, report, UserUniqueIdentifier));
 	report->CredentialLength = credential->CredentialLength;
 	memcpy(&report->CredentialData[0x0], &credential->CredentialData[0x0], report->CredentialLength);
-	report_end = (UserCredentialCredentialReportGetEnd_t *)(frame_report->packet.cmd + sizeof(report[0x0]) + report->CredentialLength);
+	report_end = (UserCredentialCredentialReportGetEnd_t *)(frame_report->info.packet.cmd + sizeof(report[0x0]) + report->CredentialLength);
 	report_end->CredentialModifierType = credential->CredentialModifierType;
 	report_end->NextCredentialType = in->pre.CredentialType;
 	memcpy(&report_end->CredentialModifierNodeID[0x0], &credential->CredentialModifierNodeID[0x0], sizeof(report_end->CredentialModifierNodeID));
@@ -1098,11 +1098,11 @@ static int _user_credential_credential_report_get(ZUNOCommandPacketReport_t *fra
 	}
 	report_end->NextCredentialSlot[0x0] = NextUserIdentifier >> 0x8;
 	report_end->NextCredentialSlot[0x1] = NextUserIdentifier;
-	frame_report->packet.len = sizeof(report[0x0]) + report->CredentialLength + sizeof(report_end[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + report->CredentialLength + sizeof(report_end[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCUserCredentialHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCUserCredentialHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {

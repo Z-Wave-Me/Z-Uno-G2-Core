@@ -43,6 +43,6 @@
 #define SCHEDULE_ENTRY_LOCK_TIME_OFFSET_SET_LEVEL2_MINUTE_OFFSET_DST_MASK                0x7F
 #define SCHEDULE_ENTRY_LOCK_TIME_OFFSET_SET_LEVEL2_SIGN_OFFSET_DST_BIT_MASK              0x80
 
-int zuno_CCScheduleEntryLockHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCScheduleEntryLockHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_SCHEDULE_ENTRY_LOCK_H

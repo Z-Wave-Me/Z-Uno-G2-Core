@@ -36,7 +36,7 @@ static inline void zunoSetReportHandler(ZunoReportHandlerType_t type, void(*hand
 	zunoAttachSysHandler(ZUNO_HANDLER_REPORT, type, (void *)handler);
 }
 
-void zunoReportHandler(ZUNOCommandPacket_t *cmd);
+void zunoReportHandler(const ZUNOCommandCmd_t *cmd);
 float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array);
 
 

@@ -99,7 +99,7 @@ bool zuno_CCNotificationReport(uint8_t channel, uint8_t event, uint8_t state) {
 			if (event >= (sizeof(info.mask) * 8) || (info.mask & (0x1 << event)) == 0x0)
 				return (false);
 	fillOutgoingReportPacketAsync(&frame, ZUNO_CFG_CHANNEL(channel).zw_channel);
-	report = (ZwNotificationReportFrame_t *)&frame.packet.cmd[0x0];
+	report = (ZwNotificationReportFrame_t *)&frame.info.packet.cmd[0x0];
 	report->byte1.cmdClass = COMMAND_CLASS_NOTIFICATION;
 	report->byte1.cmd = NOTIFICATION_REPORT;
 	report->byte1.v1AlarmType = 0x0;
@@ -116,12 +116,12 @@ bool zuno_CCNotificationReport(uint8_t channel, uint8_t event, uint8_t state) {
 		report->byte1.mevent = event;
 		report->byte1.properties1 = 0x0;
 	}
-	frame.packet.len = sizeof(report->byte1) - 2 + report->byte1.properties1;//don't include sequenceNumber & parameter value by default
-	zunoSendZWPackage(&frame.packet);
+	frame.info.packet.len = sizeof(report->byte1) - 2 + report->byte1.properties1;//don't include sequenceNumber & parameter value by default
+	zunoSendZWPackage(&frame.info);
 	return (true);
 }
 
-int __zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacket_t *packet){
+int __zuno_CCNotificationReport(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacket_t *packet){
 	uint32_t							eeprom_mask;
 	ZwNotificationInfo_t				info;
 	size_t								notificationType;
@@ -136,8 +136,8 @@ int __zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComm
 		if((eeprom_mask & (1UL << channel)) == 0)// Unsolicited => doesn't have incoming package
 			return (ZUNO_COMMAND_BLOCKED); // User don't want this report => don't send it
 	}
-	report = (ZwNotificationReportFrame_t *)&packet->cmd[0x0];
-	packet->len = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
+	report = (ZwNotificationReportFrame_t *)&packet->packet.cmd[0x0];
+	packet->packet.len = sizeof(report->byte1) - 2;//don't include sequenceNumber & parameter value by default
 	memset(report, 0, sizeof(report->byte1));// Initially till the report data with zeros
 	_get_info(channel, &info);
 	if (info.extend == true) {
@@ -200,7 +200,7 @@ int __zuno_CCNotificationReport(byte channel, ZUNOCommandPacket_t *cmd, ZUNOComm
 					report->byte1.properties1 = 1;
 					report->byte1.eventParameter1 = (val >> 8) & 0xFF;
 					// Add parameter length to whole packet lenth
-					packet->len = packet->len + 0x1;
+					packet->packet.len = packet->packet.len + 0x1;
 				}
 				mevent = info.event;
 			} else {
@@ -244,11 +244,11 @@ static int _supported_get(size_t channel, ZUNOCommandPacketReport_t *frame_repor
 	ZwNotificationInfo_t						info;
 
 	_get_info(channel, &info);
-	report = (ZwNotificationSupportedReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwNotificationSupportedReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = NOTIFICATION_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	report->properties1 = ((NOTIFICATION_TYPE_MAX >> 3) + 1);
-	frame_report->packet.len = sizeof(ZwNotificationSupportedReportFrame_t) + report->properties1;
+	frame_report->info.packet.len = sizeof(ZwNotificationSupportedReportFrame_t) + report->properties1;
 	memset(&report->bitMask[0], 0x0, ((NOTIFICATION_TYPE_MAX >> 3) + 1));
 	zunoSetupBitMask(&report->bitMask[0], info.type, report->properties1);
 	return (ZUNO_COMMAND_ANSWERED);
@@ -261,19 +261,19 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd,Z
 	ZwNotificationInfo_t								info;
 
 	_get_info(channel, &info);
-	report = (ZwEventSupportedReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwEventSupportedReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_NOTIFICATION; set in - fillOutgoingPacket
 	// report->cmd = EVENT_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	notificationType = cmd->notificationType;
 	report->notificationType = notificationType;
 	if(notificationType != info.type || notificationType == 0xFF) {
 		report->properties1 = 0x0;
-		frame_report->packet.len = sizeof(ZwEventSupportedReportFrame_t);
+		frame_report->info.packet.len = sizeof(ZwEventSupportedReportFrame_t);
 		return (ZUNO_COMMAND_ANSWERED);// We don't support this request
 	}
 	sz = sizeof(info.mask);
 	report->properties1 = sz;
-	frame_report->packet.len = sizeof(ZwEventSupportedReportFrame_t) + sz;
+	frame_report->info.packet.len = sizeof(ZwEventSupportedReportFrame_t) + sz;
 	memset(&report->bitMask[0], 0x0, sz);
 	if (info.extend == true)
 		memcpy(&report->bitMask[0], &info.mask, sz);
@@ -288,13 +288,13 @@ static int _supported_get_even(size_t channel, ZwEventSupportedGetFrame_t *cmd,Z
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCNotificationHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report){
+int zuno_CCNotificationHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report){
 	int										rs;
 
 	switch(ZW_CMD) {
 		case NOTIFICATION_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = __zuno_CCNotificationReport(channel, cmd, &frame_report->packet);
+			rs = __zuno_CCNotificationReport(channel, cmd, &frame_report->info);
 			break ;
 		case NOTIFICATION_SET:
 			rs = _set(channel, (ZwNotificationSetFrame_t *)cmd->cmd, frame_report);

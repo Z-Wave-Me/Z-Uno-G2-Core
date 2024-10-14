@@ -62,7 +62,7 @@ uint8_t __meter_get_scale(const ZwMeterReportV6Frame_t *report) {
 	return (scale + lp[channel_size + 0x2]);
 }
 
-int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOCommandPacket_t *report_paket) {//v6
+int zuno_CCMeterReport(byte channel, const ZUNOCommandCmd_t *paket, ZUNOCommandPacket_t *report_paket) {//v6
 	ZwMeterReportV6Frame_t				*report;
 	uint32_t							channel_size;
 	int32_t								value;
@@ -92,7 +92,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 				return (ZUNO_COMMAND_BLOCKED);
 		}
 	}
-	report = (ZwMeterReportV6Frame_t *)&report_paket->cmd[0x0];
+	report = (ZwMeterReportV6Frame_t *)&report_paket->packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_METER;
 	report->cmd = METER_REPORT;
 	properties1 = _get_type(channel);
@@ -113,7 +113,7 @@ int zuno_CCMeterReport(byte channel, const ZUNOCommandPacket_t *paket, ZUNOComma
 		channel_size++;//+1 - scale2
 		lp[channel_size + 0x1] = scale_device;
 	}
-	report_paket->len = sizeof(report[0x0]) + channel_size + 0x2;//+2 - deltaTime 
+	report_paket->packet.len = sizeof(report[0x0]) + channel_size + 0x2;//+2 - deltaTime 
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -165,7 +165,7 @@ static int _support_metter(uint8_t channel, ZUNOCommandPacketReport_t *frame_rep
 	uint8_t													scale;
 	uint8_t													numberOfScaleSupportedBytesToFollow;
 
-	report = (ZW_METER_SUPPORTED_REPORT_1BYTE_V6_FRAME *)&frame_report->packet.cmd[0x0];
+	report = (ZW_METER_SUPPORTED_REPORT_1BYTE_V6_FRAME *)&frame_report->info.packet.cmd[0x0];
 	// report->cmdClass = COMMAND_CLASS_METER;
 	// report->cmd = METER_SUPPORTED_REPORT;
 	properties1 = _get_type(channel) | (_get_rate(channel) << METER_SUPPORTED_REPORT_PROPERTIES1_RATE_TYPE_SHIFT);
@@ -184,17 +184,17 @@ static int _support_metter(uint8_t channel, ZUNOCommandPacketReport_t *frame_rep
 	}
 	report->properties2 = properties2;
 	report->numberOfScaleSupportedBytesToFollow = numberOfScaleSupportedBytesToFollow;
-	frame_report->packet.len = sizeof(ZW_METER_SUPPORTED_REPORT_1BYTE_V6_FRAME) + numberOfScaleSupportedBytesToFollow;
+	frame_report->info.packet.len = sizeof(ZW_METER_SUPPORTED_REPORT_1BYTE_V6_FRAME) + numberOfScaleSupportedBytesToFollow;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCMeterHandler(byte channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCMeterHandler(byte channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
 		case METER_GET:
 			_zunoMarkChannelRequested(channel);
-			rs = zuno_CCMeterReport(channel, cmd, &frame_report->packet);
+			rs = zuno_CCMeterReport(channel, cmd, &frame_report->info);
 			break ;
 		case METER_SUPPORTED_GET:
 			rs = _support_metter(channel, frame_report);

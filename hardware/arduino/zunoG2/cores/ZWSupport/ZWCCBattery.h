@@ -63,6 +63,6 @@ typedef struct								ZunoBattery_s
 
 bool zunoSendBatteryReportHandler();
 void    zunoSendBatteryReport();
-int     zuno_CCBattery(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int     zuno_CCBattery(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 void    zuno_CCBattery_OnSetup();
 #endif // ZWCC_BATTERY

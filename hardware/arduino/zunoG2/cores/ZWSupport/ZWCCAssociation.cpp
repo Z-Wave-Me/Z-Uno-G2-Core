@@ -18,6 +18,7 @@
 #include "ZWCCSwitchBinary.h"
 #include "ZWCCTimer.h"
 #include "ZWCCSoundSwitch.h"
+#include "ZWCCIndicator.h"
 
 #define ASSOCIATION_GROUP_ID				cmd->cmd[2]
 #define ASSOCIATION_GROUP_ID_EX(x)			x->cmd[2]
@@ -42,43 +43,43 @@ static int _group_id(uint8_t groupIndex) {
 	return (ZUNO_COMMAND_BLOCKED_FAILL);//drop the package
 }
 
-static int _assotiation_groupings_report(ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport_t *frame_report) {
+static int _assotiation_groupings_report(const ZUNOCommandCmd_t *packet, ZUNOCommandPacketReport_t *frame_report) {
 	ZwAssociationGroupingsReportFrame_t		*lp;
 	size_t									supportedGroupings;
 
-	lp = (ZwAssociationGroupingsReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwAssociationGroupingsReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->cmdClass = cmdClass; set in - fillOutgoingPacket
 	// lp->cmd = cmd; set in - fillOutgoingPacket
 	supportedGroupings = 1;//+1 for Lifeline group
 	if (packet->dst_zw_channel == 0)
 		supportedGroupings = supportedGroupings + ZUNO_CFG_ASSOCIATION_COUNT;
 	lp->supportedGroupings = supportedGroupings;
-	frame_report->packet.len = sizeof(ZwAssociationGroupingsReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwAssociationGroupingsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _assotiation_specific_group_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwAssociationSpecificGroupReportFrame_t		*lp;
 
-	lp = (ZwAssociationSpecificGroupReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwAssociationSpecificGroupReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION; set in - fillOutgoingPacket
 	// lp->cmd =  ASSOCIATION_SPECIFIC_GROUP_REPORT; set in - fillOutgoingPacket
 	lp->group = 0;//Does not support, but for everything to work, you need to respond with zero
-	frame_report->packet.len = sizeof(ZwAssociationSpecificGroupReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwAssociationSpecificGroupReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _assotiation_get(ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport_t *frame_report) {
+static int _assotiation_get(const ZUNOCommandCmd_t *packet, ZUNOCommandPacketReport_t *frame_report) {
 	ZwAssociationReportFrameFake_t				*report;
 
 	if (packet->dst_zw_channel != 0) {
-		report = (ZwAssociationReportFrameFake_t *)frame_report->packet.cmd;
+		report = (ZwAssociationReportFrameFake_t *)frame_report->info.packet.cmd;
 		// report->cmdClass = cmdClass; set in - fillOutgoingPacket
 		// report->cmd =  cmd; set in - fillOutgoingPacket
 		report->groupingIdentifier = 1;
 		report->maxNodesSupported = 0;
 		report->reportsToFollow = 0;
-		frame_report->packet.len = sizeof(ZwAssociationReportFrameFake_t);
+		frame_report->info.packet.len = sizeof(ZwAssociationReportFrameFake_t);
 		return (ZUNO_COMMAND_ANSWERED);
 	}
 	if (_group_id(ASSOCIATION_GROUP_ID_EX(packet)) != ZUNO_UNKNOWN_CMD)
@@ -86,7 +87,7 @@ static int _assotiation_get(ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport
 	return (ZUNO_UNKNOWN_CMD);
 }
 
-int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCAssociationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs = ZUNO_UNKNOWN_CMD;
 
 	if(cmd->dst_zw_channel == 0)
@@ -114,7 +115,7 @@ int zuno_CCAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_
 	return (rs);
 }
 
-int zuno_CCMultiAssociationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCMultiAssociationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int			rs = ZUNO_UNKNOWN_CMD;
 	if(cmd->dst_zw_channel == 0)
 		return rs;
@@ -145,7 +146,7 @@ const char *zunoAssociationGroupName(uint8_t groupIndex) {
 	return (NULL);
 }
 
-static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _association_gpr_info_name_report(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	char									group_name_default[sizeof(ASSOCIATION_GROUP_NAME_DEFAULT)];
 	ZwAssociationGroupNameReportFrame_t		*lp;
 	uint8_t									groupIndex;
@@ -171,13 +172,13 @@ static int _association_gpr_info_name_report(ZUNOCommandPacket_t *cmd, ZUNOComma
 		group_name[len - 1] = groupIndex % 10 + 0x30;
 		group_name[len - 2] = groupIndex / 10 + 0x30;
 	}
-	lp = (ZwAssociationGroupNameReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwAssociationGroupNameReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
 	// lp->cmd = ASSOCIATION_GROUP_NAME_REPORT; set in - fillOutgoingPacket
 	lp->groupingIdentifier = groupIndex;
 	lp->lengthOfName = len;
 	memcpy(&lp->name[0], group_name, len);
-	frame_report->packet.len = sizeof(ZwAssociationGroupNameReportFrame_t) + len;
+	frame_report->info.packet.len = sizeof(ZwAssociationGroupNameReportFrame_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -190,7 +191,7 @@ void zuno_CCSensorMultilevelGetProfile(uint8_t channel, ZwAssociationInfoOut_t *
 void zuno_CCNotificationGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi);
 void zuno_CCMeterGetProfile(uint8_t channel, ZwAssociationInfoOut_t *agi);
 
-static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwAssociationGroupInfoGetFrame_t *in, ZUNOCommandPacketReport_t *frame_report) {
+static int _association_gpr_info_profile_report(const ZUNOCommandCmd_t *packet, ZwAssociationGroupInfoGetFrame_t *in, ZUNOCommandPacketReport_t *frame_report) {
 	uint8_t									groupIndex;
 	uint8_t									groupIndex_end;
 	ZwAssociationGroupInfoReportFrame_t		*lp;
@@ -198,7 +199,7 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 	uint8_t									channel;
 	ZwAssociationInfoOut_t					agi;
 
-	lp = (ZwAssociationGroupInfoReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwAssociationGroupInfoReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
 	// lp->cmd = ASSOCIATION_GROUP_INFO_REPORT; set in - fillOutgoingPacket
 	lp->properties1 = 0x0;
@@ -269,15 +270,15 @@ static int _association_gpr_info_profile_report(ZUNOCommandPacket_t *packet, ZwA
 		groupIndex++;
 		if (count == ((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(lp[0x0])) / sizeof(lp->variantgroup[0x0]))) {
 			lp->properties1 = (lp->properties1 & (~0x3F) ) | count;
-			frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
-			zunoSendZWPackage(&frame_report->packet);
+			frame_report->info.packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
+			zunoSendZWPackageAdd(frame_report);
 			count = 0x0;
 		}
 	}
 	if (count != 0x0) {
 		lp->properties1 = (lp->properties1 & (~0x3F) ) | count;
-		frame_report->packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
-		zunoSendZWPackage(&frame_report->packet);
+		frame_report->info.packet.len = sizeof(ZwAssociationGroupInfoReportFrame_t) + count * sizeof(lp->variantgroup[0x0]);
+		zunoSendZWPackageAdd(frame_report);
 	}
 	return (ZUNO_COMMAND_PROCESSED);
 }
@@ -378,7 +379,7 @@ __WEAK uint8_t __zunoAssociationCommandClassCustom(uint8_t *command, uint8_t gro
 	(void)groupIndex;
 }
 
-static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in, ZUNOCommandPacket_t *packet, ZUNOCommandPacketReport_t *frame_report) {
+static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGetFrame_t *in, const ZUNOCommandCmd_t *packet, ZUNOCommandPacketReport_t *frame_report) {
 	uint8_t											groupIndex;
 	uint8_t											listLength;
 	ZwAssociationGroupCommandListReportFrame_t		*lp;
@@ -396,7 +397,7 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 	groupIndex = in->groupingIdentifier;
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		groupIndex = ZUNO_LIFELINE_GRP;//A node that receives an unsupported Grouping Identifier SHOULD return information relating to Grouping Identifier 1.
-	lp = (ZwAssociationGroupCommandListReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwAssociationGroupCommandListReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->cmdClass = COMMAND_CLASS_ASSOCIATION_GRP_INFO; set in - fillOutgoingPacket
 	// lp->cmd = ASSOCIATION_GROUP_COMMAND_LIST_REPORT; set in - fillOutgoingPacket
 	lp->groupingIdentifier = groupIndex;
@@ -405,7 +406,15 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 		if ((dst_zw_channel = packet->dst_zw_channel) == 0) {
 			command[0] = COMMAND_CLASS_DEVICE_RESET_LOCALLY;
 			command[1] = DEVICE_RESET_LOCALLY_NOTIFICATION;
-			command = command + 2;
+			command[2] = COMMAND_CLASS_INDICATOR;
+			command[3] = INDICATOR_REPORT_V4;
+			i = 0x4;
+			#if defined(WITH_CC_BATTERY)
+			command[i + 0x0] = COMMAND_CLASS_BATTERY;
+			command[i + 0x1] = BATTERY_REPORT;
+			i = i + 0x2;
+			#endif
+			command = command + i;
 			command_save = command;
 			i_all = 1;
 			max_all = ZUNO_CFG_CHANNEL_COUNT;
@@ -467,11 +476,11 @@ static int _association_gpr_info_command_report(ZwAssociationGroupCommandListGet
 	}
 	listLength = command - &lp->command[0];
 	lp->listLength = listLength;
-	frame_report->packet.len = sizeof(ZwAssociationGroupCommandListReportFrame_t) + listLength;
+	frame_report->info.packet.len = sizeof(ZwAssociationGroupCommandListReportFrame_t) + listLength;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCAssociationGprInfoHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCAssociationGprInfoHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int				rs;
 
 	rs = ZUNO_UNKNOWN_CMD;
@@ -507,22 +516,22 @@ void zunoAddAssociation(byte type, uint8_t channel) {
 }
 
 static void _init_group(ZUNOCommandPacketReport_t *frame, uint8_t groupIndex) {
-	fillOutgoingRawPacket(&frame->packet, &frame->data[0x0], 0x0, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_CONTROL, groupIndex + 1);
+	fillOutgoingRawPacket(&frame->info, &frame->data[0x0], 0x0, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_CONTROL, groupIndex + 1);
 }
 
 static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
-	frame->packet.len = len;
+	frame->info.packet.len = len;
 	// It's a user group (not LifeLine) and the queue is blocked
-	if((frame->packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
+	if((frame->info.packet.dst_node > ZUNO_LIFELINE_GRP) && zunoCheckSystemQueueStatus(QUEUE_CHANNEL_CONTROL)){
 		// Try to find the package for user group and substitude it to new one
-		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->packet.dst_node, frame->packet.flags, 0xFF, 0xFF);
+		ZUNOCommandPacket_t * p	 = ZWQFindPackage(frame->info.packet.dst_node, frame->info.packet.flags, 0xFF, 0xFF);
 		if(p != NULL){
-			if(p->dst_zw_channel != 0){
+			if(p->packet.dst_zw_channel != 0){
 				// Processing has been started -  add a new one package
 			} else {
 			  // Substitute an existing package
-			  if(len == p->len){
-			  	memcpy(p->cmd, frame->packet.cmd, len);
+			  if(len == p->packet.len){
+			  	memcpy(p->packet.cmd, frame->info.packet.cmd, len);
 			  } else {
 				#ifdef LOGGING_DBG
 			  	LOGGING_UART.print(millis());
@@ -532,13 +541,13 @@ static void _send_group(ZUNOCommandPacketReport_t *frame, size_t len) {
 			  #ifdef LOGGING_DBG
 			  LOGGING_UART.print(millis());
 			  LOGGING_UART.print(" (*ASSOC*) Replace pkg for grp:");
-			  LOGGING_UART.println(frame->packet.dst_node);	  
+			  LOGGING_UART.println(frame->info.packet.dst_node);	  
 		      #endif
 			  return;
 			}
 		}
 	}
-	zunoSendZWPackage(&frame->packet);
+	zunoSendZWPackage(&frame->info);
 }
 
 void zunoSendToGroupSoundSwitchPlayCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume) {
@@ -548,7 +557,7 @@ void zunoSendToGroupSoundSwitchPlayCommand(uint8_t groupIndex, uint8_t toneIdent
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	lp = (ZW_SOUND_SWITCH_TONE_PLAY_SET_V2_FRAME *)&frame.packet.cmd[0x0];
+	lp = (ZW_SOUND_SWITCH_TONE_PLAY_SET_V2_FRAME *)&frame.info.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_SOUND_SWITCH;
 	lp->cmd = SOUND_SWITCH_TONE_PLAY_SET;
 	lp->toneIdentifier = toneIdentifier;
@@ -563,7 +572,7 @@ void zunoSendToGroupBinarySetCommand(uint8_t groupIndex, uint8_t targetValue, si
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	lp = (ZwSwitchBinarySetV2Frame_t *)&frame.packet.cmd[0x0];
+	lp = (ZwSwitchBinarySetV2Frame_t *)&frame.info.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_SWITCH_BINARY;
 	lp->cmd = SWITCH_BINARY_SET;
 	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
@@ -579,7 +588,7 @@ void zunoSendToGroupSetValueCommand(uint8_t groupIndex, uint8_t value) {
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	lp = (ZwBasicSetFrame_t *)&frame.packet.cmd[0x0];
+	lp = (ZwBasicSetFrame_t *)&frame.info.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_BASIC;
 	lp->cmd = BASIC_SET;
 	lp->value = value;
@@ -594,7 +603,7 @@ void zunoSendToGroupDimmingCommand(uint8_t groupIndex, uint8_t direction, uint8_
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&frame.packet.cmd[0x0];
+	lp = (ZwSwitchMultilevelStartLevelChangeFrame_t *)&frame.info.packet.cmd[0x0];
 	lp->v1.cmdClass = COMMAND_CLASS_SWITCH_MULTILEVEL;
 	if(start_stop != false) {
 		lp->v1.cmd = SWITCH_MULTILEVEL_START_LEVEL_CHANGE;
@@ -616,7 +625,7 @@ void zunoSendToGroupScene(uint8_t groupIndex, uint8_t scene) {
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	lp = (ZwSceneActivationSetFrame_t *)&frame.packet.cmd[0x0];
+	lp = (ZwSceneActivationSetFrame_t *)&frame.info.packet.cmd[0x0];
 	lp->cmdClass = COMMAND_CLASS_SCENE_ACTIVATION;
 	lp->cmd = SCENE_ACTIVATION_SET;
 	lp->sceneId = scene;
@@ -637,7 +646,7 @@ void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close
 	if (_group_id(groupIndex) != ZUNO_UNKNOWN_CMD)
 		return ;
 	_init_group(&frame, groupIndex);
-	time = (ZwDoorLockConfigurationSetFrame_t *)&frame.packet.cmd[0x0];
+	time = (ZwDoorLockConfigurationSetFrame_t *)&frame.info.packet.cmd[0x0];
 	time->v3.cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	time->v3.cmd = DOOR_LOCK_CONFIGURATION_SET;
 	if (seconds == 0x0) {
@@ -661,8 +670,8 @@ void zunoSendToGroupDoorlockControlTiming(uint8_t groupIndex, uint8_t open_close
 	time->v3.properties1 = 0x0;
 	time->v3.lockTimeoutMinutes = lockTimeoutMinutes;
 	time->v3.lockTimeoutSeconds = lockTimeoutSeconds;
-	_send_group(&frame, sizeof(time->v3));
-	lp = (ZwDoorLockOperationSet_t *)&frame.packet.cmd[0x0];
+	_send_group(&frame, sizeof(time->v3)); 
+	lp = (ZwDoorLockOperationSet_t *)&frame.info.packet.cmd[0x0];
 	// lp->cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	lp->cmd = DOOR_LOCK_OPERATION_SET;
 	lp->doorLockMode = doorLockMode;

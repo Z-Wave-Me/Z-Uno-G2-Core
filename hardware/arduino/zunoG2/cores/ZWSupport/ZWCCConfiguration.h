@@ -434,7 +434,7 @@ typedef struct										ZwConfigurationBuilkReportFrame_s
 	uint8_t											parameter[];/* MSB  LSB */
 }													ZwConfigurationBuilkReportFrame_t;
 
-int zuno_CCConfigurationHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCConfigurationHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 typedef enum{
 	PARAM_SV_SYSTEM_OK,
 	PARAM_SV_USER_OK,

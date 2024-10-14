@@ -87,7 +87,7 @@ static int _report_configuration(uint8_t channel, ZUNOCommandPacketReport_t *fra
 	ZwEepromDoorLockSaveInfo_t					save;
 
 	_get_save(channel, &save);
-	lp = (ZwDoorLockConfigurationReportFrame_t *)frame_report->packet.cmd;
+	lp = (ZwDoorLockConfigurationReportFrame_t *)frame_report->info.packet.cmd;
 	// lp->v4.cmdClass = COMMAND_CLASS_DOOR_LOCK; set in - fillOutgoingPacket
 	// lp->v4.cmd = DOOR_LOCK_CONFIGURATION_REPORT; set in - fillOutgoingPacket
 	if ((lp->v4.operationType = save.operationType) == DOOR_LOCK_CONFIGURATION_SET_CONSTANT_OPERATION_V4)
@@ -99,7 +99,7 @@ static int _report_configuration(uint8_t channel, ZUNOCommandPacketReport_t *fra
 	lp->v4.holdAndReleaseTime2 = 0x0;
 	lp->v4.autoRelockTime1 = 0x0;
 	lp->v4.autoRelockTime2 = 0x0;
-	frame_report->packet.len = sizeof(lp->v4);
+	frame_report->info.packet.len = sizeof(lp->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 	(void)channel;
 }
@@ -186,7 +186,7 @@ static int _capabilities_get(size_t channel, ZUNOCommandPacketReport_t *frame_re
 	size_t					tempos;
 	ZwDoorLockProperties_t	properties;
 
-	report = frame_report->packet.cmd + 0x2;//cmdClass + cmd// COMMAND_CLASS_DOOR_LOCK DOOR_LOCK_CAPABILITIES_REPORT ; set in - fillOutgoingPacket
+	report = frame_report->info.packet.cmd + 0x2;//cmdClass + cmd// COMMAND_CLASS_DOOR_LOCK DOOR_LOCK_CAPABILITIES_REPORT ; set in - fillOutgoingPacket
 	properties1 = report;
 	report = _capabilities_get_set_operation(channel, report + 0x1);
 	tempos = report - properties1 - 0x1;
@@ -199,7 +199,7 @@ static int _capabilities_get(size_t channel, ZUNOCommandPacketReport_t *frame_re
 	report++[0] = properties.InsideDoorHandlesMode | (properties.OutsideDoorHandlesMode << DOOR_LOCK_CONFIGURATION_SET_PROPERTIES1_OUTSIDE_DOOR_HANDLES_STATE_SHIFT_V4);//properties2
 	report++[0] = 0x0;//supportedDoorComponents//Supported Door components (8 bits)
 	report++[0] = 0x0;//properties3//ARS (Auto-Relock support) (1 bit)//HRS (Hold and release support) (1 bit)//TAS (Twist assist support) (1 bit)//BTBS (Block-to-block support) (1 bit)
-	frame_report->packet.len = report - frame_report->packet.cmd;
+	frame_report->info.packet.len = report - frame_report->info.packet.cmd;
 	return (ZUNO_COMMAND_ANSWERED);
 
 }
@@ -244,7 +244,7 @@ static int _configuration_set(size_t channel, const ZwDoorLockConfigurationSetFr
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCDoorLockHandler(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int											rs;
 
 	switch(ZW_CMD) {
@@ -255,7 +255,7 @@ int zuno_CCDoorLockHandler(uint8_t channel, ZUNOCommandPacket_t *cmd, ZUNOComman
 			rs = _report_configuration(channel, frame_report);
 			break ;
 		case DOOR_LOCK_OPERATION_GET:
-			rs = zuno_CCDoorLockReport(channel, &frame_report->packet);
+			rs = zuno_CCDoorLockReport(channel, &frame_report->info);
 			_zunoMarkChannelRequested(channel);
 			break ;
 		case DOOR_LOCK_OPERATION_SET:
@@ -301,7 +301,7 @@ int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 		lockTimeoutSeconds = DOOR_LOCK_OPERATION_REPORT_UNKNOWN_DURATION_V4;
 	}
 	zunoExitCritical();
-	report = (ZwDoorLockOperationReportFrame_t *)&packet->cmd[0x0];
+	report = (ZwDoorLockOperationReportFrame_t *)&packet->packet.cmd[0x0];
 	report->v4.cmdClass = COMMAND_CLASS_DOOR_LOCK;
 	report->v4.cmd = DOOR_LOCK_OPERATION_REPORT;
 	report->v4.currentDoorLockMode = doorLockMode;
@@ -311,7 +311,7 @@ int zuno_CCDoorLockReport(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	report->v4.lockTimeoutSeconds = lockTimeoutSeconds;
 	report->v4.targetDoorLockMode = doorLockMode;
 	report->v4.duration = 0x0;
-	packet->len = sizeof(report->v4);
+	packet->packet.len = sizeof(report->v4);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 

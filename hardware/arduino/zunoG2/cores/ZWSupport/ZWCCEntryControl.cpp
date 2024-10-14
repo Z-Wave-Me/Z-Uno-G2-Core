@@ -27,12 +27,12 @@ static int _entry_control_key_supported_report(ZUNOCommandPacketReport_t *frame_
 	ZwEntryControlKeySupportedReportFrame_t		*report;
 	size_t										len;
 
-	report = (ZwEntryControlKeySupportedReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwEntryControlKeySupportedReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// report->cmd = ENTRY_CONTROL_KEY_SUPPORTED_REPORT; //set in - fillOutgoingPacket
 	len = zuno_CCEntryControlAsiiMask(&report->keySupportedBitMask[0x0]);
 	report->keySupportedBitMaskLength = len;
-	frame_report->packet.len = sizeof(ZwEntryControlKeySupportedReportFrame_t) + len;
+	frame_report->info.packet.len = sizeof(ZwEntryControlKeySupportedReportFrame_t) + len;
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -42,7 +42,7 @@ static int _entry_control_event_supported_report(ZUNOCommandPacketReport_t *fram
 	ZwEntryControlKeySupportedReportFrameEnd_t			*end;
 	size_t												len;
 
-	start = (ZwEntryControlKeySupportedReportFrameStart_t *)frame_report->packet.cmd;
+	start = (ZwEntryControlKeySupportedReportFrameStart_t *)frame_report->info.packet.cmd;
 	// start->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// start->cmd = ENTRY_CONTROL_EVENT_SUPPORTED_REPORT; //set in - fillOutgoingPacket
 	len = ((((sizeof(__g_zuno_entry_control_data_type_mask) * 0x8) - __builtin_clz(__g_zuno_entry_control_data_type_mask)) >> 0x3) + 0x1);
@@ -57,23 +57,23 @@ static int _entry_control_event_supported_report(ZUNOCommandPacketReport_t *fram
 	end->keyCachedSizeSupportedMaximum = ENTRY_CONTROL_CACHED_SIZE_SUPPORTED_MAXMIMUM;
 	end->keyCachedTimeoutSupportedMinimum = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_MINIMUM;
 	end->keyCachedTimeoutSupportedMaximum = ENTRY_CONTROL_CACHED_TIMOUT_SUPPORTED_MAXMIMUM;
-	frame_report->packet.len = (uint8_t *)end - frame_report->packet.cmd + sizeof(end[0x0]);
+	frame_report->info.packet.len = (uint8_t *)end - frame_report->info.packet.cmd + sizeof(end[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _entry_control_configuration_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME		*report;
 
-	report = (ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME *)frame_report->packet.cmd;
+	report = (ZW_ENTRY_CONTROL_CONFIGURATION_REPORT_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; //set in - fillOutgoingPacket
 	// report->cmd = ENTRY_CONTROL_CONFIGURATION_REPORT; //set in - fillOutgoingPacket
 	report->keyCacheSize = __g_zuno_entry_control_cached_size;
 	report->keyCacheTimeout = __g_zuno_entry_control_cached_timout;
-	frame_report->packet.len = sizeof(report[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _entry_control_configuration_set(ZW_ENTRY_CONTROL_CONFIGURATION_SET_FRAME *packet) {
+static int _entry_control_configuration_set(const ZW_ENTRY_CONTROL_CONFIGURATION_SET_FRAME *packet) {
 	size_t										keyCacheSize;
 	size_t										keyCacheTimeout;
 	int											rs;
@@ -90,7 +90,7 @@ static int _entry_control_configuration_set(ZW_ENTRY_CONTROL_CONFIGURATION_SET_F
 	return (rs);
 }
 
-int zuno_CCEntryControlHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCEntryControlHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {
@@ -137,7 +137,7 @@ bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint
 			break ;
 	}
 	fillOutgoingReportPacketAsync(&frame, 0x0);
-	report = (ZwEntryControlNotificationFrame_t *)&frame.packet.cmd[0x0];
+	report = (ZwEntryControlNotificationFrame_t *)&frame.info.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_ENTRY_CONTROL; 
 	report->cmd = ENTRY_CONTROL_NOTIFICATION;
 	report->sequenceNumber = sequenceNumber++;
@@ -145,7 +145,7 @@ bool zuno_CCEntryControlNotification(uint8_t data_type, uint8_t event_type, uint
 	report->eventType = event_type;
 	report->eventDataLength = len;
 	memcpy(&report->eventData[0x0], b, len);
-	frame.packet.len = sizeof(report[0x0]) + len;
-	zunoSendZWPackage(&frame.packet);
+	frame.info.packet.len = sizeof(report[0x0]) + len;
+	zunoSendZWPackage(&frame.info);
 	return (true);
 }

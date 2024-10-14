@@ -79,7 +79,7 @@ typedef struct ZUNOOTAFWDescr_s{
 	uint16_t version;
 }ZUNOOTAFWDescr_t;
 // Z-Wave packet
-typedef struct ZUNOCommandPacket_s{
+typedef struct ZUNOCommandCmd_s{
 	uint8_t * cmd;   // 4B
 	uint8_t   flags; // 5B
 	uint8_t   len;   // 6B
@@ -90,7 +90,7 @@ typedef struct ZUNOCommandPacket_s{
 	uint8_t   zw_rx_opts;// 11
 	uint8_t   zw_rx_secure_opts;//12
 	uint8_t	  aux_data[ZUNO_COMMAND_PACKET_MAX_AUX_DATA];
-} __attribute__((aligned(1),packed)) ZUNOCommandPacket_t;
+} __attribute__((aligned(1),packed)) ZUNOCommandCmd_t;
 typedef struct ZUNOSysConfigData_s {
 	uint8_t     b_sketch_valid;
 	uint8_t     ifreq;

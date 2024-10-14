@@ -51,16 +51,16 @@ static int _report(ZUNOCommandPacketReport_t *frame_report) {
 	ZwTimerParametrsReportFrame_t			*report;
 	time_t									time;
 
-	report = (ZwTimerParametrsReportFrame_t *)frame_report->packet.cmd;
+	report = (ZwTimerParametrsReportFrame_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_TIME_PARAMETERS; //set in - fillOutgoingPacket
 	// report->cmd = TIME_PARAMETERS_REPORT; //set in - fillOutgoingPacket
 	time = zunoGetTimeStamp();
 	zuno_CCTimerParametrsSet(&report->time, time);
-	frame_report->packet.len = sizeof(ZwTimerParametrsReportFrame_t);
+	frame_report->info.packet.len = sizeof(ZwTimerParametrsReportFrame_t);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-int zuno_CCTimerParametrsHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCTimerParametrsHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {

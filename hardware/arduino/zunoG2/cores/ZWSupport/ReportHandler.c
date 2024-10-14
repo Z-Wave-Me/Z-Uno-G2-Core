@@ -24,7 +24,7 @@ float zunoFixToFloat(uint8_t len, uint8_t precision, uint8_t *array) {
 	return (out);
 }
 
-void zunoReportHandler(ZUNOCommandPacket_t *cmd) {
+void zunoReportHandler(const ZUNOCommandCmd_t *cmd) {
 	ReportAuxData_t			report_data;
 	uint8_t					cmdClass;
 	uint8_t					sub_type;

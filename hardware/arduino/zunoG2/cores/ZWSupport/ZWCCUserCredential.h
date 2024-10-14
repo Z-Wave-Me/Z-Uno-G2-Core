@@ -35,6 +35,6 @@
 #define USER_CREDENTIAL_RULE_DUAL													0x2
 #define USER_CREDENTIAL_RULE_TRIPLE													0x3
 
-int zuno_CCUserCredentialHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCUserCredentialHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
 
 #endif// ZWCC_USER_CREDENTIAL_H

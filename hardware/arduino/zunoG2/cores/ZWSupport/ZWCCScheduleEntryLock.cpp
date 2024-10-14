@@ -70,13 +70,13 @@ typedef struct					ScheduleEntryLockV4GetSlotInfoReport_s
 static int _schedule_entry_type_supported_report(ZUNOCommandPacketReport_t *frame_report) {
 	ZW_SCHEDULE_ENTRY_TYPE_SUPPORTED_REPORT_V3_FRAME				*report;
 
-	report = (ZW_SCHEDULE_ENTRY_TYPE_SUPPORTED_REPORT_V3_FRAME *)frame_report->packet.cmd;
+	report = (ZW_SCHEDULE_ENTRY_TYPE_SUPPORTED_REPORT_V3_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = SCHEDULE_ENTRY_TYPE_SUPPORTED_REPORT; set in - fillOutgoingPacket
 	report->numberOfSlotsWeekDay = SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY;
 	report->numberOfSlotsYearDay = SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY;
 	report->numberOfSlotsDailyRepeating = SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING;
-	frame_report->packet.len = sizeof(report[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -146,14 +146,14 @@ static int _schedule_entry_lock_week_day_report(const ScheduleEntryLockV3GetSlot
 	ScheduleEntryLockV3GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierWeekDay_t					*report_week_day;
 
-	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v3(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = SCHEDULE_ENTRY_LOCK_WEEK_DAY_REPORT; set in - fillOutgoingPacket
 	report_week_day = (ScheduleEntryLockSaveUserIdentifierWeekDay_t *)&report->data[0x0];
 	_schedule_entry_lock_week_day_get(userIdentifier, in->pre.scheduleSlotId, report_week_day);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_week_day[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_week_day[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -162,14 +162,14 @@ static int _extended_schedule_entry_lock_week_day_report(const ScheduleEntryLock
 	ScheduleEntryLockV4GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierWeekDay_t					*report_week_day;
 
-	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v4(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_WEEK_DAY)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_REPORT; set in - fillOutgoingPacket
 	report_week_day = (ScheduleEntryLockSaveUserIdentifierWeekDay_t *)&report->data[0x0];
 	_schedule_entry_lock_week_day_get(userIdentifier, in->pre.scheduleSlotId, report_week_day);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_week_day[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_week_day[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -199,14 +199,14 @@ static int _schedule_entry_lock_year_day_report(const ScheduleEntryLockV3GetSlot
 	ScheduleEntryLockV3GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierYearDay_t					*report_year_day;
 
-	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v3(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = SCHEDULE_ENTRY_LOCK_YEAR_DAY_REPORT; set in - fillOutgoingPacket
 	report_year_day = (ScheduleEntryLockSaveUserIdentifierYearDay_t *)&report->data[0x0];
 	_schedule_entry_lock_year_day_get(userIdentifier, in->pre.scheduleSlotId, report_year_day);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_year_day[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_year_day[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -215,14 +215,14 @@ static int _extended_schedule_entry_lock_year_day_report(const ScheduleEntryLock
 	ScheduleEntryLockV4GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierYearDay_t					*report_year_day;
 
-	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v4(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_YEAR_DAY)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_REPORT; set in - fillOutgoingPacket
 	report_year_day = (ScheduleEntryLockSaveUserIdentifierYearDay_t *)&report->data[0x0];
 	_schedule_entry_lock_year_day_get(userIdentifier, in->pre.scheduleSlotId, report_year_day);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_year_day[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_year_day[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -252,14 +252,14 @@ static int _schedule_entry_lock_daily_repeating_report(const ScheduleEntryLockV3
 	ScheduleEntryLockV3GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t			*report_daily_repeating;
 
-	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV3GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v3(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT; set in - fillOutgoingPacket
 	report_daily_repeating = (ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t *)&report->data[0x0];
 	_schedule_entry_lock_daily_repeating_get(userIdentifier, in->pre.scheduleSlotId, report_daily_repeating);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_daily_repeating[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_daily_repeating[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -268,14 +268,14 @@ static int _extended_schedule_entry_lock_daily_repeating_report(const ScheduleEn
 	ScheduleEntryLockV4GetSlotInfoReport_t							*report;
 	ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t			*report_daily_repeating;
 
-	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockV4GetSlotInfoReport_t *)frame_report->info.packet.cmd;
 	if ((userIdentifier = _schedule_entry_lock_test_get_slot_info_v4(in, report, SCHEDULE_ENTRY_LOCK_NUMBER_SLOT_DAILY_REPEATING)) == 0x0)
 		return (ZUNO_COMMAND_BLOCKED_FAILL);
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_REPORT; set in - fillOutgoingPacket
 	report_daily_repeating = (ScheduleEntryLockSaveUserIdentifierDayilyRepeating_t *)&report->data[0x0];
 	_schedule_entry_lock_daily_repeating_get(userIdentifier, in->pre.scheduleSlotId, report_daily_repeating);
-	frame_report->packet.len = sizeof(report[0x0]) + sizeof(report_daily_repeating[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]) + sizeof(report_daily_repeating[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -291,7 +291,7 @@ static int _schedule_entry_lock_time_offset_report(ZUNOCommandPacketReport_t *fr
 	uint16_t													crc16;
 	ScheduleEntryLockSaveTimeOffset_t							time_offset;
 
-	report = (ScheduleEntryLockTimeOffsetReport_t *)frame_report->packet.cmd;
+	report = (ScheduleEntryLockTimeOffsetReport_t *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_SCHEDULE_ENTRY_LOCK; set in - fillOutgoingPacket
 	// report->cmd = SCHEDULE_ENTRY_LOCK_TIME_OFFSET_REPORT; set in - fillOutgoingPacket
 	zunoEEPROMRead(SCHEDULE_ENTRY_LOCK_ADDR_TIME_OFFSET, sizeof(time_offset), (byte *)&time_offset);
@@ -301,7 +301,7 @@ static int _schedule_entry_lock_time_offset_report(ZUNOCommandPacketReport_t *fr
 	}
 	else
 		report->info = time_offset.info;
-	frame_report->packet.len = sizeof(report[0x0]);
+	frame_report->info.packet.len = sizeof(report[0x0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
@@ -505,7 +505,7 @@ static int _extended_schedule_entry_lock_week_day_set(const ScheduleEntryLockV4S
 	return (ZUNO_COMMAND_PROCESSED);
 }
 
-int zuno_CCScheduleEntryLockHandler(ZUNOCommandPacket_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+int zuno_CCScheduleEntryLockHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int								rs;
 
 	switch (ZW_CMD) {

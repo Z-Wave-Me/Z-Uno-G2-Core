@@ -481,9 +481,9 @@ static uint8_t _multiinstance(const ZUNOCommandCmd_t *cmd, int *out, ZUNOCommand
 	(void)frame_report;
 }
 
-static size_t _testMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
+static size_t _isBlockMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
 	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) == 0)//test multicast
-		return (true);
+		return (false);
 	switch (cmdClass) {
 		#ifdef WITH_CC_BASIC
 		case COMMAND_CLASS_BASIC:
@@ -1032,7 +1032,7 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 			supervision = true;
 		else
 			supervision = false;
-		if (_testMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == false)
+		if (_isBlockMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == true)
 			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		options = ZUNO_COMMAND_HANDLER_OPTIONS(cmd->src_node, multi, supervision, ZW_CMD_CLASS);
 		// Check if command fits to any existing channel

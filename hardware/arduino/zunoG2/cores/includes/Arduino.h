@@ -33,8 +33,6 @@ enum{
   ZUNO_SECUREPARAM_UNDEFINED = 0xFF,
 };
 
-bool zuno_IsLr(void);
-
 // Configurator 
 #define zunoChangeDefine(type, v)  type v, _##v
 #define zunoChangeInit(v, i) v = i; _##v = v + 1

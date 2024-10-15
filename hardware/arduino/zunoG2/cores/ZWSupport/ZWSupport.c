@@ -53,6 +53,13 @@ static const uint8_t FREQ_TBL_CONV[][2] = { {ZME_FREQ_EU, REGION_EU},
 											{ZME_FREQ_IL, REGION_IL},
                       						{ZME_FREQ_MY, REGION_KR},
                       						{ZME_FREQ_LR_US, REGION_US_LR}};
+
+bool zuno_IsLr(void) {
+	if (g_zuno_sys->node_id >= 0x100)
+		return (true);
+	return (false);
+}
+
 // -----------------------------------------------------------------
 // STATIC NIF
 // -----------------------------------------------------------------

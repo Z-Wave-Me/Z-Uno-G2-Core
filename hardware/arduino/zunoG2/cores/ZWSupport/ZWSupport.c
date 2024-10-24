@@ -975,6 +975,9 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 	bool												supervision;
 	bool												multi;
 
+	#if defined(WITH_CC_BATTERY) || defined(WITH_CC_WAKEUP)
+	zunoSleepUpdateSendRadioCmd();
+	#endif
 	// delay(10); // TST!
 	#ifdef LOGGING_DBG
 	LOGGING_UART.print(millis());

@@ -133,6 +133,9 @@ static void _ZWQSend_outside(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p) {
 	p->src_zw_channel = 0;
 	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
 	p->src_zw_channel = mapped_channel;
+	#if defined(WITH_CC_BATTERY) || defined(WITH_CC_WAKEUP)
+	zunoSleepUpdateSendRadioCmd();
+	#endif
 }
 
 void _ZWQSend(ZUNOCommandPacket_t *info){
@@ -159,7 +162,10 @@ void _ZWQSend(ZUNOCommandPacket_t *info){
 		return; // do not send association with multichannel encap to plain group
 	if (_ZWQSend_test(info, p, true) == false)
 		return ;
-	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p); 
+	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
+	#if defined(WITH_CC_BATTERY) || defined(WITH_CC_WAKEUP)
+	zunoSleepUpdateSendRadioCmd();
+	#endif
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t *info){
 	ZUNOCommandCmd_t							*p;

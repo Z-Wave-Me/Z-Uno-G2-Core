@@ -5,6 +5,7 @@ void zunoSetSleepTimeout(uint8_t index, uint32_t timeout);
 void zunoSendDeviceToSleep(uint8_t mode = SLEEP_MODE_EM4);
 void zunoLockSleep(void);
 bool zunoIsSleepLocked();
+void zunoSleepUpdateSendRadioCmd(void);
 void zunoKickSleepTimeout(uint32_t ms);
 void zunoSetSleepingMode(byte mode);
 uint8_t zunoGetSleepingMode(void);

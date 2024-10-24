@@ -18,6 +18,24 @@
 //   LOGGING_UART.println(regs->lr, HEX);
 //   #endif
 // }
+uint64_t rtcc_micros(void);
+void zunoSleepUpdateSendRadioCmd(void) {
+    zunoEnterCritical();
+    g_sleep_data.last_radio_cmd = rtcc_micros();
+    zunoExitCritical();
+}
+
+static bool _zunoSleepUpdateSendRadioCmdIsSleep(void) {
+    bool b_sleep;
+
+    zunoEnterCritical();
+    if ((rtcc_micros() > g_sleep_data.last_radio_cmd + (2 * 1000 * 1000)))
+        b_sleep = true;
+    else
+        b_sleep = false;
+    zunoExitCritical();
+    return (b_sleep);
+}
 
 __WEAK bool zunoSysServiceCanSleep();
 static uint8_t __zunoSleepingUpd(){
@@ -69,7 +87,8 @@ static uint8_t __zunoSleepingUpd(){
     if(timeout >= millis()){
         return 10; 
     }
-    
+    if(_zunoSleepUpdateSendRadioCmdIsSleep() == false)
+        return (11);
     #ifdef LOGGING_DBG
     LOGGING_UART.print("CORE CODE (");
     LOGGING_UART.print((uint32_t)zunoGetCurrentThreadHandle(), HEX);
@@ -262,6 +281,7 @@ void _zunoInitDefaultWakeup(){
 void _zunoInitSleepingData(){
     if (zunoIsSleepingMode() == false)
         return ;
+    g_sleep_data.last_radio_cmd = 0x0;
     g_sleep_data.timeout = ZUNO_SLEEP_INITIAL_TIMEOUT;
     g_sleep_data.user_latch = true;
     g_sleep_data.inclusion_latch = false;

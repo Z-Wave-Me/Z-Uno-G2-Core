@@ -200,6 +200,7 @@ typedef struct HandlerFunc_s{
 
 #define MAX_SLEEP_TIMERS 2
 typedef struct ZUNOSleepData_s{
+    uint64_t last_radio_cmd;
     uint32_t timeout;
     uint32_t wup_timeout;
     uint32_t em4_map;

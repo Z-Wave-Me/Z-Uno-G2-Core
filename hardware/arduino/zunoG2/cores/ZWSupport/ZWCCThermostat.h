@@ -211,46 +211,11 @@
 /************************************************************/
 /* Thermostat Mode Supported Report V3 command class structs */
 /************************************************************/
-typedef struct							ZwThermostatModeSupportedReport1ByteFrame_s
+typedef struct							ZwThermostatModeSupportedReportFrame_s
 {
 	uint8_t								cmdClass;/* The command class */
 	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;
-}										ZwThermostatModeSupportedReport1ByteFrame_t;
-
-typedef struct							ZwThermostatModeSupportedReport2ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;/* LSB */
-}										ZwThermostatModeSupportedReport2ByteFrame_t;
-
-typedef struct							ZwThermostatModeSupportedReport3ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;
-	uint8_t								bitMask3;/* LSB */
-}										ZwThermostatModeSupportedReport3ByteFrame_t;
-
-typedef struct							ZwThermostatModeSupportedReport4ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;
-	uint8_t								bitMask3;
-	uint8_t								bitMask4;/* LSB */
-}										ZwThermostatModeSupportedReport4ByteFrame_t;
-
-typedef union							ZwThermostatModeSupportedReportFrame_u
-{
-	ZwThermostatModeSupportedReport1ByteFrame_t			byte1;
-	ZwThermostatModeSupportedReport2ByteFrame_t			byte2;
-	ZwThermostatModeSupportedReport3ByteFrame_t			byte3;
-	ZwThermostatModeSupportedReport4ByteFrame_t			byte4;
+	uint8_t								bitMask[];
 }										ZwThermostatModeSupportedReportFrame_t;
 
 
@@ -391,46 +356,11 @@ typedef union								ZwThermostatModeSetFrame_u
 /************************************************************/
 /* Thermostat Setpoint Supported Report V3 command class structs */
 /************************************************************/
-typedef struct							ZwThermostatSetpointSupportedReport1ByteFrame_s
+typedef struct							ZwThermostatSetpointSupportedReportFrame_s
 {
 	uint8_t								cmdClass;/* The command class */
 	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;
-}										ZwThermostatSetpointSupportedReport1ByteFrame_t;
-
-typedef struct							ZwThermostatSetpointSupportedReport2ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;/* LSB */
-}										ZwThermostatSetpointSupportedReport2ByteFrame_t;
-
-typedef struct							ZwThermostatSetpointSupportedReport3ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;
-	uint8_t								bitMask3;/* LSB */
-}										ZwThermostatSetpointSupportedReport3ByteFrame_t;
-
-typedef struct							ZwThermostatSetpointSupportedReport4ByteFrame_s
-{
-	uint8_t								cmdClass;/* The command class */
-	uint8_t 							cmd;/* The command */
-	uint8_t								bitMask1;/* MSB */
-	uint8_t								bitMask2;
-	uint8_t								bitMask3;
-	uint8_t								bitMask4;/* LSB */
-}										ZwThermostatSetpointSupportedReport4ByteFrame_t;
-
-typedef union							ZwThermostatSetpointSupportedReportFrame_u
-{
-	ZwThermostatSetpointSupportedReport1ByteFrame_t			byte1;
-	ZwThermostatSetpointSupportedReport2ByteFrame_t			byte2;
-	ZwThermostatSetpointSupportedReport3ByteFrame_t			byte3;
-	ZwThermostatSetpointSupportedReport4ByteFrame_t			byte4;
+	uint8_t								bitMask[];
 }										ZwThermostatSetpointSupportedReportFrame_t;
 
 

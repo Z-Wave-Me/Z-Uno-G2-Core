@@ -92,7 +92,7 @@ void __zuno_BasicUniversalDimingStop(uint8_t channel) {
 			break ;
 	}
 }
-
+uint8_t __zuno_CCThermostatModeTobasicGet(size_t channel);
 void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, uint8_t *current_value, uint8_t *duration_table_8, uint8_t *target_value) {
 	size_t									type;
 	size_t									currentValue;
@@ -130,11 +130,8 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 		default:
 			switch (type) {
 				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
-				#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 				case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-				#endif
-					currentValue = __zuno_BasicUniversalGetter1P(channel);
-					currentValue = currentValue ? 0xFF : 0x00;
+					currentValue = __zuno_CCThermostatModeTobasicGet(channel);
 					break;
 				#endif
 				default:
@@ -159,7 +156,7 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 }
 
 #ifdef WITH_CC_BASIC
-size_t zuno_CCThermostatModeTobasic(size_t channel, size_t value);
+uint8_t __zuno_CCThermostatModeTobasicSet(uint8_t channel, uint8_t value);
 int zuno_CCSoundSwitchBasicSet(size_t channel, size_t toneIdentifier, const ZUNOCommandHandlerOption_t *options);
 static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCommandHandlerOption_t *options) {
 	size_t							value;
@@ -178,7 +175,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCo
 	switch (type) {
 		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-			value = zuno_CCThermostatModeTobasic(channel, value);
+			value = __zuno_CCThermostatModeTobasicSet(channel, value);
 			break;
 		#endif
 		#ifdef WITH_CC_SWITCH_BINARY

@@ -293,7 +293,7 @@
         },
         {   
             "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":8,
-            "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT"],
+            "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT", "WITH_CC_BASIC"],
             "generic_type":"GENERIC_TYPE_THERMOSTAT",
             "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL_V2",
             "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",

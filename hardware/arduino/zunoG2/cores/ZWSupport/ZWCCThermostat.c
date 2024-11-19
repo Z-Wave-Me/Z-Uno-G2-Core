@@ -351,6 +351,10 @@ int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet) {
 
 	#ifdef WITH_CC_THERMOSTAT_MODE
 	rs = _report_mode(channel, packet);
+	if (rs == ZUNO_COMMAND_ANSWERED) {
+		zunoSendZWPackage(packet);
+		rs = ZUNO_COMMAND_PROCESSED;
+	}
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_SETPOINT
 	rs = _setpoint_get(channel, NULL, packet);

@@ -18,10 +18,7 @@
 #define EEPROM_BASIC_SAVE_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->basic[0x0])
 #define EEPROM_BASIC_SAVE_SIZE							(1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
 #endif
-#if defined(WITH_CC_SWITCH_COLOR)
-#define EEPROM_SWITCH_COLOR_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->switch_color[0x0])
-#define EEPROM_SWITCH_COLOR_SAVE_SIZE					(1 * ZUNO_MAX_MULTI_CHANNEL_NUMBER)
-#endif
+
 #if defined(WITH_CC_CENTRAL_SCENE)
 #define EEPROM_CENTRAL_SCENE_SAVE_ADDR					((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->central_scene[0x0])
 #define EEPROM_CENTRAL_SCENE_SAVE_SIZE					(1)
@@ -79,9 +76,6 @@ typedef struct									ZwEepromSketh_s
 	uint8_t										wakeup[EEPROM_WAKEUP_SIZE];
 	#if defined(WITH_CC_BASIC)
 	uint8_t										basic[EEPROM_BASIC_SAVE_SIZE];
-	#endif
-	#if defined(WITH_CC_SWITCH_COLOR)
-	uint8_t										switch_color[EEPROM_SWITCH_COLOR_SAVE_SIZE];
 	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)
 	uint8_t										switch_sound[EEPROM_SWITCH_SOUND_SAVE_SIZE];

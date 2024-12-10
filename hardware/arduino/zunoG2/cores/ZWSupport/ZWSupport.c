@@ -910,9 +910,6 @@ void zunoCommitCfg(){
 	#if defined(WITH_CC_BASIC)
 	zunoBasicSaveInit();
 	#endif
-	#if defined(WITH_CC_SWITCH_COLOR)
-	zunoSwitchColorSaveInit();
-	#endif
 	#if defined(WITH_CC_SOUND_SWITCH)
 	zunoSoundSwitchSaveInit();
 	#endif
@@ -1096,7 +1093,7 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 				#endif
 				#ifdef WITH_CC_SWITCH_COLOR
 				case COMMAND_CLASS_SWITCH_COLOR:
-					result = zuno_CCSwitchColorHandler(zuno_ch, cmd, &frame_report);
+					result = zuno_CCSwitchColorHandler(zuno_ch, cmd, &frame_report, &options);
 					break;
 				#endif
 				#ifdef WITH_CC_WINDOW_COVERING
@@ -1493,7 +1490,7 @@ void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_repo
 			#endif
 			#ifdef WITH_CC_SWITCH_COLOR
 			case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-				rs = zuno_CCSwitchColorReport(ch, NULL, &frame_report->info);
+				rs = zuno_CCSwitchColorReport(ch,  &frame_report->info);
 				break;
 			#endif
 			#ifdef WITH_CC_WINDOW_COVERING

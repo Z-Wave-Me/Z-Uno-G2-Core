@@ -54,6 +54,22 @@ void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list, const ZUNOCommandHand
 	zunoExitCritical();
 }
 
+void zunoTimerTreadDimingAddStartLevel(zunoTimerTreadDiming_t *list, const ZUNOCommandHandlerOption_t *options) {
+	size_t step;
+
+	step = list->step;
+	if (list->target_value >= list->current_value) {
+		list->flag = list->flag | ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP;
+		step = step * (list->target_value - list->current_value);
+	}
+	else {
+		list->flag = list->flag | ZUNO_TIMER_TREA_DIMING_FLAG_MODE_DOWN;
+		step = step * (list->current_value - list->target_value);
+	}
+	list->ticks_end = (rtcc_micros() / 1000) + step;
+	zunoTimerTreadDimingAdd(list, options);
+}
+
 static void _free_list(zunoTimerTreadDiming_t *list) {
 	g_sleep_data.latch--;
 	#ifdef LOGGING_DBG
@@ -128,6 +144,11 @@ bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 
 static bool _zunoTimerTreadDimingLoop_set(zunoTimerTreadDiming_t *list, uint8_t new_value) {
 	switch (list->type) {
+		#if defined(WITH_CC_SWITCH_COLOR)
+		case zunoTimerTreadDimingTypeSwitchColor:
+			__zunoSwitchColorSet(list->channel, list->colorComponentId, new_value);
+			break ;
+		#endif
 		#ifdef WITH_CC_WINDOW_COVERING
 		case zunoTimerTreadDimingTypeWindowsCovering:
 			__zunoWindowCoveringSet(list->channel, list->parameterId, new_value);
@@ -170,6 +191,7 @@ static bool _zunoTimerTreadDimingLoop(zunoTimerTreadDiming_t *list) {
 	return (false);
 }
 
+
 void zunoTimerTreadDimingLoopReportSet(ZUNOCommandPacketReport_t *frame_report, const zunoTimerTreadDiming_t *list) {
 	#ifdef WITH_CC_WINDOW_COVERING
 	ZwWindowCoveringReport_t											info_window_covering;
@@ -177,8 +199,12 @@ void zunoTimerTreadDimingLoopReportSet(ZUNOCommandPacketReport_t *frame_report, 
 
 	if ((list->flag & ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION) != 0x0)
 		zuno_CCSupervisionReportAsyncProcessed(frame_report, &list->super_vision);
-
 	switch (list->type) {
+		#if defined(WITH_CC_SWITCH_COLOR)
+		case zunoTimerTreadDimingTypeSwitchColor:
+			zuno_CCSwitchColorReportTimer(frame_report, list);
+			break ;
+		#endif
 		#ifdef WITH_CC_WINDOW_COVERING
 		case zunoTimerTreadDimingTypeWindowsCovering:
 			info_window_covering.parameterId = list->parameterId;
@@ -297,7 +323,6 @@ size_t zuno_CCTimerTicksTable7(size_t duration) {// Get the step for dimming in 
 }
 
 void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_report);
-void zuno_CCSwitchColorTimer(ZunoTimerBasic_t *lp, ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCDoorLockTimer(ZunoTimerBasic_t *lp);
 void zuno_CCIndicatorTimer(ZUNOCommandPacketReport_t *frame_report);
 void zuno_CCCentralSceneTimer(ZUNOCommandPacketReport_t *frame_report);
@@ -306,7 +331,7 @@ void zuno_CCTimeHandlerTimer(void);
 // Main timer for CC purposes
 ZunoTimer_t g_zuno_timer;
 
-#if defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
+#if defined(WITH_CC_DOORLOCK)
 static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	ZunoTimerBasic_t				*lp_b;
 	ZunoTimerBasic_t				*lp_e;
@@ -317,11 +342,6 @@ static void _exe(ZUNOCommandPacketReport_t *frame_report) {
 	while (lp_b < lp_e) {
 		if ((channel = lp_b->channel) != 0x0) {
 			switch (ZUNO_CFG_CHANNEL(channel - 1).type) {
-				#ifdef WITH_CC_SWITCH_COLOR
-				case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-					zuno_CCSwitchColorTimer(lp_b, frame_report);
-					break ;
-				#endif
 				#ifdef WITH_CC_DOORLOCK
 				case ZUNO_DOORLOCK_CHANNEL_NUMBER:
 					zuno_CCDoorLockTimer(lp_b);
@@ -346,7 +366,7 @@ void zuno_CCTimer(uint32_t ticks) {
 	}
 	#endif
 
-	#if defined(WITH_CC_SWITCH_COLOR) || defined(WITH_CC_DOORLOCK)
+	#if defined(WITH_CC_DOORLOCK)
 	_exe(&frame_report);
 	#endif
 	if((ticks & 0x3) == 0) {// Once in ~40ms 

@@ -6,6 +6,18 @@
 #include "ZWCCWindowCovering.h"
 #include "ZWCCDoorLock.h"
 
+#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
+__WEAK void __zunoSetterSwitchColorBrightness(uint8_t channel, uint8_t newValue) {
+	(void)channel;
+	(void)newValue;
+}
+
+__WEAK uint8_t __zunoGetterSwitchColorBrightness(uint8_t channel) {
+	return (0x0);
+	(void)channel;
+}
+#endif
+
 void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
     uint8_t type = ZUNO_CFG_CHANNEL(zuno_ch).type;
 
@@ -15,11 +27,11 @@ void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
             __zunoWindowCoveringBasicSet(zuno_ch, value);
             break;
         #endif
-        // #ifdef WITH_CC_SWITCH_COLOR
-        // case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-        //     zunoSwitchColorSaveSet(zuno_ch, &value);
-        //     break;
-        // #endif
+        #if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
+        case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+            __zunoSetterSwitchColorSwitchMultilevel(zuno_ch, value);
+            break;
+        #endif
         default:
             zuno_universalSetter1P(zuno_ch, value);
             break ;
@@ -36,11 +48,11 @@ uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
 			value = __zunoWindowCoveringBasicGet(zuno_ch);
 			break;
 		#endif
-		// #ifdef WITH_CC_SWITCH_COLOR
-		// case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-		// 	value = zunoSwitchColorSaveGet(zuno_ch);
-		// 	break;
-		// #endif
+		#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+			value = __zunoGetterSwitchColorSwitchMultilevel(zuno_ch);
+			break;
+		#endif
 		default:
 			value = zuno_universalGetter1P(zuno_ch);
 			break ;
@@ -50,6 +62,9 @@ uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
 
 void __zuno_BasicUniversalTimerStop(uint8_t channel) {
 	switch (ZUNO_CFG_CHANNEL(channel).type) {
+		#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+		#endif
 		#if defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			__zuno_CCSwitchMultilevelTimerStop(channel);
@@ -102,6 +117,9 @@ void __zuno_BasicUniversalGetCurrentValueDurationTargetValue(uint8_t channel, ui
 
 	type = ZUNO_CFG_CHANNEL(channel).type;
 	switch (type) {
+		#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
+		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
+		#endif
 		#if defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			__zuno_CCSwitchMultilevelGetValues(channel, current_value, duration_table_8, target_value);
@@ -185,13 +203,13 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCo
 			value = value ? 0xFF : 0x00;// Map the value right way
 			break;
 		#endif
-		#ifdef WITH_CC_WINDOW_COVERING
+		#if defined(WITH_CC_WINDOW_COVERING) && defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_WINDOW_COVERING_CHANNEL_NUMBER:
 		#endif
-		#ifdef WITH_CC_SWITCH_COLOR
+		#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
 		#endif
-		#ifdef WITH_CC_SWITCH_MULTILEVEL
+		#if defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			if (value > 0x63 && value < 0xFF)
 				return (ZUNO_COMMAND_BLOCKED_FAILL);

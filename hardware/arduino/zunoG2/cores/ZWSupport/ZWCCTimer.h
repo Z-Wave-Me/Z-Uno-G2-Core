@@ -14,6 +14,7 @@ typedef enum					zunoTimerTreadDimingType_e
 	zunoTimerTreadDimingTypeWindowsCovering,
 	zunoTimerTreadDimingTypeDoorLock,
 	zunoTimerTreadDimingTypeSoundSwitch,
+	zunoTimerTreadDimingTypeSwitchColor,
 }								zunoTimerTreadDimingType_t;
 
 typedef struct					zunoTimerTreadDiming_s
@@ -32,6 +33,7 @@ typedef struct					zunoTimerTreadDiming_s
 	{
 		uint8_t					data;
 		uint8_t					parameterId;
+		uint8_t					colorComponentId;
 	};
 }								zunoTimerTreadDiming_t;
 
@@ -42,6 +44,7 @@ bool zunoTimerTreadDimingGetValues(zunoTimerTreadDimingType_t type, uint8_t chan
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel);
 void zunoTimerTreadDimingStop(zunoTimerTreadDimingType_t type, uint8_t channel, const void *data, uint8_t length);
 void zunoTimerTreadDimingAdd(zunoTimerTreadDiming_t *list, const ZUNOCommandHandlerOption_t *options);
+void zunoTimerTreadDimingAddStartLevel(zunoTimerTreadDiming_t *list, const ZUNOCommandHandlerOption_t *options);
 zunoTimerTreadDiming_t *zunoTimerTreadDimingCreate(void);
 
 #define ZUNO_TIMER_SWITCH_MAX_VALUE				0x63//Maximum value when dimming

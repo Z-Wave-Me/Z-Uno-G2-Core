@@ -29,7 +29,7 @@ void __zuno_BasicUniversalSetter1P(byte zuno_ch, uint8_t value) {
         #endif
         #if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
         case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-            __zunoSetterSwitchColorSwitchMultilevel(zuno_ch, value);
+            __zunoSetterSwitchColorBrightness(zuno_ch, value);
             break;
         #endif
         default:
@@ -50,7 +50,7 @@ uint8_t __zuno_BasicUniversalGetter1P(byte zuno_ch) {
 		#endif
 		#if defined(WITH_CC_SWITCH_COLOR) && defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_COLOR_CHANNEL_NUMBER:
-			value = __zunoGetterSwitchColorSwitchMultilevel(zuno_ch);
+			value = __zunoGetterSwitchColorBrightness(zuno_ch);
 			break;
 		#endif
 		default:

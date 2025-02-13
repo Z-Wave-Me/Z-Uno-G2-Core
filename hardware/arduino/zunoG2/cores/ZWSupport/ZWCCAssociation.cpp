@@ -468,6 +468,8 @@ static ssize_t __association_gpr_info_get_common(_ZwAssociationGroupCommand_t *g
 		default:
 			return (0);
 	}
+	(void)gpr_info;
+	(void)gpr_info_max;
 }
 
 static bool __association_gpr_info_find_replay(_ZwAssociationGroupCommand_t *gpr_info, size_t gpr_info_max, uint8_t cmdClass) {

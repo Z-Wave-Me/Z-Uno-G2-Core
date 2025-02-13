@@ -182,7 +182,7 @@ static void _config_report_asyn(size_t channel) {
 
 	fillOutgoingReportPacketAsync(&frame_report, ZUNO_CFG_CHANNEL(channel).zw_channel);
 	_soundSwitchConfigurationReport(channel, &frame_report);
-	zunoSendZWPackage(&frame_report.info);
+	zunoSendZWPacket(&frame_report.info);
 }
 
 static int _soundSwitchConfigurationSet(const ZW_SOUND_SWITCH_CONFIGURATION_SET_V2_FRAME *frame, size_t channel) {
@@ -194,10 +194,10 @@ static int _soundSwitchConfigurationSet(const ZW_SOUND_SWITCH_CONFIGURATION_SET_
 	if ((volume = frame->volume) == 0xFF)
 		volume = switch_save.volume_save;
 	if (volume > SOUND_SWITCH_DEFAULT_VOLUME_VALUE_MAX)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	if ((defaultToneIdentifier = frame->defaultToneIdentifier) != 0x0) {
 		if (_soundSwitchParameter(_soundSwitchGetParameterArray(channel), defaultToneIdentifier) == 0x0)
-			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			return (ZUNO_COMMAND_BLOCKED_FAIL);
 		switch_save.toneIdentifier = defaultToneIdentifier;
 	}
 	switch_save.volume = volume;
@@ -234,7 +234,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 		zunoSoundSwitchSaveGet(channel, &switch_save);
 		if (_soundSwitchParameter(parameter_array, toneIdentifier) == 0x0) {
 			if (toneIdentifier != 0xFF)
-				result = ZUNO_COMMAND_BLOCKED_FAILL;
+				result = ZUNO_COMMAND_BLOCKED_FAIL;
 			toneIdentifier = switch_save.toneIdentifier;
 		}
 		if (playCommandToneVolume == 0x0)
@@ -264,7 +264,7 @@ static int _soundSwitchTonePlaySetAdd(size_t channel, size_t toneIdentifier, siz
 		return (result);
 	}
 	if ((parameter_diming = zunoTimerTreadDimingCreate()) == NULL)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	parameter_diming->flag = 0x0;
 	parameter_diming->channel = channel;
 	parameter_diming->ticks_end = time_stamp;
@@ -292,7 +292,7 @@ static int _soundSwitchTonePlaySet(const ZwSoundSwitchTonePlayFrame_t *frame, si
 			toneIdentifier = frame->v2.toneIdentifier;
 			break ;
 		default:
-			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			return (ZUNO_COMMAND_BLOCKED_FAIL);
 			break ;
 	}
 	return (_soundSwitchTonePlaySetAdd(channel, toneIdentifier, playCommandToneVolume, options));

@@ -211,7 +211,7 @@ static void _CCCentralSceneReport_common(uint8_t event, ZunoCentralSceneParamete
 	report->properties1 = properties1 | event;
 	report->sceneNumber = sceneNumber;
 	frame_report->info.packet.len = sizeof(report[0x0]);
-	zunoSendZWPackage(&frame_report->info);
+	zunoSendZWPacket(&frame_report->info);
 }
 
 static void _zuno_CCCentralSceneReport_held_down(ZunoCentralSceneParameterList_t *parameter_list, uint8_t sceneNumber, ZUNOCommandPacketReport_t *frame_report) {

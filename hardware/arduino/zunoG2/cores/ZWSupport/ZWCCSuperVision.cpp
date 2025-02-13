@@ -34,7 +34,8 @@ static void _supervision_send(ZUNOCommandPacketReport_t *frame_report, uint8_t i
 		case ZUNO_COMMAND_ANSWERED:
 			process_result = SUPERVISION_REPORT_SUCCESS;
 			break;
-		case ZUNO_COMMAND_BLOCKED_FAILL:
+		case ZUNO_COMMAND_BLOCKED_MALLOC:
+		case ZUNO_COMMAND_BLOCKED_FAIL:
 			process_result = SUPERVISION_REPORT_FAIL;
 			break;
 		case ZUNO_COMMAND_BLOCKED_WORKING:
@@ -54,7 +55,7 @@ static void _supervision_send(ZUNOCommandPacketReport_t *frame_report, uint8_t i
 	report->status = process_result;
 	report->duration = duration;
 	frame_report->info.packet.len = sizeof(ZwCSuperVisionReportFrame_t);
-	zunoSendZWPackageAdd(frame_report);
+	zunoSendZWPacketAdd(frame_report);
 	return ;
 }
 
@@ -108,9 +109,10 @@ bool __zuno_CCSupervisionReportSendTest(uint8_t duration) {
 }
 
 int zuno_CCAssociationHandler(ZUNOCommandCmd_t *cmd);
-static void __unpackSV(ZUNOCommandCmd_t *cmd, ZwCSuperVisionGetFrame_t *frame){
+static void __unpackSV(ZUNOCommandCmd_t *cmd, ZwCSuperVisionGetFrame_t *frame, bool multicast){
 	cmd->len -= 4;
-	__cc_supervision._unpacked = true;
+	if (multicast == false)
+		__cc_supervision._unpacked = true;
 	__cc_supervision._node_id = cmd->src_node;
 	__cc_supervision.properties1 = frame->properties1;
 	#ifdef LOGGING_DBG
@@ -124,7 +126,7 @@ node_id_t zunoGetSupervisionHost(){
 		return 0;
 	return __cc_supervision._node_id;
 }
-uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, bool multicast) {
 	ZwCSuperVisionGetFrame_t								*frame;
 	uint8_t													id;
 	uint64_t												ms;
@@ -153,7 +155,8 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, 
 		return (ZUNO_COMMAND_PROCESSED);
 	__cc_supervision._prev_id = id;
 	if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus())) {
-		__cc_supervision._unpacked = true;
+		if (multicast == false)
+			__cc_supervision._unpacked = true;
 		return zuno_CCSupervisionReportSyncDefault(frame_report, ZUNO_COMMAND_BLOCKED_NO_SUPPORT);
 	}
 	cmd->cmd += 4;
@@ -166,10 +169,10 @@ uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, 
 				return ZUNO_UNKNOWN_CMD;
 			//if (ZW_CMD == ASSOCIATION_SET || ZW_CMD == ASSOCIATION_REMOVE) //&& zuno_CCAssociationHandler(cmd) == ZUNO_UNKNOWN_CMD)
 			//	break ;
-			__unpackSV(cmd, frame);
+			__unpackSV(cmd, frame, multicast);
 			return (ZUNO_COMMAND_UNPACKED);
 		default:
-			__unpackSV(cmd, frame);
+			__unpackSV(cmd, frame, multicast);
 			return (ZUNO_COMMAND_UNPACKED);
 			break ;
 	}
@@ -187,6 +190,6 @@ int zuno_CCSupervisionApp(int result, ZUNOCommandPacketReport_t *frame_report) {
 	report->cmd = APPLICATION_REJECTED_REQUEST;
 	report->status = 0x0;
 	frame_report->info.packet.len = sizeof(ZwApplicationRejectedRequestFrame_t);
-	zunoSendZWPackageAdd(frame_report);
+	zunoSendZWPacketAdd(frame_report);
 	return (ZUNO_COMMAND_PROCESSED);
 }

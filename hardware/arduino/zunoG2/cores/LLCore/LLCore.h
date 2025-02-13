@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "ZUNO_SysTypes.h"
+
 #define MAX_SKETCH_NAME  48
 #define INVALID_VALUE    0xFF
 
@@ -30,5 +32,9 @@ typedef struct ZUNOCodeHeader_s{
 	char        name[MAX_SKETCH_NAME];
 	uint16_t    hw_id;
 } ZUNOCodeHeader_t;
+
+void WDOG_Feed();
+
+extern ZUNOSetupSysState_t * g_zuno_sys;
 
 #endif

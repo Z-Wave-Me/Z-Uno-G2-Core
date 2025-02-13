@@ -1,5 +1,5 @@
 {
-    "core_version":{"major":3,"minor":13,"branch":"beta"},
+    "core_version":{"major":0,"minor":0},
     "load_offset":198656,
     "default_defs":"MODERN_MULTICHANNEL MODERN_MULTICHANNEL_S2 MODERN_MULTICHANNEL_S2_ALWAYS",
     "max_channel_ccs":2,
@@ -293,7 +293,7 @@
         },
         {   
             "type_name":"ZUNO_THERMOSTAT_CHANNEL_NUMBER", "type_val":8,
-            "cc_flags":["WITH_CC_THERMOSTAT_MODE","WITH_CC_THERMOSTAT_SETPOINT", "WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_THERMOSTAT_MODE"],
             "generic_type":"GENERIC_TYPE_THERMOSTAT",
             "specific_type":"SPECIFIC_TYPE_THERMOSTAT_GENERAL_V2",
             "icon_id":"ICON_TYPE_GENERIC_THERMOSTAT",
@@ -308,7 +308,7 @@
         },
         {   
             "type_name":"ZUNO_SWITCH_COLOR_CHANNEL_NUMBER", "type_val":9,
-            "cc_flags":["WITH_CC_SWITCH_COLOR", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SWITCH_COLOR"],
             "generic_type":"GENERIC_TYPE_SWITCH_MULTILEVEL",
             "specific_type":"SPECIFIC_TYPE_COLOR_TUNABLE_MULTILEVEL",
             "icon_id":"ICON_TYPE_GENERIC_LIGHT_DIMMER_SWITCH",
@@ -323,7 +323,7 @@
         },
         {   
             "type_name":"ZUNO_SOUND_SWITCH_CHANNEL_NUMBER", "type_val":10,
-            "cc_flags":["WITH_CC_SOUND_SWITCH","WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_SOUND_SWITCH"],
             "ccs":[
                 {"name":"COMMAND_CLASS_SOUND_SWITCH","version":"SOUND_SWITCH_VERSION"}
             ],
@@ -337,7 +337,7 @@
         },
         {   
             "type_name":"ZUNO_WINDOW_COVERING_CHANNEL_NUMBER", "type_val":11,
-            "cc_flags":["WITH_CC_WINDOW_COVERING", "WITH_CC_SWITCH_MULTILEVEL", "WITH_CC_BASIC"],
+            "cc_flags":["WITH_CC_WINDOW_COVERING"],
             "generic_type":"SPECIFIC_TYPE_NOT_USED",
             "specific_type":"SPECIFIC_TYPE_NOT_USED",
             "icon_id":"ICON_TYPE_UNASSIGNED",

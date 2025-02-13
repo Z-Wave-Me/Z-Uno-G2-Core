@@ -1,7 +1,7 @@
 #include "BL0937.h"
 
 BL0937::BL0937(byte cfPin, byte cf1Pin,byte selPin, float vRef):
-                ZMEHandlerMapper(SYS_HANLER_MAPPER_TIMER),
+                ZMEHandlerMapper(SYS_HANDLER_MAPPER_TIMER),
                 _cfPin(cfPin),
                 _cf1Pin(cf1Pin),
                 _selPin(selPin),

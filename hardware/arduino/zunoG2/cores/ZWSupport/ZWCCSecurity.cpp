@@ -5,20 +5,20 @@
 uint8_t *zuno_AddCommonClass(uint8_t *b);
 
 static uint8_t *_reportGeneral(uint8_t *commandClass, uint8_t endpoint) {
-	size_t												i;
-	size_t												max;
-	size_t												channel;
-	size_t												clss;
-	const ZUNOChannelCCS_t								*lp;
+	const _ZUNOChannelCCS_t *cc_types;
+	size_t i;
+	size_t channel;
 
 	commandClass = zuno_AddCommonClass(commandClass);
 	if (endpoint != 0 && (channel = zuno_findChannelByZWChannelIndexChannel(endpoint)) != UNKNOWN_CHANNEL) {
-		i = 0;
-		lp = &ZUNO_CC_TYPES[ZUNO_CFG_CHANNEL(channel).type - 1];
-		max = lp->num_ccs;
-		while (i < max)
-			if ((clss = lp->ccs[i++].cc) != COMMAND_CLASS_BASIC)
-				commandClass++[0] = clss;
+		if ((cc_types = _zunoGetCCTypes((_ZunoChannelNumber_t)ZUNO_CFG_CHANNEL(channel).type)) != NULL)
+		{
+			i = 0;
+			while (i < cc_types->num_ccs) {
+				commandClass++[0] = cc_types->ccs[i].cc;
+				i++;
+			}
+		}
 	}
 	return (commandClass);
 }

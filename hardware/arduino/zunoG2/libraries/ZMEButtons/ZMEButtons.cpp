@@ -288,7 +288,7 @@ ZMEGPIOButtons::ZMEGPIOButtons(
                        uint32_t hold_interval,
                        bool enableHandling):
                        ZMEVirtButtons(max_clicks, debounce_interval, multiclick_interval, hold_interval),
-                       ZMEHandlerMapper(SYS_HANLER_MAPPER_TIMER | SYS_HANLER_MAPPER_WAKE) {
+                       ZMEHandlerMapper(SYS_HANDLER_MAPPER_TIMER | SYS_HANDLER_MAPPER_WAKE) {
 
     _handling_enable = enableHandling;
 }

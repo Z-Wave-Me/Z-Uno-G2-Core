@@ -117,7 +117,7 @@ bool zuno_CCNotificationReport(uint8_t channel, uint8_t event, uint8_t state) {
 		report->byte1.properties1 = 0x0;
 	}
 	frame.info.packet.len = sizeof(report->byte1) - 2 + report->byte1.properties1;//don't include sequenceNumber & parameter value by default
-	zunoSendZWPackage(&frame.info);
+	zunoSendZWPacket(&frame.info);
 	return (true);
 }
 
@@ -226,10 +226,10 @@ static int _set(size_t channel, ZwNotificationSetFrame_t *cmd, ZUNOCommandPacket
 
 	_get_info(channel, &info);
 	if(cmd->notificationType != info.type)
-		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL, frame_report));
+		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAIL, frame_report));
 	notificationStatus = cmd->notificationStatus;
 	if((notificationStatus != NOTIFICATION_OFF_VALUE) && (notificationStatus != NOTIFICATION_ON_VALUE))
-		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAILL, frame_report));
+		return (zuno_CCSupervisionApp(ZUNO_COMMAND_BLOCKED_FAIL, frame_report));
 	zunoEEPROMRead(EEPROM_NOTIFICATION_ADDR, EEPROM_NOTIFICATION_SIZE, (byte*)&eeprom_mask);
 	if(notificationStatus)
 		eeprom_mask |= 1UL << channel;

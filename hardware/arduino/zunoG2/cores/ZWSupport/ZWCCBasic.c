@@ -199,7 +199,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCo
 		#ifdef WITH_CC_SWITCH_BINARY
 		case ZUNO_SWITCH_BINARY_CHANNEL_NUMBER:
 			if (value > 0x63 && value < 0xFF)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			value = value ? 0xFF : 0x00;// Map the value right way
 			break;
 		#endif
@@ -212,7 +212,7 @@ static int _basic_set(byte channel, const ZwBasicSetFrame_t *paket, const ZUNOCo
 		#if defined(WITH_CC_SWITCH_MULTILEVEL)
 		case ZUNO_SWITCH_MULTILEVEL_CHANNEL_NUMBER:
 			if (value > 0x63 && value < 0xFF)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			if (value == 0xFF) {
 				size_t							tempos;
 				if ((tempos = zunoBasicSaveGet(channel)) != 0)

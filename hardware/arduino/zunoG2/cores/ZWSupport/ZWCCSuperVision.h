@@ -16,7 +16,7 @@ typedef struct zuno_cc_supervision_data_s{
 extern zuno_cc_supervision_data_t __cc_supervision;
 
 /* Supervision command class commands */
-#define SUPERVISION_VERSION                                                             0x02
+#define SUPERVISION_VERSION_RELEASED                                                    0x02
 #define SUPERVISION_GET                                                                 0x01
 #define SUPERVISION_REPORT                                                              0x02
 /* Values used for Supervision Get command */
@@ -65,7 +65,7 @@ typedef struct						ZwCSuperVisionReportAsyncProcessed_s
 	uint8_t							id;
 }									ZwCSuperVisionReportAsyncProcessed_t;
 
-uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+uint8_t zuno_CCSupervisionUnpack(uint8_t process_result, ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, bool multicast);
 
 node_id_t zunoGetSupervisionHost();
 void zuno_CCSupervisionAsyncProcessedSet(const ZUNOCommandCmd_t *packet, ZwCSuperVisionReportAsyncProcessed_t *super_vision);

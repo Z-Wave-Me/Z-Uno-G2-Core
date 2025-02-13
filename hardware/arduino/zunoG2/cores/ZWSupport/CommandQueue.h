@@ -2,11 +2,11 @@
 #define ZWPACKAGE_QUEUE
 #include "LinkedList.h"
 #include "Arduino.h"
-#ifndef MAX_PROCESSED_QUEUE_PKGS
-#define MAX_PROCESSED_QUEUE_PKGS 8
+#ifndef MAX_PROCESSED_QUEUE_PKTS
+#define MAX_PROCESSED_QUEUE_PKTS 8
 #endif
-#ifndef MAX_SYS_QUEUE_PKGS
-#define MAX_SYS_QUEUE_PKGS 3
+#ifndef MAX_SYS_QUEUE_PKTS
+#define MAX_SYS_QUEUE_PKTS 3
 #endif
 
 #ifndef CONTROLLER_INTERVIEW_REQUEST_INTERVAL
@@ -17,7 +17,7 @@
 #define SYSTEM_PKG_DOMINATION_TIME 2000
 #endif
 
-bool ZWQPushPackage(ZUNOCommandPacket_t * pkg);
+bool ZWQPushPacket(ZUNOCommandPacket_t * pkg);
 bool zunoExtractGroupNode(uint8_t g, uint8_t i, ZUnoAssocNode_t * node);
 bool zunoCheckSystemQueueStatus(uint8_t channel);
 ZUNOCommandPacket_t * ZWQFindPackage(uint8_t dst_id, uint8_t flags, uint8_t cc, uint8_t cmd);

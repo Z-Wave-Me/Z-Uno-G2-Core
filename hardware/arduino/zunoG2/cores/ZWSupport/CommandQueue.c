@@ -12,16 +12,27 @@ void ZWQIncomingStat(const ZUNOCommandCmd_t * pkg){
         last_controller_package_time = millis();
     }
 }
-bool ZWQPushPackage(ZUNOCommandPacket_t * pkg){
-    if(((pkg->packet.flags & ZUNO_PACKETFLAGS_TEST) == 0) && // Sometimes we need a test pakage that ignores this restriction
-        (zunoNID() == 0)) { // We are out of network - don't send anything
-		#ifdef LOGGING_DBG
-		LOGGING_UART.print(millis());
-		LOGGING_UART.println(" Package was dropped! NodeID==0");
-		#endif
-		return false;
-		
-	}
+
+static bool _ZWQProcessChecking(ZUNOCommandPacket_t *info);
+
+bool ZWQPushPacket(ZUNOCommandPacket_t * pkg){
+    if((pkg->packet.flags & ZUNO_PACKETFLAGS_TEST) == 0) { // Sometimes we need a test pakage that ignores this restriction
+        if(zunoNID() == 0) { // We are out of network - don't send anything
+            #ifdef LOGGING_DBG
+            LOGGING_UART.print(millis());
+            LOGGING_UART.println(" Packet was dropped! NodeID==0");
+            #endif
+            return false;
+        }
+        if (_ZWQProcessChecking(pkg) == false)
+        {
+            #ifdef LOGGING_DBG
+            LOGGING_UART.print(millis());
+            LOGGING_UART.print(" Packet was dropped!\n");
+            #endif
+            return false;
+        }
+    }
     ZUNOCommandPacket_t * stored_pck;
     stored_pck = (ZUNOCommandPacket_t *)malloc(sizeof(ZUNOCommandPacket_t));
     if (stored_pck == NULL){
@@ -126,9 +137,11 @@ static bool _ZWQSend_test_only_outside(ZUNOCommandPacket_t *info) {
 	return (false);
 }
 
-static void _ZWQSend_outside(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p) {
+static bool _ZWQSend_outside(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p, bool b_test) {
 	if (_ZWQSend_test(info, p, false) == false)
-		return ;
+		return (false);
+	if (b_test == true)
+		return (true);
 	uint8_t mapped_channel = p->src_zw_channel;
 	p->src_zw_channel = 0;
 	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
@@ -136,36 +149,43 @@ static void _ZWQSend_outside(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p) {
 	#if defined(WITH_CC_BATTERY) || defined(WITH_CC_WAKEUP)
 	zunoSleepUpdateSendRadioCmd();
 	#endif
+	return (true);
 }
 
-void _ZWQSend(ZUNOCommandPacket_t *info){
-	ZUNOCommandCmd_t							*p;
+static bool _ZWQSend(ZUNOCommandPacket_t *info, bool b_test){
+	ZUNOCommandCmd_t *p;
 
 	p = &info->packet;
 	#ifdef LOGGING_DBG
-	LOGGING_UART.print("\n >>> (");
-	LOGGING_UART.print(millis());
-	LOGGING_UART.print(") OUTGOING PACKAGE: ");
-	zuno_dbgdumpZWPacakge(p);
+	if (b_test == false)
+	{
+		LOGGING_UART.print("\n >>> (");
+		LOGGING_UART.print(millis());
+		LOGGING_UART.print(") OUTGOING PACKET: ");
+		zuno_dbgdumpZWPacakge(p);
+	}
 	#endif
     bool b_plain_assoc = (p->dst_zw_channel == PLAIN_ASSOC_MAP); // It's a plain associtaion 
     p->dst_zw_channel &= ~(PLAIN_ASSOC_MAP); // Remove plain assoc value
 	if (_ZWQSend_test_only_outside(info) == true) {
-		_ZWQSend_outside(info, p);
-		return ;
+		return (_ZWQSend_outside(info, p, b_test));
 	}
     if(p->src_zw_channel & ZWAVE_CHANNEL_MAPPED_BIT){
 		if (_ZWQSend_test(info, p, false) == true)
-			_ZWQSend_outside(info, p);
+			if (_ZWQSend_outside(info, p, b_test) == true && b_test == true)
+				return (true);
 	}
 	if(b_plain_assoc &&  ((p->dst_zw_channel != 0) || (p->src_zw_channel  != 0)))
-		return; // do not send association with multichannel encap to plain group
+		return (false); // do not send association with multichannel encap to plain group
 	if (_ZWQSend_test(info, p, true) == false)
-		return ;
+		return (false);
+	if (b_test == true)
+		return (true);
 	zunoSysCall(ZUNO_SYSFUNC_SENDPACKET, 1, p);
 	#if defined(WITH_CC_BATTERY) || defined(WITH_CC_WAKEUP)
 	zunoSleepUpdateSendRadioCmd();
 	#endif
+	return (true);
 }
 void _ZWQRemovePkg(ZUNOCommandPacket_t *info){
 	ZUNOCommandCmd_t							*p;
@@ -184,20 +204,106 @@ bool ZWQIsEmpty(){
 #error "ZUNO_PACKETFLAGS_PRIORITY_MASK size!!!"
 #endif
 
+typedef struct ZWQProcessContext_s
+{
+	int processed_indexes[MAX_PROCESSED_QUEUE_PKTS];
+	int processed_indexes_cnt;
+	int qi;
+	bool test;
+	ZUnoAssocNode_t node;
+} ZWQProcessContext_t;
+
+static bool _ZWQProcess_sub(ZUNOCommandPacket_t *info, ZUNOCommandCmd_t *p, ZWQProcessContext_t *context_process) {
+	bool b_send;
+
+	b_send = false;
+	if(p->flags & ZUNO_PACKETFLAGS_GROUP){
+		while (true) {
+			if(context_process->processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKTS)
+				break;
+			// Send that packet to group
+			// Extract node from association storage
+			zunoExtractGroupNode(p->dst_node, p->dst_zw_channel, &context_process->node);
+			if(context_process->node.dest_nodeid == 0){
+				p->dst_zw_channel++;
+				if (p->dst_zw_channel < ZUNO_MAX_ASSOC_LIFE_LINE)
+					continue ;
+				// There is no more data for this group
+				context_process->processed_indexes[context_process->processed_indexes_cnt++] = context_process->qi;
+				break ;
+			} 
+			#ifdef LOGGING_DBG
+			if (context_process->test == false)
+			{
+				LOGGING_UART.print(millis());
+				LOGGING_UART.print("*** GROUP:");
+				LOGGING_UART.print(p->dst_node);
+				LOGGING_UART.print(" I:");
+				LOGGING_UART.print(p->dst_zw_channel);
+				LOGGING_UART.println(" PKG");
+				LOGGING_UART.print("*** NODE ID:");
+				LOGGING_UART.print(context_process->node.dest_nodeid);
+				LOGGING_UART.print(" channel:");
+				LOGGING_UART.println(context_process->node.dest_channel);
+			}
+			#endif
+			// Save group attributes
+			uint16_t tmp = p->dst_node;
+			uint8_t tmp_ch = p->dst_zw_channel;
+			uint8_t tmp_flags = p->flags;
+			uint8_t tmp_zw_rx_secure_opts = p->zw_rx_secure_opts;
+			// Copy Node id of specific device
+			p->dst_node = context_process->node.dest_nodeid;
+			p->dst_zw_channel = context_process->node.dest_channel;
+			p->zw_rx_secure_opts = context_process->node.security_level;
+			p->flags &= ~(ZUNO_PACKETFLAGS_GROUP);
+			// Send package to target device
+			if (_ZWQSend(info, context_process->test) == true)
+				b_send = true;
+			// Restore group attributes 
+			p->dst_node = tmp;
+			p->dst_zw_channel = tmp_ch + 1;
+			p->flags = tmp_flags;
+			p->zw_rx_secure_opts = tmp_zw_rx_secure_opts;
+		}
+	} else {
+		if (_ZWQSend(info, context_process->test) == true)
+			b_send = true;
+		context_process->processed_indexes[context_process->processed_indexes_cnt++] = context_process->qi;
+	}
+	return (b_send);
+}
+
+static bool _ZWQProcessChecking(ZUNOCommandPacket_t *info) {
+    ZUNOCommandCmd_t * p;
+    ZWQProcessContext_t context_process;
+    uint8_t dst_zw_channel;
+    bool out;
+
+    context_process.qi = 0;
+    context_process.processed_indexes_cnt = 0;
+    context_process.test = true;
+    p = &info->packet;
+    dst_zw_channel = p->dst_zw_channel;
+    out = _ZWQProcess_sub(info, p, &context_process);
+    p->dst_zw_channel = dst_zw_channel;
+    return (out);
+}
+
 void ZWQProcess(){
+    ZWQProcessContext_t context_process;
     ZNLinkedList_t *e;
-    ZUnoAssocNode_t node;
+    ZUNOCommandCmd_t * p;
+    ZUNOCommandPacket_t *info;
     static uint32_t count_n = 0;
     uint8_t queue_bit_mask;
     
     // Walk through the queue
-    int qi;
-    int processed_indexes[MAX_PROCESSED_QUEUE_PKGS];
-    int processed_indexes_cnt = 0;
-    ZUNOCommandCmd_t * p;
-    ZUNOCommandPacket_t *info;
+    context_process.qi = 0;
+    context_process.processed_indexes_cnt = 0;
+    context_process.test = false;
     // Process the packages
-	int queue_sz = znllCount(g_zwpkg_queue);
+    int queue_sz = znllCount(g_zwpkg_queue);
     #ifdef LOGGING_DBG
     if((queue_sz > 0) && ((count_n & 0x3F) == 0)){
 	    LOGGING_UART.print("CommandQueue Size:");
@@ -205,12 +311,12 @@ void ZWQProcess(){
     }
     #endif
     queue_bit_mask = 0x0;
-    for(e=g_zwpkg_queue, qi=0; e!= NULL && qi < queue_sz; e=e->next, qi++){
+    for(e=g_zwpkg_queue, context_process.qi=0; e!= NULL && context_process.qi < queue_sz; e=e->next, context_process.qi++){
         info = (ZUNOCommandPacket_t *) e->data;
         p = &info->packet;
         #ifdef SYQUEUE_CNT_BARRIER
         uint32_t system_queue_count = g_zuno_sys->rstat_pkgs_queued - g_zuno_sys->rstat_pkgs_processed; //s.pkgs_queued - s.pkgs_processed;
-        if(system_queue_count >= MAX_SYS_QUEUE_PKGS){
+        if(system_queue_count >= MAX_SYS_QUEUE_PKTS){
             #ifdef LOGGING_DBG
 		    LOGGING_UART.print("*** SYSTEM QUEUE IS FULL. CNT:");
             LOGGING_UART.println(system_queue_count);
@@ -251,76 +357,27 @@ void ZWQProcess(){
             queue_bit_mask = queue_bit_mask | (0x1 << (q_ch));
             continue; // Needed queue is full for this priority - just skip the package
         }
-        
-        if(p->flags & ZUNO_PACKETFLAGS_GROUP){
-            while (true) {
-                if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
-                    break;
-                #ifdef LOGGING_DBG
-                LOGGING_UART.print(millis());
-                LOGGING_UART.print("*** GROUP:");
-                LOGGING_UART.print(p->dst_node);
-                LOGGING_UART.print(" I:");
-                LOGGING_UART.print(p->dst_zw_channel);
-                LOGGING_UART.println(" PKG");
-                #endif
-                // Send that packet to group
-                // Extract node from association storage
-                zunoExtractGroupNode(p->dst_node, p->dst_zw_channel, &node);
-                #ifdef LOGGING_DBG
-                LOGGING_UART.print("*** NODE ID:");
-                LOGGING_UART.print(node.dest_nodeid);
-                LOGGING_UART.print(" channel:");
-                LOGGING_UART.println(node.dest_channel);
-                #endif
-                if(node.dest_nodeid == 0){
-                    p->dst_zw_channel++;
-                    if (p->dst_zw_channel < ZUNO_MAX_ASSOC_LIFE_LINE)
-                        continue ;
-                    // There is no more data for this group
-                    processed_indexes[processed_indexes_cnt++] = qi;
-                    break ;
-                } 
-                // Save group attributes
-                uint16_t tmp = p->dst_node;
-                uint8_t tmp_ch = p->dst_zw_channel;
-                uint8_t tmp_flags = p->flags;
-                // Copy Node id of specific device
-                p->dst_node = node.dest_nodeid;
-                p->dst_zw_channel = node.dest_channel;
-                p->zw_rx_secure_opts = node.security_level;
-                p->flags &= ~(ZUNO_PACKETFLAGS_GROUP);
-                // Send package to target device
-                _ZWQSend(info);
-                // Restore group attributes 
-                p->dst_node = tmp;
-                p->dst_zw_channel = tmp_ch + 1;
-                p->flags = tmp_flags;
-            }
-        } else {
-            _ZWQSend(info);
-            processed_indexes[processed_indexes_cnt++] = qi;
-            if(processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKGS)
-                break;
-        }
+        _ZWQProcess_sub(info, p, &context_process);
+        if(context_process.processed_indexes_cnt >= MAX_PROCESSED_QUEUE_PKTS)
+            break;
     }
     #ifdef LOGGING_DBG
-    if(processed_indexes_cnt){
+    if(context_process.processed_indexes_cnt){
 	    LOGGING_UART.print("*** PROCESSED:");
-        LOGGING_UART.println(processed_indexes_cnt);
+        LOGGING_UART.println(context_process.processed_indexes_cnt);
     }
 	#endif
     // Clean queue
-    while(processed_indexes_cnt){
+    while(context_process.processed_indexes_cnt){
         // The backward order, otherwise it will break the indexes
-        qi = processed_indexes[processed_indexes_cnt-1];
+        context_process.qi = context_process.processed_indexes[context_process.processed_indexes_cnt-1];
         #ifdef LOGGING_DBG
 	    LOGGING_UART.print("*** CLEANUP:");
-        LOGGING_UART.println(qi);
+        LOGGING_UART.println(context_process.qi);
 	    #endif
-        info = (ZUNOCommandPacket_t *)znllRemove(&g_zwpkg_queue, qi);
+        info = (ZUNOCommandPacket_t *)znllRemove(&g_zwpkg_queue, context_process.qi);
         _ZWQRemovePkg(info);
-        processed_indexes_cnt--;
+        context_process.processed_indexes_cnt--;
     }
     count_n++;
 }

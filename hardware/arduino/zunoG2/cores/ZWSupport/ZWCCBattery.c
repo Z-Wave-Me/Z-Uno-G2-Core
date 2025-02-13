@@ -109,7 +109,7 @@ static bool _zunoSendBatteryReportHandler(bool report_test) {
 	fillOutgoingReportPacketAsync(&frame, 0x0);
 	if (_battery_report_common(true, report_test, &frame) == false)
 		return (false);
-	zunoSendZWPackageAdd(&frame);
+	zunoSendZWPacketAdd(&frame);
 	return (true);
 }
 

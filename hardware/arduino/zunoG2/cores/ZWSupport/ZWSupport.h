@@ -61,9 +61,11 @@ enum
 	COMMAND_CLASS_SENSOR_MULTILEVEL = 0x31,
 	COMMAND_CLASS_METER = 0x32,
 	COMMAND_CLASS_SWITCH_COLOR = 0x33,
-	COMMAND_CLASS_METER_TBL_MONITOR = 0x3D,
 	COMMAND_CLASS_THERMOSTAT_MODE = 0x40,
+	COMMAND_CLASS_THERMOSTAT_OPERATING_STATE = 0x42,
 	COMMAND_CLASS_THERMOSTAT_SETPOINT = 0x43,
+	COMMAND_CLASS_THERMOSTAT_FAN_MODE = 0x44,
+	COMMAND_CLASS_THERMOSTAT_FAN_STATE = 0x45,
 	COMMAND_CLASS_SCHEDULE_ENTRY_LOCK = 0x4E,
 	COMMAND_CLASS_TRANSPORT_SERVICE = 0x55,
 	COMMAND_CLASS_ASSOCIATION_GRP_INFO = 0x59,
@@ -72,10 +74,8 @@ enum
 	COMMAND_CLASS_ZWAVEPLUS_INFO = 0x5E,
 	COMMAND_CLASS_MULTI_CHANNEL = 0x60,
 	COMMAND_CLASS_DOOR_LOCK = 0x62,
-	COMMAND_CLASS_USER_CODE = 0x63,
 	COMMAND_CLASS_WINDOW_COVERING = 0x6A,
 	COMMAND_CLASS_SUPERVISION = 0x6C,
-	COMMAND_CLASS_ENTRY_CONTROL = 0x6F,
 	COMMAND_CLASS_CONFIGURATION = 0x70,
 	COMMAND_CLASS_NOTIFICATION = 0x71,
 	COMMAND_CLASS_MANUFACTURER_SPECIFIC = 0x72,
@@ -95,10 +95,7 @@ enum
 	COMMAND_CLASS_SECURITY_2 = 0x9F,
 	COMMAND_CLASS_AUTHENTICATION = 0xA1
 };
-// Versions of some system-side command classes
-#define FIRMWARE_UPDATE_MD_VERSION                               5
-#define TRANSPORT_SERVICE_VERSION                                2
-#define MANUFACTURER_SPECIFIC_VERSION                            2
+
 enum{
 	SYSREPORT_MAP_BATTERY_BIT = 0x01,
 	SYSREPORT_MAP_WAKEUP_BIT = 0x02
@@ -155,8 +152,8 @@ typedef struct				ZUNOCommandPacketReport_s
 
 uint8_t zuno_findChannelByZWChannelIndexChannel(byte zw_ch);
 void zunoSetupBitMask(byte * arr, byte b, byte max_sz);
-byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count);
-//byte getMaxChannelTypes();
+void fillOutgoingReportPacketUnsolicited(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options);
+void fillOutgoingReportPacketUnsolicitedLifeLine(ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options);
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch);
 bool fillOutgoingRawPacket(ZUNOCommandPacket_t * p, uint8_t * d, uint8_t ch, uint8_t flags, node_id_t dst);
 void zunoSendReportSet(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options, const void *add);
@@ -464,15 +461,6 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define QUEUE_CHANNEL_CONTROL 0x01
 #define QUEUE_CHANNEL_LLREPORT 0x02
 
-typedef struct ZUnoDevTypeDef_s{
-	byte gen_type;
-	byte spec_type;
-	word icon;
-	word app_icon; 
-}ZUnoDevTypeDef_t;
-
-extern  const ZUNOChannelCCS_t ZUNO_CC_TYPES[];
-extern  const ZUnoDevTypeDef_t ZUNO_DEV_TYPES[];
 extern ZUNOZWConfiguation_t g_zuno_zw_cfg;
 uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz);
 uint8_t *zuno_AddCommonClassMinimal(uint8_t *b);
@@ -482,5 +470,16 @@ uint8_t dynamicCCVersion(uint8_t cc);
 #define MAX(A, B) (A>B ? A : B)
 uint8_t zunoZMEFrequency2Region(uint8_t freqi);
 uint8_t zunoRegion2ZMEFrequency(uint8_t freqi);
-byte getMaxChannelTypes();
+
+void zunoSendZWPacket(ZUNOCommandPacket_t * pkg);
+void zunoSendZWPacketAdd(ZUNOCommandPacketReport_t *frame);
+
+typedef struct _ZwAssociationGroupCommand_s
+{
+	uint8_t cmdClass;
+	uint8_t cmd;
+} _ZwAssociationGroupCommand_t;
+
+void zunoSendReport(byte ch);
+
 #endif // ZW_COMMAND_CLASS_SUPPORT

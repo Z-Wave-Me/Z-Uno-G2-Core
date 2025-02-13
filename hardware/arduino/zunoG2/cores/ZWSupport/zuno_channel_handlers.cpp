@@ -305,18 +305,18 @@ int32_t zuno_callGetter(byte val_type, byte ch, void * handler){
 	if(handler == 0)
 		return 0;
 	switch(val_type){
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((zuno_multigetter1ub_t*)handler)(ch);
 			return ((zuno_singlegetter1ub_t*)handler)();
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((zuno_multigetter2ub_t*)handler)(ch);
 			return ((zuno_singlegetter2ub_t*)handler)();
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((zuno_multigetter4ub_t*)handler)(ch);
 			return ((zuno_singlegetter4ub_t*)handler)();
@@ -327,8 +327,8 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 	if(handler == 0)
 		return;
 	switch(val_type){
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB: {
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB: {
 				uint8_t v =  value & 0xFF;
 				if(ch != UNKNOWN_CHANNEL)
 				{
@@ -338,8 +338,8 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 				((zuno_singlesetter1ub_t*)handler)(v);
 			}
 			break;
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:{
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:{
 				uint16_t v =  value & 0xFFFF;
 				if(ch != UNKNOWN_CHANNEL){
 					((zuno_multisetter2ub_t*)handler)(ch, v);
@@ -348,8 +348,8 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 				((zuno_singlesetter2ub_t*)handler)(v);
 			}
 			break;
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 			{
 				((zuno_multisetter4ub_t*)handler)(ch, value);
@@ -361,18 +361,18 @@ void zuno_callSetter(byte val_type, byte ch, void * handler, int32_t value) {
 }
 int zuno_getMappedValue(byte val_type, byte ch, void * handler){
 	switch(val_type){
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((uint8_t*)handler)[ch];
 			return *((uint8_t*)handler);
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((uint16_t*)handler)[ch];
 			return *((uint16_t*)handler);
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return ((uint32_t*)handler)[ch];
 			return *((uint32_t*)handler);
@@ -382,8 +382,8 @@ int zuno_getMappedValue(byte val_type, byte ch, void * handler){
 
 void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 	switch(val_type){
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB:
 			if(ch != UNKNOWN_CHANNEL)
 			{
 				((uint8_t*)handler)[ch] = value & 0xFF;
@@ -391,8 +391,8 @@ void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 			}
 			*((uint8_t*)handler) = value & 0xFF;
 			break;
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:
 			if(ch != UNKNOWN_CHANNEL)
 			{
 				((uint16_t*)handler)[ch] = value & 0xFFFF;
@@ -400,8 +400,8 @@ void zuno_setMappedValue(byte val_type, byte ch, void * handler, int32_t value){
 			}
 			*((uint16_t*)handler) = value & 0xFFFF;
 			break;
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 			{
 				((uint32_t*)handler)[ch] = value;
@@ -513,22 +513,22 @@ static uint32_t _callGetter2P(byte val_type, byte ch, void * handler, uint32_t v
 	if (handler == 0)
 		return (0);
 	switch(val_type) {
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return (((zuno_multigetter1ub_2p_t *)handler)(ch, value));
 			else
 				return (((zuno_singlegetter1ub_2p_t *)handler)(value));
 			break;
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return (((zuno_multigetter2ub_2p_t *)handler)(ch, value));
 			else
 				return (((zuno_singlegetter2ub_2p_t *)handler)(value));
 			break;
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 				return (((zuno_multigetter4ub_2p_t *)handler)(ch, value));
 			else
@@ -559,9 +559,9 @@ uint32_t zuno_universalGetter2P(byte zuno_ch, uint32_t value) {
 		case CHANNEL_HANDLER_MULTI_GETTERSETTER_2P:
 			return _callGetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->getter, value);
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
-			return _callGetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->getter2, value);
+			return _callGetter2P(HANDLER_ARGTYPE_4UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->getter2, value);
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
-			return _callGetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->getter2, value);
+			return _callGetter2P(HANDLER_ARGTYPE_4UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->getter2, value);
 	}
 	return 0;
 }
@@ -571,8 +571,8 @@ static void _callSetter2P(byte val_type, byte ch, void *handler, uint32_t value,
 		return ;
 	
 	switch(val_type) {
-		case HADLER_ARGTYPE_1UB:
-		case HADLER_ARGTYPE_1SB:
+		case HANDLER_ARGTYPE_1UB:
+		case HANDLER_ARGTYPE_1SB:
 			value = value & 0xFF;
 			value_add = value_add & 0xFF;
 			if(ch != UNKNOWN_CHANNEL)
@@ -580,8 +580,8 @@ static void _callSetter2P(byte val_type, byte ch, void *handler, uint32_t value,
 			else
 				((zuno_singlesetter1ub_2p_t *)handler)(value, value_add);
 			break;
-		case HADLER_ARGTYPE_2UB:
-		case HADLER_ARGTYPE_2SB:
+		case HANDLER_ARGTYPE_2UB:
+		case HANDLER_ARGTYPE_2SB:
 			value = value & 0xFFFF;
 			value_add = value_add & 0xFFFF;
 			if(ch != UNKNOWN_CHANNEL)
@@ -589,8 +589,8 @@ static void _callSetter2P(byte val_type, byte ch, void *handler, uint32_t value,
 			else
 				((zuno_singlesetter2ub_2p_t *)handler)(value, value_add);
 			break;
-		case HADLER_ARGTYPE_4UB:
-		case HADLER_ARGTYPE_4SB:
+		case HANDLER_ARGTYPE_4UB:
+		case HANDLER_ARGTYPE_4SB:
 			if(ch != UNKNOWN_CHANNEL)
 				((zuno_multisetter4ub_2p_t *)handler)(ch, value, value_add);
 			else
@@ -621,10 +621,10 @@ void zuno_universalSetter2P(byte zuno_ch, uint32_t value, uint32_t value_add) {
 			_callSetter2P(val_type, zuno_ch - ((zuno_handler_multi_gettersetter_t *)lp)->offset, ((zuno_handler_multi_gettersetter_t *)lp)->setter, value, value_add);
 			break;
 		case CHANNEL_HANDLER_SINGLE_THERMOSTAT:
-			_callSetter2P(HADLER_ARGTYPE_2UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->setter2, value, value_add);
+			_callSetter2P(HANDLER_ARGTYPE_4UB, UNKNOWN_CHANNEL, ((zuno_handler_single_dgs_t *)lp)->setter2, value, value_add);
 			break;
 		case CHANNEL_HANDLER_MULTI_THERMOSTAT:
-			_callSetter2P(HADLER_ARGTYPE_2UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->setter2, value, value_add);
+			_callSetter2P(HANDLER_ARGTYPE_4UB, zuno_ch - ((zuno_handler_multi_dgs_t *)lp)->offset, ((zuno_handler_multi_dgs_t *)lp)->setter2, value, value_add);
 			break;
 	}
 }

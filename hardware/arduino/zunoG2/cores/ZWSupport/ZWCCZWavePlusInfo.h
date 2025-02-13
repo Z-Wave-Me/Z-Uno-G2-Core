@@ -3,8 +3,9 @@
 
 #include "ZWSupport.h"
 
+#define ZWAVEPLUS_INFO_VERSION_RELEASED 0x02
+
 /* Zwaveplus Info command class commands */
-#define ZWAVEPLUS_INFO_VERSION                                                           0x02
 #define ZWAVEPLUS_INFO_GET                                                               0x01
 #define ZWAVEPLUS_INFO_REPORT                                                            0x02
 

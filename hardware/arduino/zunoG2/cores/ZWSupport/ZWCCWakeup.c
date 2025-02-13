@@ -61,7 +61,7 @@ void zuno_sendWUP_NotificationReport() {
 	frame.info.packet.cmd[0x0] = COMMAND_CLASS_WAKE_UP;
 	frame.info.packet.cmd[0x1] = WAKE_UP_NOTIFICATION;
 	frame.info.packet.len = 2;
-	zunoSendZWPackageAdd(&frame);
+	zunoSendZWPacketAdd(&frame);
 	_zunoSleepOnWUPStart();
 }
 
@@ -159,7 +159,7 @@ static int _up_interval_set(const ZwZwaveWakeUpIntervalSetFrame_t *cmd) {
 
 	interval = (cmd->v3.seconds1 << 0x10) | (cmd->v3.seconds2 << 0x8) | (cmd->v3.seconds3);
 	if (interval > WAKEUP_INTERVAL_MAX || interval < WAKEUP_INTERVAL_MIN)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	save.wakeUpIntervalStepSeconds = interval;
 	save.nodeId = cmd->v3.nodeid;
 	zunoEEPROMWrite(EEPROM_WAKEUP_ADDR, EEPROM_WAKEUP_SIZE, (byte*)&save);

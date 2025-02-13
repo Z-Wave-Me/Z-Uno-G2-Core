@@ -214,7 +214,7 @@ static int _configuration_set(size_t channel, const ZwDoorLockConfigurationSetFr
 	switch (len) {
 		case sizeof(cmd->v4):
 			if (cmd->v4.autoRelockTime2 != 0x0 || cmd->v4.autoRelockTime1 != 0x0 || cmd->v4.properties2 != 0x0 || cmd->v4.holdAndReleaseTime1 != 0x0 || cmd->v4.holdAndReleaseTime2 != 0x0 )
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			break ;
 		default:
 			break ;
@@ -225,13 +225,13 @@ static int _configuration_set(size_t channel, const ZwDoorLockConfigurationSetFr
 	switch (operationType) {
 		case DOOR_LOCK_CONFIGURATION_REPORT_CONSTANT_OPERATION_V4:
 			if (lockTimeoutMinutes != 0xFE || lockTimeoutSeconds != 0xFE)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			break ;
 		case DOOR_LOCK_CONFIGURATION_REPORT_TIMED_OPERATION_V4:
 			if (lockTimeoutMinutes == 0xFE && lockTimeoutSeconds == 0xFE)
 				break ;
 			if (lockTimeoutMinutes > 0xFD || lockTimeoutSeconds > 0x3B)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			break ;
 	}
 	properties1 = cmd->v3.properties1;

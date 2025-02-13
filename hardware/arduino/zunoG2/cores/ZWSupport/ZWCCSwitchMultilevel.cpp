@@ -88,7 +88,7 @@ static int _start_level(uint8_t channel, const ZUNOCommandCmd_t *cmd, ZUNOComman
 	__zuno_BasicUniversalTimerStop(channel);
 	step = step / (ZUNO_TIMER_SWITCH_MAX_VALUE);
 	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	parameter->channel = channel;
 	parameter->type = zunoTimerTreadDimingTypeSwitchMultilevel;
 	parameter->step = step;
@@ -128,7 +128,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 	zunoTimerTreadDiming_t			*parameter;
 
 	if ((value = cmd->v4.value) > ZUNO_TIMER_SWITCH_MAX_VALUE && value < 0xFF)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	if (value == 0xFF) {
 		if ((val_basic = zunoBasicSaveGet(channel)) != 0)
 			value = val_basic;
@@ -148,7 +148,7 @@ static int _set(SwitchMultilevelSetFrame_t *cmd, uint8_t len, uint8_t channel, Z
 				break ;
 			}
 			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v4.dimmingDuration) == true) {
 				parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
 				zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);

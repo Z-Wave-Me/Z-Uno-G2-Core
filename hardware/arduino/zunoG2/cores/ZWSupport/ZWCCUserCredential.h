@@ -3,38 +3,10 @@
 
 #include "ZWSupport.h"
 
-#define USER_CREDENTIAL_VERSION														0x01
-#define USER_CREDENTIAL_CAPABILITIES_USER_GET										0x01
-#define USER_CREDENTIAL_CAPABILITIES_USER_REPORT									0x02
-#define USER_CREDENTIAL_CAPABILITIES_CREDENTIAL_GET									0x03
-#define USER_CREDENTIAL_CAPABILITIES_CREDENTIAL_REPORT								0x04
-#define USER_CREDENTIAL_USER_SET													0x05
-#define USER_CREDENTIAL_USER_GET													0x06
-#define USER_CREDENTIAL_USER_REPORT													0x07
-#define USER_CREDENTIAL_USER_SET_ERROR_REPORT										0x08
-#define USER_CREDENTIAL_USER_NOTIFICATION_REPORT									0x09
-#define USER_CREDENTIAL_CREDENTIAL_SET												0x0A
-#define USER_CREDENTIAL_CREDENTIAL_GET												0x0B
-#define USER_CREDENTIAL_CREDENTIAL_REPORT											0x0C
-#define USER_CREDENTIAL_CREDENTIAL_SET_ERROR_REPORT									0x0D
-#define USER_CREDENTIAL_CREDENTIAL_NOTIFICATION_REPORT								0x0E
-#define USER_CREDENTIAL_LEARN_START													0x0F
-#define USER_CREDENTIAL_LEARN_CANCEL												0x10
-#define USER_CREDENTIAL_LEARN_REPORT												0x11
-#define USER_CREDENTIAL_ASSOCIATION_SET												0x12
-#define USER_CREDENTIAL_ASSOCIATION_REPORT											0x13
-#define USER_CREDENTIAL_ALL_USERS_CHECKSUM_GET										0x14
-#define USER_CREDENTIAL_ALL_USERS_CHECKSUM_REPORT									0x15
-#define USER_CREDENTIAL_USER_CHECKSUM_GET											0x16
-#define USER_CREDENTIAL_USER_CHECKSUM_REPORT										0x17
-#define USER_CREDENTIAL_TYPE_CHECKSUM_GET											0x18
-#define USER_CREDENTIAL_TYPE_CHECKSUM_REPORT										0x19
+#define USER_CREDENTIAL_VERSION_RELEASED 0x01
 
-
-#define USER_CREDENTIAL_RULE_SINGLE													0x1
-#define USER_CREDENTIAL_RULE_DUAL													0x2
-#define USER_CREDENTIAL_RULE_TRIPLE													0x3
-
-int zuno_CCUserCredentialHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report);
+int zuno_CCUserCredentialHandler(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options);
+bool zuno_CCUserCredentialIsBlockMultiBroadcast(size_t cmd);
+ssize_t zuno_CCUserCredentialAssociationGroupCommand(_ZwAssociationGroupCommand_t *gpr_info, size_t gpr_info_max);
 
 #endif// ZWCC_USER_CREDENTIAL_H

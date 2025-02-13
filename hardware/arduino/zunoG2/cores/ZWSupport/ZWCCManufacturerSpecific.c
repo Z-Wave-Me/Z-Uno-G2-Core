@@ -26,7 +26,7 @@ int zuno_CCManufacturerSpecificHandler(const ZUNOCommandCmd_t *cmd,
             frame_report->info.packet.cmd[6] = (uint8_t)(g_zuno_sys->zw_protocol_data->product_id  >> 8);
             frame_report->info.packet.cmd[7] = (uint8_t)(g_zuno_sys->zw_protocol_data->product_id   &  0xFF);
             frame_report->info.packet.len = 8; 
-            zunoSendZWPackageAdd(frame_report);
+            zunoSendZWPacketAdd(frame_report);
             return ZUNO_COMMAND_PROCESSED;
         case DEVICE_SPECIFIC_GET:
             {
@@ -36,7 +36,7 @@ int zuno_CCManufacturerSpecificHandler(const ZUNOCommandCmd_t *cmd,
                 memcpy(frame_report->info.packet.cmd+4, &myid, DEVICE_UID_LEN);
                 frame_report->info.packet.len = 4 + DEVICE_UID_LEN;  
             }
-            zunoSendZWPackageAdd(frame_report);
+            zunoSendZWPacketAdd(frame_report);
             return ZUNO_COMMAND_PROCESSED;
         default:
 			return ZUNO_UNKNOWN_CMD;

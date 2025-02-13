@@ -3,112 +3,244 @@
 
 #ifdef WITH_CC_USER_CREDENTIAL
 
-#define USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT								0x20
+#define USER_CREDENTIAL_ADDR ((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential)
+#define USER_CREDENTIAL_SIZE (sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential))
 
-#define USER_CREDENTIAL_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential)
-#define USER_CREDENTIAL_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.info.user_credential))
-
-#ifndef USER_CREDENTIAL_NUMBER
-#define USER_CREDENTIAL_NUMBER											6
+#if !defined(USER_CREDENTIAL_USERS_COUNT)
+#error "The number of users is not specified - to do this, define USER_CREDENTIALS_USERS_COUNT"
 #endif
 
-#ifndef USER_CREDENTIAL_NAME_MAX_LENGHT
-#define USER_CREDENTIAL_NAME_MAX_LENGHT									12
+#if !defined(USER_CREDENTIAL_USERS_NAME_MAX_LENGHT)
+#error "The length of the user name is not specified. For this, define USER_CREDENTIALS_USERS_COUNT"
 #endif
 
-#if !defined(USER_CREDENTIAL_NUMBER_PIN_CODE) && !defined(USER_CREDENTIAL_NUMBER_PASSWORD) && !defined(USER_CREDENTIAL_NUMBER_RFID_CODE)
-#define USER_CREDENTIAL_NUMBER_PIN_CODE									3
-#define USER_CREDENTIAL_NUMBER_PIN_CODE_MIN_LENGHT						4
-#define USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT						10
+#if !defined(USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT) && !defined(USER_CREDENTIAL_PASSWORD_SLOTS_COUNT) && !defined(USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT) && !defined(USER_CREDENTIAL_BLE_SLOTS_COUNT) && !defined(USER_CREDENTIAL_NFC_SLOTS_COUNT)\
+&& !defined(USER_CREDENTIAL_UWB_SLOTS_COUNT) && !defined(USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT) && !defined(USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT) && !defined(USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT)\
+&& !defined(USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT) && !defined(USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT)
+#error "No usercredential type is defined. To do this, specify only these define: USER_CREDENTIALS_PIN_CODE_SLOTS_COUNT, USER_CREDENTIAL_PASSWORD_SLOTS_COUNT, USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT, USER_CREDENTIAL_BLE_SLOTS_COUNT, USER_CREDENTIAL_NFC_SLOTS_COUNT, USER_CREDENTIAL_UWB_SLOTS_COUNT,\
+USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT, USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT, USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT, USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT, USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT"
 #endif
 
-typedef struct				UserCredentialSaveUserIdInfoSet_s
-{
-	uint8_t					UserType;
-	uint8_t					profile2;
-	uint8_t					CredentialRule;
-	uint8_t					ExpiringTimeoutMinutes[0x2];/*MSB - LSB*/
-	uint8_t					profile3;
-	uint8_t					UserNameLength;
-	uint8_t					UserName[USER_CREDENTIAL_NAME_MAX_LENGHT];
-}							UserCredentialSaveUserIdInfoSet_t;
+#if defined(USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_PIN_CODE_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_PIN_CODE_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_PIN_CODE_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT is not defined, For this, define USER_CREDENTIAL_PIN_CODE_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_PASSWORD_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_PASSWORD_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_PASSWORD_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_PASSWORD_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_PASSWORD_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_PASSWORD_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_PASSWORD_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_RFID_CODE_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_RFID_CODE_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_RFID_CODE_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_RFID_CODE_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_BLE_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_BLE_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_BLE_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_BLE_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_BLE_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_BLE_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_BLE_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_NFC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_NFC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_NFC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_NFC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_NFC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_NFC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_NFC_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_UWB_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_UWB_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_UWB_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_UWB_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_UWB_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_UWB_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_UWB_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_EYE_BIOMETRIC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_EYE_BIOMETRIC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_EYE_BIOMETRIC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_EYE_BIOMETRIC_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_FACE_BIOMETRIC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_FACE_BIOMETRIC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_FACE_BIOMETRIC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_FACE_BIOMETRIC_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_FINGER_BIOMETRIC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_FINGER_BIOMETRIC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_FINGER_BIOMETRIC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_FINGER_BIOMETRIC_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_HAND_BIOMETRIC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_HAND_BIOMETRIC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_HAND_BIOMETRIC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_HAND_BIOMETRIC_MAX_LENGHT"
+	#endif
+#endif
+#if defined(USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT)
+	#if !defined(USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_MIN_LENGHT)
+	#error "The minimum data length for USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_MIN_LENGHT"
+	#endif
+	#if !defined(USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_MAX_LENGHT)
+	#error "The maximum data length for USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT is not defined. To do this, define USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_MAX_LENGHT"
+	#endif
+#endif
 
-typedef struct				UserCredentialSaveUserId_s
-{
-	uint8_t					UserModifierType;
-	uint8_t					UserModifierNodeID[0x2];/*MSB - LSB*/
-	UserCredentialSaveUserIdInfoSet_t	set;
-}							UserCredentialSaveUserId_t;
-
-#if USER_CREDENTIAL_NUMBER >= USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
-#define USER_CREDENTIAL_NUMBER_MASK_LENGHT						USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
+#if USER_CREDENTIAL_USERS_COUNT >= 0x100
+typedef uint16_t user_credential_user_id_type;
 #else
-#define USER_CREDENTIAL_NUMBER_MASK_LENGHT						USER_CREDENTIAL_NUMBER
+typedef uint8_t user_credential_user_id_type;
 #endif
 
-typedef struct				UserCredentialSaveMask_s
+typedef struct UserCredentialSaveUserIdInfoExpiring_s
 {
-	uint8_t					crc16[0x2];//lsb - Msb
-	uint8_t					crc16_mask[0x2 * USER_CREDENTIAL_NUMBER_MASK_LENGHT];
-}							UserCredentialSaveMask_t;
+	uint8_t ExpiringTimeoutMinutes[0x2];/*MSB - LSB*/
+} UserCredentialSaveUserIdInfoExpiring_t;
+
+typedef struct UserCredentialSaveUserIdInfoPart1_s
+{
+	uint8_t UserType;
+	uint8_t profile2;
+	uint8_t CredentialRule;
+} UserCredentialSaveUserIdInfoPart1_t;
+
+typedef struct UserCredentialSaveUserIdInfoPart2_s
+{
+	uint8_t profile3;
+	uint8_t UserNameLength;
+	uint8_t UserName[USER_CREDENTIAL_USERS_NAME_MAX_LENGHT];
+} UserCredentialSaveUserIdInfoPart2_t;
+
+typedef struct UserCredentialSaveUserIdInfoCrc_s
+{
+	UserCredentialSaveUserIdInfoPart1_t part1;
+	UserCredentialSaveUserIdInfoPart2_t part2;
+} UserCredentialSaveUserIdInfoCrc_t;
+
+typedef struct UserCredentialSaveUserIdInfoModify_s
+{
+	uint8_t UserModifierType;
+	uint8_t UserModifierNodeID[0x2];/*MSB - LSB*/
+} UserCredentialSaveUserIdInfoModify_t;
+
+typedef struct UserCredentialSaveUserIdCmp_s
+{
+	UserCredentialSaveUserIdInfoExpiring_t expiring;
+	UserCredentialSaveUserIdInfoCrc_t crc;
+} UserCredentialSaveUserIdCmp_t;
+
+typedef struct UserCredentialSaveUserId_s
+{
+	UserCredentialSaveUserIdInfoModify_t modify;
+	UserCredentialSaveUserIdCmp_t cmp;
+} UserCredentialSaveUserId_t;
 
 
-typedef struct				UserCredentialSaveCommonUser_s
+typedef struct UserCredentialSaveUserIdHeader_s
 {
-	#if USER_CODE_NUMBER == USER_CODE_NUMBER_MASK_LENGHT
-	UserCredentialSaveMask_t		user_id_mask[0x1];
-	UserCredentialSaveMask_t		user_id_mask_local[0x1];
-	#else
-	UserCredentialSaveMask_t		user_id_mask[((((USER_CREDENTIAL_NUMBER + ((USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8)))];
-	UserCredentialSaveMask_t		user_id_mask_local[((((USER_CREDENTIAL_NUMBER + ((USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_MASK_LENGHT * 0x8)))];
+	uint8_t crc16[0x2];//LSB - MSB
+} UserCredentialSaveUserIdHeader_t;
+
+typedef struct UserCredentialSaveUserIdList_s
+{
+	UserCredentialSaveUserIdHeader_t header;
+	UserCredentialSaveUserId_t info;
+} UserCredentialSaveUserIdList_t;
+
+typedef struct UserCredentialSaveMask_s
+{
+	uint8_t crc16[0x2];//LSB - MSB
+	uint8_t crc16_mask[];
+} UserCredentialSaveMask_t;
+
+typedef struct UserCredentialSaveCredentialHeader_s
+{
+	uint8_t crc16[0x2];//LSB - MSB
+	uint8_t crc8_data;
+	uint8_t user_id[sizeof(user_credential_user_id_type)];
+} UserCredentialSaveCredentialHeader_t;
+
+typedef struct UserCredentialSaveCredentialInfo_s
+{
+	uint8_t CredentialModifierType;
+	uint8_t CredentialModifierNodeID[0x2];/*MSB - LSB*/
+	uint8_t CredentialLength;
+	uint8_t CredentialData[];
+} UserCredentialSaveCredentialInfo_t;
+
+typedef struct UserCredentialSaveCredentialList_s
+{
+	UserCredentialSaveCredentialHeader_t header;
+	UserCredentialSaveCredentialInfo_t info;
+} UserCredentialSaveCredentialList_t;
+
+typedef struct UserCredentialSaveCommonCredential_s
+{
+	uint8_t crc16_check[0x2];//LSB - MSB
+	UserCredentialSaveUserIdList_t user[USER_CREDENTIAL_USERS_COUNT];
+	#if defined(USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT)
+	uint8_t pin_code[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_PIN_CODE_MAX_LENGHT) * USER_CREDENTIAL_PIN_CODE_SLOTS_COUNT))];
 	#endif
-	UserCredentialSaveUserId_t		user_id[USER_CREDENTIAL_NUMBER];
-}							UserCredentialSaveCommonUser_t;
-
-#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
-
-typedef struct				UserCredentialSaveCredential_s
-{
-	uint8_t					CredentialModifierType;
-	uint8_t					CredentialModifierNodeID[0x2];/*MSB - LSB*/
-	uint8_t					CredentialLength;
-	uint8_t					CredentialData[];
-}							UserCredentialSaveCredential_t;
-
-#if USER_CREDENTIAL_NUMBER_PIN_CODE >= USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
-#define USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT						USER_CREDENTIAL_NUMBER_DEFAULT_MASK_LENGHT
-#else
-#define USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT						USER_CREDENTIAL_NUMBER_PIN_CODE
-#endif
-
-
-typedef struct				UserCredentialSaveMaskPinCode_s
-{
-	uint8_t					crc16[0x2];//lsb - Msb
-	uint8_t					crc16_mask[0x2 * USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT];
-}							UserCredentialSaveMaskPinCode_t;
-
-
-typedef struct				UserCredentialSaveCommonPinCode_s
-{
-	#if USER_CREDENTIAL_NUMBER_PIN_CODE == USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT
-	UserCredentialSaveMaskPinCode_t		user_id_mask[0x1];
-	UserCredentialSaveMaskPinCode_t		user_id_mask_local[0x1];
-	#else
-	UserCredentialSaveMaskPinCode_t		user_id_mask[((((USER_CREDENTIAL_NUMBER_PIN_CODE + ((USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8)))];
-	UserCredentialSaveMaskPinCode_t		user_id_mask_local[((((USER_CREDENTIAL_NUMBER_PIN_CODE + ((USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8) - 0x1)) & (0x0 - (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8))) / (USER_CREDENTIAL_NUMBER_PIN_CODE_MASK_LENGHT * 0x8)))];
+	#if defined(USER_CREDENTIAL_PASSWORD_SLOTS_COUNT)
+	uint8_t password[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_PASSWORD_MAX_LENGHT) * USER_CREDENTIAL_PASSWORD_SLOTS_COUNT))];
 	#endif
-	uint8_t								info[(sizeof(UserCredentialSaveCredential_t) + USER_CREDENTIAL_NUMBER_PIN_CODE_MAX_LENGHT) * USER_CREDENTIAL_NUMBER_PIN_CODE];
-}							UserCredentialSaveCommonPinCode_t;
-#endif
-
-typedef struct				UserCredentialSaveCommon_s
-{
-	UserCredentialSaveCommonUser_t			user;
-	#if defined(USER_CREDENTIAL_NUMBER_PIN_CODE)
-	UserCredentialSaveCommonPinCode_t		_PIN_CODE[USER_CREDENTIAL_NUMBER];
+	#if defined(USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT)
+	uint8_t rfid_code[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_RFID_CODE_MAX_LENGHT) * USER_CREDENTIAL_RFID_CODE_SLOTS_COUNT))];
 	#endif
-}							UserCredentialSaveCommon_t;
+	#if defined(USER_CREDENTIAL_BLE_SLOTS_COUNT)
+	uint8_t ble[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_BLE_MAX_LENGHT) * USER_CREDENTIAL_BLE_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_NFC_SLOTS_COUNT)
+	uint8_t nfc[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_NFC_MAX_LENGHT) * USER_CREDENTIAL_NFC_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_UWB_SLOTS_COUNT)
+	uint8_t uwb[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_UWB_MAX_LENGHT) * USER_CREDENTIAL_UWB_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT)
+	uint8_t eye_biometric[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_EYE_BIOMETRIC_MAX_LENGHT) * USER_CREDENTIAL_EYE_BIOMETRIC_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT)
+	uint8_t face_biometric[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_FACE_BIOMETRIC_MAX_LENGHT) * USER_CREDENTIAL_FACE_BIOMETRIC_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT)
+	uint8_t finger_biometric[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_FINGER_BIOMETRIC_MAX_LENGHT) * USER_CREDENTIAL_FINGER_BIOMETRIC_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT)
+	uint8_t hand_biometric[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_HAND_BIOMETRIC_MAX_LENGHT) * USER_CREDENTIAL_HAND_BIOMETRIC_SLOTS_COUNT))];
+	#endif
+	#if defined(USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT)
+	uint8_t unspecified_biometric[(((sizeof(UserCredentialSaveCredentialList_t) + USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_MAX_LENGHT) * USER_CREDENTIAL_UNSPECIFIED_BIOMETRIC_SLOTS_COUNT))];
+	#endif
+} UserCredentialSaveCommonCredential_t;
+
+typedef struct UserCredentialSaveCommon_s
+{
+	UserCredentialSaveCommonCredential_t credential;
+} UserCredentialSaveCommon_t;
 
 #endif//WITH_CC_USER_CREDENTIAL
 #endif//EEPROM_CONFIG_USER_CREDENTIAL_H

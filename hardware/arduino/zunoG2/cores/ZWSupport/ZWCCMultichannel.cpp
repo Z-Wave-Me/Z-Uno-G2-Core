@@ -1,38 +1,52 @@
-#include "ZWCCMultichannel.h"
-#include "ZWSupport.h"
-#include "ZWCCZWavePlusInfo.h"
 #include <math.h>
+#include "ArduinoTypes.h"
+#include "LLCore.h"
+#include "ZUNO_Definitions.h"
+#include "ZWCCMultichannel.h"
+#include "ZWCCZWavePlusInfo.h"
+#include "ZW_classcmd.h"
 
-typedef struct	MultiChannelAuxData_s
+typedef struct __MultiChannelAuxData_s
 {
-	bool		inited;
-	byte		num_channels;
-}				MultiChannelAuxData_t;
-MultiChannelAuxData_t g_mch_aux_data = {false, 0};
+	bool inited;
+	bool identical;
+	byte num_channels;
+} __MultiChannelAuxData_t;
 
-static void zuno_initMchData() {
+static __MultiChannelAuxData_t __multi_channel_data =
+{
+	.inited = false,
+	.identical = false,
+	.num_channels = 0,
+};
+
+static void __initMchData(void) {
+	bool identical;
 	size_t					num_channels;
 	size_t					ch;
 	size_t					i;
 
-	if(g_mch_aux_data.inited == true)
+	if(__multi_channel_data.inited == true)
 		return;
 	num_channels = 0;
+	identical = true;
 	for(i = 0;i < ZUNO_CFG_CHANNEL_COUNT; i++){
+		if (ZUNO_CFG_CHANNEL(0).type != ZUNO_CFG_CHANNEL(i).type)
+			identical = false;
 		ch = ZUNO_CFG_CHANNEL(i).zw_channel & ~(ZWAVE_CHANNEL_MAPPED_BIT);
 		num_channels = MAX(ch, num_channels);
 	}
-	g_mch_aux_data.inited = true;
-	g_mch_aux_data.num_channels = num_channels;
+	__multi_channel_data.inited = true;
+	__multi_channel_data.identical = identical;
+	__multi_channel_data.num_channels = num_channels;
 }
 
-
-
-static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _capability_get(ZW_MULTI_CHANNEL_CAPABILITY_GET_V4_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {
+	const _ZUNOChannelCCS_t *cc_types;
+	ZW_MULTI_CHANNEL_CAPABILITY_REPORT_1BYTE_V4_FRAME *report;
+	size_t i;
 	uint8_t										channel;
 	size_t										endpoint;
-	size_t										type_index;
-	ZwMultiChannelCapabilityReportFrame_t		*report;
 	uint8_t										*commandClass;
 	ZwZwavePlusInfoType_t						info_type;
 
@@ -40,14 +54,14 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandP
 	// Get the info about selected endpoint
 	if((channel = zuno_findChannelByZWChannelIndexChannel(endpoint)) == UNKNOWN_CHANNEL)// According to z-wave specification we must to ignore unsupported end points numbers - see. CC:0060.03.09.11.004 CC:0060.03.09.11.005
 		return (ZUNO_COMMAND_BLOCKED);
-	report = (ZwMultiChannelCapabilityReportFrame_t *)frame_report->info.packet.cmd;
+	report = (ZW_MULTI_CHANNEL_CAPABILITY_REPORT_1BYTE_V4_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->cmd = MULTI_CHANNEL_CAPABILITY_REPORT; set in - fillOutgoingPacket
 	report->properties1 = endpoint; // The index of selected endpoint
 	__zuno_CCZWavePlusGetType(channel, &info_type);
 	report->genericDeviceClass = info_type.genericDeviceClass;
 	report->specificDeviceClass = info_type.specificDeviceClass;
-	commandClass = &report->commandClass[0];
+	commandClass = &report->commandClass1;
 	commandClass = zuno_AddCommonClassMinimal(commandClass);
 	#ifdef MODERN_MULTICHANNEL_S2
 	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE){
@@ -69,41 +83,47 @@ static int _capability_get(ZwMultiChannelCapabilityGetFrame_t *cmd, ZUNOCommandP
 	if(g_zuno_sys->enclusion_state != INCLUSION_STATE_INCLUDED_SECURE) 
 	#endif
 	{
-		type_index = zuno_findChannelType(ZUNO_CFG_CHANNEL(channel).type, (ZUNOChannelCCS_t*)ZUNO_CC_TYPES, getMaxChannelTypes());
-		commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[0].cc;
-		if( (ZUNO_CC_TYPES[type_index].num_ccs > 1) && (ZUNO_CC_TYPES[type_index].ccs[1].cc != COMMAND_CLASS_BASIC))
-			commandClass++[0] = ZUNO_CC_TYPES[type_index].ccs[1].cc;
+		if ((cc_types = _zunoGetCCTypes((_ZunoChannelNumber_t)ZUNO_CFG_CHANNEL(channel).type)) != NULL)
+		{
+			i = 0;
+			while (i < cc_types->num_ccs) {
+				commandClass++[0] = cc_types->ccs[i].cc;
+				i++;
+			}
+		}
 	}
-	frame_report->info.packet.len = sizeof(ZwMultiChannelCapabilityReportFrame_t) + (commandClass - &report->commandClass[0]);
+	frame_report->info.packet.len = (sizeof(report[0]) - sizeof(report->commandClass1)) + (commandClass - &report->commandClass1);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 static int _point_get(ZUNOCommandPacketReport_t *frame_report) {
-	ZwMultiChannelEndPointReportFrame_t			*report;
+	ZW_MULTI_CHANNEL_END_POINT_REPORT_V4_FRAME			*report;
 
 	// Request of endpoint's count
-	report = (ZwMultiChannelEndPointReportFrame_t *)frame_report->info.packet.cmd;
+	report = (ZW_MULTI_CHANNEL_END_POINT_REPORT_V4_FRAME *)frame_report->info.packet.cmd;
 	// report->v4.cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->v4.cmd = MULTI_CHANNEL_END_POINT_REPORT; set in - fillOutgoingPacket
-	report->v4.properties1 = 0; // No dynamic/identical endpoints
-	report->v4.properties2 = g_mch_aux_data.num_channels;// Number of endpoints ZUno has
-	report->v4.properties3 = 0;// No aggregated end points
-	frame_report->info.packet.len = sizeof(report->v4);
+	report->properties1 = 0; // No dynamic endpoints
+	if (__multi_channel_data.identical == true)
+		report->properties1 = report->properties1 | MULTI_CHANNEL_END_POINT_REPORT_PROPERTIES1_IDENTICAL_BIT_MASK_V4;
+	report->properties2 = __multi_channel_data.num_channels;// Number of endpoints ZUno has
+	report->properties3 = 0;// No aggregated end points
+	frame_report->info.packet.len = sizeof(report[0]);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
-static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
+static int _find(ZW_MULTI_CHANNEL_END_POINT_FIND_V4_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {
+	ZW_MULTI_CHANNEL_END_POINT_FIND_REPORT_1BYTE_V4_FRAME *report;
+	VG_MULTI_CHANNEL_END_POINT_FIND_REPORT_V4_VG *end_point;
 	ZwZwavePlusInfoType_t						info_type;
-	ZwMultiChannelEndPointFindReportFrame_t		*report;
 	size_t										genericDeviceClass;
 	size_t										specificDeviceClass;
-	uint8_t										*end_point;
 	size_t										i;
 	size_t										max;
 
 	genericDeviceClass = cmd->genericDeviceClass;
 	specificDeviceClass = cmd->specificDeviceClass;
-	report = (ZwMultiChannelEndPointFindReportFrame_t *)frame_report->info.packet.cmd;
+	report = (ZW_MULTI_CHANNEL_END_POINT_FIND_REPORT_1BYTE_V4_FRAME *)frame_report->info.packet.cmd;
 	// report->cmdClass = COMMAND_CLASS_MULTI_CHANNEL; set in - fillOutgoingPacket
 	// report->cmd = MULTI_CHANNEL_END_POINT_FIND_REPORT; set in - fillOutgoingPacket
 	report->reportsToFollow = 0;
@@ -111,16 +131,16 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport
 	report->specificDeviceClass = specificDeviceClass;
 	i = 1;
 	max = ZUNO_CFG_CHANNEL_COUNT;
-	end_point = &report->variantgroup[0];
+	end_point = &report->variantgroup1;
 	if (genericDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {
 		while (i <= max)
-			end_point++[0] = i++;
+			end_point++[0].properties1 = i++;
 	}
 	else if (specificDeviceClass == GENERIC_TYPE_NON_INTEROPERABLE) {
 		while (i <= max) {
 			__zuno_CCZWavePlusGetType(i - 1, &info_type);
 			if (info_type.genericDeviceClass == genericDeviceClass)
-				end_point++[0] = i;
+				end_point++[0].properties1 = i;
 			i++;
 		}
 	}
@@ -128,32 +148,32 @@ static int _find(ZwMultiChannelEndPointFindFrame_t *cmd, ZUNOCommandPacketReport
 		while (i <= max) {
 			__zuno_CCZWavePlusGetType(i - 1, &info_type);
 			if (info_type.genericDeviceClass == genericDeviceClass && info_type.specificDeviceClass == specificDeviceClass)
-				end_point++[0] = i;
+				end_point++[0].properties1 = i;
 			i++;
 		}
 	}
-	if (end_point == &report->variantgroup[0])
-		end_point++[0] = 0x0;
-	frame_report->info.packet.len = sizeof(ZwMultiChannelEndPointFindReportFrame_t) + (end_point - &report->variantgroup[0]);
+	if (end_point == &report->variantgroup1)
+		end_point++[0].properties1 = 0x0;
+	frame_report->info.packet.len = (sizeof(report[0]) - sizeof(report->variantgroup1)) + (end_point - &report->variantgroup1);
 	return (ZUNO_COMMAND_ANSWERED);
 }
 
 int zuno_CCMultichannel(ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_report) {
 	int									rs;
 
-	zuno_initMchData();
+	__initMchData();
 	// We have only one channel => there is no need to expose multichannel
-	if((!g_mch_aux_data.num_channels)  && 
-		(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP))
+	if((!__multi_channel_data.num_channels)  && 
+		(ZW_CMD != MULTI_CHANNEL_CMD_ENCAP_V4))
 		return (ZUNO_COMMAND_BLOCKED);
 	/// Mutichannel is always secure command class and availiably ONLY on the highest S2 level
 	// if (_zunoTransposeSecurityLevel(cmd->zw_rx_secure_opts) < _zunoTransposeSecurityLevel(zunoSecurityStatus()))
 	//	return ZUNO_COMMAND_BLOCKED; // Don't answer to it 
 	switch(ZW_CMD) {
-		case MULTI_CHANNEL_CAPABILITY_GET:
-			rs = _capability_get((ZwMultiChannelCapabilityGetFrame_t *)cmd->cmd, frame_report);
+		case MULTI_CHANNEL_CAPABILITY_GET_V4:
+			rs = _capability_get((ZW_MULTI_CHANNEL_CAPABILITY_GET_V4_FRAME *)cmd->cmd, frame_report);
 			break;
-		case MULTI_CHANNEL_CMD_ENCAP:
+		case MULTI_CHANNEL_CMD_ENCAP_V4:
 			if(cmd->len < 3)
 				return (ZUNO_COMMAND_BLOCKED);
 			// Extracting the command from the parent frame; Add multichannel endpoints
@@ -163,11 +183,11 @@ int zuno_CCMultichannel(ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame_
 			cmd->len -= 4;
 			rs = ZUNO_COMMAND_UNPACKED;
 			break;
-		case MULTI_CHANNEL_END_POINT_GET:
+		case MULTI_CHANNEL_END_POINT_GET_V4:
 			rs = _point_get(frame_report);
 			break;
-		case MULTI_CHANNEL_END_POINT_FIND:
-			rs = _find((ZwMultiChannelEndPointFindFrame_t*)cmd->cmd, frame_report);
+		case MULTI_CHANNEL_END_POINT_FIND_V4:
+			rs = _find((ZW_MULTI_CHANNEL_END_POINT_FIND_V4_FRAME*)cmd->cmd, frame_report);
 			break;
 		case MULTI_INSTANCE_GET:
 			// we don't support it yet

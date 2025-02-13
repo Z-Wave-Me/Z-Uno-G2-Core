@@ -213,6 +213,10 @@ static void LLInit(void *data) {
 	void zunoCentralSceneSaveLoad(void);
 	zunoCentralSceneSaveLoad();
 	#endif
+	#if defined(WITH_CC_USER_CREDENTIAL)
+	void __zme_user_credential_init(void);
+	__zme_user_credential_init();
+	#endif
 	g_sketch_inited = false;
 }
 #ifdef LOGGING_DBG

@@ -113,7 +113,7 @@ static int _set(ZUNOCommandPacketReport_t *frame_report, uint8_t channel, const 
 	result = ZUNO_COMMAND_PROCESSED;
 	while (i < count) {
 		if (_set_test(mask, &vg[i]) == false)
-			result = ZUNO_COMMAND_BLOCKED_FAILL;
+			result = ZUNO_COMMAND_BLOCKED_FAIL;
 		i++;
 	}
 	i = 0x0;
@@ -149,7 +149,7 @@ static int _set(ZUNOCommandPacketReport_t *frame_report, uint8_t channel, const 
 				continue ;
 			}
 			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			parameter->type = zunoTimerTreadDimingTypeWindowsCovering;
 			parameter->channel = channel;
 			parameter->flag = flag;
@@ -200,7 +200,7 @@ static int _start_level_sdfdsfgsd(uint8_t channel, uint8_t parameterId, uint8_t 
 	}
 	currentValue = _zunoWindowCoveringGet(channel, parameterId);
 	if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	parameter->type = zunoTimerTreadDimingTypeWindowsCovering;
 	parameter->channel = channel;
 	parameter->parameterId = parameterId;
@@ -226,7 +226,7 @@ static int _start_level_change(uint8_t channel, const ZW_WINDOW_COVERING_START_L
 	mask = _get_parameter_mask(channel);
 	parameterId = paket->parameterId;
 	if ((mask & (0x1 << parameterId)) == 0x0)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	if ((paket->properties1 & WINDOW_COVERING_START_LEVEL_CHANGE_PROPERTIES1_UP_DOWN_BIT_MASK) == 0) {// Dimming to up
 		targetValue = 0x63;
 		flag = ZUNO_TIMER_TREA_DIMING_FLAG_MODE_UP;
@@ -287,7 +287,7 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet, co
 		while (mask != 0x0) {
 			if ((mask & 0x1) != 0x0) {
 				_get_set(channel, report, parameterId);
-				zunoSendZWPackage(packet);
+				zunoSendZWPacket(packet);
 			}
 			mask = mask >> 0x1;
 			parameterId++;
@@ -295,7 +295,7 @@ int zuno_CCWindowCoveringReport(uint8_t channel, ZUNOCommandPacket_t *packet, co
 	}
 	else {
 		_get_set(channel, report, info->parameterId);
-		zunoSendZWPackage(packet);
+		zunoSendZWPacket(packet);
 		if (info->parameterId != _get_default_parameter_id(channel))
 			return (ZUNO_COMMAND_PROCESSED);
 	}

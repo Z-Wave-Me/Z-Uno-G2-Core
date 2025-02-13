@@ -44,7 +44,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 	zunoTimerTreadDiming_t			*parameter;
 
 	if ((targetValue = cmd->v2.targetValue) > 0x63 && targetValue < 0xFF)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	targetValue = targetValue ? 0xFF : 0x00;// Map the value right way
 	currentValue =_get_value(channel);
 	if (currentValue == targetValue) {
@@ -56,7 +56,7 @@ static int _set(ZwSwitchBinarySetFrame_t *cmd, size_t len, size_t channel, ZUNOC
 			if ((duration = (zuno_CCTimerTicksTable7(cmd->v2.duration))) == 0x0)
 				break ;
 			if ((parameter = zunoTimerTreadDimingCreate()) == NULL)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 			if (zuno_CCSupervisionReportSyncWorking(frame_report, cmd->v2.duration) == true) {
 				parameter->flag = ZUNO_TIMER_TREA_DIMING_FLAG_SUPERVISION;
 				zuno_CCSupervisionAsyncProcessedSet(packet, &parameter->super_vision);

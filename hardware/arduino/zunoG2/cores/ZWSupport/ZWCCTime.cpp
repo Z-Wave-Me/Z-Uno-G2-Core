@@ -64,10 +64,10 @@ static void _send(uint8_t cmd) {
 	report->cmdClass = COMMAND_CLASS_TIME;
 	report->cmd = cmd;
 	frame.info.packet.len = sizeof(report[0x0]);
-	zunoSendZWPackageAdd(&frame);
+	zunoSendZWPacketAdd(&frame);
 }
 
-static int _time_data_report(const ZwCCTimeDateReport_t *in) {
+static int _time_date_report(const ZwCCTimeDateReport_t *in) {
 	_date_report_info = in->info;
 	_micros_date_report = rtcc_micros();
 	_send(TIME_GET);
@@ -139,7 +139,7 @@ int zuno_CCTimeHandler(const ZUNOCommandCmd_t *cmd) {
 			rs = _time_time_report((const ZwCCTimeTimeReport_t *)&cmd->cmd[0x0]);
 			break ;
 		case DATE_REPORT:
-			rs = _time_data_report((const ZwCCTimeDateReport_t *)&cmd->cmd[0x0]);
+			rs = _time_date_report((const ZwCCTimeDateReport_t *)&cmd->cmd[0x0]);
 			break ;
 		default:
 			rs = ZUNO_UNKNOWN_CMD;

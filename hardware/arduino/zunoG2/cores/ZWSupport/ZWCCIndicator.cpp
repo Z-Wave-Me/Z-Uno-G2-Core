@@ -524,7 +524,7 @@ static int _indicator_set_binary(ZUNOCommandPacketReport_t *frame_report, const 
 		zunoSendReportSet(0x0, frame_report, options, &info);
 		return (ZUNO_COMMAND_PROCESSED);
 	}
-	return (ZUNO_COMMAND_BLOCKED_FAILL);
+	return (ZUNO_COMMAND_BLOCKED_FAIL);
 }
 
 static int _indicator_set_v1(ZUNOCommandPacketReport_t *frame_report, size_t value, const ZUNOCommandHandlerOption_t *options) {
@@ -621,7 +621,7 @@ static int _indicator_set_v4(ZUNOCommandPacketReport_t *frame_report, size_t ind
 			break ;
 		case (INDICATOR_PROP_TOGGLING_MASK):
 			if (prop_mask_new != ((0x1 << INDICATOR_PROP_TOGGLING_ON_OFF_PERIOD) | (0x1 << INDICATOR_PROP_TOGGLING_ON_OFF_CYCLES))) {
-				result = ZUNO_COMMAND_BLOCKED_FAILL;
+				result = ZUNO_COMMAND_BLOCKED_FAIL;
 				break ;
 			}
 			_indicator_set_toggling(parameter_array, &prop, options);
@@ -642,7 +642,7 @@ static int _indicator_set_v4(ZUNOCommandPacketReport_t *frame_report, size_t ind
 static int _indicator_set_find_na(VG_INDICATOR_SET_V4_VG *variantgroup_b, VG_INDICATOR_SET_V4_VG *variantgroup_e) {
 	while (variantgroup_b < variantgroup_e) {
 		if (variantgroup_b->indicatorId == INDICATOR_ID_NA)
-			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			return (ZUNO_COMMAND_BLOCKED_FAIL);
 		variantgroup_b++;
 	}
 	return (ZUNO_COMMAND_PROCESSED);
@@ -663,7 +663,7 @@ static int _indicator_set(ZUNOCommandPacketReport_t *frame_report, const ZwIndic
 	if (len == 0x0)
 		return (_indicator_set_v1(frame_report, frame->v4.indicator0Value, options));
 	if (len > ((ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(frame->v4)) / sizeof(variantgroup[0x0])))
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	memcpy(&vg[0x0], &frame->v4.variantgroup[0x0], len * sizeof(variantgroup[0x0]));
 	variantgroup = &vg[0x0];
 	variantgroup_e = &vg[len];
@@ -688,15 +688,15 @@ static int _indicator_set(ZUNOCommandPacketReport_t *frame_report, const ZwIndic
 							result = _indicator_set_v4(frame_report, indicatorId, (INDICATOR_PROP_TOGGLING_MASK), variantgroup, variantgroup_e, parameter_array, result, options);
 							break ;
 						default:
-							result = ZUNO_COMMAND_BLOCKED_FAILL;
+							result = ZUNO_COMMAND_BLOCKED_FAIL;
 							break ;
 					}
 				}
 				else
-					result = ZUNO_COMMAND_BLOCKED_FAILL;
+					result = ZUNO_COMMAND_BLOCKED_FAIL;
 			}
 			else
-				result = ZUNO_COMMAND_BLOCKED_FAILL;
+				result = ZUNO_COMMAND_BLOCKED_FAIL;
 		}
 		variantgroup++;
 	}

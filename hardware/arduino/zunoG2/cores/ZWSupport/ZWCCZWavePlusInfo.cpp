@@ -10,7 +10,8 @@ void zuno_CCSwitchBinaryGetIcon(ZwZwavePlusInfoIcon_t *icon);
 void zuno_CCSwitchMultilevelGetIcon(ZwZwavePlusInfoIcon_t *icon);
 
 void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
-	uint8_t								type;
+	const _ZUnoDevTypeDef_t *info;
+	uint8_t type;
 
 	type = ZUNO_CFG_CHANNEL(channel).type;
 	switch (type) {
@@ -45,9 +46,9 @@ void __zuno_CCZWavePlusGetIcon(uint8_t channel, ZwZwavePlusInfoIcon_t *icon) {
 			break ;
 		#endif
 		default:
-			type--;
-			icon->installerIconType = ZUNO_DEV_TYPES[type].icon;
-			icon->userIconType = ZUNO_DEV_TYPES[type].app_icon;
+			info = _zunoGetDevTypes((_ZunoChannelNumber_t)type);
+			icon->installerIconType = info->icon;
+			icon->userIconType = info->app_icon;
 			break ;
 	}
 }
@@ -57,7 +58,8 @@ void zuno_CCSwitchBinaryGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
 void zuno_CCSwitchMultilevelGetType(uint8_t channel, ZwZwavePlusInfoType_t *type);
 
 void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type) {
-	uint8_t								type;
+	const _ZUnoDevTypeDef_t *info;
+	uint8_t type;
 
 	type = ZUNO_CFG_CHANNEL(channel).type;
 	switch (type) {
@@ -77,9 +79,9 @@ void __zuno_CCZWavePlusGetType(uint8_t channel, ZwZwavePlusInfoType_t *info_type
 			break ;
 		#endif
 		default:
-			type--;
-			info_type->genericDeviceClass = ZUNO_DEV_TYPES[type].gen_type;
-			info_type->specificDeviceClass = ZUNO_DEV_TYPES[type].spec_type;
+			info = _zunoGetDevTypes((_ZunoChannelNumber_t)type);
+			info_type->genericDeviceClass = info->gen_type;
+			info_type->specificDeviceClass = info->spec_type;
 			break ;
 	}
 }
@@ -103,7 +105,7 @@ static int _report(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketReport_t *frame
 	report = (ZwZwavePlusInfoReportFrame_t *)frame_report->info.packet.cmd;
 	report->v2.cmdClass = COMMAND_CLASS_ZWAVEPLUS_INFO;
 	report->v2.cmd = ZWAVEPLUS_INFO_REPORT;
-	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION;
+	report->v2.zWaveVersion = ZWAVEPLUS_INFO_VERSION_RELEASED;
 	#if defined(WITH_CC_WAKEUP) || defined(WITH_CC_BATTERY)
 	switch (zunoGetSleepingMode()) {
 		case DEVICE_CONFIGURATION_FLAGS_SLEEP:

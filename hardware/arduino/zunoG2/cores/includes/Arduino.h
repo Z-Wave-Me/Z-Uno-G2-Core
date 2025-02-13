@@ -2,6 +2,8 @@
 #ifndef ZUNO_ARDUINOH
 #define ZUNO_ARDUINOH
 
+#include "ZUNO_DependenciesCC.h"
+
 #include "new.h"
 
 #include "ArduinoTypes.h"
@@ -18,7 +20,6 @@
 #include "HardwareSerial.h"
 #include "LeUartClass.h"
 #include "zwaveme_libft.h"
-#include "Custom_decl.h" // 
 #include <math.h>
 #include "WCharacter.h"
 #include "pgmspace.h"
@@ -27,6 +28,8 @@
 #include "ZWCCMeter.h"
 #include "ZWCCSoundSwitch.h"
 #include "ZWCCWindowCovering.h"
+#include "ZWCCThermostat.h"
+
 enum{
   ZUNO_SECUREPARAM_OFF = 0,
   ZUNO_SECUREPARAM_ON = 1,
@@ -41,7 +44,6 @@ enum{
 #define zunoChangedBy(v, d) (v < _##v - d || v > _##v + d)
 
 // system data
-extern ZUNOSetupSysState_t * g_zuno_sys;
 #define zunoNID()               	(g_zuno_sys->node_id)
 #define zunoSecurityStatus()    	(g_zuno_sys->highest_security_level)
 #define zunoGrantedSecurityKeys()   (g_zuno_sys->granted_keys)
@@ -118,8 +120,6 @@ inline void zunoSetProductID(uint16_t product_id){
 
 /* Z-Wave protocol support */
 void zunoReconfigStaticChannels();
-void zunoSendZWPackage(ZUNOCommandPacket_t * pkg);
-void zunoSendZWPackageAdd(ZUNOCommandPacketReport_t *frame);
 void zunoCommitCfg();
 #include "zuno_channel_handlers.h"
 inline void zunoSetZWChannel(byte ch, byte zw_channel) {
@@ -127,7 +127,6 @@ inline void zunoSetZWChannel(byte ch, byte zw_channel) {
 };
 byte zunoAddChannel(byte type, byte subtype, uint32_t options);
 bool zunoAddBaseCCS(byte ccs, byte version);
-void zunoSendReport(byte ch);
 void zunoResetLocally();
 void zunoSendNIF();
 bool zunoStartDeviceConfiguration();
@@ -161,7 +160,6 @@ void zunoSendToGroupBinarySetCommand(uint8_t groupIndex, uint8_t targetValue, si
 void zunoSendToGroupSoundSwitchPlayCommand(uint8_t groupIndex, uint8_t toneIdentifier, uint8_t playCommandToneVolume);
 
 /* Misc */
-void WDOG_Feed();
 void zunoUpdateSysConfig(bool deffered=true, bool force=false);
 void zunoReboot(bool force=true);
 unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout=20000);

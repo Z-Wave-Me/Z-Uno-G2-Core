@@ -1,13 +1,8 @@
 #ifndef EEPROM_CONFIG_H
 #define EEPROM_CONFIG_H
 
-#include "Arduino.h"
-
 #define EEPROM_SKETH_ADDR								0x0
 #define EEPROM_SKETH_SIZE								0xE00
-
-#define EEPROM_USER_CODE_ADDR							((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code[0x0])
-#define EEPROM_USER_CODE_SIZE							(sizeof(((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->common.user_code))
 
 #define EEPROM_NOTIFICATION_ADDR						((uint32_t)&((ZwEepromSketh_t *)EEPROM_SKETH_ADDR)->notification[0x0])
 #define EEPROM_NOTIFICATION_SIZE						4
@@ -38,7 +33,6 @@
 #define EEPROM_MAX_SIZE									0x1300
 
 #include "EEPROM_ConfigScheduleEntryLock.h"
-#include "EEPROM_ConfigUserCode.h"
 #include "EEPROM_ConfigUserCredential.h"
 #include "EEPROM_ConfigDoorLock.h"
 #include "EEPROM_ConfigSoundSwitch.h"
@@ -47,9 +41,6 @@ typedef struct									ZwEepromSkethCommonInfo_s
 {
 	#ifdef WITH_CC_USER_CREDENTIAL
 	UserCredentialSaveCommon_t					user_credential;
-	#endif
-	#if !defined(WITH_CC_USER_CREDENTIAL) && defined(WITH_CC_USER_CODE)
-	UserCodeSaveCommon_t						user_code;
 	#endif
 	#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
 	ScheduleEntryLockSaveCommon_t				schedule_entry_lock;

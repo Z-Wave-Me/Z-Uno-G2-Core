@@ -11,7 +11,7 @@
 class BL0937 : protected ZMEHandlerMapper {
     public:
         BL0937(byte cfPin, byte cf1Pin,byte selPin, float vRef=DEF_V_REF);
-        // ZMEHandlerMapper(SYS_HANLER_MAPPER_TIMER){
+        // ZMEHandlerMapper(SYS_HANDLER_MAPPER_TIMER){
         // }
 
 

@@ -383,7 +383,7 @@ static int _configuration_get(const ZwConfigurationGetFrame_t *cmd, ZUNOCommandP
 				break;
 		}
 		if (param >= CONFIGPARAM_MAX_PARAM)
-			return (ZUNO_COMMAND_BLOCKED_FAILL); // There are no user-side parameters 
+			return (ZUNO_COMMAND_BLOCKED_FAIL); // There are no user-side parameters 
 	}
 	if (param < CONFIGPARAM_MIN_PARAM){
 		_loadSysParam(param, value); 
@@ -410,11 +410,11 @@ static int _configuration_set(const ZUNOCommandCmd_t *cmd) {
 	lp = (ZwConfigurationSetFrame_t *)cmd->cmd;
 	param = lp->byte1.parameterNumber;
 	if (param >= CONFIGPARAM_MAX_PARAM)// Check if this is not user data
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	if ((cfg = zunoCFGParameterProxy(param)) == ZUNO_CFG_PARAMETER_UNKNOWN)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	if (cfg->readOnly == true)
-		return (ZUNO_COMMAND_BLOCKED_FAILL);
+		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	
 	level = lp->byte1.level;
 	if ((level & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) != 0){// Check whether you want to restore the default value
@@ -422,14 +422,14 @@ static int _configuration_set(const ZUNOCommandCmd_t *cmd) {
 	} else {
 		level = (level & CONFIGURATION_SET_LEVEL_SIZE_MASK);
 		if (level != cfg->size)
-			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			return (ZUNO_COMMAND_BLOCKED_FAIL);
 		value = _zunoSetterValue2Cortex(&lp->byte4.configurationValue1, level);
 		if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED) {
 			if ((ssize_t)value < cfg->minValue || (ssize_t)value > cfg->maxValue)
-				return (ZUNO_COMMAND_BLOCKED_FAILL);
+				return (ZUNO_COMMAND_BLOCKED_FAIL);
 		}
 		else if (value < (size_t)cfg->minValue || value > (size_t)cfg->maxValue)
-			return (ZUNO_COMMAND_BLOCKED_FAILL);
+			return (ZUNO_COMMAND_BLOCKED_FAIL);
 	}
 	if (param < CONFIGPARAM_MIN_PARAM){
 		_saveSysParam(param, value);
@@ -522,7 +522,7 @@ static int _configuration_name_get(const ZwConfigurationNameGetFrame_t *cmd, Zun
 			len = len - (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(ZwConfigurationNameReportFrame_t));
 			memcpy(&report->name[0], str, (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(ZwConfigurationNameReportFrame_t)));
 			str = str + (ZUNO_COMMAND_PACKET_CMD_OUT_MAX_RECOMMENDED - sizeof(ZwConfigurationNameReportFrame_t));
-			zunoSendZWPackageAdd(frame_report);
+			zunoSendZWPacketAdd(frame_report);
 		}
 		memcpy(report->name, str, len);
 		len = len + sizeof(ZwConfigurationNameReportFrame_t);

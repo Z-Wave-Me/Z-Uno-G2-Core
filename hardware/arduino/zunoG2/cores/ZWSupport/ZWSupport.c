@@ -18,13 +18,9 @@
 #include "ZWCCTimer.h"
 #include "ZWCCSecurity.h"
 #include "ZWCCTimerParametrs.h"
-#include "ZWCCMeterTbl.h"
 #include "ZWCCVersion.h"
 #include "Debug.h"
 #include "ZWCCSuperVision.h"
-#include "ZWCCUserCode.h"
-#include "ZWCCEntryControl.h"
-#include "ZWCCAuthentication.h"
 #include "ZWCCSoundSwitch.h"
 #include "ZWCCIndicator.h"
 #include "ZWCCCentralScene.h"
@@ -33,7 +29,6 @@
 #include "ZWCCManufacturerSpecific.h"
 #include "ZWCCScheduleEntryLock.h"
 #include "CommandQueue.h"
-#include "ZUNO_AutoChannels.h"
 #include "CrcClass.h"
 #include "ZWCCTime.h"
 #include "ZWCCUserCredential.h"
@@ -85,14 +80,8 @@ static const uint8_t zuno_cmdClassListSec_Def[] =
   #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
   COMMAND_CLASS_SCHEDULE_ENTRY_LOCK,
   #endif
-  #ifdef WITH_CC_USER_CODE
-  COMMAND_CLASS_USER_CODE,
-  #endif
   #ifdef WITH_CC_USER_CREDENTIAL
   COMMAND_CLASS_USER_CREDENTIAL,
-  #endif
-  #ifdef WITH_CC_ENTRY_CONTROL
-  COMMAND_CLASS_ENTRY_CONTROL,
   #endif
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
@@ -120,14 +109,8 @@ static const uint8_t zuno_cmdClassListNSNI_Def[] =
   #ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
   COMMAND_CLASS_SCHEDULE_ENTRY_LOCK,
   #endif
-  #ifdef WITH_CC_USER_CODE
-  COMMAND_CLASS_USER_CODE,
-  #endif
   #ifdef WITH_CC_USER_CREDENTIAL
   COMMAND_CLASS_USER_CREDENTIAL,
-  #endif
-  #ifdef WITH_CC_ENTRY_CONTROL
-  COMMAND_CLASS_ENTRY_CONTROL,
   #endif
   #ifdef WITH_CC_TIME_PARAMETERS
   COMMAND_CLASS_TIME_PARAMETERS,
@@ -273,15 +256,9 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 				return true;
 			break;
 		#endif
-		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+		#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT) || defined(WITH_CC_THERMOSTAT_OPERATING_STATE) || defined(WITH_CC_THERMOSTAT_FAN_MODE) || defined(WITH_CC_THERMOSTAT_FAN_STATE)
 		case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
-			if(cmd_class == COMMAND_CLASS_THERMOSTAT_MODE)
-				return true;
-			if(cmd_class == COMMAND_CLASS_THERMOSTAT_SETPOINT)
-				return true;
-			if(cmd_class == COMMAND_CLASS_BASIC)
-				return true;
-			break;
+			return zuno_CCThermostatCompareChanneltypeCC(cmd_class);
 		#endif
 		case ZUNO_SENSOR_BINARY_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_NOTIFICATION)
@@ -290,10 +267,6 @@ bool zuno_compare_channeltypeCC(ZUNOChannel_t *channel, uint8_t *cmd_bytes) {
 		case ZUNO_METER_CHANNEL_NUMBER:
 			if(cmd_class == COMMAND_CLASS_METER)
 				return true;
-			#ifdef WITH_CC_METER_TBL_MONITOR
-			if(cmd_class == COMMAND_CLASS_METER_TBL_MONITOR)
-				return true;
-			#endif
 			break;
 	}
 	return false;
@@ -353,6 +326,27 @@ static void _fillOutgoingPacket(const ZUNOCommandCmd_t *cmd, ZUNOCommandPacketRe
 
 void fillOutgoingReportPacketAsync(ZUNOCommandPacketReport_t *frame, size_t ch) {
 	fillOutgoingRawPacket(&frame->info, frame->data, ch, ZUNO_PACKETFLAGS_GROUP | QUEUE_CHANNEL_LLREPORT, ZUNO_LIFELINE_GRP);
+}
+
+static void _fillOutgoingReportPacketUnsolicited(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options, bool outside) {
+	uint8_t ch;
+
+	if (outside == false)
+		ch = ZUNO_CFG_CHANNEL(channel).zw_channel;
+	else
+		ch = 0;
+	fillOutgoingReportPacketAsync(frame_report, ch);
+	frame_report->info.report.option = options[0];
+	frame_report->info.report.outside = outside;
+	frame_report->info.report.valid = true;
+}
+
+void fillOutgoingReportPacketUnsolicited(byte channel, ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
+	_fillOutgoingReportPacketUnsolicited(channel, frame_report, options, false);
+}
+
+void fillOutgoingReportPacketUnsolicitedLifeLine(ZUNOCommandPacketReport_t *frame_report, const ZUNOCommandHandlerOption_t *options) {
+	_fillOutgoingReportPacketUnsolicited(0, frame_report, options, true);
 }
 
 #ifdef LOGGING_UART
@@ -445,24 +439,9 @@ static uint8_t _multiinstance(const ZUNOCommandCmd_t *cmd, int *out, ZUNOCommand
 				result = zuno_CCTimeHandler(cmd);
 				break ;
 			#endif
-			#ifdef WITH_CC_AUTHENTICATION
-			case COMMAND_CLASS_AUTHENTICATION:
-				result = zuno_CCAuthenticationHandler(cmd, frame_report);
-				break ;
-			#endif
-			#ifdef WITH_CC_ENTRY_CONTROL
-			case COMMAND_CLASS_ENTRY_CONTROL:
-				result = zuno_CCEntryControlHandler(cmd, frame_report);
-				break ;
-			#endif
-			#ifdef WITH_CC_USER_CODE
-			case COMMAND_CLASS_USER_CODE:
-				result = zuno_CCUserCodeHandler(cmd, frame_report);
-				break ;
-			#endif
 			#ifdef WITH_CC_USER_CREDENTIAL
 			case COMMAND_CLASS_USER_CREDENTIAL:
-				result = zuno_CCUserCredentialHandler(cmd, frame_report);
+				result = zuno_CCUserCredentialHandler(cmd, frame_report, options);
 				break ;
 			#endif
 			#ifdef WITH_CC_BATTERY
@@ -483,214 +462,276 @@ static uint8_t _multiinstance(const ZUNOCommandCmd_t *cmd, int *out, ZUNOCommand
 	(void)frame_report;
 }
 
-static size_t _isBlockMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
+#define MULTI_CHANNEL_CAPABILITY_GET 0x09
+#define MULTI_CHANNEL_CMD_ENCAP 0x0D
+#define MULTI_CHANNEL_END_POINT_FIND 0x0B
+#define MULTI_CHANNEL_END_POINT_GET 0x07
+#define MULTI_INSTANCE_GET 0x04
+#define MULTI_CHANNEL_AGGREGATED_MEMBERS_GET 0x0E
+
+#define POWERLEVEL_GET 0x02
+#define POWERLEVEL_TEST_NODE_GET 0x05
+
+static bool _isBlockMultiBroadcast(size_t zw_rx_opts, size_t cmdClass, size_t cmd) {
 	if ((zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) == 0)//test multicast
 		return (false);
 	switch (cmdClass) {
 		#ifdef WITH_CC_BASIC
 		case COMMAND_CLASS_BASIC:
 			if (cmd == BASIC_GET)
-				return (false);
-			return (true);
-			break ;
+				return (true);
+			return (false);
 		#endif
 		#ifdef WITH_CC_SWITCH_BINARY
 		case COMMAND_CLASS_SWITCH_BINARY:
 			if (cmd == SWITCH_BINARY_GET)
-				return (false);
-			return (true);
-			break ;
+				return (true);
+			return (false);
 		#endif
 		#ifdef WITH_CC_SWITCH_MULTILEVEL
 		case COMMAND_CLASS_SWITCH_MULTILEVEL:
-			if (cmd == SWITCH_MULTILEVEL_SUPPORTED_GET)
-				return (false);
 			if (cmd == SWITCH_MULTILEVEL_GET)
-				return (false);
-			return (true);
-			break ;
+				return (true);
+			if (cmd == SWITCH_MULTILEVEL_SUPPORTED_GET)
+				return (true);
+			return (false);
 		#endif
-		case COMMAND_CLASS_SCENE_ACTIVATION:
-			return (true);
-			break ;
+		#ifdef WITH_CC_SENSOR_MULTILEVEL
+		case COMMAND_CLASS_SENSOR_MULTILEVEL:
+			if (cmd == SENSOR_MULTILEVEL_GET)
+				return (true);
+			if (cmd == SENSOR_MULTILEVEL_SUPPORTED_GET_SENSOR)
+				return (true);
+			if (cmd == SENSOR_MULTILEVEL_SUPPORTED_GET_SCALE)
+				return (true);
+			return (false);
+		#endif
 		#ifdef WITH_CC_METER
 		case COMMAND_CLASS_METER:
-			if (cmd == METER_SUPPORTED_GET)
-				return (false);
 			if (cmd == METER_GET)
-				return (false);
-			return (true);
-			break ;
-		#endif
-		#ifdef WITH_CC_METER_TBL_MONITOR
-		case COMMAND_CLASS_METER_TBL_MONITOR:
+				return (true);
+			if (cmd == METER_SUPPORTED_GET)
+				return (true);
 			return (false);
-			break ;
 		#endif
 		#ifdef WITH_CC_SWITCH_COLOR
 		case COMMAND_CLASS_SWITCH_COLOR:
-			if (cmd == SWITCH_COLOR_GET)
-				return (false);
 			if (cmd == SWITCH_COLOR_SUPPORTED_GET)
-				return (false);
-			return (true);
-			break ;
+				return (true);
+			if (cmd == SWITCH_COLOR_GET)
+				return (true);
+			return (false);
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_MODE
+		case COMMAND_CLASS_THERMOSTAT_MODE:
+			return (zuno_CCThermostatModeIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_OPERATING_STATE
+		case COMMAND_CLASS_THERMOSTAT_OPERATING_STATE:
+			return (zuno_CCThermostatOperationStateIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_SETPOINT
+		case COMMAND_CLASS_THERMOSTAT_SETPOINT:
+			return (zuno_CCThermostatSetPointIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_FAN_MODE
+		case COMMAND_CLASS_THERMOSTAT_FAN_MODE:
+			return (zuno_CCThermostatFanModeIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_THERMOSTAT_FAN_STATE
+		case COMMAND_CLASS_THERMOSTAT_FAN_STATE:
+			return (zuno_CCThermostatFanStateIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_SCHEDULE_ENTRY_LOCK
+		case COMMAND_CLASS_SCHEDULE_ENTRY_LOCK:
+			if (cmd == SCHEDULE_ENTRY_TYPE_SUPPORTED_GET)
+				return (true);
+			if (cmd == SCHEDULE_ENTRY_LOCK_WEEK_DAY_GET)
+				return (true);
+			if (cmd == SCHEDULE_ENTRY_LOCK_YEAR_DAY_GET)
+				return (true);
+			if (cmd == SCHEDULE_ENTRY_LOCK_TIME_OFFSET_GET)
+				return (true);
+			if (cmd == SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET)
+				return (true);
+			if (cmd == EXTENDED_SCHEDULE_ENTRY_LOCK_WEEK_DAY_SCHEDULE_GET)
+				return (true);
+			if (cmd == EXTENDED_SCHEDULE_ENTRY_LOCK_YEAR_DAY_SCHEDULE_GET)
+				return (true);
+			if (cmd == EXTENDED_SCHEDULE_ENTRY_LOCK_DAILY_REPEATING_GET)
+				return (true);
+			return (false);
+		#endif
+		case COMMAND_CLASS_ASSOCIATION_GRP_INFO:
+			if (cmd == ASSOCIATION_GROUP_NAME_GET)
+				return (true);
+			if (cmd == ASSOCIATION_GROUP_INFO_GET)
+				return (true);
+			if (cmd == ASSOCIATION_GROUP_COMMAND_LIST_GET)
+				return (true);
+			return (false);
+		#ifdef WITH_CC_CENTRAL_SCENE
+		case COMMAND_CLASS_CENTRAL_SCENE:
+			if (cmd == CENTRAL_SCENE_SUPPORTED_GET_V3)
+				return (true);
+			if (cmd == CENTRAL_SCENE_CONFIGURATION_GET_V3)
+				return (true);
+			return (false);
+		#endif
+		case COMMAND_CLASS_ZWAVEPLUS_INFO:
+			if (cmd == ZWAVEPLUS_INFO_GET)
+				return (true);
+			return (false);
+		#ifdef WITH_CC_MULTICHANNEL
+		case COMMAND_CLASS_MULTI_CHANNEL:
+			if (cmd == MULTI_CHANNEL_END_POINT_GET)
+				return (true);
+			if (cmd == MULTI_CHANNEL_CAPABILITY_GET)
+				return (true);
+			if (cmd == MULTI_CHANNEL_END_POINT_FIND)
+				return (true);
+			if (cmd == MULTI_CHANNEL_CMD_ENCAP)
+				return (true);
+			if (cmd == MULTI_CHANNEL_AGGREGATED_MEMBERS_GET)
+				return (true);
+			return (false);
+		#endif
+		#ifdef WITH_CC_DOORLOCK
+		case COMMAND_CLASS_DOOR_LOCK:
+			if (cmd == DOOR_LOCK_OPERATION_GET)
+				return (true);
+			if (cmd == DOOR_LOCK_CONFIGURATION_GET)
+				return (true);
+			if (cmd == DOOR_LOCK_CAPABILITIES_GET)
+				return (true);
+			return (false);
 		#endif
 		#ifdef WITH_CC_WINDOW_COVERING
 		case COMMAND_CLASS_WINDOW_COVERING:
 			if (cmd == WINDOW_COVERING_SUPPORTED_GET)
-				return (false);
+				return (true);
 			if (cmd == WINDOW_COVERING_GET)
-				return (false);
-			return (true);
-			break ;
+				return (true);
+			return (false);
 		#endif
+		case COMMAND_CLASS_CONFIGURATION:
+			if (cmd == CONFIGURATION_GET)
+				return (true);
+			if (cmd == CONFIGURATION_BULK_GET)
+				return (true);
+			if (cmd == CONFIGURATION_NAME_GET)
+				return (true);
+			if (cmd == CONFIGURATION_INFO_GET)
+				return (true);
+			if (cmd == CONFIGURATION_PROPERTIES_GET)
+				return (true);
+			return (false);
+		#ifdef WITH_CC_NOTIFICATION
+		case COMMAND_CLASS_NOTIFICATION:
+			if (cmd == NOTIFICATION_GET)
+				return (true);
+			if (cmd == NOTIFICATION_SUPPORTED_GET)
+				return (true);
+			if (cmd == EVENT_SUPPORTED_GET)
+				return (true);
+			return (false);
+		#endif
+		case COMMAND_CLASS_MANUFACTURER_SPECIFIC:
+			if (cmd == MANUFACTURER_SPECIFIC_GET)
+				return (true);
+			return (false);
+		case COMMAND_CLASS_POWERLEVEL:
+			if (cmd == POWERLEVEL_GET)
+				return (true);
+			if (cmd == POWERLEVEL_TEST_NODE_GET)
+				return (true);
+			return (false);
 		#ifdef WITH_CC_SOUND_SWITCH
 		case COMMAND_CLASS_SOUND_SWITCH:
-			if (cmd == SOUND_SWITCH_CONFIGURATION_SET)
+			if (cmd == SOUND_SWITCH_TONES_NUMBER_GET)
 				return (true);
-			if (cmd == SOUND_SWITCH_TONE_PLAY_SET)
+			if (cmd == SOUND_SWITCH_TONE_INFO_GET)
+				return (true);
+			if (cmd == SOUND_SWITCH_CONFIGURATION_GET)
+				return (true);
+			if (cmd == SOUND_SWITCH_TONE_PLAY_GET)
 				return (true);
 			return (false);
-			break ;
 		#endif
-		#ifdef WITH_CC_CENTRAL_SCENE
-		case COMMAND_CLASS_CENTRAL_SCENE:
-			if (cmd == CENTRAL_SCENE_CONFIGURATION_SET)
-				return (true);;
+		case COMMAND_CLASS_FIRMWARE_UPDATE_MD:
+			if (cmd == 0x3)//FIRMWARE_UPDATE_MD_REQUEST_GET
+				return (true);
+			if (cmd == 0x5)//FIRMWARE_UPDATE_MD_GET
+				return (true);
+			if (cmd == 0x0A)//FIRMWARE_UPDATE_MD_PREPARE_GET_V8
+				return (true);
 			return (false);
-			break ;
+		#ifdef WITH_CC_BATTERY
+		case COMMAND_CLASS_BATTERY:
+			if (cmd == BATTERY_GET)
+				return (true);
+			if (cmd == BATTERY_HEALTH_GET)
+				return (true);
+			return (false);
 		#endif
-		#ifdef WITH_CC_THERMOSTAT_MODE
-		case COMMAND_CLASS_THERMOSTAT_MODE:
-			if (cmd == THERMOSTAT_MODE_SUPPORTED_GET)
-				return (false);
-			if (cmd == THERMOSTAT_MODE_GET)
+		#ifdef WITH_CC_USER_CREDENTIAL
+		case COMMAND_CLASS_USER_CREDENTIAL:
+			return (zuno_CCUserCredentialIsBlockMultiBroadcast(cmd));
+		#endif
+		#ifdef WITH_CC_WAKEUP
+		case COMMAND_CLASS_WAKE_UP:
+			if (cmd == WAKE_UP_INTERVAL_GET)
+				return (true);
+			if (cmd == WAKE_UP_INTERVAL_CAPABILITIES_GET)
+				return (true);
+			return (false);
+		#endif
+		case COMMAND_CLASS_ASSOCIATION:
+			if (cmd == ASSOCIATION_SET)
 				return (false);
 			return (true);
-			break ;
-		#endif
-		#ifdef WITH_CC_THERMOSTAT_SETPOINT
-		case COMMAND_CLASS_THERMOSTAT_SETPOINT:
-			if (cmd == THERMOSTAT_SETPOINT_SET)
-				return (true);
-			return (false);
-			break ;
-		#endif
-		#ifdef WITH_CC_DOORLOCK
-		case COMMAND_CLASS_DOOR_LOCK:
-			if (cmd == DOOR_LOCK_CONFIGURATION_SET)
-				return (true);
-			if (cmd == DOOR_LOCK_CONFIGURATION_SET)
-				return (true);
-			return (false);
-			break ;
+		case COMMAND_CLASS_VERSION:
+			return (true);
+		case COMMAND_CLASS_INDICATOR:
+			if (cmd == INDICATOR_SET_V4)
+				return (false);
+			return (true);
+		#ifdef WITH_CC_TIME
+		case COMMAND_CLASS_TIME:
+			if (cmd == TIME_OFFSET_SET)
+				return (false);
+			return (true);
 		#endif
 		#ifdef WITH_CC_TIME_PARAMETERS
 		case COMMAND_CLASS_TIME_PARAMETERS:
 			if (cmd == TIME_PARAMETERS_GET)
+				return (true);
+			return (false);
+		#endif
+		case COMMAND_CLASS_MULTI_CHANNEL_ASSOCIATION:
+			if (cmd == MULTI_CHANNEL_ASSOCIATION_SET)
 				return (false);
 			return (true);
-			break ;
-		#endif
-		#ifdef WITH_CC_AUTHENTICATION
-		case COMMAND_CLASS_AUTHENTICATION:
-			if (cmd == AUTHENTICATION_DATA_SET)
-				return (true);
-			if (cmd == AUTHENTICATION_TECHNOLOGIES_COMBINATION_SET)
-				return (true);
-			return (false);
-			break ;
-		#endif
-		#ifdef WITH_CC_ENTRY_CONTROL
-		case COMMAND_CLASS_ENTRY_CONTROL:
-			if (cmd == ENTRY_CONTROL_CONFIGURATION_SET)
-				return (true);
-			return (false);
-			break ;
-		#endif
-		#ifdef WITH_CC_USER_CODE
-		case COMMAND_CLASS_USER_CODE:
-			if (cmd == MASTER_CODE_GET_V2)
-				return (false);
-			if (cmd == USER_CODE_CHECKSUM_GET_V2)
-				return (false);
-			if (cmd == USER_CODE_KEYPAD_MODE_GET_V2)
-				return (false);
-			if (cmd == EXTENDED_USER_CODE_GET_V2)
-				return (false);
-			if (cmd == USER_CODE_GET_V2)
-				return (false);
-			if (cmd == USER_CODE_CAPABILITIES_GET_V2)
-				return (false);
-			if (cmd == USERS_NUMBER_GET_V2)
-				return (false);
-			return (true);
-			break ;
-		#endif
-		#ifdef WITH_CC_USER_CREDENTIAL
-		case COMMAND_CLASS_USER_CREDENTIAL:
-			if (cmd == USER_CREDENTIAL_CAPABILITIES_USER_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_CAPABILITIES_CREDENTIAL_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_USER_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_CREDENTIAL_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_ALL_USERS_CHECKSUM_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_USER_CHECKSUM_GET)
-				return (false);
-			if (cmd == USER_CREDENTIAL_TYPE_CHECKSUM_GET)
-				return (false);
-			return (true);
-			break ;
-		#endif
-		case COMMAND_CLASS_CONFIGURATION:
-			if (cmd == CONFIGURATION_BULK_SET)
-				return (true);
-			if (cmd == CONFIGURATION_SET)
-				return (true);
-			if (cmd == CONFIGURATION_DEFAULT_RESET)
-				return (true);
-			return (false);
-			break ;
-		case COMMAND_CLASS_INDICATOR:
-			if (cmd == INDICATOR_SET_V4)
-				return (true);
-			return (false);
-			break ;
-		#ifdef WITH_CC_NOTIFICATION
-		case COMMAND_CLASS_NOTIFICATION:
-			if (cmd == NOTIFICATION_SET)
-				return (true);
-			return (false);
-			break ;
-		#endif
 		case COMMAND_CLASS_SECURITY:
-			if (cmd == SECURITY_COMMANDS_SUPPORTED_GET)
-				return (false);
 			if (cmd == SECURITY_NONCE_GET)
-				return (false);
+				return (true);
 			if (cmd == SECURITY_SCHEME_GET)
-				return (false);
-			return (true);
-			break ;
-		case COMMAND_CLASS_SECURITY_2:
-			if (cmd == SECURITY_2_COMMANDS_SUPPORTED_GET)
-				return (false);
-			if (cmd == SECURITY_2_NETWORK_KEY_GET)
-				return (false);
-			if (cmd == KEX_GET)
-				return (false);
-			if (cmd == SECURITY_2_NONCE_GET)
-				return (false);
-			return (true);
-			break ;
-		default:
+				return (true);
+			if (cmd == SECURITY_COMMANDS_SUPPORTED_GET)
+				return (true);
 			return (false);
-			break ;
+		case COMMAND_CLASS_SECURITY_2:
+			if (cmd == SECURITY_2_NONCE_GET)
+				return (true);
+			if (cmd == SECURITY_2_MESSAGE_ENCAPSULATION)
+				return (true);
+			if (cmd == KEX_GET)
+				return (true);
+			if (cmd == SECURITY_2_NETWORK_KEY_GET)
+				return (true);
+			if (cmd == SECURITY_2_COMMANDS_SUPPORTED_GET)
+				return (true);
+			return (false);
 	}
 	return (false);
 }
@@ -731,21 +772,23 @@ static int _appendCC(uint8_t * cc_list, uint8_t &cc_list_sz, uint8_t cc, uint8_t
 }
 
 uint8_t dynamicCCVersion(uint8_t cc){
+	const _ZUNOChannelCCS_t *cc_types;
+
 	#ifdef WITH_CC_MULTICHANNEL
 	if((cc == COMMAND_CLASS_MULTI_CHANNEL) && (ZUNO_CFG_CHANNEL_COUNT > 1))
-		return MULTI_CHANNEL_VERSION;
+		return MULTI_CHANNEL_VERSION_RELEASED;
 	#endif
 	// Loop over all user-defined channels
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
-		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
-		uint8_t f = ZUNO_CC_TYPES[type].flags;
-		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
-			uint8_t c = ZUNO_CC_TYPES[type].ccs[j].cc;
-			if((cc == COMMAND_CLASS_BASIC) && (f&CHANNEL_TYPE_FLAGS_BASIC_MAPPER)){
+		if ((cc_types = _zunoGetCCTypes((_ZunoChannelNumber_t)ZUNO_CFG_CHANNEL(i).type)) == NULL)
+			continue ;
+		for(int j=0;j<cc_types->num_ccs;j++){
+			uint8_t c = cc_types->ccs[j].cc;
+			if((cc == COMMAND_CLASS_BASIC) && (cc_types->flags & CHANNEL_TYPE_FLAGS_BASIC_MAPPER)){
 				return BASIC_VERSION;
 			}
 			if(c == cc){
-				return ZUNO_CC_TYPES[type].ccs[j].version;
+				return cc_types->ccs[j].version;
 			}
 		}
 	}
@@ -760,6 +803,7 @@ static void _zunoAddBaseCCS(byte ccs) {
 #endif
 
 void _fillZWaveData(uint8_t secure_param){
+	const _ZUNOChannelCCS_t *cc_types;
 	ZwZwavePlusInfoIcon_t						icon;
 	ZwZwavePlusInfoType_t						info_type;
 
@@ -787,14 +831,14 @@ void _fillZWaveData(uint8_t secure_param){
 	#endif
 	// Loop over all user-defined channels
 	for(int i=0;i<ZUNO_CFG_CHANNEL_COUNT;i++){
-		uint8_t type = ZUNO_CFG_CHANNEL(i).type-1;
-		uint8_t f = ZUNO_CC_TYPES[type].flags;
+		if ((cc_types = _zunoGetCCTypes((_ZunoChannelNumber_t)ZUNO_CFG_CHANNEL(i).type)) == NULL)
+			continue ;
 		if( (ZUNO_CFG_CHANNEL(i).zw_channel != 0) && 
 			((ZUNO_CFG_CHANNEL(i).zw_channel & ZWAVE_CHANNEL_MAPPED_BIT) == 0))
 			continue;
-		for(int j=0;j<ZUNO_CC_TYPES[type].num_ccs;j++){
-			uint8_t cc = ZUNO_CC_TYPES[type].ccs[j].cc;
-			if(f & CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE)
+		for(int j=0;j<cc_types->num_ccs;j++){
+			uint8_t cc = cc_types->ccs[j].cc;
+			if(cc_types->flags & CHANNEL_TYPE_FLAGS_UNSECURE_AVALIABLE)
 				_appendCC(g_zuno_sys->zw_protocol_data->CCLstNSNI, g_zuno_sys->zw_protocol_data->CCLstNSNI_cnt, cc, MAX_CMDCLASES_NSNI);
 			_appendCC(g_zuno_sys->zw_protocol_data->CCLstSec, g_zuno_sys->zw_protocol_data->CCLstSec_cnt,cc, MAX_CMDCLASES_SECURED);
 		}
@@ -997,7 +1041,9 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 	#endif
 	if ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_BROAD) != 0)//test broadcast
 		return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
-	
+	if (_isBlockMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == true)
+		return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
+
 	// prepare packet for report
 	_fillOutgoingPacket(cmd, &frame_report);
 	// If we have multichannel support enabled.
@@ -1020,6 +1066,8 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 			#endif
 			_fillOutgoingPacket(cmd,  &frame_report);
 			multi = true;
+			if (_isBlockMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == true)
+				return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		}
 	}
 	#endif
@@ -1028,14 +1076,15 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 	} else if (ZW_CMD_CLASS == COMMAND_CLASS_VERSION) {
 		return __zuno_CommandHandler_Out(zuno_CCVersionHandler(cmd, &frame_report));
 	}
-	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report);
+	result = zuno_CCSupervisionUnpack(result, cmd, &frame_report, ((cmd->zw_rx_opts & RECEIVE_STATUS_TYPE_MULTI) == 0) ? false:true);
 	if(result == ZUNO_UNKNOWN_CMD || result == ZUNO_COMMAND_UNPACKED) {
-		if (result == ZUNO_COMMAND_UNPACKED)
+		if (result == ZUNO_COMMAND_UNPACKED) {
+			if (_isBlockMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == true)
+				return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 			supervision = true;
+		}
 		else
 			supervision = false;
-		if (_isBlockMultiBroadcast(cmd->zw_rx_opts, ZW_CMD_CLASS, ZW_CMD) == true)
-			return __zuno_CommandHandler_Out(ZUNO_COMMAND_BLOCKED);
 		options = ZUNO_COMMAND_HANDLER_OPTIONS(cmd->src_node, multi, supervision, ZW_CMD_CLASS);
 		// Check if command fits to any existing channel
 		if(_multiinstance(cmd, &result, &frame_report, &options) == true) {
@@ -1076,11 +1125,6 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 					result = zuno_CCMeterHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
-				#ifdef WITH_CC_METER_TBL_MONITOR
-				case COMMAND_CLASS_METER_TBL_MONITOR:
-					result = zuno_CCMeterTblMonitorHandler(zuno_ch, cmd, &frame_report);
-					break;
-				#endif
 				#ifdef WITH_CC_DOORLOCK
 				case COMMAND_CLASS_DOOR_LOCK:
 					result = zuno_CCDoorLockHandler(zuno_ch, cmd, &frame_report);
@@ -1116,13 +1160,28 @@ int zuno_CommandHandler(ZUNOCommandCmd_t *cmd) {
 					result = zuno_CCThermostatSetPointHandler(zuno_ch, cmd, &frame_report);
 					break;
 				#endif
+				#ifdef WITH_CC_THERMOSTAT_OPERATING_STATE
+				case COMMAND_CLASS_THERMOSTAT_OPERATING_STATE:
+					result = zuno_CCThermostatOperationStateHandler(zuno_ch, cmd, &frame_report);
+					break;
+				#endif
+				#ifdef WITH_CC_THERMOSTAT_FAN_MODE
+				case COMMAND_CLASS_THERMOSTAT_FAN_MODE:
+					result = zuno_CCThermostatFanModeHandler(zuno_ch, cmd, &frame_report);
+					break;
+				#endif
+				#ifdef WITH_CC_THERMOSTAT_FAN_STATE
+				case COMMAND_CLASS_THERMOSTAT_FAN_STATE:
+					result = zuno_CCThermostatFanStateHandler(zuno_ch, cmd, &frame_report);
+					break;
+				#endif
 			}
 		}
 	}
 	result = zuno_CCSupervisionReportSyncDefault(&frame_report, result);
 	// Do we have any report to send?
 	if(result == ZUNO_COMMAND_ANSWERED){
-		zunoSendZWPackageAdd(&frame_report);
+		zunoSendZWPacketAdd(&frame_report);
 	}
 	return __zuno_CommandHandler_Out(result);
 }
@@ -1154,49 +1213,7 @@ bool zunoStartDeviceConfiguration() {
 		__zunoAssociationSetupManual();
 	return  true;
 }
-byte getMaxChannelTypes() {
-	return sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t);
-}
-byte zuno_findChannelType(byte type, ZUNOChannelCCS_t* types, byte count) {
-	byte i;
-	for(i=0;i<count;i++){
-		if(types[i].type == type)
-			return i;
-	}
-	return UNKNOWN_CHANNEL;
-}
-#ifdef LOGGING_DBG
-void dbgDumpCCType(ZUNOChannelCCS_t * cc_type){
-	LOGGING_UART.print("CC TYPE:");
-	LOGGING_UART.print(cc_type->type, HEX);
-	LOGGING_UART.print(" FLAGS:");
-	LOGGING_UART.print(cc_type->flags, HEX);
-	LOGGING_UART.print(" CCS[");
-	LOGGING_UART.print(cc_type->num_ccs);
-	LOGGING_UART.print(" ]=");
-	for (int j = 0; j < cc_type->num_ccs; j++)
-	{
-		LOGGING_UART.print("{ cc:");
-		LOGGING_UART.print(cc_type->ccs[j].cc, HEX);
-		LOGGING_UART.print(" v:");
-		LOGGING_UART.print(cc_type->ccs[j].version, HEX);
-		LOGGING_UART.print("} ");
-	}
-	LOGGING_UART.println("");
-}
-void dbgCCTypes() {
-	static bool fist_run = true;
-	if(!fist_run)
-		return;
-	fist_run = false;	
-	delay(2000);
-	LOGGING_UART.println("STATIC TYPES:\n-------------------------");
-	for(size_t i=0;i<(sizeof(ZUNO_CC_TYPES)/sizeof(ZUNOChannelCCS_t));i++){
-		dbgDumpCCType((ZUNOChannelCCS_t*)&ZUNO_CC_TYPES[i]);
-	}
-	LOGGING_UART.println("\n-------------------------");
-}
-#endif
+
 // 
 void initCCSDataDefault() {
 	static bool inited = false;
@@ -1252,7 +1269,7 @@ uint8_t zuno_findChannelByZWChannelIndexChannel(byte endpoint) {
 
 static bool aux_check_last_reporttime(uint8_t ch, uint32_t ticks) {
 
-	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER) || defined(WITH_CC_METER_TBL_MONITOR)
+	#if defined(WITH_CC_SENSOR_MULTILEVEL) || defined(WITH_CC_METER)
 	switch (ZUNO_CFG_CHANNEL(ch).type) {
 		#ifdef WITH_CC_SENSOR_MULTILEVEL
 		case ZUNO_SENSOR_MULTILEVEL_CHANNEL_NUMBER:
@@ -1346,6 +1363,9 @@ void zunoSendReportSet(byte channel, ZUNOCommandPacketReport_t *frame_report, co
 	uint8_t												ch;
 
 	switch (options->cmd_class) {
+		#if defined (WITH_CC_USER_CREDENTIAL)
+		case COMMAND_CLASS_USER_CREDENTIAL:
+		#endif
 		case COMMAND_CLASS_INDICATOR:
 			outside = true;
 			break ;
@@ -1400,7 +1420,7 @@ void zunoSendReportSet(byte channel, ZUNOCommandPacketReport_t *frame_report, co
 	}
 	if (rs != ZUNO_COMMAND_ANSWERED)
 		return ;
-	zunoSendZWPackageAdd(frame_report);
+	zunoSendZWPacketAdd(frame_report);
 }
 
 void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_report) {
@@ -1523,7 +1543,7 @@ void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_repo
 				rs = zuno_CCMeterReport(ch, NULL, &frame_report->info);
 				break;
 			#endif
-			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT)
+			#if defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT) || defined(WITH_CC_THERMOSTAT_OPERATING_STATE) || defined(WITH_CC_THERMOSTAT_FAN_MODE) || defined(WITH_CC_THERMOSTAT_FAN_STATE)
 			case ZUNO_THERMOSTAT_CHANNEL_NUMBER:
 				rs = zuno_CCThermostatReport(ch, &frame_report->info);
 				break;
@@ -1539,7 +1559,7 @@ void zunoSendReportHandler(uint32_t ticks, ZUNOCommandPacketReport_t *frame_repo
 			node_id_t					node;
 			node = __getSyncVar16(&g_channels_data.sync_nodes[ch]);
 			memcpy(&frame_report->info.packet.aux_data[0], &node, sizeof(node));
-			zunoSendZWPackageAdd(frame_report);
+			zunoSendZWPacketAdd(frame_report);
 			return; // Only one report along one call
 		}
 		
@@ -1571,12 +1591,12 @@ void zunoSetupBitMask(byte * arr, byte b, byte max_sz){
 	arr[byte_index] |= 1 << bit_index;
 }
 
-void zunoSendZWPackage(ZUNOCommandPacket_t * pkg){
-	ZWQPushPackage(pkg);
+void zunoSendZWPacket(ZUNOCommandPacket_t * pkg){
+	ZWQPushPacket(pkg);
 }
 
-void zunoSendZWPackageAdd(ZUNOCommandPacketReport_t *frame) {
-	zunoSendZWPackage(&frame->info);
+void zunoSendZWPacketAdd(ZUNOCommandPacketReport_t *frame) {
+	zunoSendZWPacket(&frame->info);
 }
 
 uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
@@ -1622,7 +1642,7 @@ void zunoSendTestPackage(uint8_t * data, uint8_t len, uint8_t dst_node_id){
 	frame.info.packet.len = 2 + len;
 	frame.info.packet.zw_rx_secure_opts = 0;
 	memcpy(&frame.info.packet.cmd[2], (uint8_t*)data, len);
-	zunoSendZWPackageAdd(&frame);
+	zunoSendZWPacketAdd(&frame);
 }
 void zunoRFLogger(ZUNOSysEvent_t * ev){
 	int i;
@@ -1649,7 +1669,7 @@ void zunoRFLogger(ZUNOSysEvent_t * ev){
 	_zme_memcpy(p_data, (uint8_t*)&ev->params[0], sizeof(ev->params[0]));
 	p_data += sizeof(ev->params[0]);
 	_zme_memcpy(p_data, (uint8_t*)&ev->params[1], sizeof(ev->params[1]));
-	zunoSendZWPackageAdd(&frame);
+	zunoSendZWPacketAdd(&frame);
 }
 uint8_t zunoZMEFrequency2Region(uint8_t freqi){
   return zmeMapDict((uint8_t*)FREQ_TBL_CONV, sizeof(FREQ_TBL_CONV), freqi, false);

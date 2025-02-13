@@ -24,7 +24,7 @@ const _ZUNOChannelCCS_t __cc_types[] =
 				.version = SWITCH_BINARY_VERSION,
 			}
 		}
-	}
+	},
 #endif
 #if defined(WITH_CC_SWITCH_MULTILEVEL)
 	{

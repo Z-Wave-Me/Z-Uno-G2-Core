@@ -531,8 +531,8 @@ static int _operating_state_report(uint8_t channel, ZUNOCommandPacket_t *packet)
 	ZW_THERMOSTAT_OPERATING_STATE_REPORT_V2_FRAME *report;
 
 	report = (ZW_THERMOSTAT_OPERATING_STATE_REPORT_V2_FRAME *)&packet->packet.cmd[0x0];
-	// report->cmdClass = COMMAND_CLASS_THERMOSTAT_OPERATING_STATE; set in - fillOutgoingPacket
-	// report->cmd = THERMOSTAT_OPERATING_STATE_REPORT; set in - fillOutgoingPacket
+	report->cmdClass = COMMAND_CLASS_THERMOSTAT_OPERATING_STATE;
+	report->cmd = THERMOSTAT_OPERATING_STATE_REPORT;
 	report->properties1 = zuno_CCThermostatOperationState(channel);
 	packet->packet.len = (sizeof(report[0]));
 	return (ZUNO_COMMAND_ANSWERED);
@@ -604,8 +604,8 @@ static int __fan_mode_get(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZW_THERMOSTAT_FAN_MODE_REPORT_V5_FRAME *report;
 
 	report = (ZW_THERMOSTAT_FAN_MODE_REPORT_V5_FRAME *)&packet->packet.cmd[0x0];
-	// report->cmdClass = COMMAND_CLASS_THERMOSTAT_FAN_MODE; set in - fillOutgoingPacket
-	// report->cmd = THERMOSTAT_FAN_MODE_REPORT; set in - fillOutgoingPacket
+	report->cmdClass = COMMAND_CLASS_THERMOSTAT_FAN_MODE;
+	report->cmd = THERMOSTAT_FAN_MODE_REPORT;
 	report->properties1 = zuno_CCThermostatFanModeGet(channel);
 	if (zuno_CCThermostatFanModeIsOff(channel) == true)
 		report->properties1 = report->properties1 | THERMOSTAT_FAN_MODE_REPORT_PROPERTIES1_OFF_BIT_MASK_V4;
@@ -689,8 +689,8 @@ static int __fan_state_get(uint8_t channel, ZUNOCommandPacket_t *packet) {
 	ZW_THERMOSTAT_FAN_STATE_REPORT_V2_FRAME *report;
 
 	report = (ZW_THERMOSTAT_FAN_STATE_REPORT_V2_FRAME *)&packet->packet.cmd[0x0];
-	// report->cmdClass = COMMAND_CLASS_THERMOSTAT_FAN_STATE; set in - fillOutgoingPacket
-	// report->cmd = THERMOSTAT_FAN_STATE_REPORT_V2; set in - fillOutgoingPacket
+	report->cmdClass = COMMAND_CLASS_THERMOSTAT_FAN_STATE;
+	report->cmd = THERMOSTAT_FAN_STATE_REPORT_V2;
 	report->level = zuno_CCThermostatFanState(channel);
 	packet->packet.len = (sizeof(report[0]));
 	return (ZUNO_COMMAND_ANSWERED);
@@ -761,34 +761,33 @@ int zuno_CCThermostatReport(byte channel, ZUNOCommandPacket_t *packet) {
 	rs = _report_mode(channel, packet);
 	if (rs == ZUNO_COMMAND_ANSWERED) {
 		zunoSendZWPacket(packet);
-		rs = ZUNO_COMMAND_PROCESSED;
 	}
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_OPERATING_STATE
 	rs = _operating_state_report(channel, packet);
 	if (rs == ZUNO_COMMAND_ANSWERED) {
 		zunoSendZWPacket(packet);
-		rs = ZUNO_COMMAND_PROCESSED;
 	}
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_FAN_MODE
 	rs = __fan_mode_get(channel, packet);
 	if (rs == ZUNO_COMMAND_ANSWERED) {
 		zunoSendZWPacket(packet);
-		rs = ZUNO_COMMAND_PROCESSED;
 	}
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_FAN_STATE
 	rs = __fan_state_get(channel, packet);
 	if (rs == ZUNO_COMMAND_ANSWERED) {
 		zunoSendZWPacket(packet);
-		rs = ZUNO_COMMAND_PROCESSED;
 	}
 	#endif
 	#ifdef WITH_CC_THERMOSTAT_SETPOINT
 	rs = _setpoint_get(channel, NULL, packet);
+	if (rs == ZUNO_COMMAND_ANSWERED) {
+		zunoSendZWPacket(packet);
+	}
 	#endif
-	return (rs);
+	return (ZUNO_COMMAND_PROCESSED);
 }
 
 #endif// defined(WITH_CC_THERMOSTAT_MODE) || defined(WITH_CC_THERMOSTAT_SETPOINT) || defined(WITH_CC_THERMOSTAT_OPERATING_STATE) || defined(WITH_CC_THERMOSTAT_FAN_MODE) || defined(WITH_CC_THERMOSTAT_FAN_STATE)

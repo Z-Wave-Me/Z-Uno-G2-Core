@@ -127,11 +127,13 @@ static const uint8_t gNeoGammaTable[256] = {
 typedef enum							ZunoNeoBase_e
 {
 	ZunoNeoBaseUsart0,
+	#if USART_COUNT >= 2
 	ZunoNeoBaseUsart1,
 	ZunoNeoBaseUsart2,
 	ZunoNeoBaseTimer0,
 	ZunoNeoBaseTimer1,
 	ZunoNeoBaseWTimer0
+	#endif
 }										ZunoNeoBase_t;
 
 typedef union							ZunoNeoOption_u
@@ -177,7 +179,11 @@ class NeoPixelClass {
 	public:
 		NeoPixelClass(void);
 		ZunoError_t						addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option, ZunoNeoBase_t base);
+		#if USART_COUNT >= 2
 		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option) {return (this->addNeo(neo_pin, count_led, brightness, option, ZunoNeoBaseUsart1));};
+		#else
+		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness, ZunoNeoOptionMax_t option) {return (this->addNeo(neo_pin, count_led, brightness, option, ZunoNeoBaseUsart0));};
+		#endif
 		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led, uint8_t brightness) {return (this->addNeo(neo_pin, count_led, brightness, NEO_GRB | NEO_KHZ800));};
 		inline ZunoError_t				addNeo(uint8_t neo_pin, ZunoNeoCountLed count_led) {return (this->addNeo(neo_pin, count_led, NEO_BRIGHTNESS_DEFAULT));};
 		void							deleteNeo(uint8_t neo_pin);

@@ -31,6 +31,7 @@
 /* Constants */
 const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 {
+	#if USART_COUNT >= 1
 	{
 		{.usart = USART0},
 		.lpLock = &gSyncUSART0,
@@ -40,6 +41,8 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
 	},
+	#endif
+	#if USART_COUNT >= 2
 	{
 		{.usart = USART1},
 		.lpLock = &gSyncUSART1,
@@ -49,6 +52,8 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
 	},
+	#endif
+	#if USART_COUNT >= 3
 	{
 		{.usart = USART2},
 		.lpLock = &gSyncUSART2,
@@ -58,6 +63,8 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		.type = NEO_TYPE_USART,
 		.coder = NEO_CODER_1TO4
 	},
+	#endif
+	#if USART_COUNT >= 2
 	{
 		{.timer = TIMER0},
 		.lpLock = &gSyncTIMER0,
@@ -85,6 +92,7 @@ const ZunoNeoBaseConfig_t NeoPixelClass::_configTable[] =
 		.type = NEO_TYPE_TIMER,
 		.coder = NEO_CODER_1TO8
 	}
+	#endif
 };
 
 const USART_InitSync_TypeDef NeoPixelClass::_initSpi =
@@ -199,8 +207,10 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 	ZunoNeoOption_t					flag;
 	ZunoNeoCountLed					len;
 	volatile uint8_t				lpKey;
+	#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 	const uint8_t					*location_ptr;
 	size_t							location_sz;
+	#endif
 	ssize_t							channel;
 	LdmaClassTransferSingle_t		array;
 
@@ -212,6 +222,7 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 		len = len * (flag.redOffset == flag.whiteOffset ? 3 : 4) * config->coder;
 		base = config->base;
 		switch (config->type) {
+			#if USART_COUNT >= 2
 			case NEO_TYPE_TIMER:
 				len++;// + 1 LOW
 				TIMER_TopSet(((TIMER_TypeDef *)base), list->freq_timer);
@@ -223,7 +234,9 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 				TIMER_CompareBufSet(((TIMER_TypeDef *)base), NEO_TIMER_CHANNEL, 0);// + 1 LOW
 				TIMER_Enable(((TIMER_TypeDef *)base), true);
 				break;
+			#endif
 			case NEO_TYPE_USART:
+				#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 				if ((USART_TypeDef *)base == USART2) {
 					location_ptr = g_loc_pa5_pf0_pf1_pf3_pf7;// USART2 has a cropped location set
 					location_sz = sizeof(g_loc_pa5_pf0_pf1_pf3_pf7);
@@ -233,6 +246,11 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 					location_sz = sizeof(g_loc_pa0_pf7_all);
 				}
 				((USART_TypeDef *)base)->ROUTELOC0 = getLocation(location_ptr, location_sz, neo_pin) << _USART_ROUTELOC0_TXLOC_SHIFT;
+				#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+				GPIO->USARTROUTE[0].TXROUTE = (getRealPort(neo_pin) << _GPIO_USART_TXROUTE_PORT_SHIFT) | (getRealPin(neo_pin) << _GPIO_USART_TXROUTE_PIN_SHIFT);
+				#else
+					#error "NEO PIXEL USART"
+				#endif
 				USART_BaudrateSyncSet(((USART_TypeDef *)base), 0, (((flag.option & NEO_KHZ400) != 0)? NEO_USART_HZ400 : NEO_USART_HZ800));
 				USART_Enable(((USART_TypeDef *)base), usartEnableTx);
 				break;
@@ -242,9 +260,11 @@ void NeoPixelClass::show(uint8_t neo_pin) {
 			while (LdmaClass::transferDone(channel) == false)
 				delay(0x1);
 		switch (config->type) {
+			#if USART_COUNT >= 2
 			case NEO_TYPE_TIMER:
 				TIMER_Enable(((TIMER_TypeDef *)base), false);
 				break;
+			#endif
 			case NEO_TYPE_USART:
 				while (!(((USART_TypeDef *)base)->STATUS & USART_STATUS_TXC))//Waiting for the last byte to go before we finish the transfer protocol
 					__NOP();
@@ -459,9 +479,11 @@ inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led
 	uint8_t						*lpWite;
 	uint8_t						*lpGreen;
 	uint8_t						*lpBlue;
+	#if USART_COUNT >= 2
 	uint8_t						freq;
 	uint8_t						one_hight;
 	uint8_t						zero_hight;
+	#endif
 	uint8_t						coder;
 
 	if (++brightness != 0) {
@@ -481,6 +503,7 @@ inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led
 	lpGreen = &array[flag.greenOffset * coder];
 	lpBlue = &array[flag.blueOffset * coder];
 	switch (config->type) {
+		#if USART_COUNT >= 2
 		case NEO_TYPE_TIMER:
 			freq = list->freq_timer;
 			one_hight = freq * (((flag.option & NEO_KHZ400) != 0)? NEO_ONE_HIGH_PERIOD_HZ400 : NEO_ONE_HIGH_PERIOD_HZ800) / NEO_FULL_PERIOD;
@@ -491,6 +514,7 @@ inline void NeoPixelClass::_setColor(ZunoNeoList_t *list, ZunoNeoCountLed id_led
 			this->_setColorTimerCoder(lpGreen, color.green , one_hight, zero_hight);
 			this->_setColorTimerCoder(lpBlue, color.blue , one_hight, zero_hight);
 			break;
+		#endif
 		case NEO_TYPE_USART:
 			if (lpWite != lpRed)
 				this->_setColorUsartCoder(lpWite, color.white);
@@ -555,15 +579,18 @@ inline void NeoPixelClass::_deleteNeo(uint8_t neo_pin) {
 ZunoError_t NeoPixelClass::_init(size_t param) {
 	const ZunoNeoBaseConfig_t			*config;
 	USART_TypeDef						*usart;
+	#if USART_COUNT >= 2
 	TIMER_Init_TypeDef					timerInit;
 	TIMER_InitCC_TypeDef				timerCCInit;
 	TIMER_TypeDef						*timer;
+	#endif
 	size_t								base;
 
 	config = (const ZunoNeoBaseConfig_t *)param;
 	CMU_ClockEnable(config->bus_clock, true);
 	base = config->base;
 	switch (config->type) {
+		#if USART_COUNT >= 2
 		case NEO_TYPE_TIMER:
 			timerCCInit = TIMER_INITCC_DEFAULT;
 			timerCCInit.mode = timerCCModePWM;
@@ -575,10 +602,17 @@ ZunoError_t NeoPixelClass::_init(size_t param) {
 			TIMER_Init(timer, &timerInit);
 			timer->ROUTEPEN = (1UL << NEO_TIMER_CHANNEL);//enabled CC
 			break ;
+		#endif
 		default:
 			usart = (USART_TypeDef *)base;
 			USART_InitSync(usart, &NeoPixelClass::_initSpi);
+			#if defined(USART_ROUTEPEN_TXPEN) && defined(USART_ROUTEPEN_RXPEN)
 			usart->ROUTEPEN = USART_ROUTEPEN_TXPEN;
+			#elif defined(GPIO_USART_ROUTEEN_TXPEN) && defined(GPIO_USART_ROUTEEN_RXPEN)
+			GPIO->USARTROUTE[0].ROUTEEN = GPIO_USART_ROUTEEN_TXPEN;
+			#else
+				#error "NEO PIXEL USART"
+			#endif
 			break ;
 	}
 	return (ZunoErrorOk);

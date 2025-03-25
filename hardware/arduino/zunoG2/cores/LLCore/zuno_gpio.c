@@ -5,7 +5,7 @@
 #pragma message "ZUNO_PIN_V==0. Custom pinmapping. You have to define PinDef_t ZUNO_PIN_DEFS[] yourself!"
 #elif ZUNO_PIN_V == 0x707
 #pragma message "ZUNO_PIN_V==0x707. B2B pinmapping"
-#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704 || ZUNO_PIN_V == 0x708
 #pragma message "ZUNO_PIN_V==0x704"
 #elif ZUNO_PIN_V == 0x701
 #pragma message "ZUNO_PIN_V==0x701. u-fairy.com module"

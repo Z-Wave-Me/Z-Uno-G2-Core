@@ -20,17 +20,20 @@ typedef struct ZUNOCodeHeader_s{
     uint16_t    crc16;
     uint32_t    flags;
     uint16_t    fwId;
-	uint32_t    jumptable_offset;
-	uint32_t    build_timestamp;
-	uint8_t     console_pin;
-	uint32_t 	console_baud;	
-	uint16_t    sketch_version;
-	uint8_t     ota_firmwares_count;
-	ZUNOOTAFWDescr_t * ota_firmwares_descriptions;
-	uint32_t    ota_pincode;
-	uint32_t    ota_custom_offset;
-	char        name[MAX_SKETCH_NAME];
-	uint16_t    hw_id;
+    uint32_t    jumptable_offset;
+    uint32_t    build_timestamp;
+    uint8_t     console_pin;
+    uint32_t 	console_baud;	
+    uint16_t    sketch_version;
+    uint8_t     ota_firmwares_count;
+    ZUNOOTAFWDescr_t * ota_firmwares_descriptions;
+    uint32_t    ota_pincode;
+    uint32_t    ota_custom_offset;
+    char        name[MAX_SKETCH_NAME];
+    uint16_t    hw_id;
+    uint32_t    sketch_encryption; // Encryption FLAG + key hash data
+    uint16_t    vendor_id;
+    uint16_t    product_type_id;
 } ZUNOCodeHeader_t;
 
 void WDOG_Feed();

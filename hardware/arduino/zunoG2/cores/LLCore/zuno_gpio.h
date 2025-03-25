@@ -54,7 +54,7 @@
 	#ifndef SDA1 
 	#define SDA1 25
 	#endif
-#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704 || ZUNO_PIN_V == 0x707
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704 || ZUNO_PIN_V == 0x707 || ZUNO_PIN_V == 0x708
 	#define SCL1                23
 	#define SDA1                25
 #elif ZUNO_PIN_V == 0x701
@@ -133,7 +133,7 @@ typedef struct	PinDef_s
 #if ZUNO_PIN_V == 0
 // User-defined pin mapping
 extern const PinDef_t ZUNO_PIN_DEFS[];
-#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704 || ZUNO_PIN_V == 0x707
+#elif ZUNO_PIN_V == 6 || ZUNO_PIN_V == 0x704 || ZUNO_PIN_V == 0x707 || ZUNO_PIN_V == 0x708
 constexpr PinDef_t ZUNO_PIN_DEFS[] = {// A0 B1 C2 D3 E4 F5
     // LEFT SIDE
     {2, 8},//0 - PC8 - 0 

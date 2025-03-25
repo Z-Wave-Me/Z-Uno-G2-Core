@@ -9,6 +9,7 @@ menu.CleanNVM=Clean NVM
 menu.UpdateLicense=License update
 menu.ChipType=Chip Type
 menu.UARTBaudrate=Serial Baudrate
+menu.SketchEncryption=Sketch Encryption (B2B) 
 ##############################################################
 zuno2.name=Z-Wave>ME Z-Uno2
 
@@ -116,3 +117,14 @@ zuno2.menu.UARTBaudrate.STD.build.baud = 0
 zuno2.menu.UARTBaudrate.HIGH.build.baud = 1
 zuno2.menu.UARTBaudrate.ULTRA.build.baud = 2
 zuno2.menu.UARTBaudrate.LOW.build.baud = 3
+
+zuno2.menu.SketchEncryption.None = None (Default)
+zuno2.menu.SketchEncryption.Key1 = Key#1
+zuno2.menu.SketchEncryption.Key2 = Key#2
+zuno2.menu.SketchEncryption.Key3 = Key#3
+zuno2.menu.SketchEncryption.Key4 = Key#4
+zuno2.menu.SketchEncryption.None.build.s_key = 0
+zuno2.menu.SketchEncryption.Key1.build.s_key = 1
+zuno2.menu.SketchEncryption.Key2.build.s_key = 2
+zuno2.menu.SketchEncryption.Key3.build.s_key = 3
+zuno2.menu.SketchEncryption.Key4.build.s_key = 4

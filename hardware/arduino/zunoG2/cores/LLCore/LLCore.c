@@ -86,6 +86,12 @@ extern unsigned long __HeapLimit;
 #ifndef ZUNO_SKETCH_NAME
 #define ZUNO_SKETCH_NAME ""
 #endif
+#ifndef ZUNO_VENDOR_ID
+#define ZUNO_VENDOR_ID 0x0115 
+#endif
+#ifndef ZUNO_PRODUCT_TYPE_ID
+#define ZUNO_PRODUCT_TYPE_ID 0x0210 
+#endif
 void * zunoJumpTable(int vec, void * data);
 ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) =  {
                                                                                     {'Z','M','E','Z','U','N','O','C'}, 
@@ -103,7 +109,10 @@ ZUNOCodeHeader_t g_zuno_codeheader __attribute__((section(".sketch_struct"))) = 
                                                                                     ZUNO_OTA_PIN,
                                                                                     ZUNO_CUSTOM_OTA_OFFSET,
                                                                                     ZUNO_SKETCH_NAME,
-                                                                                    ZUNO_HWID};
+                                                                                    ZUNO_HWID,
+                                                                                    0, // Encryption is always blank here. Utility will modify it
+                                                                                    ZUNO_VENDOR_ID,
+                                                                                    ZUNO_PRODUCT_TYPE_ID};
 
 // from ZWSupport.c
 int zuno_CommandHandler(ZUNOCommandCmd_t * cmd); 

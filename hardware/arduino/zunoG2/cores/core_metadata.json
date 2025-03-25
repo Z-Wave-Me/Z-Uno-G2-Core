@@ -77,6 +77,11 @@
                     "-lm",
                     "-flto",
                     "-Wl,--gc-sections"],
+    "family_depending":{
+        "ZGM13":{"flash_page_size":2048},
+        "ZGM23":{"flash_page_size":8192},
+        "EFR32ZG23":{"flash_page_size":8192}
+    },
     "chip_depending":{
         "ZGM230SA27HGN":{
             "family":"ZGM23",

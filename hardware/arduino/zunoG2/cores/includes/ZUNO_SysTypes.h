@@ -72,6 +72,7 @@ typedef struct ZUNOZWaveProtocolData_s{
 	uint16_t device_icon;
 	uint8_t  generic_type;
 	uint8_t  specific_type;
+	uint16_t sketch_fw_id;
 	uint16_t crc16; 
 }ZUNOZWaveProtocolData_t;
 typedef struct ZUNOOTAFWDescr_s{

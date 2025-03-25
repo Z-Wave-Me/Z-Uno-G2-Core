@@ -1193,6 +1193,7 @@ __WEAK uint8_t __zunoGetS2AccessManual(void) {
 __WEAK void __zunoAssociationSetupManual(void) {
 }
 
+extern ZUNOCodeHeader_t g_zuno_codeheader;
 // Channels fill routines
 bool zunoStartDeviceConfiguration() {
 	if(zunoInNetwork() && !zunoIsDbgModeOn())
@@ -1205,6 +1206,7 @@ bool zunoStartDeviceConfiguration() {
 	g_zuno_sys->zw_protocol_data->CCLstSec_cnt = 0;
 	g_zuno_sys->zw_protocol_data->flags = DEFAULT_CONFIG_FLAGS;
 	g_zuno_sys->zw_protocol_data->product_id = DEFAULT_PRODUCT_ID;
+	g_zuno_sys->zw_protocol_data->sketch_fw_id = g_zuno_codeheader.fwId; // Save it here for the right compartion in FWUpgrade CC
 	g_zuno_sys->zw_protocol_data->req_s2_keys = __zunoGetS2AccessManual();
 	// User-side data
 	_resetUserChannels();

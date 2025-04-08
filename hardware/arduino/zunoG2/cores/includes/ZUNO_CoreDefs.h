@@ -18,6 +18,10 @@
 #define SRC_ZUNO_COREDEFS_H_
 #include <stdint.h>
 
+#ifndef ZPAL_MAX_HAL
+#define ZPAL_MAX_HAL 0
+#endif // ZPAL_MAX_HAL
+
 #define ZWAVE_SDK_VERSION_MAJOR 7UL
 #define ZWAVE_SDK_VERSION_MINOR 19UL
 #define ZWAVE_SDK_VERSION_PATCH  3UL

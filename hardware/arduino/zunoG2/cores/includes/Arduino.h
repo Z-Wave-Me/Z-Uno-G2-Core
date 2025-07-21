@@ -8,6 +8,7 @@
 
 #include "ArduinoTypes.h"
 #include "LLCore.h"
+#include "Custom_decl.h"
 #include "ZUNO_Definitions.h"
 #include "ZUNO_StaticData.h"
 #ifndef ZUNO_PREPROC_PHASE

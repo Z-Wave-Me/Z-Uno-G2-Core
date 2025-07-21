@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "Custom_decl.h"
 #include "Custom_defs.h"
 
 #define ZUNO_CORE_VERSION_MAJOR 0x03

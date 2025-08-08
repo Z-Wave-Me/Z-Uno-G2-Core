@@ -234,6 +234,23 @@ static const ZunoCFGParameter_t *zunoCFGParameterProxy(size_t param){
 
 static void _zunoSaveCFGParam(uint8_t param, ssize_t value, bool bUser);
 
+static uint32_t __get_value(const uint8_t *const data, const uint8_t size, const ZunoCFGParameter_t *const cfg)
+{
+	const uint32_t value = _zunoSetterValue2Cortex(data, size);
+	if (cfg->format != ZUNO_CFG_PARAMETER_FORMAT_SIGNED)
+	{
+		return value;
+	}
+	switch (size)
+	{
+		case 2:
+			return (int16_t)value;
+		case 1:
+			return (int8_t)value;
+	}
+	return value;
+}
+
 uint8_t checkConfigurationParameterSVSet(uint8_t * cmd){
 	const ZunoCFGParameter_t				*cfg;
 
@@ -247,7 +264,7 @@ uint8_t checkConfigurationParameterSVSet(uint8_t * cmd){
 		return PARAM_SV_UNKNOWN_PARAM;
 	
 	if((options & CONFIGURATION_SET_LEVEL_DEFAULT_BIT_MASK) == 0){
-		uint32_t new_value = _zunoSetterValue2Cortex(cmd+4, size);
+		uint32_t new_value = __get_value(cmd+4, size, cfg);
 		if(cfg->size  != size)
 			return PARAM_SV_WRONG_PARAM_SIZE;
 		if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED) {
@@ -423,7 +440,7 @@ static int _configuration_set(const ZUNOCommandCmd_t *cmd) {
 		level = (level & CONFIGURATION_SET_LEVEL_SIZE_MASK);
 		if (level != cfg->size)
 			return (ZUNO_COMMAND_BLOCKED_FAIL);
-		value = _zunoSetterValue2Cortex(&lp->byte4.configurationValue1, level);
+		value = __get_value(&lp->byte4.configurationValue1, level, cfg);
 		if (cfg->format == ZUNO_CFG_PARAMETER_FORMAT_SIGNED) {
 			if ((ssize_t)value < cfg->minValue || (ssize_t)value > cfg->maxValue)
 				return (ZUNO_COMMAND_BLOCKED_FAIL);

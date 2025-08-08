@@ -462,7 +462,7 @@ void _zunoMarkSystemClassRequested(uint8_t systembit);
 #define QUEUE_CHANNEL_LLREPORT 0x02
 
 extern ZUNOZWConfiguation_t g_zuno_zw_cfg;
-uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz);
+uint32_t _zunoSetterValue2Cortex(const uint8_t * packet, uint8_t sz);
 uint8_t *zuno_AddCommonClassMinimal(uint8_t *b);
 uint8_t *zuno_AddCommonClass(uint8_t *b);
 int _zunoTransposeSecurityLevel(uint8_t sec);

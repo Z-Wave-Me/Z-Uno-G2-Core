@@ -1601,7 +1601,7 @@ void zunoSendZWPacketAdd(ZUNOCommandPacketReport_t *frame) {
 	zunoSendZWPacket(&frame->info);
 }
 
-uint32_t _zunoSetterValue2Cortex(uint8_t * packet, uint8_t sz){
+uint32_t _zunoSetterValue2Cortex(const uint8_t * packet, uint8_t sz){
 	uint32_t res = 0;
 	while(sz){
 		res <<= 8;

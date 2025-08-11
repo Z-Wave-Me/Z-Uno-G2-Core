@@ -267,7 +267,10 @@ static bool _zuno_CCCentralSceneReport(uint32_t uuid, uint8_t event) {
 			_CCCentralSceneReport_common(event, parameter_list, 0x0, sceneNumber, &frame_report);
 			break ;
 		case CENTRAL_SCENE_KEY_HELD_DOWN:
-			_zuno_CCCentralSceneReport_held_down(parameter_list, sceneNumber, &frame_report);
+			if (parameter_list->ms == 0)
+			{
+				_zuno_CCCentralSceneReport_held_down(parameter_list, sceneNumber, &frame_report);
+			}
 			break ;
 		default:
 			break ;

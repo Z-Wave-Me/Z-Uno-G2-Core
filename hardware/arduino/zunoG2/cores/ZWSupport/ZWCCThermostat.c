@@ -383,6 +383,7 @@ static int _set_setpoint(uint8_t channel, const ZW_THERMOSTAT_SETPOINT_SET_4BYTE
 	uint8_t size;
 	uint8_t precision;
 	uint8_t scale;
+	int rs; // to allow returning SUPERVISION_FAIL even on a successful conversion - the spec says that if the Set is not exactly in th correct format, we MAY handle the command but MUST return SUPERVISION_FAIL
 
 	if (_get_termostat_set_point_is_valid(channel, (cmd->level & THERMOSTAT_SETPOINT_SET_LEVEL_SETPOINT_TYPE_MASK)) == false)
 		return (ZUNO_COMMAND_BLOCKED_FAIL);
@@ -390,6 +391,10 @@ static int _set_setpoint(uint8_t channel, const ZW_THERMOSTAT_SETPOINT_SET_4BYTE
 	size = (cmd->level2 & THERMOSTAT_SETPOINT_SET_LEVEL2_SIZE_MASK);
 	if (size > sizeof(value))
 		return (ZUNO_COMMAND_BLOCKED_FAIL);
+	if (size != limit.size)
+		rs = ZUNO_COMMAND_BLOCKED_FAIL;
+	else
+		rs = ZUNO_COMMAND_PROCESSED;
 	value = 0;
 	_zme_memcpy((byte *)&value, (byte *)&cmd->value1, size);
 	if ((_get_compresed_combi_value(channel) & THERMOSTAT_RANGE_NEG) != 0) {
@@ -412,7 +417,10 @@ static int _set_setpoint(uint8_t channel, const ZW_THERMOSTAT_SETPOINT_SET_4BYTE
 		multi = __calculation_multi(limit.precision - precision);
 		value = value * multi;
 	}
+	if (precision != limit.precision)
+		rs = ZUNO_COMMAND_BLOCKED_FAIL;
 	if ((scale = ((cmd->level2 & THERMOSTAT_SETPOINT_SET_LEVEL2_SCALE_MASK) >> THERMOSTAT_SETPOINT_SET_LEVEL2_SCALE_SHIFT)) != __get_scale(channel)) {
+		rs = ZUNO_COMMAND_BLOCKED_FAIL;
 		multi = (32 * __calculation_multi(limit.precision));
 		if (scale == THERMOSTAT_FAHRENHEIT)
 			value = ((value - multi) * 5 / 9);
@@ -424,7 +432,7 @@ static int _set_setpoint(uint8_t channel, const ZW_THERMOSTAT_SETPOINT_SET_4BYTE
 	if (value < limit.down_limit)
 		return (ZUNO_COMMAND_BLOCKED_FAIL);
 	zuno_universalSetter2P(channel, cmd->level & THERMOSTAT_SETPOINT_SET_LEVEL_SETPOINT_TYPE_MASK, value);
-	return (ZUNO_COMMAND_PROCESSED);
+	return (rs);
 }
 
 static int _setpoint_capabilities_get(size_t channel, const ZW_THERMOSTAT_SETPOINT_CAPABILITIES_GET_V3_FRAME *cmd, ZUNOCommandPacketReport_t *frame_report) {

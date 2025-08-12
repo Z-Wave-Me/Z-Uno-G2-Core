@@ -353,7 +353,7 @@ void ZWQProcess(){
            }
 
         // Check if we have a free channel to send the package
-        if(zunoCheckSystemQueueStatus(q_ch)) {
+        if(info->report.fast == false && zunoCheckSystemQueueStatus(q_ch)) {
             queue_bit_mask = queue_bit_mask | (0x1 << (q_ch));
             continue; // Needed queue is full for this priority - just skip the package
         }

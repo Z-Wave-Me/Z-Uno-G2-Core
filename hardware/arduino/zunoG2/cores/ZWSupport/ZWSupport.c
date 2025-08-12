@@ -299,6 +299,7 @@ bool fillOutgoingRawPacket(ZUNOCommandPacket_t *info, uint8_t * d, uint8_t ch, u
 	ZUNOCommandCmd_t					*p;
 
 	info->report.valid = false;
+	info->report.fast = false;
 	p = &info->packet;
 	bool res = true;
 	memset(p, 0, sizeof(p[0x0]));

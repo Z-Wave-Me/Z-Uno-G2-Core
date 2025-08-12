@@ -136,6 +136,7 @@ typedef struct				ZUNOCommandReport_t
 	ZUNOCommandHandlerOption_t option;
 	bool					outside;
 	bool					valid;
+	bool					fast;
 }							ZUNOCommandReport_s;
 
 typedef struct				ZUNOCommandPacket_t

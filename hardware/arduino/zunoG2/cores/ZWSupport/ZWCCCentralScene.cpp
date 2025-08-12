@@ -203,6 +203,10 @@ static void _CCCentralSceneReport_common(uint8_t event, ZunoCentralSceneParamete
 
 	_lock(parameter_list, ms);
 	fillOutgoingReportPacketAsync(frame_report, 0x0);
+	if (event == CENTRAL_SCENE_KEY_HELD_DOWN)
+	{
+		frame_report->info.report.fast = true;
+	}
 	report = (ZW_CENTRAL_SCENE_NOTIFICATION_V3_FRAME *)&frame_report->info.packet.cmd[0x0];
 	report->cmdClass = COMMAND_CLASS_CENTRAL_SCENE;
 	report->cmd = CENTRAL_SCENE_NOTIFICATION;

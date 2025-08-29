@@ -16,8 +16,9 @@ typedef struct ZUNOCodeHeader_s{
     char        sign[8];
     uint8_t     version_major;
     uint8_t     version_minor;
-    uint16_t    code_size;
+    uint16_t    code_size_1;
     uint16_t    crc16;
+    uint16_t    code_size_2;
     uint32_t    flags;
     uint16_t    fwId;
     uint32_t    jumptable_offset;
